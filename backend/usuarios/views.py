@@ -4,13 +4,13 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from usuarios.models import CustomUser
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.http import JsonResponse  # ← traga para o topo junto
 
 class LoginView(APIView):
     def post(self, request):
         identificador = request.data.get('identificador')
         senha = request.data.get('senha')
 
-        # Tenta encontrar o usuário por username, e-mail ou id_vendedor
         try:
             user = (
                 CustomUser.objects.filter(username=identificador).first() or
@@ -36,7 +36,7 @@ class LoginView(APIView):
             })
 
         return Response({'erro': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
-from django.http import JsonResponse
+
 
 def ping(request):
     return JsonResponse({'status': 'ok'})
