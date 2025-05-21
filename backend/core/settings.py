@@ -1,6 +1,7 @@
 import os
 from decouple import config
 from pathlib import Path
+from datetime import timedelta
 
 # Caminho base do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,8 +22,19 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'usuarios',
-    # apps futuros
+    'rest_framework',
+    'rest_framework_simplejwt',
+     # apps futuros
 ]
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',]}
 
 # Middleware
 MIDDLEWARE = [
