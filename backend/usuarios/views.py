@@ -36,3 +36,7 @@ class LoginView(APIView):
             })
 
         return Response({'erro': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
+from django.http import JsonResponse
+
+def ping(request):
+    return JsonResponse({'status': 'ok'})
