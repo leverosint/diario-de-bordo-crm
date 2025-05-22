@@ -11,16 +11,16 @@ class LoginView(APIView):
         identificador = request.data.get('identificador')
         senha = request.data.get('senha')
 
-        try:
-            user = (
-                CustomUser.objects.filter(username=identificador).first() or
-                CustomUser.objects.filter(email=identificador).first() or
-                CustomUser.objects.filter(id_vendedor=identificador).first()
-            )
-        except CustomUser.DoesNotExist:
-            return Response({'erro': 'Usuário não encontrado.'}, status=status.HTTP_401_UNAUTHORIZED)
+        user = (
+            CustomUser.objects.filter(username=identificador).first() or
+            CustomUser.objects.filter(email=identificador).first()
+        )
 
-        if user and user.check_password(senha):
+        # Se ainda não achou e for número, tenta id_vendedor
+        if not user and identificador and identificador.isdigit():
+            user = CustomUser.objects.filter(id_vendedor=int(identificador)).first()
+
+        if user and user.check_password(senha) and user.is_active:
             refresh = RefreshToken.for_user(user)
             return Response({
                 'refresh': str(refresh),
@@ -36,6 +36,7 @@ class LoginView(APIView):
             })
 
         return Response({'erro': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 
 def ping(request):
