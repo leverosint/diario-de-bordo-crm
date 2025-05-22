@@ -13,5 +13,8 @@ class CustomUser(AbstractUser):
     id_vendedor = models.CharField(max_length=20, blank=True, null=True)
     primeiro_acesso = models.BooleanField(default=True)
 
+    USERNAME_FIELD = 'username'  # ← ESSENCIAL para autenticação
+    REQUIRED_FIELDS = ['email']  # ← Usado para o createsuperuser
+
     def __str__(self):
         return self.username
