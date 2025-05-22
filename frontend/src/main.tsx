@@ -2,6 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MantineProvider } from '@mantine/core';
+import '@mantine/core/styles.css'; // <-- adicione isso
+
 
 import './index.css';
 import { customTheme } from './styles/theme';
@@ -10,7 +12,7 @@ import Dashboard from './pages/Dashboard'; // você criará esse em seguida
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MantineProvider theme={customTheme} withGlobalStyles withNormalizeCSS>
+    <MantineProvider theme={customTheme}>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LoginPage />} />
