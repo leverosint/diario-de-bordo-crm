@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'usuarios',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
      # apps futuros
 ]
 
@@ -41,6 +42,8 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Para servir arquivos estáticos
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -123,3 +126,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 #User Auth
 AUTH_USER_MODEL = 'usuarios.CustomUser'
+
+#Dominio
+CORS_ALLOWED_ORIGINS = [
+    "https://diario-de-bordo-crm-1.onrender.com",
+]
