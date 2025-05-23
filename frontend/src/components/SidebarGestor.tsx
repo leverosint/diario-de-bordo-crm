@@ -1,105 +1,81 @@
-import { useState } from 'react';
 import {
-  AppShell,
-  AppShellNavbar,
-  AppShellHeader,
-  AppShellMain,
-  Burger,
-  Group,
-  Text,
-  UnstyledButton,
-  rem,
-} from '@mantine/core';
-import {
-  Users,
-  Upload,
-  FileBarChart2,
-  LogOut,
-} from 'lucide-react';
-
-export default function SidebarGestor({ children }: { children: React.ReactNode }) {
-  const [opened, setOpened] = useState(false);
-
-  return (
-    <AppShell
-      navbar={{
-        width: 260,
-        breakpoint: 'sm',
-        collapsed: { mobile: !opened },
-      }}
-      padding="md"
-    >
-      <AppShellHeader>
-        <Group h="100%" px="md">
-          <Burger opened={opened} onClick={() => setOpened((o) => !o)} hiddenFrom="sm" size="sm" />
-          <Text c="white" fw={600} size="lg">Painel do Gestor</Text>
-        </Group>
-      </AppShellHeader>
-
-      <AppShellNavbar p="md">
-        <UnstyledButton
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: rem(10),
-            padding: rem(10),
-            borderRadius: rem(6),
-            marginBottom: rem(12),
-            backgroundColor: '#f1f3f5',
-          }}
-        >
-          <Users size={18} />
-          <Text size="sm">Cadastro de Usuários</Text>
-        </UnstyledButton>
-
-        <UnstyledButton
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: rem(10),
-            padding: rem(10),
-            borderRadius: rem(6),
-            marginBottom: rem(12),
-            backgroundColor: '#f1f3f5',
-          }}
-        >
-          <Upload size={18} />
-          <Text size="sm">Cadastro de Parceiros</Text>
-        </UnstyledButton>
-
-        <UnstyledButton
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: rem(10),
-            padding: rem(10),
-            borderRadius: rem(6),
-            marginBottom: rem(12),
-            backgroundColor: '#f1f3f5',
-          }}
-        >
-          <FileBarChart2 size={18} />
-          <Text size="sm">Relatórios</Text>
-        </UnstyledButton>
-
-        <UnstyledButton
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: rem(10),
-            padding: rem(10),
-            borderRadius: rem(6),
-            marginTop: rem(24),
-            backgroundColor: '#fff0f0',
-            color: 'red',
-          }}
-        >
-          <LogOut size={18} />
-          <Text size="sm" fw={600}>Sair</Text>
-        </UnstyledButton>
-      </AppShellNavbar>
-
-      <AppShellMain>{children}</AppShellMain>
-    </AppShell>
-  );
-}
+    AppShell,
+    AppShellNavbar,
+    NavLink,
+    Group,
+    Text,
+    ScrollArea,
+    Burger,
+  } from '@mantine/core';
+  import {
+    LayoutDashboard,
+    UserPlus,
+    Upload,
+    BarChart2,
+    LogOut,
+  } from 'lucide-react';
+  import { useNavigate } from 'react-router-dom';
+  import { useState } from 'react';
+  
+  export default function SidebarGestor({ children }: { children: React.ReactNode }) {
+    const navigate = useNavigate();
+    const [opened, setOpened] = useState(true);
+  
+    const handleLogout = () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+      navigate('/');
+    };
+  
+    return (
+      <AppShell
+        navbar={{
+          width: 260,
+          breakpoint: 'sm',
+          collapsed: { mobile: !opened },
+        }}
+        padding="md"
+      >
+        <AppShellNavbar p="xs">
+          <Group justify="space-between" mt="xs" mb="md">
+            <Text size="xl" fw={700} c="teal">
+              Painel Gestor
+            </Text>
+            <Burger opened={opened} onClick={() => setOpened((o) => !o)} size="sm" />
+          </Group>
+  
+          <ScrollArea>
+            <NavLink
+              label="Dashboard"
+              leftSection={<LayoutDashboard size={18} />}
+              onClick={() => navigate('/dashboard')}
+            />
+            <NavLink
+              label="Cadastro Usuários"
+              leftSection={<UserPlus size={18} />}
+              onClick={() => navigate('/cadastro-usuarios')}
+            />
+            <NavLink
+              label="Importar CSV"
+              leftSection={<Upload size={18} />}
+              onClick={() => navigate('/importar')}
+            />
+            <NavLink
+              label="Relatórios"
+              leftSection={<BarChart2 size={18} />}
+              onClick={() => navigate('/relatorios')}
+            />
+            <NavLink
+              label="Sair"
+              leftSection={<LogOut size={18} />}
+              onClick={handleLogout}
+              style={{ color: 'red', marginTop: 20 }}
+            />
+          </ScrollArea>
+        </AppShellNavbar>
+  
+        {children}
+      </AppShell>
+    );
+  }
+  
