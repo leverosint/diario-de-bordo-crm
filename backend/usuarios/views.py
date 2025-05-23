@@ -29,7 +29,7 @@ class LoginView(APIView):
                     'username': user.username,
                     'email': user.email,
                     'tipo_user': user.tipo_user,
-                    'canal': user.canal,
+                    'canais_venda': [canal.nome for canal in user.canais_venda.all()],
                     'id_vendedor': user.id_vendedor,
                     'primeiro_acesso': user.primeiro_acesso,
                 }
