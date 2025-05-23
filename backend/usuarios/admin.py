@@ -1,18 +1,19 @@
 from django.contrib import admin
+from .models import CustomUser, CanalVenda
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
-    model = CustomUser
-    list_display = ('username', 'first_name', 'email', 'tipo_user', 'canal', 'id_vendedor', 'is_staff')
+    list_display = ('username', 'email', 'tipo_user', 'id_vendedor', 'exibir_canais')
     fieldsets = UserAdmin.fieldsets + (
-        ('Dados Comerciais', {
-            'fields': ('tipo_user', 'canal', 'id_vendedor', 'primeiro_acesso')
+        ('Informações Adicionais', {
+            'fields': ('tipo_user', 'id_vendedor', 'primeiro_acesso', 'canais_venda')
         }),
     )
-    add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Dados Comerciais', {
-            'fields': ('tipo_user', 'canal', 'id_vendedor', 'primeiro_acesso')
-        }),
-    )  
+    filter_horizontal = ('canais_venda',)
+
+    def exibir_canais(self, obj):
+        return ", ".join([c.nome for c in obj.canais_venda.all()])
+    exibir_canais.short_description = 'Canais de Venda'
+
+admin.site.register(CanalVenda)
