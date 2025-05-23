@@ -50,14 +50,12 @@ export default function SidebarGestor({ children }: { children: React.ReactNode 
       <AppShellHeader withBorder={false} style={{ background: '#005A64' }}>
         <Group h="100%" px="md" justify="space-between">
           <Group>
-          <Button
-        variant="subtle"
-        color="white"
-        onClick={() => setOpened((o) => !o)}
-        style={{ padding: 0 }}
-      >
-        {opened ? <ChevronLeft size={20} color="white" /> : <ChevronRight size={20} color="white" />}
-      </Button>
+            <Burger
+              opened={opened}
+              onClick={() => setOpened((o) => !o)}
+              size="sm"
+              color="white"
+            />
             <Text size="lg" fw={700} c="white">
               Painel Gestor
             </Text>
