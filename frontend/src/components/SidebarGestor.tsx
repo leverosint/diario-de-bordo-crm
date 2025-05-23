@@ -21,11 +21,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {ChevronRight } from 'lucide-react';
 
-
-const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-const nome = usuario?.username || 'Usuário';
 
 export default function SidebarGestor({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
@@ -69,7 +65,7 @@ export default function SidebarGestor({ children }: { children: React.ReactNode 
       >
         <Group justify="center" mt="xs" mb="md">
           <Text size="xl" fw={700} c="teal">
-            Olá, {nome}
+            Olá
           </Text>
         </Group>
 
