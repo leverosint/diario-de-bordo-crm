@@ -21,6 +21,11 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import {ChevronRight } from 'lucide-react';
+
+
+const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+const nome = usuario?.username || 'Usuário';
 
 export default function SidebarGestor({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
@@ -45,12 +50,14 @@ export default function SidebarGestor({ children }: { children: React.ReactNode 
       <AppShellHeader withBorder={false} style={{ background: '#005A64' }}>
         <Group h="100%" px="md" justify="space-between">
           <Group>
-            <Burger
-              opened={opened}
-              onClick={() => setOpened((o) => !o)}
-              size="sm"
-              color="white"
-            />
+          <Button
+        variant="subtle"
+        color="white"
+        onClick={() => setOpened((o) => !o)}
+        style={{ padding: 0 }}
+      >
+        {opened ? <ChevronLeft size={20} color="white" /> : <ChevronRight size={20} color="white" />}
+      </Button>
             <Text size="lg" fw={700} c="white">
               Painel Gestor
             </Text>
@@ -64,7 +71,7 @@ export default function SidebarGestor({ children }: { children: React.ReactNode 
       >
         <Group justify="center" mt="xs" mb="md">
           <Text size="xl" fw={700} c="teal">
-            Painel Gestor
+            Olá, {nome}
           </Text>
         </Group>
 
