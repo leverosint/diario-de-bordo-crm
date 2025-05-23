@@ -15,4 +15,4 @@ class CustomUserAdmin(UserAdmin):
         ('Dados Comerciais', {
             'fields': ('tipo_user', 'canal', 'id_vendedor', 'primeiro_acesso')
         }),
-    )
+    )  
