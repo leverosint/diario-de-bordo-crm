@@ -9,6 +9,7 @@ import {
   Text,
   ScrollArea,
   Burger,
+  Button,
   rem,
 } from '@mantine/core';
 import {
@@ -17,12 +18,13 @@ import {
   Upload,
   BarChart2,
   LogOut,
+  ChevronLeft,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function SidebarGestor({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const [opened, setOpened] = useState(true); // controla visibilidade da sidebar
+  const [opened, setOpened] = useState(true);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -36,7 +38,7 @@ export default function SidebarGestor({ children }: { children: React.ReactNode 
       navbar={{
         width: 260,
         breakpoint: 'sm',
-        collapsed: { mobile: !opened, desktop: !opened }, // <- recolhe para todos
+        collapsed: { mobile: !opened, desktop: !opened },
       }}
       header={{ height: 60 }}
     >
@@ -56,14 +58,17 @@ export default function SidebarGestor({ children }: { children: React.ReactNode 
         </Group>
       </AppShellHeader>
 
-      <AppShellNavbar p="xs">
+      <AppShellNavbar
+        p="xs"
+        style={{ display: 'flex', flexDirection: 'column' }}
+      >
         <Group justify="center" mt="xs" mb="md">
           <Text size="xl" fw={700} c="teal">
             Painel Gestor
           </Text>
         </Group>
 
-        <ScrollArea>
+        <ScrollArea style={{ flex: 1 }}>
           <NavLink
             label="Dashboard"
             leftSection={<LayoutDashboard size={18} />}
@@ -91,6 +96,18 @@ export default function SidebarGestor({ children }: { children: React.ReactNode 
             style={{ color: 'red', marginTop: rem(20) }}
           />
         </ScrollArea>
+
+        <Group justify="center" mt="auto" mb="md">
+          <Button
+            variant="light"
+            size="xs"
+            color="#005A64"
+            onClick={() => setOpened(false)}
+            leftSection={<ChevronLeft size={16} />}
+          >
+            Recolher
+          </Button>
+        </Group>
       </AppShellNavbar>
 
       <AppShellMain>{children}</AppShellMain>
