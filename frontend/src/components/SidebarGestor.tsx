@@ -22,7 +22,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function SidebarGestor({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const [opened, setOpened] = useState(true); // true por padrão no desktop
+  const [opened, setOpened] = useState(true); // controla visibilidade da sidebar
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -36,22 +36,23 @@ export default function SidebarGestor({ children }: { children: React.ReactNode 
       navbar={{
         width: 260,
         breakpoint: 'sm',
-        collapsed: { mobile: !opened },
+        collapsed: { mobile: !opened, desktop: !opened }, // <- recolhe para todos
       }}
       header={{ height: 60 }}
     >
       <AppShellHeader withBorder={false} style={{ background: '#005A64' }}>
-        <Group h="100%" px="md">
-          <Burger
-            opened={opened}
-            onClick={() => setOpened((o) => !o)}
-            hiddenFrom="sm"
-            size="sm"
-            color="white"
-          />
-          <Text size="lg" fw={700} c="white">
-            Painel Gestor
-          </Text>
+        <Group h="100%" px="md" justify="space-between">
+          <Group>
+            <Burger
+              opened={opened}
+              onClick={() => setOpened((o) => !o)}
+              size="sm"
+              color="white"
+            />
+            <Text size="lg" fw={700} c="white">
+              Painel Gestor
+            </Text>
+          </Group>
         </Group>
       </AppShellHeader>
 
