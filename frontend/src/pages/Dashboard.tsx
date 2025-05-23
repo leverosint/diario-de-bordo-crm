@@ -6,6 +6,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const tipoUser = usuario?.tipo_user;
 
   useEffect(() => {
     if (!token) {
@@ -16,12 +17,12 @@ export default function Dashboard() {
   if (!token) return null;
 
   return (
-    <SidebarGestor>
+    <SidebarGestor tipoUser={tipoUser}>
       <div style={{ padding: 20 }}>
         <h1>
-          {usuario?.tipo_user === 'GESTOR' && 'Área do Gestor'}
-          {usuario?.tipo_user === 'VENDEDOR' && 'Área do Vendedor'}
-          {usuario?.tipo_user === 'ADMIN' && 'Área do Administrador'}
+          {tipoUser === 'GESTOR' && 'Área do Gestor'}
+          {tipoUser === 'VENDEDOR' && 'Área do Vendedor'}
+          {tipoUser === 'ADMIN' && 'Área do Administrador'}
         </h1>
         <p>Use o menu lateral para navegar pelas funcionalidades.</p>
       </div>
