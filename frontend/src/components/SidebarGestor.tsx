@@ -58,7 +58,7 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
               color="white"
             />
             <Text size="lg" fw={700} c="white">
-              Painel Gestor
+              Painel Diário de Bordo
             </Text>
           </Group>
         </Group>
