@@ -27,25 +27,11 @@ export default function Dashboard() {
   }
 
   if (usuario?.tipo_user === 'VENDEDOR') {
-    return (
-      <SidebarGestor>
-        <div style={{ padding: 20 }}>
-          <h1>Área do Gestor</h1>
-          <p>Use o menu lateral para navegar pelas funcionalidades.</p>
-        </div>
-      </SidebarGestor>
-    );
+    return <TelaVendedor />;
   }
 
   if (usuario?.tipo_user === 'ADMIN') {
-    return (
-      <SidebarGestor>
-        <div style={{ padding: 20 }}>
-          <h1>Área do Gestor</h1>
-          <p>Use o menu lateral para navegar pelas funcionalidades.</p>
-        </div>
-      </SidebarGestor>
-    );
+    return <TelaAdmin />;
   }
 
   return (
@@ -56,3 +42,25 @@ export default function Dashboard() {
   );
 }
 
+// Telas alternativas
+function TelaVendedor() {
+  return (
+    <SidebarGestor>
+      <div style={{ padding: 20 }}>
+        <h1>Área do Gestor</h1>
+        <p>Use o menu lateral para navegar pelas funcionalidades.</p>
+      </div>
+    </SidebarGestor>
+  );
+}
+
+function TelaAdmin() {
+  return (
+    <SidebarGestor>
+      <div style={{ padding: 20 }}>
+        <h1>Área do Gestor</h1>
+        <p>Use o menu lateral para navegar pelas funcionalidades.</p>
+      </div>
+    </SidebarGestor>
+  );
+}
