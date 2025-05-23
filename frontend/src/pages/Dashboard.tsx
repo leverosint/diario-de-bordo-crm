@@ -9,13 +9,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!token) {
-      navigate('/'); // Redireciona se não estiver logado
+      navigate('/');
     }
   }, [token, navigate]);
 
   if (!token) return null;
 
-  // Renderiza a tela do GESTOR
   if (usuario?.tipo_user === 'GESTOR') {
     return (
       <SidebarGestor>
@@ -27,11 +26,37 @@ export default function Dashboard() {
     );
   }
 
-  // Renderiza a tela para demais usuários (VENDEDOR, ADMIN etc.)
+  if (usuario?.tipo_user === 'VENDEDOR') {
+    return <TelaVendedor />;
+  }
+
+  if (usuario?.tipo_user === 'ADMIN') {
+    return <TelaAdmin />;
+  }
+
   return (
     <div style={{ padding: 40 }}>
       <h1>Bem-vindo ao Dashboard</h1>
       <p>Sua área personalizada de indicadores e ações.</p>
+    </div>
+  );
+}
+
+// Telas alternativas
+function TelaVendedor() {
+  return (
+    <div style={{ padding: 40 }}>
+      <h1>Área do Vendedor</h1>
+      <p>Bem-vindo! Aqui você encontrará seus clientes e metas.</p>
+    </div>
+  );
+}
+
+function TelaAdmin() {
+  return (
+    <div style={{ padding: 40 }}>
+      <h1>Área do Administrador</h1>
+      <p>Gerencie usuários, permissões e configurações do sistema.</p>
     </div>
   );
 }
