@@ -15,50 +15,14 @@ export default function Dashboard() {
 
   if (!token) return null;
 
-  if (usuario?.tipo_user === 'GESTOR') {
-    return (
-      <SidebarGestor>
-        <div style={{ padding: 20 }}>
-          <h1>Área do Gestor</h1>
-          <p>Use o menu lateral para navegar pelas funcionalidades.</p>
-        </div>
-      </SidebarGestor>
-    );
-  }
-
-  if (usuario?.tipo_user === 'VENDEDOR') {
-    return <TelaVendedor />;
-  }
-
-  if (usuario?.tipo_user === 'ADMIN') {
-    return <TelaAdmin />;
-  }
-
-  return (
-    <div style={{ padding: 40 }}>
-      <h1>Bem-vindo ao Dashboard</h1>
-      <p>Sua área personalizada de indicadores e ações.</p>
-    </div>
-  );
-}
-
-// Telas alternativas
-function TelaVendedor() {
   return (
     <SidebarGestor>
       <div style={{ padding: 20 }}>
-        <h1>Área do Gestor</h1>
-        <p>Use o menu lateral para navegar pelas funcionalidades.</p>
-      </div>
-    </SidebarGestor>
-  );
-}
-
-function TelaAdmin() {
-  return (
-    <SidebarGestor>
-      <div style={{ padding: 20 }}>
-        <h1>Área do Gestor</h1>
+        <h1>
+          {usuario?.tipo_user === 'GESTOR' && 'Área do Gestor'}
+          {usuario?.tipo_user === 'VENDEDOR' && 'Área do Vendedor'}
+          {usuario?.tipo_user === 'ADMIN' && 'Área do Administrador'}
+        </h1>
         <p>Use o menu lateral para navegar pelas funcionalidades.</p>
       </div>
     </SidebarGestor>
