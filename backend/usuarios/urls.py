@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import LoginView, ping
+from .views import LoginView, ParceiroCreateUpdateView, UploadParceirosView
 
 urlpatterns = [
-    path('login/', LoginView.as_view(), name='login'),
-    path('ping/', ping, name='ping'),  # ← novo endpoint de teste
+    path('login/', LoginView.as_view()),
+    path('parceiros/', ParceiroCreateUpdateView.as_view()),
+    path('upload-parceiros/', UploadParceirosView.as_view()),
 ]

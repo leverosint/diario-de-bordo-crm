@@ -1,5 +1,12 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+# Canal de venda associado a usuários e parceiros
+class CanalVenda(models.Model):
+    nome = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.nome
 
 TIPOS_USUARIO = [
     ('VENDEDOR', 'Vendedor'),
@@ -7,12 +14,7 @@ TIPOS_USUARIO = [
     ('ADMIN', 'Administrador'),
 ]
 
-class CanalVenda(models.Model):
-    nome = models.CharField(max_length=100, unique=True)
-
-    def __str__(self):
-        return self.nome
-
+# Usuário customizado
 class CustomUser(AbstractUser):
     tipo_user = models.CharField(max_length=10, choices=TIPOS_USUARIO, default='VENDEDOR')
     canais_venda = models.ManyToManyField(CanalVenda, blank=True, related_name='usuarios')
@@ -24,3 +26,42 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+
+# Modelo de Parceiro
+class Parceiro(models.Model):
+    codigo = models.CharField(max_length=50, unique=True)
+    parceiro = models.CharField(max_length=255)
+    classificacao = models.CharField(max_length=100, blank=True, null=True)
+    consultor = models.CharField(max_length=100, blank=True, null=True)
+    unidade = models.CharField(max_length=100, blank=True, null=True)
+    cidade = models.CharField(max_length=100, blank=True, null=True)
+    uf = models.CharField(max_length=2, blank=True, null=True)
+    primeiro_fat = models.DateField(blank=True, null=True)
+    ultimo_fat = models.DateField(blank=True, null=True)
+
+    # Valores mensais
+    janeiro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    fevereiro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    marco = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    abril = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    maio = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    junho = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    julho = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    agosto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    setembro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    outubro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    novembro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    dezembro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    janeiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    fevereiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    marco_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    total_geral = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    recorrencia = models.CharField(max_length=50, blank=True, null=True)
+    tm = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
+    canal_venda = models.ForeignKey(CanalVenda, on_delete=models.SET_NULL, blank=True, null=True, related_name="parceiros")
+    atualizado_em = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.codigo} - {self.parceiro}"

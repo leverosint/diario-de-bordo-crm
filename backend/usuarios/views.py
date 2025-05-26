@@ -1,12 +1,18 @@
+import pandas as pd
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from django.contrib.auth import authenticate
-from usuarios.models import CustomUser
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.http import JsonResponse  # ← traga para o topo junto
+from django.utils.dateparse import parse_date
+from usuarios.models import CustomUser, Parceiro, CanalVenda
+
 
 class LoginView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         identificador = request.data.get('identificador')
         senha = request.data.get('senha')
@@ -16,7 +22,6 @@ class LoginView(APIView):
             CustomUser.objects.filter(email=identificador).first()
         )
 
-        # Se ainda não achou e for número, tenta id_vendedor
         if not user and identificador and identificador.isdigit():
             user = CustomUser.objects.filter(id_vendedor=int(identificador)).first()
 
@@ -29,7 +34,7 @@ class LoginView(APIView):
                     'username': user.username,
                     'email': user.email,
                     'tipo_user': user.tipo_user,
-                    'canais_venda': [canal.nome for canal in user.canais_venda.all()],
+                    'canais_venda': [c.nome for c in user.canais_venda.all()],
                     'id_vendedor': user.id_vendedor,
                     'primeiro_acesso': user.primeiro_acesso,
                 }
@@ -38,6 +43,96 @@ class LoginView(APIView):
         return Response({'erro': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+class ParceiroCreateUpdateView(APIView):
+    def post(self, request):
+        data = request.data
+        codigo = data.get('codigo')
 
-def ping(request):
-    return JsonResponse({'status': 'ok'})
+        if not codigo:
+            return Response({'erro': 'Código do parceiro é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+
+        canal_id = data.get('canal_venda')
+        canal = CanalVenda.objects.get(id=canal_id) if canal_id else None
+
+        parceiro, created = Parceiro.objects.update_or_create(
+            codigo=codigo,
+            defaults={
+                'parceiro': data.get('parceiro'),
+                'classificacao': data.get('classificacao'),
+                'consultor': data.get('consultor'),
+                'unidade': data.get('unidade'),
+                'cidade': data.get('cidade'),
+                'uf': data.get('uf'),
+                'canal_venda': canal
+            }
+        )
+
+        return Response({
+            'mensagem': 'Parceiro criado' if created else 'Parceiro atualizado',
+            'parceiro_id': parceiro.id
+        })
+
+
+class UploadParceirosView(APIView):
+    parser_classes = [MultiPartParser]
+
+    def post(self, request, format=None):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response({'erro': 'Arquivo não enviado.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            df = pd.read_excel(file_obj) if file_obj.name.endswith('.xlsx') else pd.read_csv(file_obj)
+            criados = 0
+            atualizados = 0
+
+            for _, row in df.iterrows():
+                parceiro, created = Parceiro.objects.update_or_create(
+                    codigo=row['Código'],
+                    defaults={
+                        'parceiro': row.get('Parceiro'),
+                        'classificacao': row.get('Classif.') or row.get('Classificação'),
+                        'consultor': row.get('Consultor'),
+                        'unidade': row.get('Unidade'),
+                        'cidade': row.get('Cidade'),
+                        'uf': row.get('UF'),
+                        'primeiro_fat': parse_date(str(row.get('Primeiro Fat'))),
+                        'ultimo_fat': parse_date(str(row.get('Último Fat'))),
+                        'janeiro': row.get('janeiro', 0),
+                        'fevereiro': row.get('fevereiro', 0),
+                        'marco': row.get('março', 0) or row.get('marco', 0),
+                        'abril': row.get('abril', 0),
+                        'maio': row.get('maio', 0),
+                        'junho': row.get('junho', 0),
+                        'julho': row.get('julho', 0),
+                        'agosto': row.get('agosto', 0),
+                        'setembro': row.get('setembro', 0),
+                        'outubro': row.get('outubro', 0),
+                        'novembro': row.get('novembro', 0),
+                        'dezembro': row.get('dezembro', 0),
+                        'janeiro_2': row.get('janeiro.1', 0),
+                        'fevereiro_2': row.get('fevereiro.1', 0),
+                        'marco_2': row.get('março.1', 0) or row.get('marco.1', 0),
+                        'total_geral': row.get('Total Geral', 0),
+                        'recorrencia': row.get('Recorrência') or row.get('Recorrencia'),
+                        'tm': row.get('TM', 0),
+                    }
+                )
+                if row.get('Canal'):
+                    canal_nome = str(row.get('Canal')).strip()
+                    canal_obj, _ = CanalVenda.objects.get_or_create(nome=canal_nome)
+                    parceiro.canal_venda = canal_obj
+                    parceiro.save()
+
+                if created:
+                    criados += 1
+                else:
+                    atualizados += 1
+
+            return Response({
+                'mensagem': 'Upload processado com sucesso!',
+                'criadas': criados,
+                'atualizadas': atualizados,
+            })
+        except Exception as e:
+            return Response({'erro': f'Erro ao processar o arquivo: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
