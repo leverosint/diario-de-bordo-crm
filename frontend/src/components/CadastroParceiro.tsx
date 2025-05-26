@@ -18,7 +18,8 @@ interface CanalVenda {
   nome: string;
 }
 
-export default function CadastroParceiro() {
+export default function CadastroUsuarios() {
+
   const [form, setForm] = useState({
     codigo: '',
     parceiro: '',

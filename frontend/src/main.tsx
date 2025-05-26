@@ -9,6 +9,8 @@ import { customTheme } from './styles/theme';
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import CadastroParceiro from './components/CadastroParceiro'; // <-- novo import
+import CadastroUsuarios from './components/CadastroParceiro';
+
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -18,6 +20,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<LoginPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/cadastro-parceiro" element={<CadastroParceiro />} /> {/* nova rota */}
+          <Route path="/cadastro-usuarios" element={<CadastroUsuarios />} />
         </Routes>
       </BrowserRouter>
     </MantineProvider>
