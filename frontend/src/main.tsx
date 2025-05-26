@@ -6,11 +6,11 @@ import '@mantine/core/styles.css';
 
 import './index.css';
 import { customTheme } from './styles/theme';
+
 import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
-import CadastroParceiro from './components/CadastroParceiro'; // <-- novo import
-import CadastroUsuarios from './components/CadastroParceiro';
-
+import CadastroParceiroPage from './pages/CadastroParceiroPage'; // ✅ novo
+import CadastroUsuariosPage from './pages/CadastroUsuariosPage'; // ✅ novo
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -19,8 +19,8 @@ createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route path="/" element={<LoginPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/cadastro-parceiro" element={<CadastroParceiro />} /> {/* nova rota */}
-          <Route path="/cadastro-usuarios" element={<CadastroUsuarios />} />
+          <Route path="/cadastro-parceiro" element={<CadastroParceiroPage />} />
+          <Route path="/cadastro-usuarios" element={<CadastroUsuariosPage />} />
         </Routes>
       </BrowserRouter>
     </MantineProvider>
