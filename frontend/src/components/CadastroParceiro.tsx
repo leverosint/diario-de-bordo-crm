@@ -118,62 +118,56 @@ export default function CadastroUsuarios() {
       <Title order={2} mb="md">
         Cadastro de Parceiros
       </Title>
-
       <form onSubmit={handleSubmit}>
-        <TextInput
-          label="Código"
-          value={form.codigo}
-          onChange={(e) => handleChange('codigo', e.target.value)}
-          required
-        />
-        <TextInput
-          label="Parceiro"
-          value={form.parceiro}
-          onChange={(e) => handleChange('parceiro', e.target.value)}
-          required
-        />
-        <TextInput
-          label="Classificação"
-          value={form.classificacao}
-          onChange={(e) => handleChange('classificacao', e.target.value)}
-        />
-        <TextInput
-          label="Consultor"
-          value={form.consultor}
-          onChange={(e) => handleChange('consultor', e.target.value)}
-        />
-        <TextInput
-          label="Unidade"
-          value={form.unidade}
-          onChange={(e) => handleChange('unidade', e.target.value)}
-        />
-        <TextInput
-          label="Cidade"
-          value={form.cidade}
-          onChange={(e) => handleChange('cidade', e.target.value)}
-        />
-        <TextInput
-          label="UF"
-          value={form.uf}
-          onChange={(e) => handleChange('uf', e.target.value)}
-          maxLength={2}
-        />
+  <TextInput
+    label="Código"
+    value={form.codigo}
+    onChange={(e) => handleChange('codigo', e.target.value)}
+    required
+  />
+  <TextInput
+    label="Parceiro"
+    value={form.parceiro}
+    onChange={(e) => handleChange('parceiro', e.target.value)}
+    required
+  />
+  <TextInput
+    label="Classificação"
+    value={form.classificacao}
+    onChange={(e) => handleChange('classificacao', e.target.value)}
+  />
+  <TextInput
+    label="Consultor"
+    value={form.consultor}
+    onChange={(e) => handleChange('consultor', e.target.value)}
+  />
+  <Select
+    label="Canal de Venda"
+    placeholder="Selecione um canal"
+    data={canais.map((c) => ({ value: String(c.id), label: c.nome }))}
+    value={form.canal_venda}
+    onChange={(value) => handleChange('canal_venda', value || '')}
+    required
+  />
+  <TextInput
+    label="Cidade"
+    value={form.cidade}
+    onChange={(e) => handleChange('cidade', e.target.value)}
+  />
+  <TextInput
+    label="UF"
+    value={form.uf}
+    onChange={(e) => handleChange('uf', e.target.value)}
+    maxLength={2}
+  />
+  <Group mt="md" justify="flex-end">
+    <Button type="submit" color="teal">
+      Cadastrar
+    </Button>
+  </Group>
+</form>
 
-        <Select
-          label="Canal de Venda"
-          placeholder="Selecione um canal"
-          data={canais.map((c) => ({ value: String(c.id), label: c.nome }))}
-          value={form.canal_venda}
-          onChange={(value) => handleChange('canal_venda', value || '')}
-          required
-        />
-
-        <Group mt="md" justify="flex-end">
-          <Button type="submit" color="teal">
-            Cadastrar
-          </Button>
-        </Group>
-      </form>
+      
 
       <Title order={3} mt="xl" mb="xs">
         Upload em massa (Excel/CSV)
