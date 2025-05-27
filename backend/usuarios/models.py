@@ -29,7 +29,7 @@ class CustomUser(AbstractUser):
 
 # Modelo de Parceiro
 class Parceiro(models.Model):
-    codigo = models.CharField(max_length=50, unique=True)
+    codigo = models.CharField(max_length=52, unique=True)
     parceiro = models.CharField(max_length=255)
     classificacao = models.CharField(max_length=100, blank=True, null=True)
     consultor = models.CharField(max_length=100, blank=True, null=True)
