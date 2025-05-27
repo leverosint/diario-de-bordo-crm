@@ -136,3 +136,18 @@ class UploadParceirosView(APIView):
             })
         except Exception as e:
             return Response({'erro': f'Erro ao processar o arquivo: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+from rest_framework import viewsets, permissions
+from .serializers import ParceiroSerializer, CanalVendaSerializer
+
+
+class ParceiroViewSet(viewsets.ModelViewSet):
+    queryset = Parceiro.objects.all()
+    serializer_class = ParceiroSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class CanalVendaViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = CanalVenda.objects.all()
+    serializer_class = CanalVendaSerializer
+    permission_classes = [permissions.IsAuthenticated]

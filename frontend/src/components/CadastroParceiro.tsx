@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-
 import type { FormEvent } from 'react';
 import {
   TextInput,
@@ -19,7 +18,6 @@ interface CanalVenda {
 }
 
 export default function CadastroUsuarios() {
-
   const [form, setForm] = useState({
     codigo: '',
     parceiro: '',
@@ -42,10 +40,22 @@ export default function CadastroUsuarios() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
+      const { canal_venda, ...rest } = form;
+      const payload = {
+        ...rest,
+        canal_venda_id: Number(canal_venda),
+      };
+
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/parceiros/`,
-        form
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
       );
+
       setMensagem('Parceiro cadastrado com sucesso!');
       console.log(response.data);
     } catch (error) {
@@ -70,6 +80,7 @@ export default function CadastroUsuarios() {
         {
           headers: {
             'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         }
       );
@@ -86,7 +97,12 @@ export default function CadastroUsuarios() {
     const fetchCanais = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_API_URL}/canais-venda/`
+          `${import.meta.env.VITE_API_URL}/canais-venda/`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          }
         );
         setCanais(response.data);
       } catch (error) {
