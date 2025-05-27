@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from datetime import date
+from dateutil.relativedelta import relativedelta
 
-# Canal de venda associado a usuários e parceiros
 class CanalVenda(models.Model):
     nome = models.CharField(max_length=100, unique=True)
 
@@ -14,7 +15,6 @@ TIPOS_USUARIO = [
     ('ADMIN', 'Administrador'),
 ]
 
-# Usuário customizado
 class CustomUser(AbstractUser):
     tipo_user = models.CharField(max_length=10, choices=TIPOS_USUARIO, default='VENDEDOR')
     canais_venda = models.ManyToManyField(CanalVenda, blank=True, related_name='usuarios')
@@ -27,7 +27,6 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.username
 
-# Modelo de Parceiro
 class Parceiro(models.Model):
     codigo = models.CharField(max_length=52, unique=True)
     parceiro = models.CharField(max_length=255)
@@ -39,7 +38,6 @@ class Parceiro(models.Model):
     primeiro_fat = models.DateField(blank=True, null=True)
     ultimo_fat = models.DateField(blank=True, null=True)
 
-    # Faturamento mensal
     janeiro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
     fevereiro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
     marco = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
@@ -58,6 +56,7 @@ class Parceiro(models.Model):
 
     total_geral = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     recorrencia = models.CharField(max_length=50, blank=True, null=True)
+    status = models.CharField(max_length=50, blank=True, null=True)
     tm = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     canal_venda = models.ForeignKey(CanalVenda, on_delete=models.SET_NULL, blank=True, null=True, related_name="parceiros")
@@ -77,6 +76,25 @@ class Parceiro(models.Model):
         self.total_geral = sum(meses)
         meses_com_valor = [m for m in meses if m > 0]
         self.tm = self.total_geral / len(meses_com_valor) if meses_com_valor else 0
-        self.recorrencia = "Ativo" if len(meses_com_valor) >= 3 else "Ocasional"
+        self.recorrencia = str(len(meses_com_valor))
+
+        # cálculo do status
+        hoje = date.today()
+        ultimo_dia_mes_passado = (hoje.replace(day=1) - relativedelta(days=1))
+
+        if self.ultimo_fat:
+            dias_sem_fat = (ultimo_dia_mes_passado - self.ultimo_fat).days
+            if dias_sem_fat <= 30:
+                self.status = 'Recorrente'
+            elif dias_sem_fat <= 60:
+                self.status = '30d s/ Fat'
+            elif dias_sem_fat <= 90:
+                self.status = '60d s/ Fat'
+            elif dias_sem_fat <= 120:
+                self.status = '90d s/ Fat'
+            else:
+                self.status = '120d s/ Fat'
+        else:
+            self.status = 'Sem registro'
 
         super().save(*args, **kwargs)

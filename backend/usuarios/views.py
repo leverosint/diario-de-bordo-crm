@@ -1,152 +1,101 @@
-from rest_framework import viewsets, permissions
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser
-from rest_framework import status
-from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.utils.dateparse import parse_date
-from django.contrib.auth import authenticate
-import pandas as pd
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+from datetime import datetime, timedelta
 
-from .models import CustomUser, Parceiro, CanalVenda
-from .serializers import ParceiroSerializer, CanalVendaSerializer
+# Canal de venda associado a usuários e parceiros
+class CanalVenda(models.Model):
+    nome = models.CharField(max_length=100, unique=True)
 
+    def __str__(self):
+        return self.nome
 
-class LoginView(APIView):
-    permission_classes = [AllowAny]
+TIPOS_USUARIO = [
+    ('VENDEDOR', 'Vendedor'),
+    ('GESTOR', 'Gestor'),
+    ('ADMIN', 'Administrador'),
+]
 
-    def post(self, request):
-        identificador = request.data.get('identificador')
-        senha = request.data.get('senha')
+# Usuário customizado
+class CustomUser(AbstractUser):
+    tipo_user = models.CharField(max_length=10, choices=TIPOS_USUARIO, default='VENDEDOR')
+    canais_venda = models.ManyToManyField(CanalVenda, blank=True, related_name='usuarios')
+    id_vendedor = models.CharField(max_length=20, blank=True, null=True)
+    primeiro_acesso = models.BooleanField(default=True)
 
-        user = (
-            CustomUser.objects.filter(username=identificador).first() or
-            CustomUser.objects.filter(email=identificador).first()
-        )
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['email']
 
-        if not user and identificador and identificador.isdigit():
-            user = CustomUser.objects.filter(id_vendedor=int(identificador)).first()
+    def __str__(self):
+        return self.username
 
-        if user and user.check_password(senha) and user.is_active:
-            refresh = RefreshToken.for_user(user)
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'usuario': {
-                    'username': user.username,
-                    'email': user.email,
-                    'tipo_user': user.tipo_user,
-                    'canais_venda': [c.nome for c in user.canais_venda.all()],
-                    'id_vendedor': user.id_vendedor,
-                    'primeiro_acesso': user.primeiro_acesso,
-                }
-            })
+# Modelo de Parceiro
+class Parceiro(models.Model):
+    codigo = models.CharField(max_length=52, unique=True)
+    parceiro = models.CharField(max_length=255)
+    classificacao = models.CharField(max_length=100, blank=True, null=True)
+    consultor = models.CharField(max_length=100, blank=True, null=True)
+    unidade = models.CharField(max_length=100, blank=True, null=True)
+    cidade = models.CharField(max_length=100, blank=True, null=True)
+    uf = models.CharField(max_length=2, blank=True, null=True)
+    primeiro_fat = models.DateField(blank=True, null=True)
+    ultimo_fat = models.DateField(blank=True, null=True)
 
-        return Response({'erro': 'Credenciais inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
+    # Faturamento mensal
+    janeiro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    fevereiro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    marco = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    abril = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    maio = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    junho = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    julho = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    agosto = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    setembro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    outubro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    novembro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    dezembro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    janeiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    fevereiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    marco_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
 
+    total_geral = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    tm = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    recorrencia = models.IntegerField(default=0)
+    status = models.CharField(max_length=50, blank=True, null=True)
 
-class ParceiroCreateUpdateView(APIView):
-    def post(self, request):
-        data = request.data
-        codigo = data.get('codigo')
+    canal_venda = models.ForeignKey(CanalVenda, on_delete=models.SET_NULL, blank=True, null=True, related_name="parceiros")
+    atualizado_em = models.DateTimeField(auto_now=True)
 
-        if not codigo:
-            return Response({'erro': 'Código do parceiro é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
+    def __str__(self):
+        return f"{self.codigo or ''} - {self.parceiro or ''}"
 
-        canal_id = data.get('canal_venda_id') or data.get('canal_venda')
-        canal = CanalVenda.objects.filter(id=canal_id).first() if canal_id else None
+    def save(self, *args, **kwargs):
+        meses = [
+            self.janeiro or 0, self.fevereiro or 0, self.marco or 0, self.abril or 0,
+            self.maio or 0, self.junho or 0, self.julho or 0, self.agosto or 0,
+            self.setembro or 0, self.outubro or 0, self.novembro or 0, self.dezembro or 0,
+            self.janeiro_2 or 0, self.fevereiro_2 or 0, self.marco_2 or 0,
+        ]
 
-        parceiro, created = Parceiro.objects.update_or_create(
-            codigo=codigo,
-            defaults={
-                'parceiro': data.get('parceiro'),
-                'classificacao': data.get('classificacao'),
-                'consultor': data.get('consultor'),
-                'unidade': data.get('unidade'),
-                'cidade': data.get('cidade'),
-                'uf': data.get('uf'),
-                'canal_venda': canal
-            }
-        )
+        self.total_geral = sum(meses)
 
-        return Response({
-            'mensagem': 'Parceiro criado' if created else 'Parceiro atualizado',
-            'parceiro_id': parceiro.id
-        })
+        meses_com_valor = [m for m in meses if m > 0]
+        self.tm = self.total_geral / len(meses_com_valor) if meses_com_valor else 0
+        self.recorrencia = len(meses_com_valor)
 
+        # Status baseado em atraso de faturamento
+        hoje = datetime.now()
+        ultimo_dia_mes_passado = (hoje.replace(day=1) - timedelta(days=1)).date()
+        dias_sem_fat = (ultimo_dia_mes_passado - self.ultimo_fat).days if self.ultimo_fat else 999
 
-class UploadParceirosView(APIView):
-    parser_classes = [MultiPartParser]
+        if dias_sem_fat <= 30:
+            self.status = 'Recorrente'
+        elif dias_sem_fat <= 60:
+            self.status = '30d s/ Fat'
+        elif dias_sem_fat <= 90:
+            self.status = '60d s/ Fat'
+        elif dias_sem_fat <= 120:
+            self.status = '90d s/ Fat'
+        else:
+            self.status = '120d s/ Fat'
 
-    def post(self, request, format=None):
-        file_obj = request.FILES.get('file')
-        if not file_obj:
-            return Response({'erro': 'Arquivo não enviado.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            df = pd.read_excel(file_obj) if file_obj.name.endswith('.xlsx') else pd.read_csv(file_obj)
-            criados = 0
-            atualizados = 0
-
-            for _, row in df.iterrows():
-                parceiro, created = Parceiro.objects.update_or_create(
-                    codigo=row['Código'],
-                    defaults={
-                        'parceiro': row.get('Parceiro'),
-                        'classificacao': row.get('Classif.') or row.get('Classificação'),
-                        'consultor': row.get('Consultor'),
-                        'unidade': row.get('Unidade'),
-                        'cidade': row.get('Cidade'),
-                        'uf': row.get('UF'),
-                        'primeiro_fat': parse_date(str(row.get('Primeiro Fat'))),
-                        'ultimo_fat': parse_date(str(row.get('Último Fat'))),
-                        'janeiro': row.get('janeiro', 0),
-                        'fevereiro': row.get('fevereiro', 0),
-                        'marco': row.get('março', 0) or row.get('marco', 0),
-                        'abril': row.get('abril', 0),
-                        'maio': row.get('maio', 0),
-                        'junho': row.get('junho', 0),
-                        'julho': row.get('julho', 0),
-                        'agosto': row.get('agosto', 0),
-                        'setembro': row.get('setembro', 0),
-                        'outubro': row.get('outubro', 0),
-                        'novembro': row.get('novembro', 0),
-                        'dezembro': row.get('dezembro', 0),
-                        'janeiro_2': row.get('janeiro.1', 0),
-                        'fevereiro_2': row.get('fevereiro.1', 0),
-                        'marco_2': row.get('março.1', 0) or row.get('marco.1', 0),
-                    }
-                )
-                if row.get('Canal'):
-                    canal_nome = str(row.get('Canal')).strip()
-                    canal_obj, _ = CanalVenda.objects.get_or_create(nome=canal_nome)
-                    parceiro.canal_venda = canal_obj
-                    parceiro.save()
-
-                if created:
-                    criados += 1
-                else:
-                    atualizados += 1
-
-            return Response({
-                'mensagem': 'Upload processado com sucesso!',
-                'criadas': criados,
-                'atualizadas': atualizados,
-            })
-        except Exception as e:
-            return Response({'erro': f'Erro ao processar o arquivo: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-# ViewSets para uso em frontend (React, etc)
-
-class ParceiroViewSet(viewsets.ModelViewSet):
-    queryset = Parceiro.objects.all()
-    serializer_class = ParceiroSerializer
-    ppermission_classes = [permissions.AllowAny]
-
-
-class CanalVendaViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = CanalVenda.objects.all()
-    serializer_class = CanalVendaSerializer
-    permission_classes = [permissions.IsAuthenticated]
+        super().save(*args, **kwargs)

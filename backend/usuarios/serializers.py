@@ -17,10 +17,11 @@ class ParceiroSerializer(serializers.ModelSerializer):
     class Meta:
         model = Parceiro
         fields = [
-            'id', 'codigo', 'parceiro', 'classificacao', 'consultor', 'cidade', 'uf', 'canal_venda',
-            'canal_venda_id',  # write-only
+            'id', 'codigo', 'parceiro', 'classificacao', 'consultor', 'unidade', 'cidade', 'uf',
+            'primeiro_fat', 'ultimo_fat',
             'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
             'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
             'janeiro_2', 'fevereiro_2', 'marco_2',
-            'total_geral', 'recorrencia', 'tm', 'atualizado_em'
+            'total_geral', 'tm', 'recorrencia', 'status',
+            'canal_venda', 'canal_venda_id', 'atualizado_em'
         ]
