@@ -31,8 +31,9 @@ class ParceiroAdmin(admin.ModelAdmin):
     list_filter = ('canal_venda', 'uf', 'classificacao')
 
     def get_readonly_fields(self, request, obj=None):
-        if not obj:
-            return ('tm', 'recorrencia', 'total_geral')
+        if obj is None:
+            return []
+
         readonly = ['tm', 'recorrencia', 'total_geral']
         meses = [
             'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
@@ -52,7 +53,7 @@ class ParceiroAdmin(admin.ModelAdmin):
                 'parceiro',
                 'classificacao',
                 'consultor',
-                'canal_venda',
+                'canal_venda',  # exibido como "Unidade" visualmente
                 'cidade',
                 'uf',
             )
