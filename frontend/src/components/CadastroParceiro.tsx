@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
+
 import {
   TextInput,
   Button,
@@ -9,7 +10,6 @@ import {
   Select,
   FileInput,
   Text,
-  NumberInput,
 } from '@mantine/core';
 import axios from 'axios';
 
@@ -18,16 +18,16 @@ interface CanalVenda {
   nome: string;
 }
 
-export default function CadastroParceiros() {
+export default function CadastroParceiro() {
   const [form, setForm] = useState({
     codigo: '',
     parceiro: '',
     classificacao: '',
     consultor: '',
-    unidade: '',
+    canal_venda: '',
     cidade: '',
     uf: '',
-    canal_venda: '',
+    unidade: '',
     janeiro: 0,
     fevereiro: 0,
     marco: 0,
@@ -48,10 +48,8 @@ export default function CadastroParceiros() {
   const [file, setFile] = useState<File | null>(null);
   const [canais, setCanais] = useState<CanalVenda[]>([]);
   const [mensagem, setMensagem] = useState<string | null>(null);
-  const [recorrencia, setRecorrencia] = useState<number | null>(null);
-  const [statusFat, setStatusFat] = useState<string | null>(null);
 
-  const handleChange = (field: keyof typeof form, value: string | number) => {
+  const handleChange = (field: keyof typeof form, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -75,8 +73,7 @@ export default function CadastroParceiros() {
       );
 
       setMensagem('Parceiro cadastrado com sucesso!');
-      if (response.data.recorrencia) setRecorrencia(response.data.recorrencia);
-      if (response.data.status) setStatusFat(response.data.status);
+      console.log(response.data);
     } catch (error) {
       console.error('Erro ao cadastrar parceiro:', error);
       setMensagem('Erro ao cadastrar parceiro');
@@ -132,6 +129,12 @@ export default function CadastroParceiros() {
     fetchCanais();
   }, []);
 
+  const meses = [
+    'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
+    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+    'janeiro_2', 'fevereiro_2', 'marco_2',
+  ];
+
   return (
     <Container size="sm" mt="xl">
       <Title order={2} mb="md">
@@ -139,10 +142,28 @@ export default function CadastroParceiros() {
       </Title>
 
       <form onSubmit={handleSubmit}>
-        <TextInput label="Código" value={form.codigo} onChange={(e) => handleChange('codigo', e.target.value)} required />
-        <TextInput label="Parceiro" value={form.parceiro} onChange={(e) => handleChange('parceiro', e.target.value)} required />
-        <TextInput label="Classificação" value={form.classificacao} onChange={(e) => handleChange('classificacao', e.target.value)} />
-        <TextInput label="Consultor" value={form.consultor} onChange={(e) => handleChange('consultor', e.target.value)} />
+        <TextInput
+          label="Código"
+          value={form.codigo}
+          onChange={(e) => handleChange('codigo', e.target.value)}
+          required
+        />
+        <TextInput
+          label="Parceiro"
+          value={form.parceiro}
+          onChange={(e) => handleChange('parceiro', e.target.value)}
+          required
+        />
+        <TextInput
+          label="Classificação"
+          value={form.classificacao}
+          onChange={(e) => handleChange('classificacao', e.target.value)}
+        />
+        <TextInput
+          label="Consultor"
+          value={form.consultor}
+          onChange={(e) => handleChange('consultor', e.target.value)}
+        />
         <Select
           label="Canal de Venda"
           placeholder="Selecione um canal"
@@ -151,47 +172,68 @@ export default function CadastroParceiros() {
           onChange={(value) => handleChange('canal_venda', value || '')}
           required
         />
-        <TextInput label="Cidade" value={form.cidade} onChange={(e) => handleChange('cidade', e.target.value)} />
-        <TextInput label="UF" value={form.uf} onChange={(e) => handleChange('uf', e.target.value)} maxLength={2} />
+        <TextInput
+          label="Cidade"
+          value={form.cidade}
+          onChange={(e) => handleChange('cidade', e.target.value)}
+        />
+        <TextInput
+          label="UF"
+          value={form.uf}
+          onChange={(e) => handleChange('uf', e.target.value)}
+          maxLength={2}
+        />
+        <TextInput
+          label="Unidade"
+          value={form.unidade}
+          onChange={(e) => handleChange('unidade', e.target.value)}
+        />
 
-        <Title order={4} mt="lg" mb="sm">Faturamento Mensal</Title>
-        {[
-          'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
-          'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
-          'janeiro_2', 'fevereiro_2', 'marco_2'
-        ].map((mes) => (
-          <NumberInput
+        <Title order={4} mt="lg" mb="xs">
+          Faturamento Mensal
+        </Title>
+
+        {meses.map((mes) => (
+          <TextInput
             key={mes}
             label={mes.charAt(0).toUpperCase() + mes.slice(1).replace('_2', ' (2º ano)')}
-            value={form[mes as keyof typeof form]}
-            onChange={(value) => handleChange(mes as keyof typeof form, Number(value))}
-            parser={(value) => value?.replace(/[R$\s.]/g, '').replace(',', '.') || ''}
-            formatter={(value) =>
-              !Number.isNaN(parseFloat(value || ''))
-                ? `R$ ${new Intl.NumberFormat('pt-BR').format(parseFloat(value))}`
-                : 'R$ 0,00'
-            }
+            value={new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }).format(Number(form[mes as keyof typeof form]))}
+            onChange={(e) => {
+              const raw = e.currentTarget.value
+                .replace(/[R$\s.]/g, '')
+                .replace(',', '.');
+              const parsed = parseFloat(raw);
+              handleChange(mes as keyof typeof form, isNaN(parsed) ? 0 : parsed);
+            }}
+            onFocus={(e) => {
+              const raw = form[mes as keyof typeof form]?.toString() || '0';
+              e.currentTarget.value = raw;
+            }}
           />
         ))}
 
-        {recorrencia !== null && (
-          <Text mt="md">Recorrência: <strong>{recorrencia}</strong></Text>
-        )}
-        {statusFat && (
-          <Text mt="xs" color={statusFat.includes('Recorrente') ? 'green' : statusFat.includes('30') ? 'orange' : statusFat.includes('60') ? 'red' : 'pink'}>
-            Status: <strong>{statusFat}</strong>
-          </Text>
-        )}
-
         <Group mt="md" justify="flex-end">
-          <Button type="submit" color="teal">Cadastrar</Button>
+          <Button type="submit" color="teal">
+            Cadastrar
+          </Button>
         </Group>
       </form>
 
-      <Title order={3} mt="xl" mb="xs">Upload em massa (Excel/CSV)</Title>
-      <FileInput label="Selecionar arquivo" placeholder="Escolha um arquivo Excel ou CSV" onChange={setFile} />
+      <Title order={3} mt="xl" mb="xs">
+        Upload em massa (Excel/CSV)
+      </Title>
+      <FileInput
+        label="Selecionar arquivo"
+        placeholder="Escolha um arquivo Excel ou CSV"
+        onChange={setFile}
+      />
       <Group mt="sm">
-        <Button onClick={handleUpload} color="blue">Enviar Arquivo</Button>
+        <Button onClick={handleUpload} color="blue">
+          Enviar Arquivo
+        </Button>
       </Group>
 
       {mensagem && (
