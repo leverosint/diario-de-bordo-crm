@@ -40,21 +40,21 @@ class Parceiro(models.Model):
     ultimo_fat = models.DateField(blank=True, null=True)
 
     # Faturamento mensal
-    janeiro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    fevereiro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    marco = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    abril = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    maio = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    junho = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    julho = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    agosto = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    setembro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    outubro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    novembro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    dezembro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    janeiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    fevereiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    marco_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    janeiro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    fevereiro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    marco = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    abril = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    maio = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    junho = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    julho = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    agosto = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    setembro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    outubro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    novembro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    dezembro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    janeiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    fevereiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    marco_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
 
     total_geral = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     recorrencia = models.CharField(max_length=50, blank=True, null=True)
@@ -68,12 +68,13 @@ class Parceiro(models.Model):
 
     def save(self, *args, **kwargs):
         meses = [
-            self.janeiro, self.fevereiro, self.marco, self.abril, self.maio, self.junho,
-            self.julho, self.agosto, self.setembro, self.outubro, self.novembro, self.dezembro,
-            self.janeiro_2, self.fevereiro_2, self.marco_2,
+            self.janeiro or 0, self.fevereiro or 0, self.marco or 0, self.abril or 0,
+            self.maio or 0, self.junho or 0, self.julho or 0, self.agosto or 0,
+            self.setembro or 0, self.outubro or 0, self.novembro or 0, self.dezembro or 0,
+            self.janeiro_2 or 0, self.fevereiro_2 or 0, self.marco_2 or 0,
         ]
-        self.total_geral = sum(meses)
 
+        self.total_geral = sum(meses)
         meses_com_valor = [m for m in meses if m > 0]
         self.tm = self.total_geral / len(meses_com_valor) if meses_com_valor else 0
         self.recorrencia = "Ativo" if len(meses_com_valor) >= 3 else "Ocasional"

@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser, CanalVenda, Parceiro
 
-
+# Admin do usuário
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
     list_display = ('username', 'email', 'tipo_user', 'id_vendedor', 'exibir_canais')
@@ -18,34 +18,32 @@ class CustomUserAdmin(UserAdmin):
     exibir_canais.short_description = 'Canais de Venda'
 
 
+# Admin de Canal de Venda
 @admin.register(CanalVenda)
 class CanalVendaAdmin(admin.ModelAdmin):
     list_display = ('id', 'nome')
     search_fields = ('nome',)
 
 
+# Admin de Parceiro
 @admin.register(Parceiro)
 class ParceiroAdmin(admin.ModelAdmin):
-    list_display = ('codigo', 'parceiro', 'cidade', 'uf', 'canal_display')
+    list_display = ('codigo', 'parceiro', 'cidade', 'uf', 'canal_venda')
     search_fields = ('codigo', 'parceiro', 'cidade', 'consultor')
     list_filter = ('canal_venda', 'uf', 'classificacao')
 
-    def canal_display(self, obj):
-        return obj.canal_venda.nome if obj.canal_venda else "-"
-    canal_display.short_description = 'Unidade'
-
     def get_readonly_fields(self, request, obj=None):
-        if obj is None:
-            return []
+        if not obj:
+            return ('tm', 'recorrencia', 'total_geral')
 
         readonly = ['tm', 'recorrencia', 'total_geral']
         meses = [
             'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
             'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
-            'janeiro_2', 'fevereiro_2', 'marco_2'
+            'janeiro_2', 'fevereiro_2', 'marco_2',
         ]
         for mes in meses:
-            valor = getattr(obj, mes, 0)
+            valor = getattr(obj, mes)
             if valor and valor != 0:
                 readonly.append(mes)
         return readonly
@@ -54,7 +52,7 @@ class ParceiroAdmin(admin.ModelAdmin):
         ('Informações do Parceiro', {
             'fields': (
                 'codigo', 'parceiro', 'classificacao', 'consultor',
-                'canal_venda', 'cidade', 'uf'
+                'canal_venda', 'cidade', 'uf',
             )
         }),
         ('Faturamento Mensal', {
@@ -65,9 +63,7 @@ class ParceiroAdmin(admin.ModelAdmin):
             )
         }),
         ('Totais e Cálculos (Somente Leitura)', {
-            'fields': (
-                'tm', 'recorrencia', 'total_geral',
-            )
+            'fields': ('tm', 'recorrencia', 'total_geral')
         }),
     )
 

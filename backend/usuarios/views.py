@@ -143,7 +143,7 @@ class UploadParceirosView(APIView):
 class ParceiroViewSet(viewsets.ModelViewSet):
     queryset = Parceiro.objects.all()
     serializer_class = ParceiroSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    ppermission_classes = [permissions.AllowAny]
 
 
 class CanalVendaViewSet(viewsets.ReadOnlyModelViewSet):
