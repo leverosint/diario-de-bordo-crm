@@ -1,6 +1,29 @@
 from django.contrib import admin
-from .models import CustomUser, CanalVenda, Parceiro
 from django.contrib.auth.admin import UserAdmin
+from .models import CustomUser, CanalVenda, Parceiro
+
+
+@admin.register(CustomUser)
+class CustomUserAdmin(UserAdmin):
+    list_display = ('username', 'email', 'tipo_user', 'id_vendedor', 'exibir_canais')
+    fieldsets = UserAdmin.fieldsets + (
+        ('Informações Adicionais', {
+            'fields': ('tipo_user', 'id_vendedor', 'primeiro_acesso', 'canais_venda')
+        }),
+    )
+    filter_horizontal = ('canais_venda',)
+
+    def exibir_canais(self, obj):
+        return ", ".join([c.nome for c in obj.canais_venda.all()])
+    exibir_canais.short_description = 'Canais de Venda'
+
+
+@admin.register(CanalVenda)
+class CanalVendaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nome')
+    search_fields = ('nome',)
+
+
 @admin.register(Parceiro)
 class ParceiroAdmin(admin.ModelAdmin):
     list_display = ('codigo', 'parceiro', 'cidade', 'uf', 'canal_venda')
@@ -54,11 +77,4 @@ class ParceiroAdmin(admin.ModelAdmin):
         field = super().formfield_for_dbfield(db_field, **kwargs)
         if db_field.name == 'canal_venda':
             field.label = 'Unidade'
-        if db_field.name in [
-            'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
-            'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
-            'janeiro_2', 'fevereiro_2', 'marco_2',
-            'tm', 'total_geral'
-        ]:
-            field.widget.attrs['style'] = 'width: 200px'
         return field
