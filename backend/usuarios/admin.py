@@ -26,9 +26,13 @@ class CanalVendaAdmin(admin.ModelAdmin):
 
 @admin.register(Parceiro)
 class ParceiroAdmin(admin.ModelAdmin):
-    list_display = ('codigo', 'parceiro', 'cidade', 'uf', 'canal_venda')
+    list_display = ('codigo', 'parceiro', 'cidade', 'uf', 'canal_display')
     search_fields = ('codigo', 'parceiro', 'cidade', 'consultor')
     list_filter = ('canal_venda', 'uf', 'classificacao')
+
+    def canal_display(self, obj):
+        return obj.canal_venda.nome if obj.canal_venda else "-"
+    canal_display.short_description = 'Unidade'
 
     def get_readonly_fields(self, request, obj=None):
         if obj is None:
@@ -49,13 +53,8 @@ class ParceiroAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Informações do Parceiro', {
             'fields': (
-                'codigo',
-                'parceiro',
-                'classificacao',
-                'consultor',
-                'canal_venda',  # exibido como "Unidade" visualmente
-                'cidade',
-                'uf',
+                'codigo', 'parceiro', 'classificacao', 'consultor',
+                'canal_venda', 'cidade', 'uf'
             )
         }),
         ('Faturamento Mensal', {
@@ -67,9 +66,7 @@ class ParceiroAdmin(admin.ModelAdmin):
         }),
         ('Totais e Cálculos (Somente Leitura)', {
             'fields': (
-                'tm',
-                'recorrencia',
-                'total_geral',
+                'tm', 'recorrencia', 'total_geral',
             )
         }),
     )
