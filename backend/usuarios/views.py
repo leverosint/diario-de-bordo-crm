@@ -2,19 +2,15 @@ from rest_framework import viewsets, status, generics
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth import authenticate
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.contrib.auth import get_user_model
 from django.db import transaction
 import pandas as pd
-from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import check_password
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 
 from .models import Parceiro, CanalVenda
 from .serializers import ParceiroSerializer, CanalVendaSerializer
 
+User = get_user_model()
 
 class ParceiroViewSet(viewsets.ModelViewSet):
     queryset = Parceiro.objects.all()
@@ -89,9 +85,10 @@ class UploadParceirosView(viewsets.ViewSet):
         except Exception as e:
             return Response({'erro': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-User = get_user_model()
 
 class LoginView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         identificador = request.data.get('identificador')
         senha = request.data.get('senha')
@@ -108,12 +105,14 @@ class LoginView(APIView):
                 "usuario": {
                     "id": user.id,
                     "username": user.username,
+                    "email": user.email,
                     "tipo_user": user.tipo_user,
+                    "id_vendedor": user.id_vendedor,
                     "canais_venda": [canal.nome for canal in user.canais_venda.all()],
                 }
             })
         else:
-            return Response({"error": "Credenciais inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"erro": "Credenciais inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class CanalVendaListView(generics.ListAPIView):
