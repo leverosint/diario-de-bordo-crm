@@ -8,6 +8,7 @@ class CanalVenda(models.Model):
     def __str__(self):
         return self.nome
 
+
 TIPOS_USUARIO = [
     ('VENDEDOR', 'Vendedor'),
     ('GESTOR', 'Gestor'),
@@ -27,6 +28,7 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.username
 
+
 # Modelo de Parceiro
 class Parceiro(models.Model):
     codigo = models.CharField(max_length=50, unique=True)
@@ -39,7 +41,7 @@ class Parceiro(models.Model):
     primeiro_fat = models.DateField(blank=True, null=True)
     ultimo_fat = models.DateField(blank=True, null=True)
 
-    # Valores mensais
+    # Faturamento mensal
     janeiro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     fevereiro = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     marco = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -56,6 +58,7 @@ class Parceiro(models.Model):
     fevereiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     marco_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
+    # Cálculos automáticos
     total_geral = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     recorrencia = models.CharField(max_length=50, blank=True, null=True)
     tm = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -65,3 +68,21 @@ class Parceiro(models.Model):
 
     def __str__(self):
         return f"{self.codigo} - {self.parceiro}"
+
+    def save(self, *args, **kwargs):
+        meses = [
+            self.janeiro, self.fevereiro, self.marco, self.abril, self.maio, self.junho,
+            self.julho, self.agosto, self.setembro, self.outubro, self.novembro, self.dezembro,
+            self.janeiro_2, self.fevereiro_2, self.marco_2,
+        ]
+        self.total_geral = sum(meses)
+
+        meses_com_valor = [m for m in meses if m > 0]
+        if meses_com_valor:
+            self.tm = self.total_geral / len(meses_com_valor)
+        else:
+            self.tm = 0
+
+        self.recorrencia = "Ativo" if len(meses_com_valor) >= 3 else "Ocasional"
+
+        super().save(*args, **kwargs)
