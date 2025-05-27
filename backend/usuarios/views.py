@@ -6,6 +6,11 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import authenticate
 from django.db import transaction
 import pandas as pd
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import check_password
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
 from .models import Parceiro, CanalVenda
 from .serializers import ParceiroSerializer, CanalVendaSerializer
@@ -84,17 +89,23 @@ class UploadParceirosView(viewsets.ViewSet):
         except Exception as e:
             return Response({'erro': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+User = get_user_model()
 
 class LoginView(APIView):
     def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        user = authenticate(username=username, password=password)
+        identificador = request.data.get('identificador')
+        senha = request.data.get('senha')
 
-        if user is not None:
+        user = (
+            User.objects.filter(username=identificador).first()
+            or User.objects.filter(email=identificador).first()
+            or User.objects.filter(id_vendedor=identificador).first()
+        )
+
+        if user and user.check_password(senha):
             return Response({
                 "message": "Login realizado com sucesso",
-                "user": {
+                "usuario": {
                     "id": user.id,
                     "username": user.username,
                     "tipo_user": user.tipo_user,
