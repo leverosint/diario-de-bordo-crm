@@ -27,8 +27,8 @@ export default function LoginPage() {
     setErro('');
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/login/`, {
-        username: identificador,
-        password: senha,
+        identificador,
+        senha,
       });
 
       const { access, usuario } = response.data;
