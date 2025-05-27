@@ -1,7 +1,14 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
-from datetime import date
+from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from django.contrib.auth.models import AbstractUser
+
+
+TIPO_USER_CHOICES = [
+    ('ADMIN', 'Administrador'),
+    ('GESTOR', 'Gestor'),
+    ('VENDEDOR', 'Vendedor'),
+]
 
 class CanalVenda(models.Model):
     nome = models.CharField(max_length=100, unique=True)
@@ -9,92 +16,113 @@ class CanalVenda(models.Model):
     def __str__(self):
         return self.nome
 
-TIPOS_USUARIO = [
-    ('VENDEDOR', 'Vendedor'),
-    ('GESTOR', 'Gestor'),
-    ('ADMIN', 'Administrador'),
-]
-
-class CustomUser(AbstractUser):
-    tipo_user = models.CharField(max_length=10, choices=TIPOS_USUARIO, default='VENDEDOR')
-    canais_venda = models.ManyToManyField(CanalVenda, blank=True, related_name='usuarios')
-    id_vendedor = models.CharField(max_length=20, blank=True, null=True)
-    primeiro_acesso = models.BooleanField(default=True)
-
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email']
-
-    def __str__(self):
-        return self.username
-
 class Parceiro(models.Model):
-    codigo = models.CharField(max_length=52, unique=True)
-    parceiro = models.CharField(max_length=255)
+    codigo = models.CharField(max_length=50, unique=True)
+    parceiro = models.CharField(max_length=200)
     classificacao = models.CharField(max_length=100, blank=True, null=True)
     consultor = models.CharField(max_length=100, blank=True, null=True)
-    unidade = models.CharField(max_length=100, blank=True, null=True)
     cidade = models.CharField(max_length=100, blank=True, null=True)
     uf = models.CharField(max_length=2, blank=True, null=True)
-    primeiro_fat = models.DateField(blank=True, null=True)
-    ultimo_fat = models.DateField(blank=True, null=True)
+    unidade = models.CharField(max_length=100, blank=True, null=True)
+    canal_venda = models.ForeignKey(CanalVenda, on_delete=models.SET_NULL, null=True)
 
-    janeiro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    fevereiro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    marco = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    abril = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    maio = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    junho = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    julho = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    agosto = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    setembro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    outubro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    novembro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    dezembro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    janeiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    fevereiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    marco_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    janeiro = models.FloatField(default=0)
+    fevereiro = models.FloatField(default=0)
+    marco = models.FloatField(default=0)
+    abril = models.FloatField(default=0)
+    maio = models.FloatField(default=0)
+    junho = models.FloatField(default=0)
+    julho = models.FloatField(default=0)
+    agosto = models.FloatField(default=0)
+    setembro = models.FloatField(default=0)
+    outubro = models.FloatField(default=0)
+    novembro = models.FloatField(default=0)
+    dezembro = models.FloatField(default=0)
+    janeiro_2 = models.FloatField(default=0)
+    fevereiro_2 = models.FloatField(default=0)
+    marco_2 = models.FloatField(default=0)
 
-    total_geral = models.DecimalField(max_digits=14, decimal_places=2, default=0)
-    recorrencia = models.CharField(max_length=50, blank=True, null=True)
-    status = models.CharField(max_length=50, blank=True, null=True)
-    tm = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_geral = models.FloatField(default=0)
+    tm = models.FloatField(default=0)
+    recorrencia = models.IntegerField(default=0)
+    status = models.CharField(max_length=50, default="Sem registro")
+    primeiro_fat = models.DateField(null=True, blank=True)
+    ultimo_fat = models.DateField(null=True, blank=True)
 
-    canal_venda = models.ForeignKey(CanalVenda, on_delete=models.SET_NULL, blank=True, null=True, related_name="parceiros")
     atualizado_em = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.codigo or ''} - {self.parceiro or ''}"
 
     def save(self, *args, **kwargs):
         meses = [
-            self.janeiro or 0, self.fevereiro or 0, self.marco or 0, self.abril or 0,
-            self.maio or 0, self.junho or 0, self.julho or 0, self.agosto or 0,
-            self.setembro or 0, self.outubro or 0, self.novembro or 0, self.dezembro or 0,
-            self.janeiro_2 or 0, self.fevereiro_2 or 0, self.marco_2 or 0,
+            ('01', self.janeiro),
+            ('02', self.fevereiro),
+            ('03', self.marco),
+            ('04', self.abril),
+            ('05', self.maio),
+            ('06', self.junho),
+            ('07', self.julho),
+            ('08', self.agosto),
+            ('09', self.setembro),
+            ('10', self.outubro),
+            ('11', self.novembro),
+            ('12', self.dezembro),
+            ('01', self.janeiro_2),
+            ('02', self.fevereiro_2),
+            ('03', self.marco_2),
         ]
 
-        self.total_geral = sum(meses)
-        meses_com_valor = [m for m in meses if m > 0]
-        self.tm = self.total_geral / len(meses_com_valor) if meses_com_valor else 0
-        self.recorrencia = str(len(meses_com_valor))
+        hoje = datetime.now()
+        ano = hoje.year
+        ano_anterior = ano - 1
 
-        # cálculo do status
-        hoje = date.today()
-        ultimo_dia_mes_passado = (hoje.replace(day=1) - relativedelta(days=1))
+        datas_faturamento = []
+        total = 0
+        recorrencia = 0
 
+        for i, (mes, valor) in enumerate(meses):
+            if valor > 0:
+                ano_ref = ano_anterior if i < 12 else ano
+                data_ref = datetime.strptime(f"{ano_ref}-{mes}-01", "%Y-%m-%d")
+                datas_faturamento.append(data_ref)
+                recorrencia += 1
+                total += valor
+
+        self.total_geral = total
+        self.tm = total / recorrencia if recorrencia else 0
+        self.recorrencia = recorrencia
+
+        self.primeiro_fat = min(datas_faturamento) if datas_faturamento else None
+        self.ultimo_fat = max(datas_faturamento) if datas_faturamento else None
+
+        # Cálculo de status
+        status = "Sem registro"
         if self.ultimo_fat:
-            dias_sem_fat = (ultimo_dia_mes_passado - self.ultimo_fat).days
-            if dias_sem_fat <= 30:
-                self.status = 'Recorrente'
-            elif dias_sem_fat <= 60:
-                self.status = '30d s/ Fat'
-            elif dias_sem_fat <= 90:
-                self.status = '60d s/ Fat'
-            elif dias_sem_fat <= 120:
-                self.status = '90d s/ Fat'
+            ultimo_dia_mes_passado = datetime(hoje.year, hoje.month, 1) - timedelta(days=1)
+            dias_diff = (ultimo_dia_mes_passado.date() - self.ultimo_fat).days
+
+            if dias_diff <= 0:
+                status = "Recorrente"
+            elif dias_diff <= 30:
+                status = "30d s/ Fat"
+            elif dias_diff <= 60:
+                status = "60d s/ Fat"
+            elif dias_diff <= 90:
+                status = "90d s/ Fat"
             else:
-                self.status = '120d s/ Fat'
-        else:
-            self.status = 'Sem registro'
+                status = "120d s/ Fat"
+
+        self.status = status
 
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.codigo} - {self.parceiro}"
+
+class CustomUser(AbstractUser):
+    tipo_user = models.CharField(max_length=10, choices=TIPO_USER_CHOICES, default='VENDEDOR')
+    id_vendedor = models.CharField(max_length=20, blank=True, null=True)
+    canais_venda = models.ManyToManyField(CanalVenda, blank=True)
+
+    def __str__(self):
+        return self.username
+    
+    

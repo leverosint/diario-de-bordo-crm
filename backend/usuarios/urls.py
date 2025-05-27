@@ -15,6 +15,6 @@ router.register(r'canais-venda', CanalVendaViewSet, basename='canais-venda')
 urlpatterns = [
     path('login/', LoginView.as_view()),
     path('parceiros/', ParceiroCreateUpdateView.as_view()),  # criação manual
-    path('upload-parceiros/', UploadParceirosView.as_view()),  # via Excel
+    path('upload-parceiros/', UploadParceirosView.as_view({'post': 'create'})),  # via Excel
     path('', include(router.urls)),  # <-- adiciona os ViewSets
 ]
