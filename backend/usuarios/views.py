@@ -1,13 +1,16 @@
-import pandas as pd
+from rest_framework import viewsets, permissions
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser
 from rest_framework import status
 from rest_framework.permissions import AllowAny
-from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.utils.dateparse import parse_date
-from usuarios.models import CustomUser, Parceiro, CanalVenda
+from django.contrib.auth import authenticate
+import pandas as pd
+
+from .models import CustomUser, Parceiro, CanalVenda
+from .serializers import ParceiroSerializer, CanalVendaSerializer
 
 
 class LoginView(APIView):
@@ -51,8 +54,8 @@ class ParceiroCreateUpdateView(APIView):
         if not codigo:
             return Response({'erro': 'Código do parceiro é obrigatório'}, status=status.HTTP_400_BAD_REQUEST)
 
-        canal_id = data.get('canal_venda')
-        canal = CanalVenda.objects.get(id=canal_id) if canal_id else None
+        canal_id = data.get('canal_venda_id') or data.get('canal_venda')
+        canal = CanalVenda.objects.filter(id=canal_id).first() if canal_id else None
 
         parceiro, created = Parceiro.objects.update_or_create(
             codigo=codigo,
@@ -113,9 +116,6 @@ class UploadParceirosView(APIView):
                         'janeiro_2': row.get('janeiro.1', 0),
                         'fevereiro_2': row.get('fevereiro.1', 0),
                         'marco_2': row.get('março.1', 0) or row.get('marco.1', 0),
-                        'total_geral': row.get('Total Geral', 0),
-                        'recorrencia': row.get('Recorrência') or row.get('Recorrencia'),
-                        'tm': row.get('TM', 0),
                     }
                 )
                 if row.get('Canal'):
@@ -137,9 +137,8 @@ class UploadParceirosView(APIView):
         except Exception as e:
             return Response({'erro': f'Erro ao processar o arquivo: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-from rest_framework import viewsets, permissions
-from .serializers import ParceiroSerializer, CanalVendaSerializer
 
+# ViewSets para uso em frontend (React, etc)
 
 class ParceiroViewSet(viewsets.ModelViewSet):
     queryset = Parceiro.objects.all()

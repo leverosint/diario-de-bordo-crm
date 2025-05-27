@@ -16,4 +16,11 @@ class ParceiroSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Parceiro
-        fields = '__all__'
+        fields = [
+            'id', 'codigo', 'parceiro', 'classificacao', 'consultor', 'cidade', 'uf', 'canal_venda',
+            'canal_venda_id',  # write-only
+            'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
+            'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+            'janeiro_2', 'fevereiro_2', 'marco_2',
+            'total_geral', 'recorrencia', 'tm', 'atualizado_em'
+        ]
