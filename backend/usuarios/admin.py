@@ -1,3 +1,6 @@
+from django.contrib import admin
+from .models import CustomUser, CanalVenda, Parceiro
+from django.contrib.auth.admin import UserAdmin
 @admin.register(Parceiro)
 class ParceiroAdmin(admin.ModelAdmin):
     list_display = ('codigo', 'parceiro', 'cidade', 'uf', 'canal_venda')
