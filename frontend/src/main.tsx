@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MantineProvider } from '@mantine/core';
 import '@mantine/core/styles.css';
 import Interacoes from './pages/Interacoes';
+import InteracoesPage from './pages/InteracoesPage';
 
 import './index.css';
 import { customTheme } from './styles/theme';
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/cadastro-parceiro" element={<CadastroParceiroPage />} />
           <Route path="/cadastro-usuarios" element={<CadastroUsuariosPage />} />
           <Route path="/interacoes" element={<Interacoes />} /> {/* ✅ nova rota */}
+          <Route path="/interacoes" element={<InteracoesPage />} />
         </Routes>
       </BrowserRouter>
     </MantineProvider>
