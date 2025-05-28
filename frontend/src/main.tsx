@@ -12,6 +12,7 @@ import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import CadastroParceiroPage from './pages/CadastroParceiroPage'; // ✅ novo
 import CadastroUsuariosPage from './pages/CadastroUsuariosPage'; // ✅ novo
+console.log('Componente Interações carregado');
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
