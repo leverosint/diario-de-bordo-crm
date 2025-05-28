@@ -1,13 +1,13 @@
 from django.urls import path, include 
 from rest_framework.routers import DefaultRouter
+from .views import InteracaoViewSet
 from .views import (
     LoginView,
     ParceiroCreateUpdateView,
     UploadParceirosView,
     ParceiroViewSet,
     CanalVendaViewSet,
-    InteracaoViewSet,  # ✅ Adicionada a importação correta
-    InteracoesHojeView,
+        InteracoesHojeView,
     InteracoesPendentesView,
     HistoricoInteracoesView,
     RegistrarInteracaoView,
@@ -17,7 +17,7 @@ from .views import (
 router = DefaultRouter()
 router.register(r'parceiros-list', ParceiroViewSet, basename='parceiros')
 router.register(r'canais-venda', CanalVendaViewSet, basename='canais-venda')
-router.register(r'interacoes', InteracaoViewSet, basename='interacoes')  # ✅ REGISTRO DO VIEWSET
+router.register(r'interacoes', InteracaoViewSet, basename='interacoes')
 
 # URLPATTERNS PRINCIPAIS
 urlpatterns = [

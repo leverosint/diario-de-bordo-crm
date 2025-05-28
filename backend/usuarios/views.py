@@ -9,6 +9,8 @@ from django.utils.timezone import now
 from datetime import timedelta
 import pandas as pd
 
+
+
 from .models import Parceiro, CanalVenda, Interacao
 from .serializers import (
     ParceiroSerializer,
@@ -182,6 +184,10 @@ class InteracoesPendentesView(APIView):
 
         return Response(data)
 
+class InteracaoViewSet(viewsets.ModelViewSet):
+    queryset = Interacao.objects.all()
+    serializer_class = InteracaoSerializer
+    permission_classes = [IsAuthenticated]
 
 class HistoricoInteracoesView(generics.ListAPIView):
     serializer_class = InteracaoSerializer
