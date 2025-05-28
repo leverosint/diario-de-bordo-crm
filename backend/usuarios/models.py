@@ -9,15 +9,18 @@ class CanalVenda(models.Model):
     def __str__(self):
         return self.nome
 
+
+# Tipos de usuário
 TIPOS_USUARIO = [
     ('VENDEDOR', 'Vendedor'),
     ('GESTOR', 'Gestor'),
     ('ADMIN', 'Administrador'),
 ]
 
+
 # Usuário customizado
 class CustomUser(AbstractUser):
-    tipo_user = models.CharField(max_length=20, choices=[("ADMIN", "Administrador"), ("GESTOR", "Gestor"), ("VENDEDOR", "Vendedor")])
+    tipo_user = models.CharField(max_length=20, choices=TIPOS_USUARIO)
     canais_venda = models.ManyToManyField(CanalVenda, blank=True, related_name='usuarios')
     id_vendedor = models.CharField(max_length=50, blank=True, null=True)
     primeiro_acesso = models.BooleanField(default=True)
@@ -27,6 +30,7 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+
 
 # Modelo de Parceiro
 class Parceiro(models.Model):
@@ -77,12 +81,11 @@ class Parceiro(models.Model):
         ]
 
         self.total_geral = sum([m[1] or 0 for m in meses])
-
         meses_com_valor = [m[1] for m in meses if m[1] and m[1] > 0]
         self.tm = self.total_geral / len(meses_com_valor) if meses_com_valor else 0
         self.recorrencia = len(meses_com_valor)
 
-        # Mapeamento mês → número e ano
+        # Mapeia cada mês ao número e ano
         mes_ref = {
             'janeiro': (1, 2025), 'fevereiro': (2, 2025), 'marco': (3, 2025), 'abril': (4, 2025),
             'maio': (5, 2025), 'junho': (6, 2025), 'julho': (7, 2025), 'agosto': (8, 2025),
@@ -90,7 +93,6 @@ class Parceiro(models.Model):
             'janeiro_2': (1, 2026), 'fevereiro_2': (2, 2026), 'marco_2': (3, 2026)
         }
 
-        # Último mês com faturamento > 0
         ultimo_fat_data = None
         for nome, valor in reversed(meses):
             if valor and valor > 0:
@@ -102,7 +104,6 @@ class Parceiro(models.Model):
             hoje = datetime.today()
             ano_atual, mes_atual = hoje.year, hoje.month
             ultimo_dia_mes_anterior = datetime(ano_atual, mes_atual, 1) - timedelta(days=1)
-
             dias_diferenca = (ultimo_dia_mes_anterior - ultimo_fat_data).days
 
             if dias_diferenca <= 30:
@@ -121,6 +122,8 @@ class Parceiro(models.Model):
 
         super().save(*args, **kwargs)
 
+
+# Modelo de Interação
 class Interacao(models.Model):
     TIPO_CHOICES = [
         ('whatsapp', 'WhatsApp'),
