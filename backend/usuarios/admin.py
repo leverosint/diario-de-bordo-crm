@@ -28,15 +28,15 @@ class CanalVendaAdmin(admin.ModelAdmin):
 # Admin de Parceiro
 @admin.register(Parceiro)
 class ParceiroAdmin(admin.ModelAdmin):
-    list_display = ('codigo', 'parceiro', 'cidade', 'uf', 'canal_venda')
+    list_display = ('codigo', 'parceiro', 'cidade', 'uf', 'canal_venda', 'status')
     search_fields = ('codigo', 'parceiro', 'cidade', 'consultor')
     list_filter = ('canal_venda', 'uf', 'classificacao')
 
     def get_readonly_fields(self, request, obj=None):
         if not obj:
-            return ('tm', 'recorrencia', 'total_geral')
+            return ('tm', 'recorrencia', 'total_geral', 'status')
 
-        readonly = ['tm', 'recorrencia', 'total_geral']
+        readonly = ['tm', 'recorrencia', 'total_geral', 'status']
         meses = [
             'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
             'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
@@ -63,7 +63,7 @@ class ParceiroAdmin(admin.ModelAdmin):
             )
         }),
         ('Totais e Cálculos (Somente Leitura)', {
-            'fields': ('tm', 'recorrencia', 'total_geral')
+            'fields': ('tm', 'recorrencia', 'total_geral', 'status')
         }),
     )
 
