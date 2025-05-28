@@ -1,9 +1,9 @@
-// src/pages/Interacoes.tsx
 import { useEffect, useState } from 'react';
 import {
   Container, Title, Group, Badge, Button, Table, Loader, Modal,
 } from '@mantine/core';
 import axios from 'axios';
+import SidebarGestor from '../components/SidebarGestor';
 
 interface Parceiro {
   id: number;
@@ -23,6 +23,7 @@ export default function Interacoes() {
   const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
 
   const token = localStorage.getItem('token');
+  const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user || '';
 
   useEffect(() => {
     async function fetchData() {
@@ -69,82 +70,84 @@ export default function Interacoes() {
   if (loading) return <Loader mt="xl" />;
 
   return (
-    <Container>
-      <Title order={2} mb="md">Interações</Title>
+    <SidebarGestor tipoUser={tipoUser}>
+      <Container>
+        <Title order={2} mb="md">Interações</Title>
 
-      <Group justify="space-between" mb="sm">
-        <Title order={4}>Parceiros a interagir ({pendentes.length})</Title>
-        <Button variant="outline">Exportar Excel</Button>
-      </Group>
+        <Group justify="space-between" mb="sm">
+          <Title order={4}>Parceiros a interagir ({pendentes.length})</Title>
+          <Button variant="outline">Exportar Excel</Button>
+        </Group>
 
-      <Table striped highlightOnHover withTableBorder withColumnBorders mb="xl">
-        <thead>
-          <tr>
-            <th>Parceiro</th>
-            <th>Canal</th>
-            <th>Classificação</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pendentes.map(p => (
-            <tr key={p.id}>
-              <td>{p.parceiro}</td>
-              <td>{p.canal_venda}</td>
-              <td>{p.classificacao}</td>
-              <td>{renderStatus(p.status)}</td>
-              <td>
-                <Button size="xs" variant="light" onClick={() => abrirHistorico(p.id)}>Ver histórico</Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-
-      <Title order={4} mb="sm">Interagidos hoje ({interagidos.length})</Title>
-      <Table striped highlightOnHover withTableBorder withColumnBorders>
-        <thead>
-          <tr>
-            <th>Parceiro</th>
-            <th>Data</th>
-          </tr>
-        </thead>
-        <tbody>
-          {interagidos.map((i) => (
-            <tr key={i.id}>
-              <td>{i.parceiro?.parceiro || 'Sem nome'}</td>
-              <td>{new Date(i.data_interacao).toLocaleString()}</td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-
-      <Modal
-        opened={modalAberto}
-        onClose={() => setModalAberto(false)}
-        title={`Histórico - ${parceiroSelecionado}`}
-        size="lg"
-      >
-        <Table striped highlightOnHover withTableBorder withColumnBorders>
+        <Table striped highlightOnHover withTableBorder withColumnBorders mb="xl">
           <thead>
             <tr>
-              <th>Data</th>
-              <th>Tipo</th>
-              <th>Usuário</th>
+              <th>Parceiro</th>
+              <th>Canal</th>
+              <th>Classificação</th>
+              <th>Status</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>
-            {historico.map((item, index) => (
-              <tr key={index}>
-                <td>{new Date(item.data_interacao).toLocaleString()}</td>
-                <td>{item.tipo}</td>
-                <td>{item.usuario?.username || 'N/A'}</td>
+            {pendentes.map(p => (
+              <tr key={p.id}>
+                <td>{p.parceiro}</td>
+                <td>{p.canal_venda}</td>
+                <td>{p.classificacao}</td>
+                <td>{renderStatus(p.status)}</td>
+                <td>
+                  <Button size="xs" variant="light" onClick={() => abrirHistorico(p.id)}>Ver histórico</Button>
+                </td>
               </tr>
             ))}
           </tbody>
         </Table>
-      </Modal>
-    </Container>
+
+        <Title order={4} mb="sm">Interagidos hoje ({interagidos.length})</Title>
+        <Table striped highlightOnHover withTableBorder withColumnBorders>
+          <thead>
+            <tr>
+              <th>Parceiro</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody>
+            {interagidos.map((i) => (
+              <tr key={i.id}>
+                <td>{i.parceiro?.parceiro || 'Sem nome'}</td>
+                <td>{new Date(i.data_interacao).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+
+        <Modal
+          opened={modalAberto}
+          onClose={() => setModalAberto(false)}
+          title={`Histórico - ${parceiroSelecionado}`}
+          size="lg"
+        >
+          <Table striped highlightOnHover withTableBorder withColumnBorders>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Usuário</th>
+              </tr>
+            </thead>
+            <tbody>
+              {historico.map((item, index) => (
+                <tr key={index}>
+                  <td>{new Date(item.data_interacao).toLocaleString()}</td>
+                  <td>{item.tipo}</td>
+                  <td>{item.usuario?.username || 'N/A'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Modal>
+      </Container>
+    </SidebarGestor>
   );
 }
