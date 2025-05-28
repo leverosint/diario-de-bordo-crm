@@ -13,6 +13,7 @@ import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill
 from django.http import HttpResponse
 import io
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Parceiro, CanalVenda, Interacao
 from .serializers import (
@@ -21,6 +22,7 @@ from .serializers import (
     InteracaoSerializer,
     InteracaoPendentesSerializer,
 )
+
 User = get_user_model()
 
 class ParceiroViewSet(viewsets.ModelViewSet):
@@ -111,8 +113,10 @@ class LoginView(APIView):
         )
 
         if user and user.check_password(senha):
+            refresh = RefreshToken.for_user(user)
             return Response({
-                "message": "Login realizado com sucesso",
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
                 "usuario": {
                     "id": user.id,
                     "username": user.username,
@@ -143,119 +147,22 @@ class CanalVendaViewSet(viewsets.ModelViewSet):
     serializer_class = CanalVendaSerializer
 
 
-# === INTERAÇÕES ===
-
 class InteracaoViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet para gerenciar interações com parceiros.
-    """
     serializer_class = InteracaoSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         user = self.request.user
         if user.tipo_user == 'ADMIN':
             return Interacao.objects.all()
         elif user.tipo_user == 'GESTOR':
-            return Interacao.objects.filter(
-                parceiro__canal_venda__in=user.canais_venda.all()
-            )
+            return Interacao.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
         elif user.tipo_user == 'VENDEDOR':
             return Interacao.objects.filter(usuario=user)
         return Interacao.objects.none()
-    
+
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
-    
-    @action(detail=False, methods=['get'])
-    def exportar_excel(self, request):
-        """
-        Exporta as interações para um arquivo Excel.
-        """
-        # Obter parâmetros de filtro
-        data_inicio_str = request.query_params.get('data_inicio')
-        data_fim_str = request.query_params.get('data_fim')
-        
-        # Converter strings para datas
-        try:
-            if data_inicio_str:
-                data_inicio = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
-            else:
-                data_inicio = (now() - timedelta(days=30)).date()
-                
-            if data_fim_str:
-                data_fim = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
-            else:
-                data_fim = now().date()
-        except ValueError:
-            return Response(
-                {"erro": "Formato de data inválido. Use YYYY-MM-DD."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Filtrar interações
-        queryset = self.get_queryset().filter(
-            data_interacao__date__gte=data_inicio,
-            data_interacao__date__lte=data_fim
-        ).order_by('-data_interacao')
-        
-        # Criar workbook e worksheet
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Interações"
-        
-        # Definir cabeçalhos
-        headers = [
-            "ID", "Parceiro", "Unidade", "Classificação", "Status", 
-            "Tipo de Interação", "Data da Interação", "Usuário", "Entrou em Contato"
-        ]
-        
-        # Estilo para cabeçalho
-        header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
-        header_font = Font(color="FFFFFF", bold=True)
-        
-        # Adicionar cabeçalhos
-        for col_num, header in enumerate(headers, 1):
-            cell = ws.cell(row=1, column=col_num, value=header)
-            cell.fill = header_fill
-            cell.font = header_font
-            cell.alignment = Alignment(horizontal='center')
-        
-        # Adicionar dados
-        for row_num, interacao in enumerate(queryset, 2):
-            ws.cell(row=row_num, column=1, value=interacao.id)
-            ws.cell(row=row_num, column=2, value=interacao.parceiro.parceiro)
-            ws.cell(row=row_num, column=3, value=interacao.parceiro.unidade)
-            ws.cell(row=row_num, column=4, value=interacao.parceiro.classificacao)
-            ws.cell(row=row_num, column=5, value=interacao.parceiro.status)
-            ws.cell(row=row_num, column=6, value=interacao.get_tipo_display())
-            ws.cell(row=row_num, column=7, value=interacao.data_interacao.strftime('%d/%m/%Y %H:%M'))
-            ws.cell(row=row_num, column=8, value=interacao.usuario.username)
-            ws.cell(row=row_num, column=9, value="Sim" if interacao.entrou_em_contato else "Não")
-        
-        # Ajustar largura das colunas
-        for col in ws.columns:
-            max_length = 0
-            column = col[0].column_letter
-            for cell in col:
-                if cell.value:
-                    max_length = max(max_length, len(str(cell.value)))
-            adjusted_width = (max_length + 2)
-            ws.column_dimensions[column].width = adjusted_width
-        
-        # Salvar para buffer
-        buffer = io.BytesIO()
-        wb.save(buffer)
-        buffer.seek(0)
-        
-        # Criar resposta HTTP
-        response = HttpResponse(
-            buffer.getvalue(),
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        response['Content-Disposition'] = f'attachment; filename=interacoes_{data_inicio}_a_{data_fim}.xlsx'
-        
-        return response
 
 
 class InteracoesHojeView(generics.ListAPIView):
@@ -274,39 +181,27 @@ class InteracoesPendentesView(APIView):
         usuario = request.user
         hoje = now().date()
         limite_data = hoje - timedelta(days=3)
-        
-        # Filtrar parceiros de acordo com o perfil do usuário
+
         if usuario.tipo_user == 'VENDEDOR':
             parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
         elif usuario.tipo_user == 'GESTOR':
             parceiros = Parceiro.objects.filter(canal_venda__in=usuario.canais_venda.all())
-        else:  # ADMIN
+        else:
             parceiros = Parceiro.objects.all()
-        
-        # Obter o tipo de lista solicitada (pendentes ou interagidos)
-        tipo_lista = request.query_params.get('tipo', 'pendentes')
-        
-        # Listas para armazenar parceiros pendentes e interagidos
+
         parceiros_pendentes = []
         parceiros_interagidos = []
-        
-        # Processar cada parceiro
+
         for parceiro in parceiros:
-            # Obter a última interação do parceiro
             ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
-            
-            # Verificar se o parceiro foi interagido hoje
             interagido_hoje = ultima_interacao and ultima_interacao.data_interacao.date() == hoje
-            
-            # Verificar se o parceiro está no período de bloqueio (3 dias)
             em_periodo_bloqueio = (
                 ultima_interacao and 
                 ultima_interacao.entrou_em_contato and 
                 ultima_interacao.data_interacao.date() > limite_data and
                 ultima_interacao.data_interacao.date() < hoje
             )
-            
-            # Adicionar à lista apropriada
+
             if interagido_hoje:
                 parceiros_interagidos.append({
                     'id': parceiro.id,
@@ -329,40 +224,11 @@ class InteracoesPendentesView(APIView):
                     'data_interacao': '',
                     'entrou_em_contato': False,
                 })
-        
-        # Retornar a lista solicitada
+
+        tipo_lista = request.query_params.get('tipo', 'pendentes')
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
-        else:  # pendentes (padrão)
-            return Response(parceiros_pendentes)
-    
-    @action(detail=False, methods=['get'])
-    def metas(self, request):
-        """
-        Retorna informações sobre as metas diárias de interação.
-        """
-        usuario = request.user
-        hoje = now().date()
-        
-        # Obter o número de interações realizadas hoje
-        interacoes_hoje = Interacao.objects.filter(
-            usuario=usuario,
-            data_interacao__date=hoje
-        ).count()
-        
-        # Meta diária (poderia ser configurável por usuário ou perfil)
-        meta_diaria = 10
-        
-        # Calcular progresso
-        progresso = min(interacoes_hoje / meta_diaria, 1.0) if meta_diaria > 0 else 0
-        meta_atingida = interacoes_hoje >= meta_diaria
-        
-        return Response({
-            'interacoes_realizadas': interacoes_hoje,
-            'meta_diaria': meta_diaria,
-            'progresso': progresso,
-            'meta_atingida': meta_atingida
-        })
+        return Response(parceiros_pendentes)
 
 
 class HistoricoInteracoesView(generics.ListAPIView):
