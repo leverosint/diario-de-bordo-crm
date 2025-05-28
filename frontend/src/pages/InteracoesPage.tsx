@@ -30,7 +30,17 @@ export default function InteracoesPage() {
   const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user;
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const rawToken = localStorage.getItem('token');
+    const token = rawToken?.replace(/^"|"$/g, ''); // remove aspas duplas se houver
+
+    console.log('🔐 Token usado:', token);
+
+    if (!token) {
+      setErro('Você precisa fazer login novamente.');
+      setCarregando(false);
+      return;
+    }
+
     axios
       .get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -44,8 +54,12 @@ export default function InteracoesPage() {
         }
       })
       .catch((err) => {
-        console.error('Erro ao buscar interações:', err);
-        setErro('Erro ao carregar interações. Verifique sua conexão ou login.');
+        console.error('❌ Erro ao buscar interações:', err);
+        if (err.response?.status === 401) {
+          setErro('Sessão expirada. Faça login novamente.');
+        } else {
+          setErro('Erro ao carregar interações. Verifique sua conexão ou login.');
+        }
       })
       .finally(() => setCarregando(false));
   }, []);
