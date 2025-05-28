@@ -5,6 +5,13 @@ import {
 import { IconAlertCircle } from '@tabler/icons-react';
 import axios from 'axios';
 import SidebarGestor from '../components/SidebarGestor';
+import { useNavigate } from 'react-router-dom';
+
+interface Interagido {
+  id: number;
+  parceiro_nome: string;
+  data_interacao: string;
+}
 
 interface Parceiro {
   id: number;
@@ -16,19 +23,21 @@ interface Parceiro {
 
 export default function Interacoes() {
   const [pendentes, setPendentes] = useState<Parceiro[]>([]);
-  const [interagidos, setInteragidos] = useState<any[]>([]);
+  const [interagidos, setInteragidos] = useState<Interagido[]>([]);
   const [historico, setHistorico] = useState<any[]>([]);
   const [modalAberto, setModalAberto] = useState(false);
   const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
+  const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user || 'VENDEDOR';
 
   useEffect(() => {
     if (!token) {
-      setErro('Token de autenticação não encontrado.');
+      localStorage.clear();
+      navigate('/');
       return;
     }
 
@@ -39,8 +48,8 @@ export default function Interacoes() {
           axios.get('/api/interacoes/pendentes/', { headers }),
           axios.get('/api/interacoes/hoje/', { headers }),
         ]);
-        setPendentes(pend.data);
-        setInteragidos(inter.data);
+        setPendentes(pend.data || []);
+        setInteragidos(inter.data || []);
       } catch (err) {
         console.error('Erro ao buscar dados:', err);
         setErro('Erro ao buscar dados das interações.');
@@ -50,7 +59,7 @@ export default function Interacoes() {
     }
 
     fetchData();
-  }, [token]);
+  }, [token, navigate]);
 
   const abrirHistorico = async (parceiroId: number) => {
     try {
@@ -110,19 +119,23 @@ export default function Interacoes() {
             </tr>
           </thead>
           <tbody>
-            {pendentes.map(p => (
-              <tr key={p.id}>
-                <td>{p.parceiro}</td>
-                <td>{p.canal_venda}</td>
-                <td>{p.classificacao}</td>
-                <td>{renderStatus(p.status)}</td>
-                <td>
-                  <Button size="xs" variant="light" onClick={() => abrirHistorico(p.id)}>
-                    Ver histórico
-                  </Button>
-                </td>
-              </tr>
-            ))}
+            {pendentes.length === 0 ? (
+              <tr><td colSpan={5}>Nenhum parceiro pendente.</td></tr>
+            ) : (
+              pendentes.map(p => (
+                <tr key={p.id}>
+                  <td>{p.parceiro}</td>
+                  <td>{p.canal_venda}</td>
+                  <td>{p.classificacao}</td>
+                  <td>{renderStatus(p.status)}</td>
+                  <td>
+                    <Button size="xs" variant="light" onClick={() => abrirHistorico(p.id)}>
+                      Ver histórico
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </Table>
 
@@ -135,12 +148,16 @@ export default function Interacoes() {
             </tr>
           </thead>
           <tbody>
-            {interagidos.map((i) => (
-              <tr key={i.id}>
-                <td>{i.parceiro?.parceiro || 'Sem nome'}</td>
-                <td>{new Date(i.data_interacao).toLocaleString()}</td>
-              </tr>
-            ))}
+            {interagidos.length === 0 ? (
+              <tr><td colSpan={2}>Nenhuma interação registrada hoje.</td></tr>
+            ) : (
+              interagidos.map((i) => (
+                <tr key={i.id}>
+                  <td>{i.parceiro_nome || 'Sem nome'}</td>
+                  <td>{new Date(i.data_interacao).toLocaleString()}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </Table>
 
@@ -159,13 +176,17 @@ export default function Interacoes() {
               </tr>
             </thead>
             <tbody>
-              {historico.map((item, index) => (
-                <tr key={index}>
-                  <td>{new Date(item.data_interacao).toLocaleString()}</td>
-                  <td>{item.tipo}</td>
-                  <td>{item.usuario?.username || 'N/A'}</td>
-                </tr>
-              ))}
+              {historico.length === 0 ? (
+                <tr><td colSpan={3}>Nenhuma interação registrada.</td></tr>
+              ) : (
+                historico.map((item, index) => (
+                  <tr key={index}>
+                    <td>{new Date(item.data_interacao).toLocaleString()}</td>
+                    <td>{item.tipo}</td>
+                    <td>{item.usuario_nome || 'N/A'}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </Table>
         </Modal>
