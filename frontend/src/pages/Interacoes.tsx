@@ -24,7 +24,6 @@ export default function Interacoes() {
   const [erro, setErro] = useState<string | null>(null);
 
   const token = localStorage.getItem('token');
-  const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   
   useEffect(() => {
     if (!token) {
