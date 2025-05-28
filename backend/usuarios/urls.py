@@ -18,3 +18,18 @@ urlpatterns = [
     path('upload-parceiros/', UploadParceirosView.as_view({'post': 'create'})),  # via Excel
     path('', include(router.urls)),  # <-- adiciona os ViewSets
 ]
+
+from django.urls import path
+from .views import (
+    InteracoesHojeView,
+    InteracoesPendentesView,
+    HistoricoInteracoesView,
+    RegistrarInteracaoView,
+)
+
+urlpatterns += [
+    path('interacoes/hoje/', InteracoesHojeView.as_view(), name='interacoes-hoje'),
+    path('interacoes/pendentes/', InteracoesPendentesView.as_view(), name='interacoes-pendentes'),
+    path('interacoes/historico/', HistoricoInteracoesView.as_view(), name='interacoes-historico'),
+    path('interacoes/registrar/', RegistrarInteracaoView.as_view(), name='registrar-interacao'),
+]

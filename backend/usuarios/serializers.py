@@ -42,3 +42,24 @@ class CanalVendaSerializer(serializers.ModelSerializer):
     class Meta:
         model = CanalVenda
         fields = '__all__'
+
+from .models import Interacao
+from rest_framework import serializers
+
+class InteracaoSerializer(serializers.ModelSerializer):
+    parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
+    usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
+
+    class Meta:
+        model = Interacao
+        fields = [
+            'id',
+            'parceiro',
+            'parceiro_nome',
+            'usuario',
+            'usuario_nome',
+            'tipo',
+            'data_interacao',
+            'entrou_em_contato',
+        ]
+        read_only_fields = ['data_interacao']

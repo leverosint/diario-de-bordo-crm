@@ -6,9 +6,11 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import get_user_model
 from django.db import transaction
 import pandas as pd
+from .models import Parceiro, CanalVenda, Interacao
+from .serializers import ParceiroSerializer, CanalVendaSerializer, InteracaoSerializer
+from django.utils.timezone import now
+from datetime import timedelta
 
-from .models import Parceiro, CanalVenda
-from .serializers import ParceiroSerializer, CanalVendaSerializer
 
 User = get_user_model()
 
@@ -130,3 +132,64 @@ class ParceiroCreateUpdateView(generics.CreateAPIView):
 class CanalVendaViewSet(viewsets.ModelViewSet):
     queryset = CanalVenda.objects.all()
     serializer_class = CanalVendaSerializer
+
+
+# === INTERAÇÕES ===
+
+class InteracoesHojeView(generics.ListAPIView):
+    serializer_class = InteracaoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        hoje = now().date()
+        return Interacao.objects.filter(data_interacao__date=hoje, usuario=self.request.user)
+
+
+class InteracoesPendentesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuario = request.user
+        hoje = now().date()
+        limite_data = hoje - timedelta(days=3)
+
+        # filtro de parceiros baseado no tipo de usuário
+        if usuario.tipo_user == 'VENDEDOR':
+            parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
+        elif usuario.tipo_user == 'GESTOR':
+            parceiros = Parceiro.objects.filter(canal_venda__in=usuario.canais_venda.all())
+        else:
+            parceiros = Parceiro.objects.all()
+
+        parceiros_pendentes = []
+        for parceiro in parceiros:
+            ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
+            if not ultima_interacao or ultima_interacao.data_interacao.date() <= limite_data:
+                parceiros_pendentes.append(parceiro)
+
+        data = [{
+            'id': p.id,
+            'parceiro': p.parceiro,
+            'canal_venda': p.canal_venda.nome if p.canal_venda else '',
+            'classificacao': p.classificacao,
+            'status': p.status,
+        } for p in parceiros_pendentes]
+
+        return Response(data)
+
+
+class HistoricoInteracoesView(generics.ListAPIView):
+    serializer_class = InteracaoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        parceiro_id = self.request.query_params.get('parceiro_id')
+        return Interacao.objects.filter(parceiro_id=parceiro_id).order_by('-data_interacao')
+
+
+class RegistrarInteracaoView(generics.CreateAPIView):
+    serializer_class = InteracaoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(usuario=self.request.user)

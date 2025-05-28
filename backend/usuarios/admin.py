@@ -72,3 +72,11 @@ class ParceiroAdmin(admin.ModelAdmin):
         if db_field.name == 'canal_venda':
             field.label = 'Unidade'
         return field
+
+from .models import Interacao
+
+@admin.register(Interacao)
+class InteracaoAdmin(admin.ModelAdmin):
+    list_display = ('parceiro', 'usuario', 'tipo', 'data_interacao', 'entrou_em_contato')
+    list_filter = ('tipo', 'entrou_em_contato', 'data_interacao')
+    search_fields = ('parceiro__parceiro', 'usuario__username')

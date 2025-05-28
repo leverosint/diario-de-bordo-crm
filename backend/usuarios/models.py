@@ -120,3 +120,19 @@ class Parceiro(models.Model):
             self.status = "Sem Faturamento"
 
         super().save(*args, **kwargs)
+
+class Interacao(models.Model):
+    TIPO_CHOICES = [
+        ('whatsapp', 'WhatsApp'),
+        ('email', 'E-mail'),
+        ('ligacao', 'Ligação'),
+    ]
+
+    parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='interacoes')
+    usuario = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='interacoes')
+    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
+    data_interacao = models.DateTimeField(auto_now_add=True)
+    entrou_em_contato = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.parceiro.parceiro} - {self.usuario.username} ({self.tipo})"
