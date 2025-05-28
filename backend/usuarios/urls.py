@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include 
 from rest_framework.routers import DefaultRouter
 from .views import (
     LoginView,
@@ -6,7 +6,8 @@ from .views import (
     UploadParceirosView,
     ParceiroViewSet,
     CanalVendaViewSet,
-       InteracoesHojeView,
+    InteracaoViewSet,  # ✅ Adicionada a importação correta
+    InteracoesHojeView,
     InteracoesPendentesView,
     HistoricoInteracoesView,
     RegistrarInteracaoView,

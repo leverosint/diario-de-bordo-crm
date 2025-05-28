@@ -5,13 +5,16 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import get_user_model
 from django.db import transaction
-import pandas as pd
-from .models import Parceiro, CanalVenda, Interacao
-from .serializers import ParceiroSerializer, CanalVendaSerializer, InteracaoSerializer
 from django.utils.timezone import now
 from datetime import timedelta
+import pandas as pd
 
-
+from .models import Parceiro, CanalVenda, Interacao
+from .serializers import (
+    ParceiroSerializer,
+    CanalVendaSerializer,
+    InteracaoSerializer,
+)
 User = get_user_model()
 
 class ParceiroViewSet(viewsets.ModelViewSet):
@@ -153,7 +156,6 @@ class InteracoesPendentesView(APIView):
         hoje = now().date()
         limite_data = hoje - timedelta(days=3)
 
-        # filtro de parceiros baseado no tipo de usuário
         if usuario.tipo_user == 'VENDEDOR':
             parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
         elif usuario.tipo_user == 'GESTOR':
@@ -170,9 +172,12 @@ class InteracoesPendentesView(APIView):
         data = [{
             'id': p.id,
             'parceiro': p.parceiro,
-            'canal_venda': p.canal_venda.nome if p.canal_venda else '',
+            'unidade': p.unidade,
             'classificacao': p.classificacao,
             'status': p.status,
+            'tipo': '',
+            'data_interacao': '',
+            'entrou_em_contato': False,
         } for p in parceiros_pendentes]
 
         return Response(data)

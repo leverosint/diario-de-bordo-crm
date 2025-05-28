@@ -45,6 +45,7 @@ class CanalVendaSerializer(serializers.ModelSerializer):
 
 from .models import Interacao
 from rest_framework import serializers
+from .models import Parceiro, CustomUser
 
 class InteracaoSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
@@ -63,3 +64,19 @@ class InteracaoSerializer(serializers.ModelSerializer):
             'entrou_em_contato',
         ]
         read_only_fields = ['data_interacao']
+
+class InteracaoPendentesSerializer(serializers.ModelSerializer):
+    parceiro = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Parceiro
+        fields = [
+            'id',
+            'parceiro',
+            'unidade',
+            'classificacao',
+            'status',
+        ]
+
+    def get_parceiro(self, obj):
+        return obj.parceiro
