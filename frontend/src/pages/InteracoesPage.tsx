@@ -1,5 +1,5 @@
 // src/pages/InteracoesPage.tsx
-import Interacoes from './interacoes';
+import Interacoes from './Interacoes';
 import SidebarGestor from '../components/SidebarGestor';
 
 export default function InteracoesPage() {
