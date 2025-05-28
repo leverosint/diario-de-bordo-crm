@@ -1,13 +1,13 @@
 from django.urls import path, include 
 from rest_framework.routers import DefaultRouter
-from .views import InteracaoViewSet
 from .views import (
     LoginView,
     ParceiroCreateUpdateView,
     UploadParceirosView,
     ParceiroViewSet,
     CanalVendaViewSet,
-        InteracoesHojeView,
+    InteracaoViewSet,
+    InteracoesHojeView,
     InteracoesPendentesView,
     HistoricoInteracoesView,
     RegistrarInteracaoView,
@@ -17,7 +17,8 @@ from .views import (
 router = DefaultRouter()
 router.register(r'parceiros-list', ParceiroViewSet, basename='parceiros')
 router.register(r'canais-venda', CanalVendaViewSet, basename='canais-venda')
-router.register(r'interacoes', InteracaoViewSet, basename='interacoes')
+# Remova esta linha para evitar conflito
+# router.register(r'interacoes', InteracaoViewSet, basename='interacoes')
 
 # URLPATTERNS PRINCIPAIS
 urlpatterns = [
@@ -29,6 +30,9 @@ urlpatterns = [
 
 # VIEWS ADICIONAIS ESPECÍFICAS DE INTERAÇÃO
 urlpatterns += [
+    path('interacoes/', InteracaoViewSet.as_view({'get': 'list', 'post': 'create'}), name='interacoes-list'),
+    path('interacoes/<int:pk>/', InteracaoViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'}), name='interacoes-detail'),
+    path('interacoes/exportar-excel/', InteracaoViewSet.as_view({'get': 'exportar_excel'}), name='interacoes-exportar'),
     path('interacoes/hoje/', InteracoesHojeView.as_view(), name='interacoes-hoje'),
     path('interacoes/pendentes/', InteracoesPendentesView.as_view(), name='interacoes-pendentes'),
     path('interacoes/historico/', HistoricoInteracoesView.as_view(), name='interacoes-historico'),

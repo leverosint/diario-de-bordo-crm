@@ -19,5 +19,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('usuarios.urls')),  # adiciona o login
+    path('api/', include('usuarios.urls')),  # Certifique-se que este prefixo está correto
 ]
