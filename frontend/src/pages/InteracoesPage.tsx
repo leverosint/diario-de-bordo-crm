@@ -11,6 +11,7 @@ import {
   TableTr,
   TableTh,
   TableTd,
+  Alert,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 
@@ -25,6 +26,7 @@ interface Interacao {
 export default function InteracoesPage() {
   const [interacoes, setInteracoes] = useState<Interacao[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
   const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user;
 
   useEffect(() => {
@@ -34,10 +36,16 @@ export default function InteracoesPage() {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((response) => {
-        setInteracoes(response.data);
+        if (Array.isArray(response.data)) {
+          setInteracoes(response.data);
+        } else {
+          setErro('Dados inválidos recebidos da API.');
+          console.error('⚠️ Resposta não é array:', response.data);
+        }
       })
       .catch((err) => {
         console.error('Erro ao buscar interações:', err);
+        setErro('Erro ao carregar interações. Verifique sua conexão ou login.');
       })
       .finally(() => setCarregando(false));
   }, []);
@@ -51,6 +59,10 @@ export default function InteracoesPage() {
       {carregando ? (
         <Center>
           <Loader />
+        </Center>
+      ) : erro ? (
+        <Center>
+          <Alert color="red" title="Erro">{erro}</Alert>
         </Center>
       ) : interacoes.length === 0 ? (
         <Center>
