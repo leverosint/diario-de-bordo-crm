@@ -31,21 +31,11 @@ export default function LoginPage() {
         senha,
       });
 
-      console.log("🧪 Resposta do login:", response.data);
-
-      // Altere aqui se o backend retorna 'access' ou 'token'
-      const token = response.data.access || response.data.token;
-      const usuario = response.data.usuario;
-
-      if (token && usuario) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('usuario', JSON.stringify(usuario));
-        navigate('/dashboard');
-      } else {
-        setErro('Login falhou: token ou usuário não encontrado.');
-      }
+      const { access, usuario } = response.data;
+      localStorage.setItem('token', access);
+      localStorage.setItem('usuario', JSON.stringify(usuario));
+      navigate('/dashboard');
     } catch (err) {
-      console.error(err);
       setErro('Credenciais inválidas');
     } finally {
       setLoading(false);
@@ -71,31 +61,35 @@ export default function LoginPage() {
         style={{
           width: '100%',
           maxWidth: 420,
+          maxHeight: 1000,
           backgroundColor: 'white',
-          borderRadius: 20,
+          borderRadius: '20px',
+          overflow: 'hidden',
           boxShadow: '0 10px 30px rgba(0,0,0,0.15)',
+          padding: '32px 28px',
         }}
       >
         <Box mb={23} style={{ textAlign: 'center' }}>
           <Title
             order={2}
-            style={{
-              color: '#005A64',
+            style={{ 
+              color: '#005A64', 
               fontWeight: 700,
               fontSize: '28px',
-              marginBottom: '4px',
+              marginBottom: '4px'
             }}
           >
             Diário de Bordo
           </Title>
           <Text
             size="sm"
-            style={{
-              color: '#4CDDDD',
-              fontSize: '15px',
-              fontWeight: 600,
-              marginBottom: '1px',
-              textAlign: 'center',
+            style={{ 
+              color: '#4CDDDD', 
+              fontSize: '15px', 
+              fontWeight: 600, 
+              marginBottom: '1px', 
+                           textAlign: 'center'
+            
             }}
           >
             Acesse com seu usuário, e-mail ou ID vendedor
@@ -103,88 +97,172 @@ export default function LoginPage() {
         </Box>
 
         <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleLogin();
+  onSubmit={(e) => {
+    e.preventDefault();
+    handleLogin();
+  }}
+>
+  <Box
+    mb={24}
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textAlign: 'center',
+      gap: -43,
+    }}
+  >
+    {/* Campo de Login */}
+    <Box style={{ width: '100%', maxWidth: '320px', marginBottom: '0px' }}>
+      <Text 
+        style={{ 
+          fontSize: '15px', 
+          fontWeight: 600, 
+          marginBottom: '1px', 
+          color: '#005A64',
+          textAlign: 'left'
+        }}
+      >
+        Login *
+      </Text>
+      <TextInput
+        placeholder="Digite seu login"
+        value={identificador}
+        onChange={(e) => setIdentificador(e.currentTarget.value)}
+        required
+        styles={{
+          input: {
+            height: 50,
+            fontSize: 16,
+            paddingLeft: 17,
+            paddingRight: 100,
+            borderRadius: 12,
+            border: '1px solid #E0E0E0',
+            transition: 'all 0.2s ease',
+            '&:focus': {
+              borderColor: '#4CDDDD',
+              boxShadow: '0 0 0 3px rgba(76, 221, 221, 0.2)',
+            },
+          },
+        }}
+      />
+    </Box>
+
+    {/* Campo de Senha */}
+    <Box style={{ width: '100%', maxWidth: 320, marginBottom: '20px' }}>
+      <Text 
+        style={{ 
+          fontSize: '15px', 
+          fontWeight: 600, 
+          marginBottom: '2px', 
+          color: '#005A64',
+          textAlign: 'left'
+        }}
+      >
+        Senha *
+      </Text>
+      <div style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+        <TextInput
+          type={mostrarSenha ? 'text' : 'password'}
+          placeholder="Digite sua senha"
+          value={senha}
+          onChange={(e) => setSenha(e.currentTarget.value)}
+          required
+          style={{ width: '100%' }}
+          styles={{
+            input: {
+              height: 50,
+              fontSize: 16,
+              paddingLeft: 17,
+              paddingRight: 100,
+              borderRadius: 12,
+              border: '1px solid #E0E0E0',
+              transition: 'all 0.2s ease',
+              '&:focus': {
+                borderColor: '#4CDDDD',
+                boxShadow: '0 0 0 3px rgba(76, 221, 221, 0.2)',
+              },
+            },
+          }}
+        />
+        <div 
+          onClick={() => setMostrarSenha(!mostrarSenha)}
+          style={{
+            position: 'absolute',
+            right: '12px',
+            cursor: 'pointer',
+            color: '#005A64',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '30px',
+            height: '30px',
+            borderRadius: '50%',
+            transition: 'all 0.2s ease',
           }}
         >
-          <Box mb={24} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <Box style={{ width: '100%', maxWidth: 320 }}>
-              <Text style={{ fontSize: 15, fontWeight: 600, marginBottom: 4, color: '#005A64' }}>
-                Login *
-              </Text>
-              <TextInput
-                placeholder="Digite seu login"
-                value={identificador}
-                onChange={(e) => setIdentificador(e.currentTarget.value)}
-                required
-              />
-            </Box>
+          {mostrarSenha ? <EyeOff size={20} /> : <Eye size={20} />}
+        </div>
+      </div>
+    </Box>
+  </Box>
 
-            <Box style={{ width: '100%', maxWidth: 320, marginTop: 16 }}>
-              <Text style={{ fontSize: 15, fontWeight: 600, marginBottom: 4, color: '#005A64' }}>
-                Senha *
-              </Text>
-              <div style={{ position: 'relative' }}>
-                <TextInput
-                  type={mostrarSenha ? 'text' : 'password'}
-                  placeholder="Digite sua senha"
-                  value={senha}
-                  onChange={(e) => setSenha(e.currentTarget.value)}
-                  required
-                />
-                <div
-                  onClick={() => setMostrarSenha(!mostrarSenha)}
-                  style={{
-                    position: 'absolute',
-                    right: 10,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    cursor: 'pointer',
-                    color: '#005A64',
-                  }}
-                >
-                  {mostrarSenha ? <EyeOff size={20} /> : <Eye size={20} />}
-                </div>
-              </div>
-            </Box>
-          </Box>
+  {erro && (
+    <Text 
+      color="red" 
+      size="sm" 
+      style={{ 
+        textAlign: 'center', 
+        marginBottom: 8,
+        padding: '8px 12px',
+        backgroundColor: 'rgba(255, 0, 0, 0.05)',
+        borderRadius: 8,
+        fontWeight: 500,
+        maxWidth: '320px',
+        margin: '0 auto 16px'
+      }}
+    >
+      {erro}
+    </Text>
+  )}
 
-          {erro && (
-            <Text
-              color="red"
-              size="sm"
-              style={{
-                textAlign: 'center',
-                marginBottom: 12,
-                padding: '8px 12px',
-                backgroundColor: 'rgba(255, 0, 0, 0.05)',
-                borderRadius: 8,
-                fontWeight: 500,
-              }}
-            >
-              {erro}
-            </Text>
-          )}
+  <Box style={{ gap: 30, display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+    <Button
+      type="submit"
+      disabled={loading}
+      style={{
+        height: 50,
+        width: '180px',
+        fontSize: 16,
+        fontWeight: 600,
+        background: '#005A64',
+        borderRadius: 12,
+        boxShadow: '0 4px 12px rgba(0, 90, 100, 0.3)',
+        transition: 'all 0.2s ease',
+        border: 'none',
+        gap: 5,
+        color: 'white',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: '0 6px 15px rgba(0, 90, 100, 0.4)',
+        },
+        '&:active': {
+          transform: 'translateY(1px)',
+        },
+      }}
+    >
+      {loading ? (
+        <Center>
+          <Loader size="sm" color="white" />
+        </Center>
+      ) : (
+        'Entrar'
+      )}
+    </Button>
+  </Box>
+</form>
 
-          <Box style={{ display: 'flex', justifyContent: 'center' }}>
-            <Button
-              type="submit"
-              disabled={loading}
-              style={{
-                height: 50,
-                width: '180px',
-                fontSize: 16,
-                fontWeight: 600,
-                background: '#005A64',
-                borderRadius: 12,
-                color: 'white',
-              }}
-            >
-              {loading ? <Loader size="sm" color="white" /> : 'Entrar'}
-            </Button>
-          </Box>
-        </form>
       </Paper>
     </div>
   );
