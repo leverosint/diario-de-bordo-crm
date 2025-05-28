@@ -25,8 +25,7 @@ export default function Interacoes() {
 
   const token = localStorage.getItem('token');
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-  const tipoUser = usuario?.tipo_user || 'VENDEDOR';
-
+  
   useEffect(() => {
     if (!token) {
       setErro('Token de autenticação não encontrado.');
