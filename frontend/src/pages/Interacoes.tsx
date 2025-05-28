@@ -1,4 +1,4 @@
-// src/pages/Interacoes.tsx
+// src/pages/interacoes.tsx
 import { useEffect, useState } from 'react';
 import {
   Container, Title, Group, Badge, Button, Table, Loader, Modal, Alert,
@@ -24,6 +24,8 @@ export default function Interacoes() {
   const [erro, setErro] = useState<string | null>(null);
 
   const token = localStorage.getItem('token');
+  const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const tipoUser = usuario?.tipo_user || 'VENDEDOR';
 
   useEffect(() => {
     if (!token) {

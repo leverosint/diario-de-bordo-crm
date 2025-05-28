@@ -1,11 +1,10 @@
 // src/pages/InteracoesPage.tsx
-import Interacoes from './Interacoes';
+import Interacoes from './interacoes';
 import SidebarGestor from '../components/SidebarGestor';
 
-const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-const tipoUser = usuario?.tipo_user || 'VENDEDOR';
-
 export default function InteracoesPage() {
+  const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user || 'VENDEDOR';
+
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <Interacoes />
