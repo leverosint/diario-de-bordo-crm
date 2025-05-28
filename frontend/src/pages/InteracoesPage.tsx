@@ -67,7 +67,7 @@ export default function InteracoesPage() {
 
   const registrarInteracao = async (parceiroId: number) => {
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/registrar-interacao/`, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, {
         parceiro: parceiroId,
         tipo: 'LIGACAO',
         entrou_em_contato: true,
