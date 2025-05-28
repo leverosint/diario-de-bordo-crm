@@ -1,6 +1,8 @@
 // src/pages/Interacoes.tsx
 import { useEffect, useState } from 'react';
-import { Container, Title, Group, Badge, Button, Table, Loader } from '@mantine/core';
+import {
+  Container, Title, Group, Badge, Button, Table, Loader, Modal,
+} from '@mantine/core';
 import axios from 'axios';
 
 interface Parceiro {
@@ -15,6 +17,10 @@ export default function Interacoes() {
   const [pendentes, setPendentes] = useState<Parceiro[]>([]);
   const [interagidos, setInteragidos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [historico, setHistorico] = useState<any[]>([]);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
 
   const token = localStorage.getItem('token');
 
@@ -37,6 +43,19 @@ export default function Interacoes() {
 
     fetchData();
   }, []);
+
+  const abrirHistorico = async (parceiroId: number) => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const resp = await axios.get(`/api/interacoes/historico/?parceiro_id=${parceiroId}`, { headers });
+      setHistorico(resp.data);
+      const nome = pendentes.find(p => p.id === parceiroId)?.parceiro || 'Parceiro';
+      setParceiroSelecionado(nome);
+      setModalAberto(true);
+    } catch (err) {
+      console.error('Erro ao carregar histórico:', err);
+    }
+  };
 
   const renderStatus = (status: string) => {
     const cor =
@@ -65,6 +84,7 @@ export default function Interacoes() {
             <th>Canal</th>
             <th>Classificação</th>
             <th>Status</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -74,6 +94,9 @@ export default function Interacoes() {
               <td>{p.canal_venda}</td>
               <td>{p.classificacao}</td>
               <td>{renderStatus(p.status)}</td>
+              <td>
+                <Button size="xs" variant="light" onClick={() => abrirHistorico(p.id)}>Ver histórico</Button>
+              </td>
             </tr>
           ))}
         </tbody>
@@ -96,6 +119,32 @@ export default function Interacoes() {
           ))}
         </tbody>
       </Table>
+
+      <Modal
+        opened={modalAberto}
+        onClose={() => setModalAberto(false)}
+        title={`Histórico - ${parceiroSelecionado}`}
+        size="lg"
+      >
+        <Table striped highlightOnHover withTableBorder withColumnBorders>
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th>Usuário</th>
+            </tr>
+          </thead>
+          <tbody>
+            {historico.map((item, index) => (
+              <tr key={index}>
+                <td>{new Date(item.data_interacao).toLocaleString()}</td>
+                <td>{item.tipo}</td>
+                <td>{item.usuario?.username || 'N/A'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </Modal>
     </Container>
   );
 }

@@ -1,3 +1,4 @@
+// src/components/SidebarGestor.tsx
 import { useState } from 'react';
 import {
   AppShell,
@@ -19,6 +20,7 @@ import {
   BarChart2,
   LogOut,
   ChevronLeft,
+  MessageCircle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -76,6 +78,12 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
             label="Dashboard"
             leftSection={<LayoutDashboard size={18} />}
             onClick={() => navigate('/dashboard')}
+          />
+
+          <NavLink
+            label="Interações"
+            leftSection={<MessageCircle size={18} />}
+            onClick={() => navigate('/interacoes')}
           />
 
           {(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
