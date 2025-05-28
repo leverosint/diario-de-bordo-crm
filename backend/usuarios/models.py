@@ -57,9 +57,8 @@ class Parceiro(models.Model):
     marco_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
 
     total_geral = models.DecimalField(max_digits=14, decimal_places=2, default=0)
-    recorrencia = models.CharField(max_length=50, blank=True, null=True)
+    recorrencia = models.IntegerField(blank=True, null=True)
     tm = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    
 
     canal_venda = models.ForeignKey(CanalVenda, on_delete=models.SET_NULL, blank=True, null=True, related_name="parceiros")
     atualizado_em = models.DateTimeField(auto_now=True)
@@ -76,8 +75,11 @@ class Parceiro(models.Model):
         ]
 
         self.total_geral = sum(meses)
+
         meses_com_valor = [m for m in meses if m > 0]
         self.tm = self.total_geral / len(meses_com_valor) if meses_com_valor else 0
-        self.recorrencia = "Ativo" if len(meses_com_valor) >= 3 else "Ocasional"
+
+        # Recorrência = total de meses com faturamento > 0 (mesmo pulando meses vazios)
+        self.recorrencia = sum(1 for m in meses if m > 0)
 
         super().save(*args, **kwargs)
