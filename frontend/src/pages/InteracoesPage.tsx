@@ -90,7 +90,7 @@ export default function InteracoesPage() {
     <SidebarGestor tipoUser={tipoUser}>
       <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
 
-      <Group position="apart" mb="md">
+      <Group justify="space-between" mb="md">
         <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
           Meta do dia: {metaAtual}/{metaTotal}
         </Badge>
