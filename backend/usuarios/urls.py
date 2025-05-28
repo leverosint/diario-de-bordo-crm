@@ -17,7 +17,7 @@ from .views import (
 router = DefaultRouter()
 router.register(r'parceiros-list', ParceiroViewSet, basename='parceiros')
 router.register(r'canais-venda', CanalVendaViewSet, basename='canais-venda')
-# Remova esta linha para evitar conflito
+# A linha abaixo foi removida para evitar conflito
 # router.register(r'interacoes', InteracaoViewSet, basename='interacoes')
 
 # URLPATTERNS PRINCIPAIS
@@ -30,9 +30,12 @@ urlpatterns = [
 
 # VIEWS ADICIONAIS ESPECÍFICAS DE INTERAÇÃO
 urlpatterns += [
+    # Rotas específicas para o InteracaoViewSet
     path('interacoes/', InteracaoViewSet.as_view({'get': 'list', 'post': 'create'}), name='interacoes-list'),
-    path('interacoes/<int:pk>/', InteracaoViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'}), name='interacoes-detail'),
+    path('interacoes/<int:pk>/', InteracaoViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}), name='interacoes-detail'),
     path('interacoes/exportar-excel/', InteracaoViewSet.as_view({'get': 'exportar_excel'}), name='interacoes-exportar'),
+    
+    # Rotas específicas para as outras views de interação
     path('interacoes/hoje/', InteracoesHojeView.as_view(), name='interacoes-hoje'),
     path('interacoes/pendentes/', InteracoesPendentesView.as_view(), name='interacoes-pendentes'),
     path('interacoes/historico/', HistoricoInteracoesView.as_view(), name='interacoes-historico'),
