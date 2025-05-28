@@ -1,6 +1,17 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Table, Loader, Center, Text, ScrollArea } from '@mantine/core';
+import {
+  Table,
+  Loader,
+  Center,
+  Text,
+  ScrollArea,
+  TableThead,
+  TableTbody,
+  TableTr,
+  TableTh,
+  TableTd,
+} from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 
 interface Interacao {
@@ -47,31 +58,25 @@ export default function InteracoesPage() {
         </Center>
       ) : (
         <ScrollArea>
-          <Table
-            striped
-            withColumnBorders
-            highlightOnHover
-            verticalSpacing="sm"
-            miw={700}
-          >
-            <thead>
-              <tr>
-                <th>Parceiro</th>
-                <th>Unidade</th>
-                <th>Classificação</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table striped highlightOnHover withTableBorder>
+            <TableThead>
+              <TableTr>
+                <TableTh>Parceiro</TableTh>
+                <TableTh>Unidade</TableTh>
+                <TableTh>Classificação</TableTh>
+                <TableTh>Status</TableTh>
+              </TableTr>
+            </TableThead>
+            <TableTbody>
               {interacoes.map((interacao) => (
-                <tr key={interacao.id}>
-                  <td>{interacao.parceiro}</td>
-                  <td>{interacao.unidade}</td>
-                  <td>{interacao.classificacao}</td>
-                  <td>{interacao.status}</td>
-                </tr>
+                <TableTr key={interacao.id}>
+                  <TableTd>{interacao.parceiro}</TableTd>
+                  <TableTd>{interacao.unidade}</TableTd>
+                  <TableTd>{interacao.classificacao}</TableTd>
+                  <TableTd>{interacao.status}</TableTd>
+                </TableTr>
               ))}
-            </tbody>
+            </TableTbody>
           </Table>
         </ScrollArea>
       )}
