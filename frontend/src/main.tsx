@@ -11,7 +11,8 @@ import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/Dashboard';
 import CadastroParceiroPage from './pages/CadastroParceiroPage';
 import CadastroUsuariosPage from './pages/CadastroUsuariosPage';
-import Interacoes from './pages/Interacoes'; // ✅ import atualizado
+import InteracoesPage from './pages/InteracoesPage';
+
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -22,7 +23,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/cadastro-parceiro" element={<CadastroParceiroPage />} />
           <Route path="/cadastro-usuarios" element={<CadastroUsuariosPage />} />
-          <Route path="/interacoes" element={<Interacoes />} /> {/* ✅ uso direto */}
+                  <Route path="/interacoes" element={<InteracoesPage />} />
         </Routes>
       </BrowserRouter>
     </MantineProvider>
