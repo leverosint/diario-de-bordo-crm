@@ -6,8 +6,7 @@ from .views import (
     UploadParceirosView,
     ParceiroViewSet,
     CanalVendaViewSet,
-    InteracaoViewSet,  # ✅ Import do ViewSet
-    InteracoesHojeView,
+       InteracoesHojeView,
     InteracoesPendentesView,
     HistoricoInteracoesView,
     RegistrarInteracaoView,
