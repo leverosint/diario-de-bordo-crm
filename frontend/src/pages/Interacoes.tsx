@@ -20,13 +20,7 @@ interface Parceiro {
   classificacao: string;
   status: string;
 }
-interface Interacao {
-  id: number;
-  parceiro: string | { parceiro: string };
-  unidade: string;
-  classificacao: string;
-  status: string;
-}
+
 
 export default function Interacoes() {
   const [pendentes, setPendentes] = useState<Parceiro[]>([]);
