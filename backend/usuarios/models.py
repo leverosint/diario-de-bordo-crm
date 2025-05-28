@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from datetime import datetime, timedelta
 
 # Canal de venda associado a usuários e parceiros
 class CanalVenda(models.Model):
@@ -59,6 +60,7 @@ class Parceiro(models.Model):
     total_geral = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     recorrencia = models.IntegerField(blank=True, null=True)
     tm = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    status = models.CharField(max_length=30, blank=True, null=True)
 
     canal_venda = models.ForeignKey(CanalVenda, on_delete=models.SET_NULL, blank=True, null=True, related_name="parceiros")
     atualizado_em = models.DateTimeField(auto_now=True)
@@ -68,18 +70,53 @@ class Parceiro(models.Model):
 
     def save(self, *args, **kwargs):
         meses = [
-            self.janeiro or 0, self.fevereiro or 0, self.marco or 0, self.abril or 0,
-            self.maio or 0, self.junho or 0, self.julho or 0, self.agosto or 0,
-            self.setembro or 0, self.outubro or 0, self.novembro or 0, self.dezembro or 0,
-            self.janeiro_2 or 0, self.fevereiro_2 or 0, self.marco_2 or 0,
+            ('janeiro', self.janeiro), ('fevereiro', self.fevereiro), ('marco', self.marco), ('abril', self.abril),
+            ('maio', self.maio), ('junho', self.junho), ('julho', self.julho), ('agosto', self.agosto),
+            ('setembro', self.setembro), ('outubro', self.outubro), ('novembro', self.novembro), ('dezembro', self.dezembro),
+            ('janeiro_2', self.janeiro_2), ('fevereiro_2', self.fevereiro_2), ('marco_2', self.marco_2)
         ]
 
-        self.total_geral = sum(meses)
+        self.total_geral = sum([m[1] or 0 for m in meses])
 
-        meses_com_valor = [m for m in meses if m > 0]
+        meses_com_valor = [m[1] for m in meses if m[1] and m[1] > 0]
         self.tm = self.total_geral / len(meses_com_valor) if meses_com_valor else 0
+        self.recorrencia = len(meses_com_valor)
 
-        # Recorrência = total de meses com faturamento > 0 (mesmo pulando meses vazios)
-        self.recorrencia = sum(1 for m in meses if m > 0)
+        # Mapeamento mês → número e ano
+        mes_ref = {
+            'janeiro': (1, 2025), 'fevereiro': (2, 2025), 'marco': (3, 2025), 'abril': (4, 2025),
+            'maio': (5, 2025), 'junho': (6, 2025), 'julho': (7, 2025), 'agosto': (8, 2025),
+            'setembro': (9, 2025), 'outubro': (10, 2025), 'novembro': (11, 2025), 'dezembro': (12, 2025),
+            'janeiro_2': (1, 2026), 'fevereiro_2': (2, 2026), 'marco_2': (3, 2026)
+        }
+
+        # Último mês com faturamento > 0
+        ultimo_fat_data = None
+        for nome, valor in reversed(meses):
+            if valor and valor > 0:
+                mes_num, ano = mes_ref[nome]
+                ultimo_fat_data = datetime(ano, mes_num, 1)
+                break
+
+        if ultimo_fat_data:
+            hoje = datetime.today()
+            ano_atual, mes_atual = hoje.year, hoje.month
+            ultimo_dia_mes_anterior = datetime(ano_atual, mes_atual, 1) - timedelta(days=1)
+
+            dias_diferenca = (ultimo_dia_mes_anterior - ultimo_fat_data).days
+
+            if dias_diferenca <= 30:
+                self.status = "30d s/ Fat"
+            elif dias_diferenca <= 60:
+                self.status = "60d s/ Fat"
+            elif dias_diferenca <= 90:
+                self.status = "90d s/ Fat"
+            else:
+                self.status = "120d s/ Fat"
+
+            if ultimo_fat_data.month in [mes_atual, mes_atual - 1] and ultimo_fat_data.year == ano_atual:
+                self.status = "Recorrente"
+        else:
+            self.status = "Sem Faturamento"
 
         super().save(*args, **kwargs)
