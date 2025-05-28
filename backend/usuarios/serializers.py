@@ -1,11 +1,14 @@
 from rest_framework import serializers
-from .models import Parceiro, CanalVenda
+from .models import Parceiro, CanalVenda, Interacao, CustomUser
 
+# ===== Canal de Venda =====
 class CanalVendaSerializer(serializers.ModelSerializer):
     class Meta:
         model = CanalVenda
         fields = ['id', 'nome']
 
+
+# ===== Parceiro =====
 class ParceiroSerializer(serializers.ModelSerializer):
     canal_venda = CanalVendaSerializer(read_only=True)
     canal_venda_id = serializers.PrimaryKeyRelatedField(
@@ -38,16 +41,13 @@ class ParceiroSerializer(serializers.ModelSerializer):
             'ultimo_fat',
             'atualizado_em',
         ]
-class CanalVendaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CanalVenda
-        fields = '__all__'
 
-from .models import Interacao
-from rest_framework import serializers
-from .models import Parceiro, CustomUser
 
+# ===== Interação (Completa) =====
 class InteracaoSerializer(serializers.ModelSerializer):
+    parceiro = serializers.PrimaryKeyRelatedField(queryset=Parceiro.objects.all())
+    usuario = serializers.PrimaryKeyRelatedField(read_only=True)  # Setado automaticamente no backend
+
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
 
@@ -65,6 +65,8 @@ class InteracaoSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['data_interacao']
 
+
+# ===== Interações Pendentes (Simples) =====
 class InteracaoPendentesSerializer(serializers.ModelSerializer):
     parceiro = serializers.SerializerMethodField()
 
