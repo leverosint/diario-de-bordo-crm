@@ -3,7 +3,6 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.decorators import action
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.timezone import now
@@ -24,6 +23,7 @@ from .serializers import (
 )
 
 User = get_user_model()
+
 
 class ParceiroViewSet(viewsets.ModelViewSet):
     queryset = Parceiro.objects.all()
@@ -229,6 +229,30 @@ class InteracoesPendentesView(APIView):
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
         return Response(parceiros_pendentes)
+
+
+class InteracoesMetasView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuario = request.user
+        hoje = now().date()
+
+        interacoes_hoje = Interacao.objects.filter(
+            usuario=usuario,
+            data_interacao__date=hoje
+        ).count()
+
+        meta_diaria = 10
+        progresso = min(interacoes_hoje / meta_diaria, 1.0)
+        meta_atingida = interacoes_hoje >= meta_diaria
+
+        return Response({
+            'interacoes_realizadas': interacoes_hoje,
+            'meta_diaria': meta_diaria,
+            'progresso': progresso,
+            'meta_atingida': meta_atingida
+        })
 
 
 class HistoricoInteracoesView(generics.ListAPIView):
