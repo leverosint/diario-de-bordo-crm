@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
-  Container, Title, Group, Badge, Button, Table, Loader, Modal,
+  Container, Title, Group, Badge, Button, Table, Loader, Modal, Alert,
 } from '@mantine/core';
+import { IconAlertCircle } from '@tabler/icons-react';
 import axios from 'axios';
 import SidebarGestor from '../components/SidebarGestor';
 
@@ -16,16 +17,22 @@ interface Parceiro {
 export default function Interacoes() {
   const [pendentes, setPendentes] = useState<Parceiro[]>([]);
   const [interagidos, setInteragidos] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const [historico, setHistorico] = useState<any[]>([]);
   const [modalAberto, setModalAberto] = useState(false);
   const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
 
   const token = localStorage.getItem('token');
-  const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user || '';
+  const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const tipoUser = usuario?.tipo_user || 'VENDEDOR';
 
   useEffect(() => {
+    if (!token) {
+      setErro('Token de autenticação não encontrado.');
+      return;
+    }
+
     async function fetchData() {
       try {
         const headers = { Authorization: `Bearer ${token}` };
@@ -37,13 +44,14 @@ export default function Interacoes() {
         setInteragidos(inter.data);
       } catch (err) {
         console.error('Erro ao buscar dados:', err);
+        setErro('Erro ao buscar dados das interações.');
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
-  }, []);
+  }, [token]);
 
   const abrirHistorico = async (parceiroId: number) => {
     try {
@@ -55,6 +63,7 @@ export default function Interacoes() {
       setModalAberto(true);
     } catch (err) {
       console.error('Erro ao carregar histórico:', err);
+      setErro('Erro ao carregar histórico de interações.');
     }
   };
 
@@ -73,6 +82,12 @@ export default function Interacoes() {
     <SidebarGestor tipoUser={tipoUser}>
       <Container>
         <Title order={2} mb="md">Interações</Title>
+
+        {erro && (
+          <Alert icon={<IconAlertCircle size={16} />} title="Erro" color="red" mb="md">
+            {erro}
+          </Alert>
+        )}
 
         <Group justify="space-between" mb="sm">
           <Title order={4}>Parceiros a interagir ({pendentes.length})</Title>
@@ -97,7 +112,9 @@ export default function Interacoes() {
                 <td>{p.classificacao}</td>
                 <td>{renderStatus(p.status)}</td>
                 <td>
-                  <Button size="xs" variant="light" onClick={() => abrirHistorico(p.id)}>Ver histórico</Button>
+                  <Button size="xs" variant="light" onClick={() => abrirHistorico(p.id)}>
+                    Ver histórico
+                  </Button>
                 </td>
               </tr>
             ))}
