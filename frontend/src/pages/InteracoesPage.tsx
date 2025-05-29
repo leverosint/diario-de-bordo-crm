@@ -17,6 +17,7 @@ import {
   Title,
   Divider,
   Badge,
+  Select,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 
@@ -38,6 +39,7 @@ export default function InteracoesPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [metaAtual, setMetaAtual] = useState(0);
   const [metaTotal, setMetaTotal] = useState(10);
+  const [tipoSelecionado, setTipoSelecionado] = useState<{ [key: number]: string }>({});
   const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user;
   const token = localStorage.getItem('token');
 
@@ -66,10 +68,16 @@ export default function InteracoesPage() {
   };
 
   const registrarInteracao = async (parceiroId: number) => {
+    const tipo = tipoSelecionado[parceiroId];
+    if (!tipo) {
+      alert('Selecione o tipo de interação antes de registrar.');
+      return;
+    }
+
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, {
         parceiro: parceiroId,
-        tipo: 'LIGACAO',
+        tipo: tipo,
         entrou_em_contato: true,
       }, {
         headers: { Authorization: `Bearer ${token}` },
@@ -115,6 +123,7 @@ export default function InteracoesPage() {
                     <TableTh>Unidade</TableTh>
                     <TableTh>Classificação</TableTh>
                     <TableTh>Status</TableTh>
+                    <TableTh>Tipo</TableTh>
                     <TableTh>Ação</TableTh>
                   </TableTr>
                 </TableThead>
@@ -125,6 +134,20 @@ export default function InteracoesPage() {
                       <TableTd>{item.unidade}</TableTd>
                       <TableTd>{item.classificacao}</TableTd>
                       <TableTd>{item.status}</TableTd>
+                      <TableTd>
+                        <Select
+                          placeholder="Tipo"
+                          value={tipoSelecionado[item.id] || ''}
+                          onChange={(value) =>
+                            setTipoSelecionado((prev) => ({ ...prev, [item.id]: value || '' }))
+                          }
+                          data={[
+                            { value: 'whatsapp', label: 'WhatsApp' },
+                            { value: 'email', label: 'E-mail' },
+                            { value: 'ligacao', label: 'Ligação' },
+                          ]}
+                        />
+                      </TableTd>
                       <TableTd>
                         <Button size="xs" onClick={() => registrarInteracao(item.id)}>
                           Marcar como interagido
@@ -151,6 +174,7 @@ export default function InteracoesPage() {
                     <TableTh>Classificação</TableTh>
                     <TableTh>Status</TableTh>
                     <TableTh>Data</TableTh>
+                    <TableTh>Tipo</TableTh>
                   </TableTr>
                 </TableThead>
                 <TableTbody>
@@ -161,6 +185,7 @@ export default function InteracoesPage() {
                       <TableTd>{item.classificacao}</TableTd>
                       <TableTd>{item.status}</TableTd>
                       <TableTd>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</TableTd>
+                      <TableTd>{item.tipo}</TableTd>
                     </TableTr>
                   ))}
                 </TableTbody>
