@@ -19,7 +19,6 @@ import {
   Badge,
   Select,
   Grid,
-  Modal,
   TextInput,
   Textarea,
 } from '@mantine/core';
@@ -46,11 +45,7 @@ export default function InteracoesPage() {
   const [metaAtual, setMetaAtual] = useState(0);
   const [metaTotal, setMetaTotal] = useState(10);
   const [tipoSelecionado, setTipoSelecionado] = useState<{ [key: number]: string }>({});
-
-  const [parceiroSelecionado, setParceiroSelecionado] = useState<Interacao | null>(null);
-  const [modalConfirmarAberto, setModalConfirmarAberto] = useState(false);
-  const [modalOportunidadeAberto, setModalOportunidadeAberto] = useState(false);
-
+  const [expandirId, setExpandirId] = useState<number | null>(null);
   const [valorOportunidade, setValorOportunidade] = useState('');
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
 
@@ -102,45 +97,13 @@ export default function InteracoesPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      setExpandirId(null);
+      setValorOportunidade('');
+      setObservacaoOportunidade('');
       await carregarDados();
     } catch (err) {
       console.error('Erro ao registrar interação:', err);
       alert('Erro ao registrar interação. Tente novamente.');
-    }
-  };
-
-  const abrirConfirmarModal = (parceiro: Interacao) => {
-    setParceiroSelecionado(parceiro);
-    setModalConfirmarAberto(true);
-  };
-
-  const confirmarInteracao = async (teveOportunidade: boolean) => {
-    setModalConfirmarAberto(false);
-    if (teveOportunidade) {
-      setModalOportunidadeAberto(true);
-    } else if (parceiroSelecionado) {
-      await registrarInteracao(parceiroSelecionado.id, tipoSelecionado[parceiroSelecionado.id] || '', false);
-      setParceiroSelecionado(null);
-    }
-  };
-
-  const salvarOportunidade = async () => {
-    if (!valorOportunidade) {
-      alert('Por favor, preencha o valor da oportunidade.');
-      return;
-    }
-    if (parceiroSelecionado) {
-      await registrarInteracao(
-        parceiroSelecionado.id,
-        tipoSelecionado[parceiroSelecionado.id] || '',
-        true,
-        parseFloat(valorOportunidade.replace(',', '.')),
-        observacaoOportunidade
-      );
-      setModalOportunidadeAberto(false);
-      setValorOportunidade('');
-      setObservacaoOportunidade('');
-      setParceiroSelecionado(null);
     }
   };
 
@@ -184,33 +147,75 @@ export default function InteracoesPage() {
                     </TableThead>
                     <TableTbody>
                       {pendentes.map((item) => (
-                        <TableTr key={item.id}>
-                          <TableTd>{item.parceiro}</TableTd>
-                          <TableTd>{item.unidade}</TableTd>
-                          <TableTd>{item.classificacao}</TableTd>
-                          <TableTd>{item.status}</TableTd>
-                          <TableTd>
-                            <Select
-                              placeholder="Tipo"
-                              value={tipoSelecionado[item.id] || ''}
-                              onChange={(value) => {
-                                if (value) {
-                                  setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
-                                }
-                              }}
-                              data={[
-                                { value: 'whatsapp', label: 'WhatsApp' },
-                                { value: 'email', label: 'E-mail' },
-                                { value: 'ligacao', label: 'Ligação' },
-                              ]}
-                            />
-                          </TableTd>
-                          <TableTd>
-                            <Button size="xs" onClick={() => abrirConfirmarModal(item)}>
-                              Marcar como interagido
-                            </Button>
-                          </TableTd>
-                        </TableTr>
+                        <>
+                          <TableTr key={item.id}>
+                            <TableTd>{item.parceiro}</TableTd>
+                            <TableTd>{item.unidade}</TableTd>
+                            <TableTd>{item.classificacao}</TableTd>
+                            <TableTd>{item.status}</TableTd>
+                            <TableTd>
+                              <Select
+                                placeholder="Tipo"
+                                value={tipoSelecionado[item.id] || ''}
+                                onChange={(value) => {
+                                  if (value) {
+                                    setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
+                                  }
+                                }}
+                                data={[
+                                  { value: 'whatsapp', label: 'WhatsApp' },
+                                  { value: 'email', label: 'E-mail' },
+                                  { value: 'ligacao', label: 'Ligação' },
+                                ]}
+                              />
+                            </TableTd>
+                            <TableTd>
+                              <Button size="xs" onClick={() => setExpandirId(item.id)}>
+                                Marcar como interagido
+                              </Button>
+                            </TableTd>
+                          </TableTr>
+                          {expandirId === item.id && (
+                            <TableTr>
+                              <TableTd colSpan={6}>
+                                <Group grow>
+                                  <TextInput
+                                    label="Valor da Oportunidade (R$)"
+                                    placeholder="5000"
+                                    value={valorOportunidade}
+                                    onChange={(e) => setValorOportunidade(e.currentTarget.value)}
+                                  />
+                                  <Textarea
+                                    label="Observação"
+                                    placeholder="Detalhes adicionais..."
+                                    value={observacaoOportunidade}
+                                    onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
+                                  />
+                                </Group>
+                                <Group mt="md" justify="end">
+                                  <Button
+                                    color="blue"
+                                    onClick={() => registrarInteracao(
+                                      item.id,
+                                      tipoSelecionado[item.id] || '',
+                                      true,
+                                      parseFloat(valorOportunidade.replace(',', '.')),
+                                      observacaoOportunidade
+                                    )}
+                                  >
+                                    Salvar e Criar Oportunidade
+                                  </Button>
+                                  <Button
+                                    color="gray"
+                                    onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
+                                  >
+                                    Só Interagir
+                                  </Button>
+                                </Group>
+                              </TableTd>
+                            </TableTr>
+                          )}
+                        </>
                       ))}
                     </TableTbody>
                   </Table>
@@ -257,51 +262,6 @@ export default function InteracoesPage() {
           <OportunidadesKanban />
         </>
       )}
-
-      {/* Modal Pergunta */}
-      <Modal
-        opened={modalConfirmarAberto}
-        onClose={() => setModalConfirmarAberto(false)}
-        title="Teve oportunidade?"
-        centered
-      >
-        <Group justify="center" mt="md">
-          <Button onClick={() => confirmarInteracao(true)} color="blue">
-            Sim
-          </Button>
-          <Button onClick={() => confirmarInteracao(false)} color="gray">
-            Não
-          </Button>
-        </Group>
-      </Modal>
-
-      {/* Modal Oportunidade */}
-      <Modal
-        opened={modalOportunidadeAberto}
-        onClose={() => setModalOportunidadeAberto(false)}
-        title="Detalhes da Oportunidade"
-        centered
-      >
-        <TextInput
-          label="Valor da Oportunidade (R$)"
-          placeholder="Ex: 5000"
-          value={valorOportunidade}
-          onChange={(e) => setValorOportunidade(e.currentTarget.value)}
-          mt="md"
-        />
-        <Textarea
-          label="Observação"
-          placeholder="Detalhes adicionais..."
-          value={observacaoOportunidade}
-          onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
-          mt="md"
-        />
-        <Group justify="end" mt="md">
-          <Button onClick={salvarOportunidade}>
-            Salvar
-          </Button>
-        </Group>
-      </Modal>
     </SidebarGestor>
   );
 }
