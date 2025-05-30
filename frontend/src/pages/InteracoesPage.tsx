@@ -22,7 +22,7 @@ import {
   TextInput,
   Textarea,
 } from '@mantine/core';
-import { useModals } from '@mantine/modals'; // ✅ Importa useModals
+import { useModals } from '@mantine/modals'; // ✅ Hook para modais
 
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
@@ -39,7 +39,7 @@ interface Interacao {
 }
 
 export default function InteracoesPage() {
-  const modals = useModals(); // ✅ Hook para abrir os Modals
+  const modals = useModals(); // ✅ Instância dos modais
 
   const [pendentes, setPendentes] = useState<Interacao[]>([]);
   const [interagidos, setInteragidos] = useState<Interacao[]>([]);
@@ -48,7 +48,6 @@ export default function InteracoesPage() {
   const [metaAtual, setMetaAtual] = useState(0);
   const [metaTotal, setMetaTotal] = useState(10);
   const [tipoSelecionado, setTipoSelecionado] = useState<{ [key: number]: string }>({});
-  const [parceiroSelecionado, setParceiroSelecionado] = useState<Interacao | null>(null);
 
   const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user;
   const token = localStorage.getItem('token');
@@ -106,15 +105,12 @@ export default function InteracoesPage() {
   };
 
   const abrirModalPergunta = (parceiro: Interacao) => {
-    setParceiroSelecionado(parceiro);
-
     modals.openConfirmModal({
       title: 'Teve oportunidade?',
       labels: { confirm: 'Sim', cancel: 'Não' },
+      centered: true,
       onCancel: async () => {
-        if (parceiro) {
-          await registrarInteracao(parceiro.id, tipoSelecionado[parceiro.id] || '', false);
-        }
+        await registrarInteracao(parceiro.id, tipoSelecionado[parceiro.id] || '', false);
       },
       onConfirm: () => abrirModalOportunidade(parceiro),
     });
@@ -126,6 +122,7 @@ export default function InteracoesPage() {
 
     modals.openModal({
       title: 'Detalhes da Oportunidade',
+      centered: true,
       children: (
         <>
           <TextInput
