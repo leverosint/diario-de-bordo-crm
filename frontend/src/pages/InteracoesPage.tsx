@@ -19,10 +19,10 @@ import {
   Badge,
   Select,
   Grid,
+  Modal,
   TextInput,
   Textarea,
 } from '@mantine/core';
-import { useModals } from '@mantine/modals'; // ✅ Hook para modais
 
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
@@ -39,8 +39,6 @@ interface Interacao {
 }
 
 export default function InteracoesPage() {
-  const modals = useModals(); // ✅ Instância dos modais
-
   const [pendentes, setPendentes] = useState<Interacao[]>([]);
   const [interagidos, setInteragidos] = useState<Interacao[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -48,6 +46,13 @@ export default function InteracoesPage() {
   const [metaAtual, setMetaAtual] = useState(0);
   const [metaTotal, setMetaTotal] = useState(10);
   const [tipoSelecionado, setTipoSelecionado] = useState<{ [key: number]: string }>({});
+
+  const [parceiroSelecionado, setParceiroSelecionado] = useState<Interacao | null>(null);
+  const [modalConfirmarAberto, setModalConfirmarAberto] = useState(false);
+  const [modalOportunidadeAberto, setModalOportunidadeAberto] = useState(false);
+
+  const [valorOportunidade, setValorOportunidade] = useState('');
+  const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
 
   const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user;
   const token = localStorage.getItem('token');
@@ -104,64 +109,39 @@ export default function InteracoesPage() {
     }
   };
 
-  const abrirModalPergunta = (parceiro: Interacao) => {
-    modals.openConfirmModal({
-      title: 'Teve oportunidade?',
-      labels: { confirm: 'Sim', cancel: 'Não' },
-      centered: true,
-      onCancel: async () => {
-        await registrarInteracao(parceiro.id, tipoSelecionado[parceiro.id] || '', false);
-      },
-      onConfirm: () => abrirModalOportunidade(parceiro),
-    });
+  const abrirConfirmarModal = (parceiro: Interacao) => {
+    setParceiroSelecionado(parceiro);
+    setModalConfirmarAberto(true);
   };
 
-  const abrirModalOportunidade = (parceiro: Interacao) => {
-    let valor = '';
-    let observacao = '';
+  const confirmarInteracao = async (teveOportunidade: boolean) => {
+    setModalConfirmarAberto(false);
+    if (teveOportunidade) {
+      setModalOportunidadeAberto(true);
+    } else if (parceiroSelecionado) {
+      await registrarInteracao(parceiroSelecionado.id, tipoSelecionado[parceiroSelecionado.id] || '', false);
+      setParceiroSelecionado(null);
+    }
+  };
 
-    modals.openModal({
-      title: 'Detalhes da Oportunidade',
-      centered: true,
-      children: (
-        <>
-          <TextInput
-            label="Valor da Oportunidade (R$)"
-            placeholder="Ex: 5000"
-            value={valor}
-            onChange={(e) => (valor = e.currentTarget.value)}
-            mt="md"
-          />
-          <Textarea
-            label="Observação"
-            placeholder="Detalhes adicionais..."
-            value={observacao}
-            onChange={(e) => (observacao = e.currentTarget.value)}
-            mt="md"
-          />
-          <Group justify="end" mt="md">
-            <Button
-              onClick={async () => {
-                if (!valor) {
-                  alert('Por favor, preencha o valor da oportunidade.');
-                  return;
-                }
-                await registrarInteracao(
-                  parceiro.id,
-                  tipoSelecionado[parceiro.id] || '',
-                  true,
-                  parseFloat(valor.replace(',', '.')),
-                  observacao
-                );
-                modals.closeAll();
-              }}
-            >
-              Salvar
-            </Button>
-          </Group>
-        </>
-      ),
-    });
+  const salvarOportunidade = async () => {
+    if (!valorOportunidade) {
+      alert('Por favor, preencha o valor da oportunidade.');
+      return;
+    }
+    if (parceiroSelecionado) {
+      await registrarInteracao(
+        parceiroSelecionado.id,
+        tipoSelecionado[parceiroSelecionado.id] || '',
+        true,
+        parseFloat(valorOportunidade.replace(',', '.')),
+        observacaoOportunidade
+      );
+      setModalOportunidadeAberto(false);
+      setValorOportunidade('');
+      setObservacaoOportunidade('');
+      setParceiroSelecionado(null);
+    }
   };
 
   useEffect(() => {
@@ -185,7 +165,6 @@ export default function InteracoesPage() {
       ) : (
         <>
           <Grid>
-            {/* Coluna de Pendentes */}
             <Grid.Col span={6}>
               <Divider label="A Interagir" mb="xs" />
               {pendentes.length === 0 ? (
@@ -227,7 +206,7 @@ export default function InteracoesPage() {
                             />
                           </TableTd>
                           <TableTd>
-                            <Button size="xs" onClick={() => abrirModalPergunta(item)}>
+                            <Button size="xs" onClick={() => abrirConfirmarModal(item)}>
                               Marcar como interagido
                             </Button>
                           </TableTd>
@@ -239,7 +218,6 @@ export default function InteracoesPage() {
               )}
             </Grid.Col>
 
-            {/* Coluna de Interagidos */}
             <Grid.Col span={6}>
               <Divider label="Interagidos Hoje" mb="xs" />
               {interagidos.length === 0 ? (
@@ -275,11 +253,55 @@ export default function InteracoesPage() {
             </Grid.Col>
           </Grid>
 
-          {/* Kanban Oportunidades */}
           <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
           <OportunidadesKanban />
         </>
       )}
+
+      {/* Modal Pergunta */}
+      <Modal
+        opened={modalConfirmarAberto}
+        onClose={() => setModalConfirmarAberto(false)}
+        title="Teve oportunidade?"
+        centered
+      >
+        <Group justify="center" mt="md">
+          <Button onClick={() => confirmarInteracao(true)} color="blue">
+            Sim
+          </Button>
+          <Button onClick={() => confirmarInteracao(false)} color="gray">
+            Não
+          </Button>
+        </Group>
+      </Modal>
+
+      {/* Modal Oportunidade */}
+      <Modal
+        opened={modalOportunidadeAberto}
+        onClose={() => setModalOportunidadeAberto(false)}
+        title="Detalhes da Oportunidade"
+        centered
+      >
+        <TextInput
+          label="Valor da Oportunidade (R$)"
+          placeholder="Ex: 5000"
+          value={valorOportunidade}
+          onChange={(e) => setValorOportunidade(e.currentTarget.value)}
+          mt="md"
+        />
+        <Textarea
+          label="Observação"
+          placeholder="Detalhes adicionais..."
+          value={observacaoOportunidade}
+          onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
+          mt="md"
+        />
+        <Group justify="end" mt="md">
+          <Button onClick={salvarOportunidade}>
+            Salvar
+          </Button>
+        </Group>
+      </Modal>
     </SidebarGestor>
   );
 }
