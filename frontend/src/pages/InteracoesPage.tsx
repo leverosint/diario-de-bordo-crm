@@ -147,8 +147,8 @@ export default function InteracoesPage() {
                     </TableThead>
                     <TableTbody>
                       {pendentes.map((item) => (
-                        <>
-                          <TableTr key={item.id}>
+                        <div key={item.id}>
+                          <TableTr>
                             <TableTd>{item.parceiro}</TableTd>
                             <TableTd>{item.unidade}</TableTd>
                             <TableTd>{item.classificacao}</TableTd>
@@ -211,11 +211,22 @@ export default function InteracoesPage() {
                                   >
                                     Só Interagir
                                   </Button>
+                                  <Button
+                                    color="red"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setExpandirId(null);
+                                      setValorOportunidade('');
+                                      setObservacaoOportunidade('');
+                                    }}
+                                  >
+                                    Cancelar
+                                  </Button>
                                 </Group>
                               </TableTd>
                             </TableTr>
                           )}
-                        </>
+                        </div>
                       ))}
                     </TableTbody>
                   </Table>
