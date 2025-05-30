@@ -23,6 +23,7 @@ import {
   Textarea,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
+import OportunidadesKanban from './OportunidadesPage'; // ✅ Importa o Kanban
 
 interface Interacao {
   id: number;
@@ -244,6 +245,10 @@ export default function InteracoesPage() {
               </Table>
             </ScrollArea>
           )}
+
+          {/* Kanban Oportunidades */}
+          <Divider label="Oportunidades" mt="lg" mb="md" />
+          <OportunidadesKanban />
         </>
       )}
 
