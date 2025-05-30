@@ -18,6 +18,9 @@ import {
   Divider,
   Badge,
   Select,
+  Modal,
+  TextInput,
+  Textarea,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 
@@ -40,6 +43,11 @@ export default function InteracoesPage() {
   const [metaAtual, setMetaAtual] = useState(0);
   const [metaTotal, setMetaTotal] = useState(10);
   const [tipoSelecionado, setTipoSelecionado] = useState<{ [key: number]: string }>({});
+  const [parceiroSelecionado, setParceiroSelecionado] = useState<Interacao | null>(null);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [modalOportunidadeAberto, setModalOportunidadeAberto] = useState(false);
+  const [valorOportunidade, setValorOportunidade] = useState('');
+  const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
   const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user;
   const token = localStorage.getItem('token');
 
@@ -67,19 +75,61 @@ export default function InteracoesPage() {
     }
   };
 
-  const registrarInteracao = async (parceiroId: number) => {
-    const tipo = tipoSelecionado[parceiroId];
-    if (!tipo) {
-      alert('Selecione o tipo de interação antes de registrar.');
+  const handleMarcarInteragido = (parceiro: Interacao) => {
+    setParceiroSelecionado(parceiro);
+    setModalAberto(true);
+  };
+
+  const handleRespostaOportunidade = async (teveOportunidade: boolean) => {
+    setModalAberto(false);
+    if (teveOportunidade) {
+      setModalOportunidadeAberto(true);
+    } else {
+      await registrarInteracao(parceiroSelecionado?.id!, tipoSelecionado[parceiroSelecionado?.id!] || '', false);
+    }
+  };
+
+  const handleSalvarOportunidade = async () => {
+    if (!valorOportunidade) {
+      alert('Por favor, preencha o valor da oportunidade.');
       return;
     }
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, {
+      await registrarInteracao(
+        parceiroSelecionado?.id!,
+        tipoSelecionado[parceiroSelecionado?.id!] || '',
+        true,
+        parseFloat(valorOportunidade.replace(',', '.')),
+        observacaoOportunidade
+      );
+    } catch (error) {
+      console.error('Erro ao registrar oportunidade:', error);
+    } finally {
+      setModalOportunidadeAberto(false);
+      setValorOportunidade('');
+      setObservacaoOportunidade('');
+    }
+  };
+
+  const registrarInteracao = async (
+    parceiroId: number,
+    tipo: string,
+    oportunidade: boolean,
+    valor?: number,
+    observacao?: string
+  ) => {
+    try {
+      const data = {
         parceiro: parceiroId,
-        tipo: tipo,
+        tipo,
         entrou_em_contato: true,
-      }, {
+        oportunidade,
+        valor_oportunidade: valor,
+        observacao,
+      };
+
+      await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, data, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -138,9 +188,11 @@ export default function InteracoesPage() {
                         <Select
                           placeholder="Tipo"
                           value={tipoSelecionado[item.id] || ''}
-                          onChange={(value) =>
-                            setTipoSelecionado((prev) => ({ ...prev, [item.id]: value || '' }))
-                          }
+                          onChange={(value) => {
+                            if (value) {
+                              setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
+                            }
+                          }}
                           data={[
                             { value: 'whatsapp', label: 'WhatsApp' },
                             { value: 'email', label: 'E-mail' },
@@ -149,7 +201,7 @@ export default function InteracoesPage() {
                         />
                       </TableTd>
                       <TableTd>
-                        <Button size="xs" onClick={() => registrarInteracao(item.id)}>
+                        <Button size="xs" onClick={() => handleMarcarInteragido(item)}>
                           Marcar como interagido
                         </Button>
                       </TableTd>
@@ -194,6 +246,48 @@ export default function InteracoesPage() {
           )}
         </>
       )}
+
+      {/* Modal Pergunta Oportunidade */}
+      <Modal
+        opened={modalAberto}
+        onClose={() => setModalAberto(false)}
+        title="Teve oportunidade?"
+        centered
+      >
+        <Group justify="center" mt="md">
+          <Button onClick={() => handleRespostaOportunidade(true)} color="blue">
+            Sim
+          </Button>
+          <Button onClick={() => handleRespostaOportunidade(false)} color="gray">
+            Não
+          </Button>
+        </Group>
+      </Modal>
+
+      {/* Modal Informar Valor e Observação */}
+      <Modal
+        opened={modalOportunidadeAberto}
+        onClose={() => setModalOportunidadeAberto(false)}
+        title="Detalhes da Oportunidade"
+        centered
+      >
+        <TextInput
+          label="Valor da Oportunidade (R$)"
+          placeholder="Ex: 5000"
+          value={valorOportunidade}
+          onChange={(e) => setValorOportunidade(e.currentTarget.value)}
+        />
+        <Textarea
+          label="Observação"
+          placeholder="Detalhes adicionais..."
+          value={observacaoOportunidade}
+          onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
+          mt="md"
+        />
+        <Group justify="end" mt="md">
+          <Button onClick={handleSalvarOportunidade}>Salvar</Button>
+        </Group>
+      </Modal>
     </SidebarGestor>
   );
 }

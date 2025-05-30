@@ -1,12 +1,11 @@
 from rest_framework import serializers
-from .models import Parceiro, CanalVenda, Interacao, CustomUser
+from .models import Parceiro, CanalVenda, Interacao, CustomUser, Oportunidade
 
 # ===== Canal de Venda =====
 class CanalVendaSerializer(serializers.ModelSerializer):
     class Meta:
         model = CanalVenda
         fields = ['id', 'nome']
-
 
 # ===== Parceiro =====
 class ParceiroSerializer(serializers.ModelSerializer):
@@ -42,7 +41,6 @@ class ParceiroSerializer(serializers.ModelSerializer):
             'atualizado_em',
         ]
 
-
 # ===== Interação (Completa) =====
 class InteracaoSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
@@ -63,7 +61,6 @@ class InteracaoSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['data_interacao', 'usuario']
 
-
 # ===== Interações Pendentes (Simples) =====
 class InteracaoPendentesSerializer(serializers.ModelSerializer):
     parceiro = serializers.SerializerMethodField()
@@ -80,3 +77,30 @@ class InteracaoPendentesSerializer(serializers.ModelSerializer):
 
     def get_parceiro(self, obj):
         return obj.parceiro
+
+# ===== Oportunidade (Kanban) =====
+class OportunidadeSerializer(serializers.ModelSerializer):
+    parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
+    dias_sem_interacao = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Oportunidade
+        fields = [
+            'id',
+            'parceiro',
+            'parceiro_nome',
+            'valor',
+            'observacao',
+            'etapa',
+            'data_criacao',
+            'dias_sem_interacao',
+        ]
+        read_only_fields = ['data_criacao']
+
+    def get_dias_sem_interacao(self, obj):
+        from django.utils.timezone import now
+        ultima_interacao = obj.parceiro.interacoes.order_by('-data_interacao').first()
+        if ultima_interacao:
+            delta = now().date() - ultima_interacao.data_interacao.date()
+            return delta.days
+        return None

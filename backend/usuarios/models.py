@@ -85,7 +85,6 @@ class Parceiro(models.Model):
         self.tm = self.total_geral / len(meses_com_valor) if meses_com_valor else 0
         self.recorrencia = len(meses_com_valor)
 
-        # Mapeia cada mês ao número e ano
         mes_ref = {
             'janeiro': (1, 2025), 'fevereiro': (2, 2025), 'marco': (3, 2025), 'abril': (4, 2025),
             'maio': (5, 2025), 'junho': (6, 2025), 'julho': (7, 2025), 'agosto': (8, 2025),
@@ -139,3 +138,22 @@ class Interacao(models.Model):
 
     def __str__(self):
         return f"{self.parceiro.parceiro} - {self.usuario.username} ({self.tipo})"
+
+
+# 🚀 Modelo de Oportunidade com Etapa, Valor e Observação
+class Oportunidade(models.Model):
+    ETAPA_CHOICES = [
+        ('oportunidade', 'Oportunidade'),
+        ('orcamento', 'Orçamento'),
+        ('pedido', 'Pedido'),
+        ('perdida', 'Venda Perdida'),
+    ]
+
+    parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='oportunidades')
+    valor = models.DecimalField(max_digits=12, decimal_places=2)
+    etapa = models.CharField(max_length=20, choices=ETAPA_CHOICES, default='oportunidade')
+    observacao = models.TextField(blank=True, null=True)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.parceiro.parceiro} - R$ {self.valor} - {self.get_etapa_display()}"

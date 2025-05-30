@@ -8,23 +8,22 @@ from django.db import transaction
 from django.utils.timezone import now
 from datetime import timedelta, datetime
 import pandas as pd
-import openpyxl
-from openpyxl.styles import Font, Alignment, PatternFill
 from django.http import HttpResponse
 import io
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Parceiro, CanalVenda, Interacao
+from .models import Parceiro, CanalVenda, Interacao, Oportunidade
 from .serializers import (
     ParceiroSerializer,
     CanalVendaSerializer,
     InteracaoSerializer,
     InteracaoPendentesSerializer,
+    OportunidadeSerializer,
 )
 
 User = get_user_model()
 
-
+# ===== Parceiro =====
 class ParceiroViewSet(viewsets.ModelViewSet):
     queryset = Parceiro.objects.all()
     serializer_class = ParceiroSerializer
@@ -40,7 +39,7 @@ class ParceiroViewSet(viewsets.ModelViewSet):
             return Parceiro.objects.filter(consultor=user.id_vendedor)
         return Parceiro.objects.none()
 
-
+# ===== Upload Parceiros (Excel) =====
 class UploadParceirosView(viewsets.ViewSet):
     parser_classes = [MultiPartParser]
     permission_classes = [IsAuthenticated]
@@ -87,18 +86,17 @@ class UploadParceirosView(viewsets.ViewSet):
                         'marco_2': row.get('Março 2', 0) or 0,
                     }
 
-                    parceiro_obj, _ = Parceiro.objects.update_or_create(
+                    Parceiro.objects.update_or_create(
                         codigo=parceiro_data['codigo'],
                         defaults=parceiro_data
                     )
-                    parceiro_obj.save()
 
             return Response({'mensagem': 'Parceiros importados com sucesso'}, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({'erro': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
+# ===== Login JWT =====
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
@@ -129,24 +127,17 @@ class LoginView(APIView):
         else:
             return Response({"erro": "Credenciais inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
 
-
+# ===== Canal Venda =====
 class CanalVendaListView(generics.ListAPIView):
     queryset = CanalVenda.objects.all()
     serializer_class = CanalVendaSerializer
     permission_classes = [IsAuthenticated]
 
-
-class ParceiroCreateUpdateView(generics.CreateAPIView):
-    queryset = Parceiro.objects.all()
-    serializer_class = ParceiroSerializer
-    permission_classes = [IsAuthenticated]
-
-
 class CanalVendaViewSet(viewsets.ModelViewSet):
     queryset = CanalVenda.objects.all()
     serializer_class = CanalVendaSerializer
 
-
+# ===== Interações =====
 class InteracaoViewSet(viewsets.ModelViewSet):
     serializer_class = InteracaoSerializer
     permission_classes = [IsAuthenticated]
@@ -164,7 +155,6 @@ class InteracaoViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
 
-
 class InteracoesHojeView(generics.ListAPIView):
     serializer_class = InteracaoSerializer
     permission_classes = [IsAuthenticated]
@@ -172,7 +162,6 @@ class InteracoesHojeView(generics.ListAPIView):
     def get_queryset(self):
         hoje = now().date()
         return Interacao.objects.filter(data_interacao__date=hoje, usuario=self.request.user)
-
 
 class InteracoesPendentesView(APIView):
     permission_classes = [IsAuthenticated]
@@ -209,9 +198,9 @@ class InteracoesPendentesView(APIView):
                     'unidade': parceiro.unidade,
                     'classificacao': parceiro.classificacao,
                     'status': parceiro.status,
-                    'tipo': ultima_interacao.tipo if ultima_interacao else '',
-                    'data_interacao': ultima_interacao.data_interacao if ultima_interacao else '',
-                    'entrou_em_contato': ultima_interacao.entrou_em_contato if ultima_interacao else False,
+                    'tipo': ultima_interacao.tipo,
+                    'data_interacao': ultima_interacao.data_interacao,
+                    'entrou_em_contato': ultima_interacao.entrou_em_contato,
                 })
             elif not em_periodo_bloqueio:
                 parceiros_pendentes.append({
@@ -229,7 +218,6 @@ class InteracoesPendentesView(APIView):
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
         return Response(parceiros_pendentes)
-
 
 class InteracoesMetasView(APIView):
     permission_classes = [IsAuthenticated]
@@ -254,7 +242,6 @@ class InteracoesMetasView(APIView):
             'meta_atingida': meta_atingida
         })
 
-
 class HistoricoInteracoesView(generics.ListAPIView):
     serializer_class = InteracaoSerializer
     permission_classes = [IsAuthenticated]
@@ -263,10 +250,24 @@ class HistoricoInteracoesView(generics.ListAPIView):
         parceiro_id = self.request.query_params.get('parceiro_id')
         return Interacao.objects.filter(parceiro_id=parceiro_id).order_by('-data_interacao')
 
-
 class RegistrarInteracaoView(generics.CreateAPIView):
     serializer_class = InteracaoSerializer
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
+
+# ===== Oportunidades =====
+class OportunidadeViewSet(viewsets.ModelViewSet):
+    serializer_class = OportunidadeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.tipo_user == 'ADMIN':
+            return Oportunidade.objects.all()
+        elif user.tipo_user == 'GESTOR':
+            return Oportunidade.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+        elif user.tipo_user == 'VENDEDOR':
+            return Oportunidade.objects.filter(parceiro__consultor=user.id_vendedor)
+        return Oportunidade.objects.none()

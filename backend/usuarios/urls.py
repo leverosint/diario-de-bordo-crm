@@ -1,8 +1,7 @@
-from django.urls import path, include 
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     LoginView,
-    ParceiroCreateUpdateView,
     UploadParceirosView,
     ParceiroViewSet,
     CanalVendaViewSet,
@@ -11,37 +10,33 @@ from .views import (
     InteracoesPendentesView,
     HistoricoInteracoesView,
     RegistrarInteracaoView,
-    InteracoesMetasView,  # ✅ Importação correta
+    InteracoesMetasView,
+    OportunidadeViewSet,  # 🚀 ViewSet Oportunidade
 )
 
 # ROTAS DO ROUTER
 router = DefaultRouter()
 router.register(r'parceiros-list', ParceiroViewSet, basename='parceiros')
 router.register(r'canais-venda', CanalVendaViewSet, basename='canais-venda')
-# A linha abaixo foi removida para evitar conflito
-# router.register(r'interacoes', InteracaoViewSet, basename='interacoes')
+router.register(r'oportunidades', OportunidadeViewSet, basename='oportunidades')  # 🚀 Nova rota para Oportunidades
 
 # URLPATTERNS PRINCIPAIS
 urlpatterns = [
     path('login/', LoginView.as_view()),
-    path('parceiros/', ParceiroCreateUpdateView.as_view()),  # criação manual
-    path('upload-parceiros/', UploadParceirosView.as_view({'post': 'create'})),  # via Excel
-    path('', include(router.urls)),  # inclui todos os ViewSets acima
-
-    # ✅ Corrigido: view correta para metas
-    path('interacoes/pendentes/metas/', InteracoesMetasView.as_view(), name='interacoes-metas'),
+        path('upload-parceiros/', UploadParceirosView.as_view({'post': 'create'})),  # Upload via Excel
+    path('', include(router.urls)),  # Inclui todas as rotas dos ViewSets acima
 ]
 
-# VIEWS ADICIONAIS ESPECÍFICAS DE INTERAÇÃO
+# VIEWS ADICIONAIS ESPECÍFICAS
 urlpatterns += [
-    # Rotas específicas para o InteracaoViewSet
+    # Rotas específicas para o InteracaoViewSet (sem usar o router, pois são personalizadas)
     path('interacoes/', InteracaoViewSet.as_view({'get': 'list', 'post': 'create'}), name='interacoes-list'),
     path('interacoes/<int:pk>/', InteracaoViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}), name='interacoes-detail'),
-    path('interacoes/exportar-excel/', InteracaoViewSet.as_view({'get': 'exportar_excel'}), name='interacoes-exportar'),
 
-    # Rotas específicas para as outras views de interação
-    path('interacoes/hoje/', InteracoesHojeView.as_view(), name='interacoes-hoje'),
+    # Rotas específicas para outras views
     path('interacoes/pendentes/', InteracoesPendentesView.as_view(), name='interacoes-pendentes'),
+    path('interacoes/pendentes/metas/', InteracoesMetasView.as_view(), name='interacoes-metas'),
+    path('interacoes/hoje/', InteracoesHojeView.as_view(), name='interacoes-hoje'),
     path('interacoes/historico/', HistoricoInteracoesView.as_view(), name='interacoes-historico'),
     path('interacoes/registrar/', RegistrarInteracaoView.as_view(), name='registrar-interacao'),
 ]
