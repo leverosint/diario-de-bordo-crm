@@ -4,17 +4,16 @@ import {
   Card,
   Title,
   Text,
-  Button,
-  Modal,
   Group,
-  Select,
+  ScrollArea,
 } from '@mantine/core';
 import {
-    DragDropContext,
-    Droppable,
-    Draggable,
-  } from '@hello-pangea/dnd';
-  import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
+  DragDropContext,
+  Droppable,
+  Draggable,
+} from '@hello-pangea/dnd';
+import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
+
 import SidebarGestor from '../components/SidebarGestor';
 
 interface Oportunidade {
@@ -29,18 +28,16 @@ interface Oportunidade {
 }
 
 const etapasKanban = [
-  { id: 'oportunidade', titulo: 'Oportunidade', color: 'blue' },
-  { id: 'orcamento', titulo: 'Orçamento', color: 'green' },
-  { id: 'pedido', titulo: 'Pedido', color: 'yellow' },
-  { id: 'perdida', titulo: 'Venda Perdida', color: 'red' },
+  { id: 'oportunidade', titulo: 'Oportunidade', color: '#228be6' },
+  { id: 'orcamento', titulo: 'Orçamento', color: '#40c057' },
+  { id: 'pedido', titulo: 'Pedido', color: '#fab005' },
+  { id: 'perdida', titulo: 'Venda Perdida', color: '#fa5252' },
 ];
 
 export default function OportunidadesPage() {
   const [oportunidades, setOportunidades] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [modalAberto, setModalAberto] = useState(false);
-  const [novaEtapa, setNovaEtapa] = useState('');
   const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user;
   const token = localStorage.getItem('token');
 
@@ -92,7 +89,7 @@ export default function OportunidadesPage() {
         <Text style={{ textAlign: 'center', color: 'red' }}>{erro}</Text>
       ) : (
         <DragDropContext onDragEnd={onDragEnd}>
-          <Group align="start" wrap="nowrap">
+          <Group align="start" wrap="nowrap" style={{ overflowX: 'auto', paddingBottom: '20px' }}>
             {etapasKanban.map((etapa) => (
               <Droppable droppableId={etapa.id} key={etapa.id}>
                 {(provided: DroppableProvided) => (
@@ -100,40 +97,55 @@ export default function OportunidadesPage() {
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     style={{
-                      minWidth: 250,
+                      minWidth: 280,
+                      maxWidth: 320,
                       padding: 10,
                       backgroundColor: '#f8f9fa',
                       borderRadius: 8,
                       border: `2px solid ${etapa.color}`,
                       margin: '0 10px',
+                      flexShrink: 0,
                     }}
                   >
-                    <div style={{ textAlign: 'center', color: etapa.color }}>
-                      <Title order={4}>{etapa.titulo}</Title>
+                    <div style={{ textAlign: 'center', color: etapa.color, marginBottom: 10 }}>
+                      <Title order={4}>
+                        {etapa.titulo} ({oportunidades.filter((o) => o.etapa === etapa.id).length})
+                      </Title>
                     </div>
-                    {oportunidades
-                      .filter((o) => o.etapa === etapa.id)
-                      .sort((a, b) => b.dias_sem_interacao - a.dias_sem_interacao)
-                      .map((o, index) => (
-                        <Draggable draggableId={o.id.toString()} index={index} key={o.id}>
-                          {(provided: DraggableProvided) => (
-                            <Card
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              withBorder
-                              shadow="sm"
-                              mt="md"
-                            >
-                              <Text fw={700}>{o.parceiro_nome}</Text>
-                              <Text>Valor: R$ {o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</Text>
-                              <Text>Sem interação: {o.dias_sem_interacao} dias</Text>
-                              <Text size="sm" color="dimmed">{o.observacao}</Text>
-                            </Card>
-                          )}
-                        </Draggable>
-                      ))}
-                    {provided.placeholder}
+
+                    <ScrollArea h={500}>
+                      {oportunidades
+                        .filter((o) => o.etapa === etapa.id)
+                        .sort((a, b) => b.dias_sem_interacao - a.dias_sem_interacao)
+                        .map((o, index) => (
+                          <Draggable draggableId={o.id.toString()} index={index} key={o.id}>
+                            {(provided: DraggableProvided) => (
+                              <Card
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                withBorder
+                                shadow="md"
+                                radius="md"
+                                p="md"
+                                style={{ marginBottom: 15 }}
+                              >
+                                <Text fw={700} size="md">{o.parceiro_nome}</Text>
+                                <Text size="sm" color="gray">Valor: R$ {o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</Text>
+                                <Text size="xs" color="dimmed" mt={5}>
+                                  Sem interação: {o.dias_sem_interacao} dias
+                                </Text>
+                                {o.observacao && (
+                                  <Text size="xs" mt={5} color="gray">
+                                    {o.observacao}
+                                  </Text>
+                                )}
+                              </Card>
+                            )}
+                          </Draggable>
+                        ))}
+                      {provided.placeholder}
+                    </ScrollArea>
                   </div>
                 )}
               </Droppable>
@@ -141,34 +153,6 @@ export default function OportunidadesPage() {
           </Group>
         </DragDropContext>
       )}
-
-      {/* Modal de movimentação manual */}
-      <Modal
-        opened={modalAberto}
-        onClose={() => setModalAberto(false)}
-        title="Mover Oportunidade"
-        centered
-      >
-        <Select
-          label="Nova Etapa"
-          placeholder="Selecione a etapa"
-          value={novaEtapa}
-          onChange={(value) => setNovaEtapa(value || '')}
-          data={etapasKanban.map((e) => ({ value: e.id, label: e.titulo }))}
-        />
-        <Group justify="flex-end" mt="md">
-          <Button
-            onClick={() => {
-              if (novaEtapa) {
-                // colocar a lógica de movimentação manual aqui
-                setModalAberto(false);
-              }
-            }}
-          >
-            Mover
-          </Button>
-        </Group>
-      </Modal>
     </SidebarGestor>
   );
 }
