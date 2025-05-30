@@ -21,9 +21,11 @@ import {
   Modal,
   TextInput,
   Textarea,
+  Grid,
 } from '@mantine/core';
+const { Col } = Grid;
 import SidebarGestor from '../components/SidebarGestor';
-import OportunidadesKanban from './OportunidadesPage'; // ✅ Importa o Kanban
+import OportunidadesKanban from './OportunidadesPage';
 
 interface Interacao {
   id: number;
@@ -161,93 +163,99 @@ export default function InteracoesPage() {
         <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
       ) : (
         <>
-          <Divider label="A Interagir" mb="xs" />
+          <Grid>
+            {/* Coluna de Pendentes */}
+            <Col span={6}>
+              <Divider label="A Interagir" mb="xs" />
+              {pendentes.length === 0 ? (
+                <Text>Nenhuma interação pendente encontrada.</Text>
+              ) : (
+                <ScrollArea h={300}>
+                  <Table striped highlightOnHover withTableBorder>
+                    <TableThead>
+                      <TableTr>
+                        <TableTh>Parceiro</TableTh>
+                        <TableTh>Unidade</TableTh>
+                        <TableTh>Classificação</TableTh>
+                        <TableTh>Status</TableTh>
+                        <TableTh>Tipo</TableTh>
+                        <TableTh>Ação</TableTh>
+                      </TableTr>
+                    </TableThead>
+                    <TableTbody>
+                      {pendentes.map((item) => (
+                        <TableTr key={item.id}>
+                          <TableTd>{item.parceiro}</TableTd>
+                          <TableTd>{item.unidade}</TableTd>
+                          <TableTd>{item.classificacao}</TableTd>
+                          <TableTd>{item.status}</TableTd>
+                          <TableTd>
+                            <Select
+                              placeholder="Tipo"
+                              value={tipoSelecionado[item.id] || ''}
+                              onChange={(value) => {
+                                if (value) {
+                                  setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
+                                }
+                              }}
+                              data={[
+                                { value: 'whatsapp', label: 'WhatsApp' },
+                                { value: 'email', label: 'E-mail' },
+                                { value: 'ligacao', label: 'Ligação' },
+                              ]}
+                            />
+                          </TableTd>
+                          <TableTd>
+                            <Button size="xs" onClick={() => handleMarcarInteragido(item)}>
+                              Marcar como interagido
+                            </Button>
+                          </TableTd>
+                        </TableTr>
+                      ))}
+                    </TableTbody>
+                  </Table>
+                </ScrollArea>
+              )}
+            </Col>
 
-          {pendentes.length === 0 ? (
-            <Text>Nenhuma interação pendente encontrada.</Text>
-          ) : (
-            <ScrollArea>
-              <Table striped highlightOnHover withTableBorder>
-                <TableThead>
-                  <TableTr>
-                    <TableTh>Parceiro</TableTh>
-                    <TableTh>Unidade</TableTh>
-                    <TableTh>Classificação</TableTh>
-                    <TableTh>Status</TableTh>
-                    <TableTh>Tipo</TableTh>
-                    <TableTh>Ação</TableTh>
-                  </TableTr>
-                </TableThead>
-                <TableTbody>
-                  {pendentes.map((item) => (
-                    <TableTr key={item.id}>
-                      <TableTd>{item.parceiro}</TableTd>
-                      <TableTd>{item.unidade}</TableTd>
-                      <TableTd>{item.classificacao}</TableTd>
-                      <TableTd>{item.status}</TableTd>
-                      <TableTd>
-                        <Select
-                          placeholder="Tipo"
-                          value={tipoSelecionado[item.id] || ''}
-                          onChange={(value) => {
-                            if (value) {
-                              setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
-                            }
-                          }}
-                          data={[
-                            { value: 'whatsapp', label: 'WhatsApp' },
-                            { value: 'email', label: 'E-mail' },
-                            { value: 'ligacao', label: 'Ligação' },
-                          ]}
-                        />
-                      </TableTd>
-                      <TableTd>
-                        <Button size="xs" onClick={() => handleMarcarInteragido(item)}>
-                          Marcar como interagido
-                        </Button>
-                      </TableTd>
-                    </TableTr>
-                  ))}
-                </TableTbody>
-              </Table>
-            </ScrollArea>
-          )}
-
-          <Divider label="Interagidos Hoje" mt="lg" mb="xs" />
-
-          {interagidos.length === 0 ? (
-            <Text>Nenhum parceiro interagido hoje.</Text>
-          ) : (
-            <ScrollArea>
-              <Table striped highlightOnHover withTableBorder>
-                <TableThead>
-                  <TableTr>
-                    <TableTh>Parceiro</TableTh>
-                    <TableTh>Unidade</TableTh>
-                    <TableTh>Classificação</TableTh>
-                    <TableTh>Status</TableTh>
-                    <TableTh>Data</TableTh>
-                    <TableTh>Tipo</TableTh>
-                  </TableTr>
-                </TableThead>
-                <TableTbody>
-                  {interagidos.map((item) => (
-                    <TableTr key={item.id}>
-                      <TableTd>{item.parceiro}</TableTd>
-                      <TableTd>{item.unidade}</TableTd>
-                      <TableTd>{item.classificacao}</TableTd>
-                      <TableTd>{item.status}</TableTd>
-                      <TableTd>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</TableTd>
-                      <TableTd>{item.tipo}</TableTd>
-                    </TableTr>
-                  ))}
-                </TableTbody>
-              </Table>
-            </ScrollArea>
-          )}
+            {/* Coluna de Interagidos */}
+            <Col span={6}>
+              <Divider label="Interagidos Hoje" mb="xs" />
+              {interagidos.length === 0 ? (
+                <Text>Nenhum parceiro interagido hoje.</Text>
+              ) : (
+                <ScrollArea h={300}>
+                  <Table striped highlightOnHover withTableBorder>
+                    <TableThead>
+                      <TableTr>
+                        <TableTh>Parceiro</TableTh>
+                        <TableTh>Unidade</TableTh>
+                        <TableTh>Classificação</TableTh>
+                        <TableTh>Status</TableTh>
+                        <TableTh>Data</TableTh>
+                        <TableTh>Tipo</TableTh>
+                      </TableTr>
+                    </TableThead>
+                    <TableTbody>
+                      {interagidos.map((item) => (
+                        <TableTr key={item.id}>
+                          <TableTd>{item.parceiro}</TableTd>
+                          <TableTd>{item.unidade}</TableTd>
+                          <TableTd>{item.classificacao}</TableTd>
+                          <TableTd>{item.status}</TableTd>
+                          <TableTd>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</TableTd>
+                          <TableTd>{item.tipo}</TableTd>
+                        </TableTr>
+                      ))}
+                    </TableTbody>
+                  </Table>
+                </ScrollArea>
+              )}
+            </Col>
+          </Grid>
 
           {/* Kanban Oportunidades */}
-          <Divider label="Oportunidades" mt="lg" mb="md" />
+          <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
           <OportunidadesKanban />
         </>
       )}
@@ -281,6 +289,7 @@ export default function InteracoesPage() {
           placeholder="Ex: 5000"
           value={valorOportunidade}
           onChange={(e) => setValorOportunidade(e.currentTarget.value)}
+          mt="md"
         />
         <Textarea
           label="Observação"
