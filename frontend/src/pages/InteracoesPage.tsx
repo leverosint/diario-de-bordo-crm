@@ -178,7 +178,7 @@ export default function InteracoesPage() {
                           {expandirId === item.id && (
                             <TableTr>
                               <TableTd colSpan={6}>
-                                <Group grow>
+                                <Group grow style={{ marginTop: 10 }}>
                                   <TextInput
                                     label="Valor da Oportunidade (R$)"
                                     placeholder="5000"
@@ -192,7 +192,7 @@ export default function InteracoesPage() {
                                     onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
                                   />
                                 </Group>
-                                <Group mt="md" justify="end">
+                                <Group mt="md" justify="flex-end">
                                   <Button
                                     color="blue"
                                     onClick={() => registrarInteracao(
