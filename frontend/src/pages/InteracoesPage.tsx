@@ -18,12 +18,12 @@ import {
   Divider,
   Badge,
   Select,
-  Modal,
+  Grid,
   TextInput,
   Textarea,
-  Grid,
 } from '@mantine/core';
-const { Col } = Grid;
+import { useModals } from '@mantine/modals'; // ✅ Importa useModals
+
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
 
@@ -39,6 +39,8 @@ interface Interacao {
 }
 
 export default function InteracoesPage() {
+  const modals = useModals(); // ✅ Hook para abrir os Modals
+
   const [pendentes, setPendentes] = useState<Interacao[]>([]);
   const [interagidos, setInteragidos] = useState<Interacao[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -47,10 +49,7 @@ export default function InteracoesPage() {
   const [metaTotal, setMetaTotal] = useState(10);
   const [tipoSelecionado, setTipoSelecionado] = useState<{ [key: number]: string }>({});
   const [parceiroSelecionado, setParceiroSelecionado] = useState<Interacao | null>(null);
-  const [modalAberto, setModalAberto] = useState(false);
-  const [modalOportunidadeAberto, setModalOportunidadeAberto] = useState(false);
-  const [valorOportunidade, setValorOportunidade] = useState('');
-  const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
+
   const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user;
   const token = localStorage.getItem('token');
 
@@ -75,43 +74,6 @@ export default function InteracoesPage() {
       setErro('Erro ao carregar interações. Verifique sua conexão ou login.');
     } finally {
       setCarregando(false);
-    }
-  };
-
-  const handleMarcarInteragido = (parceiro: Interacao) => {
-    setParceiroSelecionado(parceiro);
-    setModalAberto(true);
-  };
-
-  const handleRespostaOportunidade = async (teveOportunidade: boolean) => {
-    setModalAberto(false);
-    if (teveOportunidade) {
-      setModalOportunidadeAberto(true);
-    } else {
-      await registrarInteracao(parceiroSelecionado?.id!, tipoSelecionado[parceiroSelecionado?.id!] || '', false);
-    }
-  };
-
-  const handleSalvarOportunidade = async () => {
-    if (!valorOportunidade) {
-      alert('Por favor, preencha o valor da oportunidade.');
-      return;
-    }
-
-    try {
-      await registrarInteracao(
-        parceiroSelecionado?.id!,
-        tipoSelecionado[parceiroSelecionado?.id!] || '',
-        true,
-        parseFloat(valorOportunidade.replace(',', '.')),
-        observacaoOportunidade
-      );
-    } catch (error) {
-      console.error('Erro ao registrar oportunidade:', error);
-    } finally {
-      setModalOportunidadeAberto(false);
-      setValorOportunidade('');
-      setObservacaoOportunidade('');
     }
   };
 
@@ -143,6 +105,68 @@ export default function InteracoesPage() {
     }
   };
 
+  const abrirModalPergunta = (parceiro: Interacao) => {
+    setParceiroSelecionado(parceiro);
+
+    modals.openConfirmModal({
+      title: 'Teve oportunidade?',
+      labels: { confirm: 'Sim', cancel: 'Não' },
+      onCancel: async () => {
+        if (parceiro) {
+          await registrarInteracao(parceiro.id, tipoSelecionado[parceiro.id] || '', false);
+        }
+      },
+      onConfirm: () => abrirModalOportunidade(parceiro),
+    });
+  };
+
+  const abrirModalOportunidade = (parceiro: Interacao) => {
+    let valor = '';
+    let observacao = '';
+
+    modals.openModal({
+      title: 'Detalhes da Oportunidade',
+      children: (
+        <>
+          <TextInput
+            label="Valor da Oportunidade (R$)"
+            placeholder="Ex: 5000"
+            value={valor}
+            onChange={(e) => (valor = e.currentTarget.value)}
+            mt="md"
+          />
+          <Textarea
+            label="Observação"
+            placeholder="Detalhes adicionais..."
+            value={observacao}
+            onChange={(e) => (observacao = e.currentTarget.value)}
+            mt="md"
+          />
+          <Group justify="end" mt="md">
+            <Button
+              onClick={async () => {
+                if (!valor) {
+                  alert('Por favor, preencha o valor da oportunidade.');
+                  return;
+                }
+                await registrarInteracao(
+                  parceiro.id,
+                  tipoSelecionado[parceiro.id] || '',
+                  true,
+                  parseFloat(valor.replace(',', '.')),
+                  observacao
+                );
+                modals.closeAll();
+              }}
+            >
+              Salvar
+            </Button>
+          </Group>
+        </>
+      ),
+    });
+  };
+
   useEffect(() => {
     carregarDados();
   }, []);
@@ -165,7 +189,7 @@ export default function InteracoesPage() {
         <>
           <Grid>
             {/* Coluna de Pendentes */}
-            <Col span={6}>
+            <Grid.Col span={6}>
               <Divider label="A Interagir" mb="xs" />
               {pendentes.length === 0 ? (
                 <Text>Nenhuma interação pendente encontrada.</Text>
@@ -206,7 +230,7 @@ export default function InteracoesPage() {
                             />
                           </TableTd>
                           <TableTd>
-                            <Button size="xs" onClick={() => handleMarcarInteragido(item)}>
+                            <Button size="xs" onClick={() => abrirModalPergunta(item)}>
                               Marcar como interagido
                             </Button>
                           </TableTd>
@@ -216,10 +240,10 @@ export default function InteracoesPage() {
                   </Table>
                 </ScrollArea>
               )}
-            </Col>
+            </Grid.Col>
 
             {/* Coluna de Interagidos */}
-            <Col span={6}>
+            <Grid.Col span={6}>
               <Divider label="Interagidos Hoje" mb="xs" />
               {interagidos.length === 0 ? (
                 <Text>Nenhum parceiro interagido hoje.</Text>
@@ -251,7 +275,7 @@ export default function InteracoesPage() {
                   </Table>
                 </ScrollArea>
               )}
-            </Col>
+            </Grid.Col>
           </Grid>
 
           {/* Kanban Oportunidades */}
@@ -259,49 +283,6 @@ export default function InteracoesPage() {
           <OportunidadesKanban />
         </>
       )}
-
-      {/* Modal Pergunta Oportunidade */}
-      <Modal
-        opened={modalAberto}
-        onClose={() => setModalAberto(false)}
-        title="Teve oportunidade?"
-        centered
-      >
-        <Group justify="center" mt="md">
-          <Button onClick={() => handleRespostaOportunidade(true)} color="blue">
-            Sim
-          </Button>
-          <Button onClick={() => handleRespostaOportunidade(false)} color="gray">
-            Não
-          </Button>
-        </Group>
-      </Modal>
-
-      {/* Modal Informar Valor e Observação */}
-      <Modal
-        opened={modalOportunidadeAberto}
-        onClose={() => setModalOportunidadeAberto(false)}
-        title="Detalhes da Oportunidade"
-        centered
-      >
-        <TextInput
-          label="Valor da Oportunidade (R$)"
-          placeholder="Ex: 5000"
-          value={valorOportunidade}
-          onChange={(e) => setValorOportunidade(e.currentTarget.value)}
-          mt="md"
-        />
-        <Textarea
-          label="Observação"
-          placeholder="Detalhes adicionais..."
-          value={observacaoOportunidade}
-          onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
-          mt="md"
-        />
-        <Group justify="end" mt="md">
-          <Button onClick={handleSalvarOportunidade}>Salvar</Button>
-        </Group>
-      </Modal>
     </SidebarGestor>
   );
 }
