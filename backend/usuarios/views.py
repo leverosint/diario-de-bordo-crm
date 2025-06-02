@@ -6,10 +6,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.timezone import now
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncMonth
 from datetime import timedelta, datetime
 import pandas as pd
-from django.http import HttpResponse
-import io
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade
@@ -273,4 +273,106 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
         return Oportunidade.objects.none()
 
     def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)  # <--- ADICIONADO
+        serializer.save(usuario=self.request.user)
+
+# ===== Dashboard KPIs =====
+class DashboardKPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.tipo_user == 'ADMIN':
+            parceiros = Parceiro.objects.all()
+            interacoes = Interacao.objects.all()
+            oportunidades = Oportunidade.objects.all()
+        elif user.tipo_user == 'GESTOR':
+            parceiros = Parceiro.objects.filter(canal_venda__in=user.canais_venda.all())
+            interacoes = Interacao.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+            oportunidades = Oportunidade.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+        else:  # VENDEDOR
+            parceiros = Parceiro.objects.filter(consultor=user.id_vendedor)
+            interacoes = Interacao.objects.filter(usuario=user)
+            oportunidades = Oportunidade.objects.filter(usuario=user)
+
+        status_counts = {
+            '30 dias': parceiros.filter(status='30d s/ Fat').count(),
+            '60 dias': parceiros.filter(status='60d s/ Fat').count(),
+            '90 dias': parceiros.filter(status='90d s/ Fat').count(),
+            '120 dias': parceiros.filter(status='120d s/ Fat').count(),
+        }
+
+        total_interacoes = interacoes.count()
+        total_oportunidades = oportunidades.count()
+        total_orcamentos = oportunidades.filter(etapa='orcamento').count()
+        total_pedidos = oportunidades.filter(etapa='pedido').count()
+
+        valor_total = oportunidades.aggregate(Sum('valor'))['valor__sum'] or 0
+        ticket_medio = (valor_total / total_pedidos) if total_pedidos > 0 else 0
+
+        taxa_interacao_oportunidade = (total_oportunidades / total_interacoes * 100) if total_interacoes > 0 else 0
+        taxa_oportunidade_orcamento = (total_orcamentos / total_oportunidades * 100) if total_oportunidades > 0 else 0
+        taxa_orcamento_venda = (total_pedidos / total_orcamentos * 100) if total_orcamentos > 0 else 0
+
+        return Response([
+            {"title": "30 dias", "value": status_counts['30 dias']},
+            {"title": "60 dias", "value": status_counts['60 dias']},
+            {"title": "90 dias", "value": status_counts['90 dias']},
+            {"title": "120 dias", "value": status_counts['120 dias']},
+            {"title": "Interações", "value": total_interacoes},
+            {"title": "Oportunidades", "value": total_oportunidades},
+            {"title": "Taxa Interação → Oportunidade", "value": f"{taxa_interacao_oportunidade:.1f}%"},
+            {"title": "Taxa Oportunidade → Orçamento", "value": f"{taxa_oportunidade_orcamento:.1f}%"},
+            {"title": "Taxa Orçamento → Venda", "value": f"{taxa_orcamento_venda:.1f}%"},
+            {"title": "Valor Gerado", "value": f"R$ {valor_total:,.2f}"},
+            {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}"},
+        ])
+
+# ===== Funil de Conversão =====
+class DashboardFunilView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.tipo_user == 'ADMIN':
+            interacoes = Interacao.objects.all()
+            oportunidades = Oportunidade.objects.all()
+        elif user.tipo_user == 'GESTOR':
+            interacoes = Interacao.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+            oportunidades = Oportunidade.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+        else:
+            interacoes = Interacao.objects.filter(usuario=user)
+            oportunidades = Oportunidade.objects.filter(usuario=user)
+
+        return Response([
+            {"name": "Interações", "value": interacoes.count()},
+            {"name": "Oportunidades", "value": oportunidades.filter(etapa='oportunidade').count()},
+            {"name": "Orçamentos", "value": oportunidades.filter(etapa='orcamento').count()},
+            {"name": "Pedidos", "value": oportunidades.filter(etapa='pedido').count()},
+            {"name": "Perdidas", "value": oportunidades.filter(etapa='perdida').count()},
+        ])
+
+# ===== Evolução Mensal de Oportunidades =====
+class DashboardOportunidadesMensaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.tipo_user == 'ADMIN':
+            oportunidades = Oportunidade.objects.all()
+        elif user.tipo_user == 'GESTOR':
+            oportunidades = Oportunidade.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+        else:
+            oportunidades = Oportunidade.objects.filter(usuario=user)
+
+        dados = oportunidades.annotate(mes=TruncMonth('data_criacao')) \
+            .values('mes') \
+            .annotate(total=Count('id')) \
+            .order_by('mes')
+
+        return Response([
+            {
+                "mes": dado['mes'].strftime('%b %Y'),
+                "oportunidades": dado['total']
+            }
+            for dado in dados
+        ])
