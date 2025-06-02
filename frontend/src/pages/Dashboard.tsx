@@ -91,7 +91,7 @@ export default function Dashboard() {
             <Grid.Col span={3} key={kpi.title}>
               <Card shadow="sm" padding="lg" radius="md" withBorder>
                 <Title order={4}>{kpi.title}</Title>
-                <Text size="xl" weight={700}>
+                <Text size="xl" fw={700}>
                   {kpi.value}
                 </Text>
               </Card>
