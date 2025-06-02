@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.timezone import now
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Max
 from django.db.models.functions import TruncMonth
 from datetime import timedelta, datetime
 import pandas as pd
@@ -275,7 +275,7 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
 
-# ===== Dashboard KPIs =====
+# ===== Dashboard KPIs (com parceiros) =====
 class DashboardKPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -313,19 +313,32 @@ class DashboardKPIView(APIView):
         taxa_oportunidade_orcamento = (total_orcamentos / total_oportunidades * 100) if total_oportunidades > 0 else 0
         taxa_orcamento_venda = (total_pedidos / total_orcamentos * 100) if total_orcamentos > 0 else 0
 
-        return Response([
-            {"title": "30 dias", "value": status_counts['30 dias']},
-            {"title": "60 dias", "value": status_counts['60 dias']},
-            {"title": "90 dias", "value": status_counts['90 dias']},
-            {"title": "120 dias", "value": status_counts['120 dias']},
-            {"title": "Interações", "value": total_interacoes},
-            {"title": "Oportunidades", "value": total_oportunidades},
-            {"title": "Taxa Interação → Oportunidade", "value": f"{taxa_interacao_oportunidade:.1f}%"},
-            {"title": "Taxa Oportunidade → Orçamento", "value": f"{taxa_oportunidade_orcamento:.1f}%"},
-            {"title": "Taxa Orçamento → Venda", "value": f"{taxa_orcamento_venda:.1f}%"},
-            {"title": "Valor Gerado", "value": f"R$ {valor_total:,.2f}"},
-            {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}"},
-        ])
+        parceiros_data = []
+        for parceiro in parceiros:
+            ultima_interacao = parceiro.interacoes.aggregate(ultima=Max('data_interacao'))['ultima']
+            parceiros_data.append({
+                'parceiro': parceiro.parceiro,
+                'status': parceiro.status,
+                'total': parceiro.total_geral,
+                'ultima_interacao': ultima_interacao.strftime('%d/%m/%Y') if ultima_interacao else None,
+            })
+
+        return Response({
+            "kpis": [
+                {"title": "30 dias", "value": status_counts['30 dias']},
+                {"title": "60 dias", "value": status_counts['60 dias']},
+                {"title": "90 dias", "value": status_counts['90 dias']},
+                {"title": "120 dias", "value": status_counts['120 dias']},
+                {"title": "Interações", "value": total_interacoes},
+                {"title": "Oportunidades", "value": total_oportunidades},
+                {"title": "Taxa Interação > Oportunidade", "value": f"{taxa_interacao_oportunidade:.1f}%"},
+                {"title": "Taxa Oportunidade > Orçamento", "value": f"{taxa_oportunidade_orcamento:.1f}%"},
+                {"title": "Taxa Orçamento > Pedido", "value": f"{taxa_orcamento_venda:.1f}%"},
+                {"title": "Valor Gerado", "value": f"R$ {valor_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
+                {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
+            ],
+            "parceiros": parceiros_data
+        })
 
 # ===== Funil de Conversão =====
 class DashboardFunilView(APIView):
