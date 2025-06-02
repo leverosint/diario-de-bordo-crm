@@ -7,24 +7,15 @@ import {
   Title,
   Text,
   Loader,
-   MultiSelect,
-  Table,
-  ScrollArea,
+  Tooltip,
+  Accordion,
+  MultiSelect,
 } from '@mantine/core';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
   FunnelChart, Funnel, LabelList, PieChart, Pie, Cell, Legend
 } from 'recharts';
 import SidebarGestor from '../components/SidebarGestor';
-
-const STATUS_COLORS: { [key: string]: string } = {
-  '30 dias': '#40c057',    // Verde
-  '60 dias': '#fab005',    // Amarelo
-  '90 dias': '#fd7e14',    // Laranja
-  '120 dias': '#fa5252',   // Vermelho
-};
-
-const OTHER_CARD_COLOR = '#4CDDDD'; // Cor default para Interações e Taxas
 
 const COLORS = ['#005A64', '#4CDDDD', '#40c057', '#fab005', '#fa5252'];
 
@@ -34,10 +25,10 @@ export default function Dashboard() {
   const [kpis, setKpis] = useState<any[]>([]);
   const [dadosFunil, setDadosFunil] = useState<any[]>([]);
   const [dadosBarra, setDadosBarra] = useState<any[]>([]);
-  const [parceiros, setParceiros] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filtros
+  const [categoriaFiltro, setCategoriaFiltro] = useState<string[]>([]);
   const [statusFiltro, setStatusFiltro] = useState<string[]>([]);
 
   const token = localStorage.getItem('token');
@@ -45,19 +36,19 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const headers = { Authorization: `Bearer ${token}` };
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
 
-      const [kpiRes, funilRes, barraRes, parceirosRes] = await Promise.all([
+      const [kpiRes, funilRes, barraRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/dashboard/kpis/`, { headers }),
         axios.get(`${import.meta.env.VITE_API_URL}/dashboard/funil/`, { headers }),
         axios.get(`${import.meta.env.VITE_API_URL}/dashboard/oportunidades-mensais/`, { headers }),
-        axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers }),
       ]);
 
       setKpis(kpiRes.data);
       setDadosFunil(funilRes.data);
       setDadosBarra(barraRes.data);
-      setParceiros(parceirosRes.data);
     } catch (error) {
       console.error('Erro ao buscar dados do dashboard:', error);
     } finally {
@@ -97,22 +88,6 @@ export default function Dashboard() {
     );
   }
 
-  // Separar KPIs por grupos
-  const statusKpis = kpis.filter(kpi =>
-    ['30 dias', '60 dias', '90 dias', '120 dias'].includes(kpi.title)
-  );
-  const interacoesKpis = kpis.filter(kpi =>
-    ['Interações', 'Oportunidades', 'Valor Gerado', 'Ticket Médio'].includes(kpi.title)
-  );
-  const taxasKpis = kpis.filter(kpi =>
-    kpi.title.includes('Taxa')
-  );
-
-  // Aplicar filtro
-  const parceirosFiltrados = statusFiltro.length > 0
-    ? parceiros.filter((p: any) => statusFiltro.includes(p.status))
-    : parceiros;
-
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <div style={{ padding: 20 }}>
@@ -126,6 +101,15 @@ export default function Dashboard() {
         <Grid mb="xl">
           <Grid.Col span={6}>
             <MultiSelect
+              data={['Estrutura', 'Clareza', 'Informação']}
+              label="Filtrar por Categoria"
+              placeholder="Selecione categorias"
+              value={categoriaFiltro}
+              onChange={setCategoriaFiltro}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <MultiSelect
               data={['30 dias', '60 dias', '90 dias', '120 dias']}
               label="Filtrar por Status"
               placeholder="Selecione status"
@@ -135,53 +119,43 @@ export default function Dashboard() {
           </Grid.Col>
         </Grid>
 
-        {/* Área de Status */}
-        <Title order={4} mt="md" mb="sm">Status dos Parceiros</Title>
-        <Grid>
-          {statusKpis.map((kpi) => (
-            <Grid.Col span={3} key={kpi.title}>
-              <Card shadow="lg" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[kpi.title] }}>
-                <Title order={5} style={{ color: '#fff' }}>{kpi.title}</Title>
-                <Text size="xl" fw={700} color="#fff">
-                  {kpi.value}
-                </Text>
-              </Card>
-            </Grid.Col>
-          ))}
-        </Grid>
+        {/* KPIs */}
+        <Accordion multiple variant="separated" radius="md">
+          <Grid>
+          {kpis.map((kpi) => (
+  <Grid.Col span={3} key={kpi.title}>
 
-        {/* Área de Interações e Oportunidades */}
-        <Title order={4} mt="xl" mb="sm">Interações e Oportunidades</Title>
-        <Grid>
-          {interacoesKpis.map((kpi) => (
-            <Grid.Col span={3} key={kpi.title}>
-              <Card shadow="lg" padding="lg" radius="lg" withBorder style={{ backgroundColor: OTHER_CARD_COLOR }}>
-                <Title order={5} style={{ color: '#fff' }}>{kpi.title}</Title>
-                <Text size="xl" fw={700} color="#fff">
-                  {kpi.value}
-                </Text>
-              </Card>
-            </Grid.Col>
-          ))}
-        </Grid>
-
-        {/* Área de Taxas */}
-        <Title order={4} mt="xl" mb="sm">Taxas de Conversão</Title>
-        <Grid>
-          {taxasKpis.map((kpi) => (
-            <Grid.Col span={4} key={kpi.title}>
-              <Card shadow="lg" padding="lg" radius="lg" withBorder style={{ backgroundColor: OTHER_CARD_COLOR }}>
-                <Title order={5} style={{ color: '#fff' }}>{kpi.title}</Title>
-                <Text size="xl" fw={700} color="#fff">
-                  {kpi.value}
-                </Text>
-              </Card>
-            </Grid.Col>
-          ))}
-        </Grid>
+                <Accordion.Item value={kpi.title}>
+                  <Accordion.Control>
+                    <Tooltip label="Clique para ver mais detalhes" withArrow>
+                      <Card
+                        shadow="lg"
+                        padding="lg"
+                        radius="lg"
+                        withBorder
+                        style={{ cursor: 'pointer', transition: '0.3s', backgroundColor: '#f9fafb' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)')}
+                      >
+                        <Title order={4} style={{ color: '#005A64' }}>{kpi.title}</Title>
+                        <Text size="xl" fw={700}>
+                          {kpi.value}
+                        </Text>
+                      </Card>
+                    </Tooltip>
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <Text size="sm" color="dimmed">Informação detalhada sobre {kpi.title}.</Text>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Grid.Col>
+            ))}
+          </Grid>
+        </Accordion>
 
         {/* Gráficos */}
         <Grid mt="xl">
+          {/* Gráfico de Funil */}
           <Grid.Col span={4}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Funil de Conversão</Title>
@@ -195,21 +169,22 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
+          {/* Gráfico de Pizza */}
           <Grid.Col span={4}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Distribuição de Status</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={statusKpis}
+                    data={kpis.filter(kpi => ['30 dias', '60 dias', '90 dias', '120 dias'].includes(kpi.title))}
                     dataKey="value"
                     nameKey="title"
                     outerRadius={100}
                     label
                   >
-                    {statusKpis.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
+                   {(kpis.map((_, index) => (
+  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+)))}
                   </Pie>
                   <Legend />
                 </PieChart>
@@ -217,6 +192,7 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
+          {/* Gráfico de Barras */}
           <Grid.Col span={4}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Evolução Mensal</Title>
@@ -231,37 +207,6 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
         </Grid>
-
-        {/* Tabela Dinâmica */}
-        <Title order={4} mt="xl" mb="sm">Parceiros</Title>
-        <ScrollArea>
-        <Table highlightOnHover striped>
-            <thead>
-              <tr>
-                <th>Parceiro</th>
-                <th>Status</th>
-                <th>Total Faturado</th>
-                <th>Consultor</th>
-                <th>Unidade</th>
-                <th>Última Interação</th>
-                <th>Última Venda</th>
-              </tr>
-            </thead>
-            <tbody>
-              {parceirosFiltrados.map((p: any) => (
-                <tr key={p.id}>
-                  <td>{p.parceiro}</td>
-                  <td>{p.status}</td>
-                  <td>R$ {p.total_geral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                  <td>{p.consultor}</td>
-                  <td>{p.unidade}</td>
-                  <td>{p.ultimo_fat ? new Date(p.ultimo_fat).toLocaleDateString() : '-'}</td>
-                  <td>{p.primeiro_fat ? new Date(p.primeiro_fat).toLocaleDateString() : '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </ScrollArea>
       </div>
     </SidebarGestor>
   );
