@@ -7,7 +7,7 @@ import {
   Title,
   Text,
   Loader,
-    MultiSelect,
+  MultiSelect,
   Table,
   ScrollArea,
 } from '@mantine/core';
@@ -23,8 +23,6 @@ const STATUS_COLORS: { [key: string]: string } = {
   '90 dias': '#fd7e14',    // Laranja
   '120 dias': '#fa5252',   // Vermelho
 };
-
-const OTHER_CARD_COLOR = '#4CDDDD'; // Cor default para Interações e Taxas
 
 const COLORS = ['#005A64', '#4CDDDD', '#40c057', '#fab005', '#fa5252'];
 
@@ -45,13 +43,15 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const headers = { Authorization: `Bearer ${token}` };
+      const headers = {
+        Authorization: `Bearer ${token}`,
+      };
 
       const [kpiRes, funilRes, barraRes, parceirosRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/dashboard/kpis/`, { headers }),
         axios.get(`${import.meta.env.VITE_API_URL}/dashboard/funil/`, { headers }),
         axios.get(`${import.meta.env.VITE_API_URL}/dashboard/oportunidades-mensais/`, { headers }),
-        axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers }),
+        axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers }), // <-- NOVO
       ]);
 
       setKpis(kpiRes.data);
@@ -97,18 +97,12 @@ export default function Dashboard() {
     );
   }
 
-  // Separar KPIs por grupos
-  const statusKpis = kpis.filter(kpi =>
-    ['30 dias', '60 dias', '90 dias', '120 dias'].includes(kpi.title)
-  );
-  const interacoesKpis = kpis.filter(kpi =>
-    ['Interações', 'Oportunidades', 'Valor Gerado', 'Ticket Médio'].includes(kpi.title)
-  );
-  const taxasKpis = kpis.filter(kpi =>
-    kpi.title.includes('Taxa')
-  );
+  // Aplicar filtro aos KPIs
+  const kpisFiltrados = statusFiltro.length > 0
+    ? kpis.filter((kpi) => statusFiltro.includes(kpi.title))
+    : kpis;
 
-  // Aplicar filtro
+  // Aplicar filtro aos Parceiros
   const parceirosFiltrados = statusFiltro.length > 0
     ? parceiros.filter((p: any) => statusFiltro.includes(p.status))
     : parceiros;
@@ -135,44 +129,22 @@ export default function Dashboard() {
           </Grid.Col>
         </Grid>
 
-        {/* Área de Status */}
-        <Title order={4} mt="md" mb="sm">Status dos Parceiros</Title>
+        {/* KPIs */}
         <Grid>
-          {statusKpis.map((kpi) => (
+          {kpisFiltrados.map((kpi) => (
             <Grid.Col span={3} key={kpi.title}>
-              <Card shadow="lg" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[kpi.title] }}>
-                <Title order={5} style={{ color: '#fff' }}>{kpi.title}</Title>
-                <Text size="xl" fw={700} color="#fff">
-                  {kpi.value}
-                </Text>
-              </Card>
-            </Grid.Col>
-          ))}
-        </Grid>
-
-        {/* Área de Interações e Oportunidades */}
-        <Title order={4} mt="xl" mb="sm">Interações e Oportunidades</Title>
-        <Grid>
-          {interacoesKpis.map((kpi) => (
-            <Grid.Col span={3} key={kpi.title}>
-              <Card shadow="lg" padding="lg" radius="lg" withBorder style={{ backgroundColor: OTHER_CARD_COLOR }}>
-                <Title order={5} style={{ color: '#fff' }}>{kpi.title}</Title>
-                <Text size="xl" fw={700} color="#fff">
-                  {kpi.value}
-                </Text>
-              </Card>
-            </Grid.Col>
-          ))}
-        </Grid>
-
-        {/* Área de Taxas */}
-        <Title order={4} mt="xl" mb="sm">Taxas de Conversão</Title>
-        <Grid>
-          {taxasKpis.map((kpi) => (
-            <Grid.Col span={4} key={kpi.title}>
-              <Card shadow="lg" padding="lg" radius="lg" withBorder style={{ backgroundColor: OTHER_CARD_COLOR }}>
-                <Title order={5} style={{ color: '#fff' }}>{kpi.title}</Title>
-                <Text size="xl" fw={700} color="#fff">
+              <Card
+                shadow="lg"
+                padding="lg"
+                radius="lg"
+                style={{
+                  backgroundColor: STATUS_COLORS[kpi.title] || '#4CDDDD',
+                  color: '#fff',
+                  textAlign: 'center',
+                }}
+              >
+                <Title order={5}>{kpi.title}</Title>
+                <Text size="xl" fw={700}>
                   {kpi.value}
                 </Text>
               </Card>
@@ -182,8 +154,9 @@ export default function Dashboard() {
 
         {/* Gráficos */}
         <Grid mt="xl">
+          {/* Gráfico de Funil */}
           <Grid.Col span={4}>
-            <Card shadow="sm" padding="lg" radius="lg" withBorder>
+            <Card shadow="sm" padding="lg" radius="lg">
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Funil de Conversão</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <FunnelChart>
@@ -195,19 +168,20 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
+          {/* Gráfico de Pizza */}
           <Grid.Col span={4}>
-            <Card shadow="sm" padding="lg" radius="lg" withBorder>
+            <Card shadow="sm" padding="lg" radius="lg">
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Distribuição de Status</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={statusKpis}
+                    data={kpisFiltrados}
                     dataKey="value"
                     nameKey="title"
                     outerRadius={100}
                     label
                   >
-                    {statusKpis.map((_, index) => (
+                    {kpisFiltrados.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -217,8 +191,9 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
+          {/* Gráfico de Barras */}
           <Grid.Col span={4}>
-            <Card shadow="sm" padding="lg" radius="lg" withBorder>
+            <Card shadow="sm" padding="lg" radius="lg">
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Evolução Mensal</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dadosBarra}>
@@ -232,10 +207,10 @@ export default function Dashboard() {
           </Grid.Col>
         </Grid>
 
-        {/* Tabela Dinâmica */}
+        {/* Tabela de Parceiros */}
         <Title order={4} mt="xl" mb="sm">Parceiros</Title>
         <ScrollArea>
-        <Table highlightOnHover striped>
+          <Table striped highlightOnHover>
             <thead>
               <tr>
                 <th>Parceiro</th>
