@@ -84,26 +84,32 @@ export default function InteracoesPage() {
     observacao?: string
   ) => {
     try {
-      const data = {
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // 1. Cria a interação
+      await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, {
         parceiro: parceiroId,
         tipo,
         entrou_em_contato: true,
-        oportunidade,
-        valor_oportunidade: valor,
-        observacao,
-      };
+      }, { headers });
 
-      await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, data, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // 2. Se for oportunidade, cria a oportunidade também
+      if (oportunidade && valor) {
+        await axios.post(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
+          parceiro: parceiroId,
+          valor: valor,
+          observacao: observacao,
+          etapa: 'oportunidade', // etapa inicial
+        }, { headers });
+      }
 
       setExpandirId(null);
       setValorOportunidade('');
       setObservacaoOportunidade('');
       await carregarDados();
     } catch (err) {
-      console.error('Erro ao registrar interação:', err);
-      alert('Erro ao registrar interação. Tente novamente.');
+      console.error('Erro ao registrar interação ou oportunidade:', err);
+      alert('Erro ao registrar interação ou oportunidade. Tente novamente.');
     }
   };
 
