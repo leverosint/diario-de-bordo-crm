@@ -12,15 +12,15 @@ import {
 } from '@mantine/core';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
-  FunnelChart, Funnel, LabelList, PieChart, Pie, Cell, Legend
+  FunnelChart, Funnel, LabelList, PieChart, Pie, Cell, Legend,
 } from 'recharts';
 import SidebarGestor from '../components/SidebarGestor';
 
 const STATUS_COLORS: { [key: string]: string } = {
-  '30 dias': '#40c057',    // verde
-  '60 dias': '#fab005',    // amarelo
-  '90 dias': '#fd7e14',    // laranja
-  '120 dias': '#fa5252',   // vermelho
+  '30 dias': '#40c057',
+  '60 dias': '#fab005',
+  '90 dias': '#fd7e14',
+  '120 dias': '#fa5252',
 };
 
 const COLORS = ['#005A64', '#4CDDDD', '#40c057', '#fab005', '#fa5252'];
@@ -33,18 +33,13 @@ export default function Dashboard() {
   const [dadosBarra, setDadosBarra] = useState<any[]>([]);
   const [tabelaParceiros, setTabelaParceiros] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Filtros
   const [statusFiltro, setStatusFiltro] = useState<string[]>([]);
-
   const token = localStorage.getItem('token');
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const headers = {
-        Authorization: `Bearer ${token}`,
-      };
+      const headers = { Authorization: `Bearer ${token}` };
 
       const [kpiRes, funilRes, barraRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/dashboard/kpis/`, { headers }),
@@ -95,14 +90,13 @@ export default function Dashboard() {
     );
   }
 
-  // Aplicar filtro nos KPIs e na Tabela
-  const kpisFiltrados = statusFiltro.length > 0
-    ? kpis.filter(kpi => statusFiltro.includes(kpi.title))
-    : kpis;
-
+  // Aplicar filtros
   const parceirosFiltrados = statusFiltro.length > 0
-    ? tabelaParceiros.filter((parceiro: any) => statusFiltro.includes(parceiro.status))
+    ? tabelaParceiros.filter((p: any) => statusFiltro.includes(p.status))
     : tabelaParceiros;
+
+  const parceirosInteracao = parceirosFiltrados.filter((p: any) => p.tem_interacao);
+  const parceirosOportunidade = parceirosFiltrados.filter((p: any) => p.tem_oportunidade);
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
@@ -126,43 +120,45 @@ export default function Dashboard() {
           </Grid.Col>
         </Grid>
 
-        {/* KPIs */}
+        {/* Seção 1: Quantidade de Parceiros sem Interações */}
+        <Title order={3} mb="md">Quantidade de Parceiros Sem Interações</Title>
         <Grid mb="xl">
-          {/* Bloco 1 - Status */}
           {['30 dias', '60 dias', '90 dias', '120 dias'].map(status => (
             <Grid.Col span={3} key={status}>
               <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}>
                 <Title order={4}>{status}</Title>
                 <Text size="xl" fw={700}>
-                  {kpisFiltrados.find(k => k.title === status)?.value || 0}
+                  {kpis.find(k => k.title === status)?.value || 0}
                 </Text>
               </Card>
             </Grid.Col>
           ))}
         </Grid>
 
+        {/* Seção 2: Interações, Oportunidades e Faturamento */}
+        <Title order={3} mb="md">Interações, Oportunidades e Faturamento</Title>
         <Grid mb="xl">
-          {/* Bloco 2 - Interações e Oportunidades */}
           {['Interações', 'Oportunidades', 'Valor Gerado', 'Ticket Médio'].map(title => (
             <Grid.Col span={3} key={title}>
               <Card shadow="md" padding="lg" radius="lg" withBorder>
                 <Title order={4}>{title}</Title>
                 <Text size="xl" fw={700}>
-                  {kpisFiltrados.find(k => k.title === title)?.value || 0}
+                  {kpis.find(k => k.title === title)?.value || 0}
                 </Text>
               </Card>
             </Grid.Col>
           ))}
         </Grid>
 
+        {/* Seção 3: Taxas por Etapa */}
+        <Title order={3} mb="md">Taxas de Conversão por Etapa (%)</Title>
         <Grid mb="xl">
-          {/* Bloco 3 - Taxas % */}
-          {['Taxa Interação > Oportunidade', 'Taxa Oportunidade > Orçamento', 'Taxa Orçamento > Pedido'].map(title => (
+          {['Taxa Interação → Oportunidade', 'Taxa Oportunidade → Orçamento', 'Taxa Orçamento → Venda'].map(title => (
             <Grid.Col span={4} key={title}>
               <Card shadow="md" padding="lg" radius="lg" withBorder>
                 <Title order={4}>{title}</Title>
                 <Text size="xl" fw={700}>
-                  {kpisFiltrados.find(k => k.title === title)?.value || '0%'}
+                  {kpis.find(k => k.title === title)?.value || '0%'}
                 </Text>
               </Card>
             </Grid.Col>
@@ -171,7 +167,7 @@ export default function Dashboard() {
 
         {/* Gráficos */}
         <Grid mt="xl">
-          {/* Gráfico de Funil */}
+          {/* Funil de Conversão */}
           <Grid.Col span={4}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Funil de Conversão</Title>
@@ -185,22 +181,22 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
-          {/* Gráfico de Pizza */}
+          {/* Distribuição de Status */}
           <Grid.Col span={4}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Distribuição de Status</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
-                    data={kpisFiltrados.filter(kpi => ['30 dias', '60 dias', '90 dias', '120 dias'].includes(kpi.title))}
+                    data={kpis.filter(kpi => ['30 dias', '60 dias', '90 dias', '120 dias'].includes(kpi.title))}
                     dataKey="value"
                     nameKey="title"
                     outerRadius={100}
                     label
                   >
-                    {(kpisFiltrados.map((_, index) => (
+                    {kpis.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    )))}
+                    ))}
                   </Pie>
                   <Legend />
                 </PieChart>
@@ -208,7 +204,7 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
-          {/* Gráfico de Barras */}
+          {/* Evolução Mensal */}
           <Grid.Col span={4}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Evolução Mensal</Title>
@@ -224,34 +220,75 @@ export default function Dashboard() {
           </Grid.Col>
         </Grid>
 
-        {/* Tabela de Parceiros */}
-        <Grid mt="xl">
-          <Grid.Col span={12}>
-            <Card shadow="sm" padding="lg" radius="lg" withBorder>
-              <Title order={5} mb="md" style={{ color: '#005A64' }}>Parceiros Filtrados</Title>
-              <Table striped highlightOnHover withTableBorder withColumnBorders>
-                <thead>
-                  <tr>
-                    <th>Parceiro</th>
-                    <th>Status</th>
-                    <th>Faturamento Total</th>
-                    <th>Última Interação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {parceirosFiltrados.map((p: any, idx: number) => (
-                    <tr key={idx}>
-                      <td>{p.parceiro}</td>
-                      <td>{p.status}</td>
-                      <td>R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                      <td>{p.ultima_interacao || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </Card>
-          </Grid.Col>
-        </Grid>
+        {/* Tabelas */}
+        <Title order={3} mt="xl" mb="md">Tabela de Parceiros</Title>
+        <Table striped highlightOnHover withTableBorder withColumnBorders>
+          <thead>
+            <tr>
+              <th>Parceiro</th>
+              <th>Status</th>
+              <th>Faturamento Total</th>
+              <th>Última Interação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {parceirosFiltrados.map((p: any, idx: number) => (
+              <tr key={idx}>
+                <td>{p.parceiro}</td>
+                <td>{p.status}</td>
+                <td>R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td>{p.ultima_interacao || '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+
+        {/* Tabela de Parceiros com Interação */}
+        <Title order={3} mt="xl" mb="md">Parceiros com Interações</Title>
+        <Table striped highlightOnHover withTableBorder withColumnBorders>
+          <thead>
+            <tr>
+              <th>Parceiro</th>
+              <th>Status</th>
+              <th>Faturamento Total</th>
+              <th>Última Interação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {parceirosInteracao.map((p: any, idx: number) => (
+              <tr key={idx}>
+                <td>{p.parceiro}</td>
+                <td>{p.status}</td>
+                <td>R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td>{p.ultima_interacao || '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+
+        {/* Tabela de Parceiros com Oportunidade */}
+        <Title order={3} mt="xl" mb="md">Parceiros com Oportunidades</Title>
+        <Table striped highlightOnHover withTableBorder withColumnBorders>
+          <thead>
+            <tr>
+              <th>Parceiro</th>
+              <th>Status</th>
+              <th>Faturamento Total</th>
+              <th>Última Interação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {parceirosOportunidade.map((p: any, idx: number) => (
+              <tr key={idx}>
+                <td>{p.parceiro}</td>
+                <td>{p.status}</td>
+                <td>R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td>{p.ultima_interacao || '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+
       </div>
     </SidebarGestor>
   );
