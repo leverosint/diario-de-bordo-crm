@@ -7,7 +7,7 @@ import {
   Title,
   Text,
   Loader,
-  MultiSelect,
+   MultiSelect,
   Table,
   ScrollArea,
 } from '@mantine/core';
@@ -25,6 +25,7 @@ const STATUS_COLORS: { [key: string]: string } = {
 };
 
 const OTHER_CARD_COLOR = '#4CDDDD'; // Cor default para Interações e Taxas
+
 const COLORS = ['#005A64', '#4CDDDD', '#40c057', '#fab005', '#fa5252'];
 
 export default function Dashboard() {
@@ -130,14 +131,12 @@ export default function Dashboard() {
               placeholder="Selecione status"
               value={statusFiltro}
               onChange={setStatusFiltro}
-              searchable
-              clearable
             />
           </Grid.Col>
         </Grid>
 
         {/* Área de Status */}
-        <Title order={4} mt="md" mb="sm" fw={700}>Status dos Parceiros</Title>
+        <Title order={4} mt="md" mb="sm">Status dos Parceiros</Title>
         <Grid>
           {statusKpis.map((kpi) => (
             <Grid.Col span={3} key={kpi.title}>
@@ -152,7 +151,7 @@ export default function Dashboard() {
         </Grid>
 
         {/* Área de Interações e Oportunidades */}
-        <Title order={4} mt="xl" mb="sm" fw={700}>Interações e Oportunidades</Title>
+        <Title order={4} mt="xl" mb="sm">Interações e Oportunidades</Title>
         <Grid>
           {interacoesKpis.map((kpi) => (
             <Grid.Col span={3} key={kpi.title}>
@@ -167,7 +166,7 @@ export default function Dashboard() {
         </Grid>
 
         {/* Área de Taxas */}
-        <Title order={4} mt="xl" mb="sm" fw={700}>Taxas de Conversão</Title>
+        <Title order={4} mt="xl" mb="sm">Taxas de Conversão</Title>
         <Grid>
           {taxasKpis.map((kpi) => (
             <Grid.Col span={4} key={kpi.title}>
@@ -234,10 +233,10 @@ export default function Dashboard() {
         </Grid>
 
         {/* Tabela Dinâmica */}
-        <Title order={4} mt="xl" mb="sm" fw={700}>Parceiros</Title>
+        <Title order={4} mt="xl" mb="sm">Parceiros</Title>
         <ScrollArea>
-          <Table highlightOnHover striped withColumnBorders>
-            <thead style={{ backgroundColor: '#f1f3f5' }}>
+        <Table highlightOnHover striped>
+            <thead>
               <tr>
                 <th>Parceiro</th>
                 <th>Status</th>
