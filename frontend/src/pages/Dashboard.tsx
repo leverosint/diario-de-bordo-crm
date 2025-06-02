@@ -7,8 +7,7 @@ import {
   Title,
   Text,
   Loader,
-  Tooltip,
-  MultiSelect,
+    MultiSelect,
   Table,
   ScrollArea,
 } from '@mantine/core';
@@ -236,7 +235,7 @@ export default function Dashboard() {
         {/* Tabela Dinâmica */}
         <Title order={4} mt="xl" mb="sm">Parceiros</Title>
         <ScrollArea>
-          <Table highlightOnHover striped withBorder>
+        <Table highlightOnHover striped>
             <thead>
               <tr>
                 <th>Parceiro</th>
