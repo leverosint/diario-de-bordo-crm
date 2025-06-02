@@ -7,9 +7,17 @@ import {
   Title,
   Text,
   Loader,
-} from '@mantine/core';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, FunnelChart, Funnel, LabelList } from 'recharts';
+  Tooltip,
+  Accordion,
+  MultiSelect,
+  } from '@mantine/core';
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
+  FunnelChart, Funnel, LabelList, PieChart, Pie, Cell, Legend
+} from 'recharts';
 import SidebarGestor from '../components/SidebarGestor';
+
+const COLORS = ['#005A64', '#4CDDDD', '#40c057', '#fab005', '#fa5252'];
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -18,6 +26,10 @@ export default function Dashboard() {
   const [dadosFunil, setDadosFunil] = useState<any[]>([]);
   const [dadosBarra, setDadosBarra] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filtros
+  const [categoriaFiltro, setCategoriaFiltro] = useState<string[]>([]);
+  const [statusFiltro, setStatusFiltro] = useState<string[]>([]);
 
   const token = localStorage.getItem('token');
 
@@ -79,32 +91,73 @@ export default function Dashboard() {
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <div style={{ padding: 20 }}>
-        <Title order={2} mb="md">
+        <Title order={2} mb="md" style={{ color: '#005A64' }}>
           {tipoUser === 'GESTOR' && 'Dashboard do Gestor'}
           {tipoUser === 'VENDEDOR' && 'Dashboard do Vendedor'}
           {tipoUser === 'ADMIN' && 'Dashboard do Administrador'}
         </Title>
 
-        {/* KPIs */}
+        {/* Filtros */}
         <Grid mb="xl">
-          {kpis.map((kpi) => (
-            <Grid.Col span={3} key={kpi.title}>
-              <Card shadow="sm" padding="lg" radius="md" withBorder>
-                <Title order={4}>{kpi.title}</Title>
-                <Text size="xl" fw={700}>
-                  {kpi.value}
-                </Text>
-              </Card>
-            </Grid.Col>
-          ))}
+          <Grid.Col span={6}>
+            <MultiSelect
+              data={['Estrutura', 'Clareza', 'Informação']}
+              label="Filtrar por Categoria"
+              placeholder="Selecione categorias"
+              value={categoriaFiltro}
+              onChange={setCategoriaFiltro}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <MultiSelect
+              data={['30 dias', '60 dias', '90 dias', '120 dias']}
+              label="Filtrar por Status"
+              placeholder="Selecione status"
+              value={statusFiltro}
+              onChange={setStatusFiltro}
+            />
+          </Grid.Col>
         </Grid>
 
-        {/* Funil e Evolução Mensal */}
-        <Grid>
-          {/* Funil de Conversão */}
-          <Grid.Col span={6}>
-            <Card shadow="sm" padding="lg" radius="md" withBorder>
-              <Title order={4} mb="md">Funil de Conversão</Title>
+        {/* KPIs */}
+        <Accordion multiple variant="separated" radius="md">
+          <Grid>
+          {kpis.map((kpi) => (
+  <Grid.Col span={3} key={kpi.title}>
+                <Accordion.Item value={kpi.title}>
+                  <Accordion.Control>
+                    <Tooltip label="Clique para ver mais detalhes" withArrow>
+                      <Card
+                        shadow="lg"
+                        padding="lg"
+                        radius="lg"
+                        withBorder
+                        style={{ cursor: 'pointer', transition: '0.3s', backgroundColor: '#f9fafb' }}
+                        onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.1)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)')}
+                      >
+                        <Title order={4} style={{ color: '#005A64' }}>{kpi.title}</Title>
+                        <Text size="xl" fw={700}>
+                          {kpi.value}
+                        </Text>
+                      </Card>
+                    </Tooltip>
+                  </Accordion.Control>
+                  <Accordion.Panel>
+                    <Text size="sm" color="dimmed">Informação detalhada sobre {kpi.title}.</Text>
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Grid.Col>
+            ))}
+          </Grid>
+        </Accordion>
+
+        {/* Gráficos */}
+        <Grid mt="xl">
+          {/* Gráfico de Funil */}
+          <Grid.Col span={4}>
+            <Card shadow="sm" padding="lg" radius="lg" withBorder>
+              <Title order={5} mb="md" style={{ color: '#005A64' }}>Funil de Conversão</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <FunnelChart>
                   <Funnel dataKey="value" data={dadosFunil} isAnimationActive>
@@ -115,16 +168,39 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
+          {/* Gráfico de Pizza */}
+          <Grid.Col span={4}>
+            <Card shadow="sm" padding="lg" radius="lg" withBorder>
+              <Title order={5} mb="md" style={{ color: '#005A64' }}>Distribuição de Status</Title>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={kpis.filter(kpi => ['30 dias', '60 dias', '90 dias', '120 dias'].includes(kpi.title))}
+                    dataKey="value"
+                    nameKey="title"
+                    outerRadius={100}
+                    label
+                  >
+                   {(kpis.map((_, index) => (
+  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+)))}
+                  </Pie>
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
+          </Grid.Col>
+
           {/* Gráfico de Barras */}
-          <Grid.Col span={6}>
-            <Card shadow="sm" padding="lg" radius="md" withBorder>
-              <Title order={4} mb="md">Evolução Mensal de Oportunidades</Title>
+          <Grid.Col span={4}>
+            <Card shadow="sm" padding="lg" radius="lg" withBorder>
+              <Title order={5} mb="md" style={{ color: '#005A64' }}>Evolução Mensal</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dadosBarra}>
                   <XAxis dataKey="mes" />
                   <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="oportunidades" fill="#82ca9d" />
+                  <RechartsTooltip />
+                  <Bar dataKey="oportunidades" fill="#4CDDDD" radius={[5, 5, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Card>
