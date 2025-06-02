@@ -271,3 +271,6 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
         elif user.tipo_user == 'VENDEDOR':
             return Oportunidade.objects.filter(parceiro__consultor=user.id_vendedor)
         return Oportunidade.objects.none()
+
+    def perform_create(self, serializer):
+        serializer.save(usuario=self.request.user)  # <--- ADICIONADO

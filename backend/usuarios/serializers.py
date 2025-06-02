@@ -81,6 +81,7 @@ class InteracaoPendentesSerializer(serializers.ModelSerializer):
 # ===== Oportunidade (Kanban) =====
 class OportunidadeSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
+    usuario_nome = serializers.CharField(source='usuario.username', read_only=True)  # <--- ADICIONADO
     dias_sem_interacao = serializers.SerializerMethodField()
 
     class Meta:
@@ -89,13 +90,15 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             'id',
             'parceiro',
             'parceiro_nome',
+            'usuario',
+            'usuario_nome',  # <--- ADICIONADO
             'valor',
             'observacao',
             'etapa',
             'data_criacao',
             'dias_sem_interacao',
         ]
-        read_only_fields = ['data_criacao']
+        read_only_fields = ['data_criacao', 'usuario']
 
     def get_dias_sem_interacao(self, obj):
         from django.utils.timezone import now
