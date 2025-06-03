@@ -3,6 +3,7 @@ import {
   Container, Title, Button, Group, Select, Divider, ScrollArea, Table, Card
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
+import type { DatesRangeValue } from '@mantine/dates';
 import '@mantine/dates/styles.css';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
@@ -20,8 +21,7 @@ interface Parceiro {
 
 export default function Relatorios() {
   const [tipoRelatorio, setTipoRelatorio] = useState<string | null>(null);
-  const [dataInicio, setDataInicio] = useState<Date | null>(null);
-  const [dataFim, setDataFim] = useState<Date | null>(null);
+  const [periodo, setPeriodo] = useState<DatesRangeValue>([null, null]); // <- trocado para null
   const [statusFiltro, setStatusFiltro] = useState<string | null>(null);
   const [dados, setDados] = useState<Parceiro[]>([]);
 
@@ -44,11 +44,10 @@ export default function Relatorios() {
   const filtrarDados = () => {
     return dados.filter((item) => {
       const dataItem = new Date(item.data);
-      const inicio = dataInicio;
-      const fim = dataFim;
+      const [dataInicio, dataFim] = periodo;
       const statusOk = statusFiltro ? item.status === statusFiltro : true;
       const dataOk =
-        (!inicio || dataItem >= inicio) && (!fim || dataItem <= fim);
+        (!dataInicio || dataItem >= dataInicio) && (!dataFim || dataItem <= dataFim);
 
       return statusOk && dataOk;
     });
@@ -91,11 +90,8 @@ export default function Relatorios() {
                 type="range"
                 label="Período"
                 placeholder="Selecione o período"
-                value={[dataInicio, dataFim]}
-                onChange={(range) => {
-                  setDataInicio(range[0]);
-                  setDataFim(range[1]);
-                }}
+                value={periodo}
+                onChange={setPeriodo}
                 locale="pt-br"
               />
               <Select
