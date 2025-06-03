@@ -101,10 +101,10 @@ export default function Dashboard() {
     ? tabelaParceiros.filter((p: any) => statusFiltro.includes(p.status))
     : tabelaParceiros;
 
+  const parceirosSemInteracoes = parceirosFiltrados.filter(p => !p.tem_interacao);
   const parceirosInteracoes = parceirosFiltrados.filter(p => p.tem_interacao);
   const parceirosOportunidades = parceirosFiltrados.filter(p => p.tem_oportunidade);
 
-  // Função para exportar
   const exportToExcel = (data: any[], fileName: string) => {
     const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -112,9 +112,36 @@ export default function Dashboard() {
     XLSX.writeFile(wb, `${fileName}.xlsx`);
   };
 
+  const renderTable = (data: any[]) => (
+    <ScrollArea>
+      <Table striped highlightOnHover withColumnBorders verticalSpacing="sm">
+        <thead style={{ backgroundColor: '#f1f3f5' }}>
+          <tr>
+            <th style={{ textAlign: 'center' }}>Parceiro</th>
+            <th style={{ textAlign: 'center' }}>Status</th>
+            <th style={{ textAlign: 'center' }}>Faturamento Total</th>
+            <th style={{ textAlign: 'center' }}>Última Interação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((p: any, idx: number) => (
+            <tr key={idx}>
+              <td style={{ textAlign: 'center' }}>{p.parceiro}</td>
+              <td style={{ textAlign: 'center' }}>{p.status}</td>
+              <td style={{ textAlign: 'center' }}>
+                R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </td>
+              <td style={{ textAlign: 'center' }}>{p.ultima_interacao || '-'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </ScrollArea>
+  );
+
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <Container fluid style={{ padding: 20 }}>
+      <Container fluid p="md">
         <Title order={2} mb="md" style={{ color: '#005A64' }}>
           {tipoUser === 'GESTOR' && 'Dashboard do Gestor'}
           {tipoUser === 'VENDEDOR' && 'Dashboard do Vendedor'}
@@ -123,7 +150,7 @@ export default function Dashboard() {
 
         {/* Filtros */}
         <Grid mb="xl">
-          <Grid.Col span={6}>
+          <Grid.Col span={{ base: 12, md: 6 }}>
             <MultiSelect
               data={['30 dias', '60 dias', '90 dias', '120 dias']}
               label="Filtrar por Status"
@@ -134,14 +161,14 @@ export default function Dashboard() {
           </Grid.Col>
         </Grid>
 
-        {/* KPIs - Quantidade Parceiros */}
+        {/* KPIs */}
         <Title order={3} mb="sm">Quantidade de Parceiros Sem Interações</Title>
         <Grid mb="xl">
           {['30 dias', '60 dias', '90 dias', '120 dias'].map(status => (
-            <Grid.Col span={3} key={status}>
+            <Grid.Col span={{ base: 12, md: 3 }} key={status}>
               <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}>
-                <Title order={4}>{status}</Title>
-                <Text size="xl" fw={700}>
+                <Title order={4} ta="center">{status}</Title>
+                <Text size="xl" fw={700} ta="center">
                   {kpis.find(k => k.title === status)?.value || 0}
                 </Text>
               </Card>
@@ -151,14 +178,14 @@ export default function Dashboard() {
 
         <Divider my="lg" />
 
-        {/* KPIs - Indicadores */}
+        {/* Indicadores */}
         <Title order={3} mb="sm">Indicadores de Atividades e Resultados</Title>
         <Grid mb="xl">
           {['Interações', 'Oportunidades', 'Valor Gerado', 'Ticket Médio'].map(title => (
-            <Grid.Col span={3} key={title}>
+            <Grid.Col span={{ base: 12, md: 3 }} key={title}>
               <Card shadow="md" padding="lg" radius="lg" withBorder>
-                <Title order={4}>{title}</Title>
-                <Text size="xl" fw={700}>
+                <Title order={4} ta="center">{title}</Title>
+                <Text size="xl" fw={700} ta="center">
                   {kpis.find(k => k.title === title)?.value || 0}
                 </Text>
               </Card>
@@ -168,14 +195,14 @@ export default function Dashboard() {
 
         <Divider my="lg" />
 
-        {/* KPIs - Taxas */}
+        {/* Taxas */}
         <Title order={3} mb="sm">Taxas de Conversão por Etapa</Title>
         <Grid mb="xl">
           {['Taxa Interação > Oportunidade', 'Taxa Oportunidade > Orçamento', 'Taxa Orçamento > Pedido'].map(title => (
-            <Grid.Col span={4} key={title}>
+            <Grid.Col span={{ base: 12, md: 4 }} key={title}>
               <Card shadow="md" padding="lg" radius="lg" withBorder>
-                <Title order={4}>{title}</Title>
-                <Text size="xl" fw={700}>
+                <Title order={4} ta="center">{title}</Title>
+                <Text size="xl" fw={700} ta="center">
                   {kpis.find(k => k.title === title)?.value || '0%'}
                 </Text>
               </Card>
@@ -183,13 +210,11 @@ export default function Dashboard() {
           ))}
         </Grid>
 
-        <Divider my="lg" />
-
         {/* Gráficos */}
         <Grid>
-          <Grid.Col span={4}>
+          <Grid.Col span={{ base: 12, md: 4 }}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
-              <Title order={5} mb="md" style={{ color: '#005A64' }}>Funil de Conversão</Title>
+              <Title order={5} mb="md" ta="center" style={{ color: '#005A64' }}>Funil de Conversão</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <FunnelChart>
                   <Funnel dataKey="value" data={dadosFunil} isAnimationActive>
@@ -200,9 +225,9 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
-          <Grid.Col span={4}>
+          <Grid.Col span={{ base: 12, md: 4 }}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
-              <Title order={5} mb="md" style={{ color: '#005A64' }}>Distribuição de Status</Title>
+              <Title order={5} mb="md" ta="center" style={{ color: '#005A64' }}>Distribuição de Status</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -222,9 +247,9 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
-          <Grid.Col span={4}>
+          <Grid.Col span={{ base: 12, md: 4 }}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
-              <Title order={5} mb="md" style={{ color: '#005A64' }}>Evolução Mensal</Title>
+              <Title order={5} mb="md" ta="center" style={{ color: '#005A64' }}>Evolução Mensal</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dadosBarra}>
                   <XAxis dataKey="mes" />
@@ -243,37 +268,17 @@ export default function Dashboard() {
           { title: "Todos os Parceiros", data: parceirosFiltrados, exportName: "parceiros" },
           { title: "Parceiros com Interação", data: parceirosInteracoes, exportName: "parceiros_interacoes" },
           { title: "Parceiros com Oportunidade", data: parceirosOportunidades, exportName: "parceiros_oportunidades" },
+          { title: "Parceiros sem Interação", data: parceirosSemInteracoes, exportName: "parceiros_sem_interacoes" },
         ].map((section, index) => (
           <div key={index}>
             <Title order={3} mb="md">{section.title}</Title>
             <Card shadow="md" padding="md" radius="md" withBorder mb="lg">
-            <Group justify="space-between" mb="sm">
+              <Group justify="space-between" mb="sm">
                 <Button variant="outline" color="teal" size="xs" onClick={() => exportToExcel(section.data, section.exportName)}>
                   Exportar Excel
                 </Button>
               </Group>
-              <ScrollArea>
-                <Table striped highlightOnHover withColumnBorders>
-                  <thead style={{ backgroundColor: '#f1f3f5' }}>
-                    <tr>
-                      <th>Parceiro</th>
-                      <th>Status</th>
-                      <th>Faturamento Total</th>
-                      <th>Última Interação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {section.data.map((p: any, idx: number) => (
-                      <tr key={idx}>
-                        <td>{p.parceiro}</td>
-                        <td>{p.status}</td>
-                        <td>R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                        <td>{p.ultima_interacao || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </ScrollArea>
+              {renderTable(section.data)}
             </Card>
           </div>
         ))}
