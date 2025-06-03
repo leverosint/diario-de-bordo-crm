@@ -9,11 +9,14 @@ import {
   Loader,
   MultiSelect,
   Table,
+  Divider,
+  Button,
 } from '@mantine/core';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
-  FunnelChart, Funnel, LabelList, PieChart, Pie, Cell, Legend,
+  FunnelChart, Funnel, LabelList, PieChart, Pie, Cell, Legend
 } from 'recharts';
+import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
 
 const STATUS_COLORS: { [key: string]: string } = {
@@ -33,7 +36,9 @@ export default function Dashboard() {
   const [dadosBarra, setDadosBarra] = useState<any[]>([]);
   const [tabelaParceiros, setTabelaParceiros] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [statusFiltro, setStatusFiltro] = useState<string[]>([]);
+
   const token = localStorage.getItem('token');
 
   const fetchDashboardData = async () => {
@@ -90,13 +95,54 @@ export default function Dashboard() {
     );
   }
 
-  // Aplicar filtros
   const parceirosFiltrados = statusFiltro.length > 0
     ? tabelaParceiros.filter((p: any) => statusFiltro.includes(p.status))
     : tabelaParceiros;
 
-  const parceirosInteracao = parceirosFiltrados.filter((p: any) => p.tem_interacao);
-  const parceirosOportunidade = parceirosFiltrados.filter((p: any) => p.tem_oportunidade);
+  const parceirosInteracoes = parceirosFiltrados.filter(p => p.tem_interacao);
+  const parceirosOportunidades = parceirosFiltrados.filter(p => p.tem_oportunidade);
+
+  const exportToExcel = (dados: any[], fileName: string) => {
+    const worksheet = XLSX.utils.json_to_sheet(dados);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Dados');
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+  };
+
+  const renderTable = (dados: any[], titulo: string, fileName: string) => (
+    <div style={{ overflowX: 'auto' }}>
+      <Title order={3} mb="md">{titulo}</Title>
+      <Button
+        variant="outline"
+        color="teal"
+        size="xs"
+        mb="md"
+        onClick={() => exportToExcel(dados, fileName)}
+      >
+        Exportar Excel
+      </Button>
+      <Table striped highlightOnHover withTableBorder withColumnBorders>
+        <thead>
+          <tr>
+            <th>Parceiro</th>
+            <th>Status</th>
+            <th>Faturamento Total</th>
+            <th>Última Interação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {dados.map((p: any, idx: number) => (
+            <tr key={idx}>
+              <td>{p.parceiro}</td>
+              <td>{p.status}</td>
+              <td>R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+              <td>{p.ultima_interacao || '-'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </div>
+  );
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
@@ -109,7 +155,7 @@ export default function Dashboard() {
 
         {/* Filtros */}
         <Grid mb="xl">
-          <Grid.Col span={6}>
+          <Grid.Col span={{ base: 12, md: 6 }}>
             <MultiSelect
               data={['30 dias', '60 dias', '90 dias', '120 dias']}
               label="Filtrar por Status"
@@ -120,11 +166,11 @@ export default function Dashboard() {
           </Grid.Col>
         </Grid>
 
-        {/* Seção 1: Quantidade de Parceiros sem Interações */}
-        <Title order={3} mb="md">Quantidade de Parceiros Sem Interações</Title>
+        {/* KPIs de Parceiros Sem Interação */}
+        <Title order={3} mb="sm">Quantidade de Parceiros Sem Interações</Title>
         <Grid mb="xl">
           {['30 dias', '60 dias', '90 dias', '120 dias'].map(status => (
-            <Grid.Col span={3} key={status}>
+            <Grid.Col span={{ base: 12, md: 6, lg: 3 }} key={status}>
               <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}>
                 <Title order={4}>{status}</Title>
                 <Text size="xl" fw={700}>
@@ -135,11 +181,13 @@ export default function Dashboard() {
           ))}
         </Grid>
 
-        {/* Seção 2: Interações, Oportunidades e Faturamento */}
-        <Title order={3} mb="md">Interações, Oportunidades e Faturamento</Title>
+        <Divider my="lg" />
+
+        {/* KPIs de Interações e Oportunidades */}
+        <Title order={3} mb="sm">Indicadores de Atividades e Resultados</Title>
         <Grid mb="xl">
           {['Interações', 'Oportunidades', 'Valor Gerado', 'Ticket Médio'].map(title => (
-            <Grid.Col span={3} key={title}>
+            <Grid.Col span={{ base: 12, md: 6, lg: 3 }} key={title}>
               <Card shadow="md" padding="lg" radius="lg" withBorder>
                 <Title order={4}>{title}</Title>
                 <Text size="xl" fw={700}>
@@ -150,11 +198,13 @@ export default function Dashboard() {
           ))}
         </Grid>
 
-        {/* Seção 3: Taxas por Etapa */}
-        <Title order={3} mb="md">Taxas de Conversão por Etapa (%)</Title>
+        <Divider my="lg" />
+
+        {/* KPIs de Taxas */}
+        <Title order={3} mb="sm">Taxas de Conversão por Etapa</Title>
         <Grid mb="xl">
-          {['Taxa Interação → Oportunidade', 'Taxa Oportunidade → Orçamento', 'Taxa Orçamento → Venda'].map(title => (
-            <Grid.Col span={4} key={title}>
+          {['Taxa Interação > Oportunidade', 'Taxa Oportunidade > Orçamento', 'Taxa Orçamento > Pedido'].map(title => (
+            <Grid.Col span={{ base: 12, md: 6, lg: 4 }} key={title}>
               <Card shadow="md" padding="lg" radius="lg" withBorder>
                 <Title order={4}>{title}</Title>
                 <Text size="xl" fw={700}>
@@ -165,10 +215,11 @@ export default function Dashboard() {
           ))}
         </Grid>
 
+        <Divider my="lg" />
+
         {/* Gráficos */}
-        <Grid mt="xl">
-          {/* Funil de Conversão */}
-          <Grid.Col span={4}>
+        <Grid>
+          <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Funil de Conversão</Title>
               <ResponsiveContainer width="100%" height={300}>
@@ -181,8 +232,7 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
-          {/* Distribuição de Status */}
-          <Grid.Col span={4}>
+          <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Distribuição de Status</Title>
               <ResponsiveContainer width="100%" height={300}>
@@ -194,9 +244,9 @@ export default function Dashboard() {
                     outerRadius={100}
                     label
                   >
-                    {kpis.map((_, index) => (
+                    {(kpis.map((_, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
+                    )))}
                   </Pie>
                   <Legend />
                 </PieChart>
@@ -204,8 +254,7 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
-          {/* Evolução Mensal */}
-          <Grid.Col span={4}>
+          <Grid.Col span={{ base: 12, md: 12, lg: 4 }}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Evolução Mensal</Title>
               <ResponsiveContainer width="100%" height={300}>
@@ -220,75 +269,14 @@ export default function Dashboard() {
           </Grid.Col>
         </Grid>
 
-        {/* Tabelas */}
-        <Title order={3} mt="xl" mb="md">Tabela de Parceiros</Title>
-        <Table striped highlightOnHover withTableBorder withColumnBorders>
-          <thead>
-            <tr>
-              <th>Parceiro</th>
-              <th>Status</th>
-              <th>Faturamento Total</th>
-              <th>Última Interação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {parceirosFiltrados.map((p: any, idx: number) => (
-              <tr key={idx}>
-                <td>{p.parceiro}</td>
-                <td>{p.status}</td>
-                <td>R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td>{p.ultima_interacao || '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <Divider my="xl" />
 
-        {/* Tabela de Parceiros com Interação */}
-        <Title order={3} mt="xl" mb="md">Parceiros com Interações</Title>
-        <Table striped highlightOnHover withTableBorder withColumnBorders>
-          <thead>
-            <tr>
-              <th>Parceiro</th>
-              <th>Status</th>
-              <th>Faturamento Total</th>
-              <th>Última Interação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {parceirosInteracao.map((p: any, idx: number) => (
-              <tr key={idx}>
-                <td>{p.parceiro}</td>
-                <td>{p.status}</td>
-                <td>R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td>{p.ultima_interacao || '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-
-        {/* Tabela de Parceiros com Oportunidade */}
-        <Title order={3} mt="xl" mb="md">Parceiros com Oportunidades</Title>
-        <Table striped highlightOnHover withTableBorder withColumnBorders>
-          <thead>
-            <tr>
-              <th>Parceiro</th>
-              <th>Status</th>
-              <th>Faturamento Total</th>
-              <th>Última Interação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {parceirosOportunidade.map((p: any, idx: number) => (
-              <tr key={idx}>
-                <td>{p.parceiro}</td>
-                <td>{p.status}</td>
-                <td>R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td>{p.ultima_interacao || '-'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-
+        {/* Tabelas com Exportação */}
+        {renderTable(parceirosFiltrados, 'Todos os Parceiros', 'todos_parceiros')}
+        <Divider my="xl" />
+        {renderTable(parceirosInteracoes, 'Parceiros com Interação', 'parceiros_interacao')}
+        <Divider my="xl" />
+        {renderTable(parceirosOportunidades, 'Parceiros com Oportunidade', 'parceiros_oportunidade')}
       </div>
     </SidebarGestor>
   );

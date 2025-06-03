@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.timezone import now
-from django.db.models import Count, Sum, Max
+from django.db.models import Count, Sum
 from django.db.models.functions import TruncMonth
 from datetime import timedelta, datetime
 import pandas as pd
@@ -289,12 +289,11 @@ class DashboardKPIView(APIView):
             parceiros = Parceiro.objects.filter(canal_venda__in=user.canais_venda.all())
             interacoes = Interacao.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
             oportunidades = Oportunidade.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
-        else:  # VENDEDOR
+        else:
             parceiros = Parceiro.objects.filter(consultor=user.id_vendedor)
             interacoes = Interacao.objects.filter(usuario=user)
             oportunidades = Oportunidade.objects.filter(usuario=user)
 
-        # KPIs
         status_counts = {
             '30 dias': parceiros.filter(status='30d s/ Fat').count(),
             '60 dias': parceiros.filter(status='60d s/ Fat').count(),
@@ -312,7 +311,7 @@ class DashboardKPIView(APIView):
 
         taxa_interacao_oportunidade = (total_oportunidades / total_interacoes * 100) if total_interacoes > 0 else 0
         taxa_oportunidade_orcamento = (total_orcamentos / total_oportunidades * 100) if total_oportunidades > 0 else 0
-        taxa_orcamento_venda = (total_pedidos / total_orcamentos * 100) if total_orcamentos > 0 else 0
+        taxa_orcamento_pedido = (total_pedidos / total_orcamentos * 100) if total_orcamentos > 0 else 0
 
         kpis = [
             {"title": "30 dias", "value": status_counts['30 dias']},
@@ -321,14 +320,13 @@ class DashboardKPIView(APIView):
             {"title": "120 dias", "value": status_counts['120 dias']},
             {"title": "Interações", "value": total_interacoes},
             {"title": "Oportunidades", "value": total_oportunidades},
-            {"title": "Taxa Interação → Oportunidade", "value": f"{taxa_interacao_oportunidade:.1f}%"},
-            {"title": "Taxa Oportunidade → Orçamento", "value": f"{taxa_oportunidade_orcamento:.1f}%"},
-            {"title": "Taxa Orçamento → Venda", "value": f"{taxa_orcamento_venda:.1f}%"},
-            {"title": "Valor Gerado", "value": f"R$ {valor_total:,.2f}"},
-            {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}"},
+            {"title": "Taxa Interação > Oportunidade", "value": f"{taxa_interacao_oportunidade:.1f}%"},
+            {"title": "Taxa Oportunidade > Orçamento", "value": f"{taxa_oportunidade_orcamento:.1f}%"},
+            {"title": "Taxa Orçamento > Pedido", "value": f"{taxa_orcamento_pedido:.1f}%"},
+            {"title": "Valor Gerado", "value": f"R$ {valor_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
+            {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
         ]
 
-        # Parceiros com dados extras
         parceiros_data = []
         for parceiro in parceiros:
             ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
@@ -343,19 +341,7 @@ class DashboardKPIView(APIView):
             })
 
         return Response({
-            "kpis": [
-                {"title": "30 dias", "value": status_counts['30 dias']},
-                {"title": "60 dias", "value": status_counts['60 dias']},
-                {"title": "90 dias", "value": status_counts['90 dias']},
-                {"title": "120 dias", "value": status_counts['120 dias']},
-                {"title": "Interações", "value": total_interacoes},
-                {"title": "Oportunidades", "value": total_oportunidades},
-                {"title": "Taxa Interação > Oportunidade", "value": f"{taxa_interacao_oportunidade:.1f}%"},
-                {"title": "Taxa Oportunidade > Orçamento", "value": f"{taxa_oportunidade_orcamento:.1f}%"},
-                {"title": "Taxa Orçamento > Pedido", "value": f"{taxa_orcamento_venda:.1f}%"},
-                {"title": "Valor Gerado", "value": f"R$ {valor_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
-                {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
-            ],
+            "kpis": kpis,
             "parceiros": parceiros_data
         })
 
