@@ -1,165 +1,151 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
-  Container, Title, Button, Group, Select, Divider, ScrollArea, Table, Card
+  Container, Title, Button, Table, ScrollArea, Card, Loader, Group, Select, Grid
 } from '@mantine/core';
-import { DatePickerInput } from '@mantine/dates';
-import type { DatesRangeValue } from '@mantine/dates';
-import '@mantine/dates/styles.css';
-import * as XLSX from 'xlsx';
+import { DatePickerInput } from '@mantine/dates'; // Atenção: Mantine Dates v5 usa STRING
 import SidebarGestor from '../components/SidebarGestor';
 import axios from 'axios';
-import { DatesProvider } from '@mantine/dates';
-import 'dayjs/locale/pt-br';
-
-interface RelatorioData {
-  id: number;
-  nome: string;
-  status: string;
-  faturamento: number;
-  data: string;
-  tipo: string; // <- agora tipo de relatorio
-}
+import * as XLSX from 'xlsx';
 
 export default function Relatorios() {
-  const [tipoRelatorio, setTipoRelatorio] = useState<string | null>(null);
-  const [periodo, setPeriodo] = useState<DatesRangeValue>([null, null]);
-  const [statusFiltro, setStatusFiltro] = useState<string | null>(null);
-  const [dados, setDados] = useState<RelatorioData[]>([]);
+  const [relatorioSelecionado, setRelatorioSelecionado] = useState<string | null>(null);
+  const [dataInicial, setDataInicial] = useState<string | null>(null);
+  const [dataFinal, setDataFinal] = useState<string | null>(null);
+  const [dados, setDados] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const fetchRelatorioData = async () => {
+  const token = localStorage.getItem('token');
+  const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user || '';
+
+  const buscarRelatorio = async () => {
+    if (!relatorioSelecionado) return;
+
+    setLoading(true);
     try {
-      const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/relatorios/`, { headers });
-      setDados(response.data);
+      let endpoint = '';
+      if (relatorioSelecionado === 'interacoes') endpoint = '/dashboard/interacoes/';
+      if (relatorioSelecionado === 'faturamento') endpoint = '/dashboard/faturamento/';
+      if (relatorioSelecionado === 'oportunidades') endpoint = '/dashboard/oportunidades/';
+      if (relatorioSelecionado === 'status') endpoint = '/dashboard/status/';
+
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}${endpoint}`, {
+        headers,
+        params: {
+          data_inicial: dataInicial,
+          data_final: dataFinal,
+        },
+      });
+
+      setDados(response.data || []);
     } catch (error) {
-      console.error('Erro ao buscar dados de relatório:', error);
+      console.error('Erro ao buscar relatório:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchRelatorioData();
-  }, []);
+  const exportarExcel = () => {
+    if (!dados.length) return;
 
-  const filtrarDados = () => {
-    return dados.filter((item) => {
-      const dataItem = new Date(item.data);
-      const [dataInicio, dataFim] = periodo;
-      const tipoOk = tipoRelatorio ? item.tipo.toLowerCase() === tipoRelatorio.toLowerCase() : true;
-      const statusOk = statusFiltro ? item.status === statusFiltro : true;
-      const dataOk =
-        (!dataInicio || dataItem >= dataInicio) && (!dataFim || dataItem <= dataFim);
-
-      return tipoOk && statusOk && dataOk;
-    });
-  };
-
-  const exportToExcel = () => {
-    const dadosFiltrados = filtrarDados();
-    const ws = XLSX.utils.json_to_sheet(dadosFiltrados);
+    const ws = XLSX.utils.json_to_sheet(dados);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
-    XLSX.writeFile(wb, `${tipoRelatorio || 'relatorio'}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'Relatorio');
+    XLSX.writeFile(wb, `relatorio-${relatorioSelecionado}-${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
-
-  const dadosFiltrados = filtrarDados();
 
   return (
-    <SidebarGestor tipoUser="GESTOR">
-      <DatesProvider settings={{ locale: 'pt-br', firstDayOfWeek: 0 }}>
-        <Container fluid style={{ padding: 20, maxWidth: '100%' }}>
-          <Title order={2} mb="md" style={{ color: '#005A64' }}>
-            Gerar Relatórios
-          </Title>
+    <SidebarGestor tipoUser={tipoUser}>
+      <Container fluid style={{ padding: 20, maxWidth: '100%' }}>
+        <Title order={2} style={{ color: '#005A64', marginBottom: '20px' }}>
+          Relatórios
+        </Title>
 
-          <Divider my="lg" />
-
-          <Card shadow="sm" padding="lg" radius="md" withBorder mb="lg">
-            <Group grow mb="xl">
+        <Card withBorder shadow="md" mb="lg">
+          <Grid>
+            <Grid.Col span={4}>
               <Select
                 label="Tipo de Relatório"
-                placeholder="Selecione"
+                placeholder="Selecione o relatório"
                 data={[
-                  { label: 'Interações', value: 'interacoes' },
-                  { label: 'Faturamento', value: 'faturamento' },
-                  { label: 'Oportunidades', value: 'oportunidades' },
+                  { value: 'interacoes', label: 'Relatório de Interações' },
+                  { value: 'faturamento', label: 'Relatório de Faturamento' },
+                  { value: 'oportunidades', label: 'Relatório de Oportunidades' },
+                  { value: 'status', label: 'Relatório de Status' },
                 ]}
-                value={tipoRelatorio}
-                onChange={setTipoRelatorio}
+                value={relatorioSelecionado}
+                onChange={setRelatorioSelecionado}
+                size="md"
               />
+            </Grid.Col>
+
+            <Grid.Col span={4}>
               <DatePickerInput
-                type="range"
-                label="Período"
-                placeholder="Selecione o período"
-                value={periodo}
-                onChange={setPeriodo}
+                label="Data Inicial"
+                placeholder="Selecione a data inicial"
+                value={dataInicial}
+                onChange={setDataInicial}
                 locale="pt-br"
+                size="md"
+                valueFormat="DD/MM/YYYY"
               />
-              <Select
-                label="Status"
-                placeholder="Selecione o status"
-                data={[
-                  { label: '30 dias', value: '30 dias' },
-                  { label: '60 dias', value: '60 dias' },
-                  { label: '90 dias', value: '90 dias' },
-                  { label: '120 dias', value: '120 dias' },
-                ]}
-                value={statusFiltro}
-                onChange={setStatusFiltro}
+            </Grid.Col>
+
+            <Grid.Col span={4}>
+              <DatePickerInput
+                label="Data Final"
+                placeholder="Selecione a data final"
+                value={dataFinal}
+                onChange={setDataFinal}
+                locale="pt-br"
+                size="md"
+                valueFormat="DD/MM/YYYY"
               />
-            </Group>
+            </Grid.Col>
+          </Grid>
 
-            <Group justify="flex-end">
-              <Button
-                disabled={dadosFiltrados.length === 0}
-                onClick={exportToExcel}
-                variant="filled"
-                color="teal"
-              >
-                Exportar Excel
-              </Button>
-            </Group>
-          </Card>
+          <Group mt="md">
+            <Button onClick={buscarRelatorio} color="teal" size="md">
+              Buscar Relatório
+            </Button>
+            <Button onClick={exportarExcel} color="blue" size="md" disabled={!dados.length}>
+              Exportar Excel
+            </Button>
+          </Group>
+        </Card>
 
-          <Divider my="lg" />
-
-          <Title order={4} mb="md">
-            Preview de Dados ({dadosFiltrados.length})
-          </Title>
-
-          <ScrollArea>
-            <Table striped highlightOnHover withColumnBorders>
-              <thead style={{ backgroundColor: '#f1f3f5' }}>
-                <tr>
-                  <th>Nome</th>
-                  <th>Status</th>
-                  <th style={{ textAlign: 'center' }}>Faturamento</th>
-                  <th style={{ textAlign: 'center' }}>Data</th>
-                  <th style={{ textAlign: 'center' }}>Tipo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dadosFiltrados.map((item, idx) => (
-                  <tr key={idx}>
-                    <td>{item.nome}</td>
-                    <td>{item.status}</td>
-                    <td style={{ textAlign: 'center' }}>
-                      R$ {Number(item.faturamento).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      {new Date(item.data).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td style={{ textAlign: 'center' }}>
-                      {item.tipo}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </ScrollArea>
-        </Container>
-      </DatesProvider>
+        {loading ? (
+          <Loader size="xl" color="teal" />
+        ) : (
+          <>
+            {dados.length > 0 && (
+              <Card withBorder shadow="sm">
+                <ScrollArea>
+                  <Table striped highlightOnHover withColumnBorders>
+                    <thead>
+                      <tr>
+                        {Object.keys(dados[0] || {}).map((key) => (
+                          <th key={key}>{key.toUpperCase()}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dados.map((item, index) => (
+                        <tr key={index}>
+                          {Object.values(item).map((value, idx) => (
+                            <td key={idx}>{String(value)}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </ScrollArea>
+              </Card>
+            )}
+          </>
+        )}
+      </Container>
     </SidebarGestor>
   );
 }
