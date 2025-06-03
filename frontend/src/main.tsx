@@ -4,6 +4,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MantineProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals'; // ✅ IMPORTANTE
 import '@mantine/core/styles.css';
+import Relatorios from './pages/Relatorios';
+
 
 import './index.css';
 import { customTheme } from './styles/theme';
@@ -25,6 +27,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/cadastro-parceiro" element={<CadastroParceiroPage />} />
             <Route path="/cadastro-usuarios" element={<CadastroUsuariosPage />} />
             <Route path="/interacoes" element={<InteracoesPage />} />
+            <Route path="/relatorios" element={<Relatorios />} />
           </Routes>
         </BrowserRouter>
       </ModalsProvider>

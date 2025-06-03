@@ -190,7 +190,7 @@ export default function Dashboard() {
           </Group>
 
           {/* KPIs - Quantidade Parceiros */}
-          <Title order={3} mb="sm">Quantidade de Parceiros Sem Interações</Title>
+          <Title order={3} mb="sm">Quantidade de Parceiros Sem Faturamento por Status</Title>
           <Grid mb="xl">
             {['30 dias', '60 dias', '90 dias', '120 dias'].map(status => (
               <Grid.Col span={{ base: 12, sm: 6, md: 3 }} key={status}>
