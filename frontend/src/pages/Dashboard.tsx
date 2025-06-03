@@ -9,17 +9,13 @@ import {
   Loader,
   MultiSelect,
   Divider,
-  Table,
-  ScrollArea,
-  Button,
-  Group,
   Container,
 } from '@mantine/core';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
   FunnelChart, Funnel, LabelList, PieChart, Pie, Cell, Legend
 } from 'recharts';
-import * as XLSX from 'xlsx';
+import { DataTable } from 'mantine-datatable';
 import SidebarGestor from '../components/SidebarGestor';
 
 const STATUS_COLORS: { [key: string]: string } = {
@@ -41,6 +37,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   const [statusFiltro, setStatusFiltro] = useState<string[]>([]);
+
   const token = localStorage.getItem('token');
 
   const fetchDashboardData = async () => {
@@ -90,9 +87,9 @@ export default function Dashboard() {
   if (loading) {
     return (
       <SidebarGestor tipoUser={tipoUser}>
-        <div style={{ padding: 20 }}>
+        <Container fluid p="md">
           <Loader />
-        </div>
+        </Container>
       </SidebarGestor>
     );
   }
@@ -103,18 +100,11 @@ export default function Dashboard() {
 
   const parceirosInteracoes = parceirosFiltrados.filter(p => p.tem_interacao);
   const parceirosOportunidades = parceirosFiltrados.filter(p => p.tem_oportunidade);
-
-  // Função para exportar
-  const exportToExcel = (data: any[], fileName: string) => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-    XLSX.writeFile(wb, `${fileName}.xlsx`);
-  };
+  const parceirosSemInteracoes = parceirosFiltrados.filter(p => !p.tem_interacao);
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <Container fluid style={{ padding: 20 }}>
+      <Container fluid p="md">
         <Title order={2} mb="md" style={{ color: '#005A64' }}>
           {tipoUser === 'GESTOR' && 'Dashboard do Gestor'}
           {tipoUser === 'VENDEDOR' && 'Dashboard do Vendedor'}
@@ -123,22 +113,23 @@ export default function Dashboard() {
 
         {/* Filtros */}
         <Grid mb="xl">
-          <Grid.Col span={6}>
+          <Grid.Col span={12}>
             <MultiSelect
               data={['30 dias', '60 dias', '90 dias', '120 dias']}
               label="Filtrar por Status"
               placeholder="Selecione status"
               value={statusFiltro}
               onChange={setStatusFiltro}
+              clearable
             />
           </Grid.Col>
         </Grid>
 
-        {/* KPIs - Quantidade Parceiros */}
+        {/* KPIs */}
         <Title order={3} mb="sm">Quantidade de Parceiros Sem Interações</Title>
         <Grid mb="xl">
           {['30 dias', '60 dias', '90 dias', '120 dias'].map(status => (
-            <Grid.Col span={3} key={status}>
+            <Grid.Col span={{ base: 6, md: 3 }} key={status}>
               <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}>
                 <Title order={4}>{status}</Title>
                 <Text size="xl" fw={700}>
@@ -151,11 +142,10 @@ export default function Dashboard() {
 
         <Divider my="lg" />
 
-        {/* KPIs - Indicadores */}
         <Title order={3} mb="sm">Indicadores de Atividades e Resultados</Title>
         <Grid mb="xl">
           {['Interações', 'Oportunidades', 'Valor Gerado', 'Ticket Médio'].map(title => (
-            <Grid.Col span={3} key={title}>
+            <Grid.Col span={{ base: 6, md: 3 }} key={title}>
               <Card shadow="md" padding="lg" radius="lg" withBorder>
                 <Title order={4}>{title}</Title>
                 <Text size="xl" fw={700}>
@@ -168,11 +158,10 @@ export default function Dashboard() {
 
         <Divider my="lg" />
 
-        {/* KPIs - Taxas */}
         <Title order={3} mb="sm">Taxas de Conversão por Etapa</Title>
         <Grid mb="xl">
           {['Taxa Interação > Oportunidade', 'Taxa Oportunidade > Orçamento', 'Taxa Orçamento > Pedido'].map(title => (
-            <Grid.Col span={4} key={title}>
+            <Grid.Col span={{ base: 6, md: 4 }} key={title}>
               <Card shadow="md" padding="lg" radius="lg" withBorder>
                 <Title order={4}>{title}</Title>
                 <Text size="xl" fw={700}>
@@ -187,7 +176,7 @@ export default function Dashboard() {
 
         {/* Gráficos */}
         <Grid>
-          <Grid.Col span={4}>
+          <Grid.Col span={{ base: 12, md: 4 }}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Funil de Conversão</Title>
               <ResponsiveContainer width="100%" height={300}>
@@ -200,7 +189,7 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
-          <Grid.Col span={4}>
+          <Grid.Col span={{ base: 12, md: 4 }}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Distribuição de Status</Title>
               <ResponsiveContainer width="100%" height={300}>
@@ -222,7 +211,7 @@ export default function Dashboard() {
             </Card>
           </Grid.Col>
 
-          <Grid.Col span={4}>
+          <Grid.Col span={{ base: 12, md: 4 }}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
               <Title order={5} mb="md" style={{ color: '#005A64' }}>Evolução Mensal</Title>
               <ResponsiveContainer width="100%" height={300}>
@@ -237,46 +226,74 @@ export default function Dashboard() {
           </Grid.Col>
         </Grid>
 
-        {/* Tabelas */}
         <Divider my="xl" />
-        {[
-          { title: "Todos os Parceiros", data: parceirosFiltrados, exportName: "parceiros" },
-          { title: "Parceiros com Interação", data: parceirosInteracoes, exportName: "parceiros_interacoes" },
-          { title: "Parceiros com Oportunidade", data: parceirosOportunidades, exportName: "parceiros_oportunidades" },
-        ].map((section, index) => (
-          <div key={index}>
-            <Title order={3} mb="md">{section.title}</Title>
-            <Card shadow="md" padding="md" radius="md" withBorder mb="lg">
-            <Group justify="space-between" mb="sm">
-                <Button variant="outline" color="teal" size="xs" onClick={() => exportToExcel(section.data, section.exportName)}>
-                  Exportar Excel
-                </Button>
-              </Group>
-              <ScrollArea>
-                <Table striped highlightOnHover withColumnBorders>
-                  <thead style={{ backgroundColor: '#f1f3f5' }}>
-                    <tr>
-                      <th>Parceiro</th>
-                      <th>Status</th>
-                      <th>Faturamento Total</th>
-                      <th>Última Interação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {section.data.map((p: any, idx: number) => (
-                      <tr key={idx}>
-                        <td>{p.parceiro}</td>
-                        <td>{p.status}</td>
-                        <td>R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                        <td>{p.ultima_interacao || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </ScrollArea>
-            </Card>
-          </div>
-        ))}
+
+        {/* Tabelas Responsivas */}
+        <Title order={3} mb="md">Todos os Parceiros</Title>
+        <DataTable
+          columns={[
+            { accessor: 'parceiro', title: 'Parceiro', width: 200 },
+            { accessor: 'status', title: 'Status', width: 120 },
+            { accessor: 'total', title: 'Faturamento Total', render: (p) => `R$ ${Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
+            { accessor: 'ultima_interacao', title: 'Última Interação', width: 150 },
+          ]}
+          records={parceirosFiltrados}
+          striped
+          highlightOnHover
+          withBorder
+          withColumnBorders
+        />
+
+        <Divider my="xl" />
+
+        <Title order={3} mb="md">Parceiros com Interação</Title>
+        <DataTable
+          columns={[
+            { accessor: 'parceiro', title: 'Parceiro', width: 200 },
+            { accessor: 'status', title: 'Status', width: 120 },
+            { accessor: 'total', title: 'Faturamento Total', render: (p) => `R$ ${Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
+            { accessor: 'ultima_interacao', title: 'Última Interação', width: 150 },
+          ]}
+          records={parceirosInteracoes}
+          striped
+          highlightOnHover
+          withBorder
+          withColumnBorders
+        />
+
+        <Divider my="xl" />
+
+        <Title order={3} mb="md">Parceiros com Oportunidade</Title>
+        <DataTable
+          columns={[
+            { accessor: 'parceiro', title: 'Parceiro', width: 200 },
+            { accessor: 'status', title: 'Status', width: 120 },
+            { accessor: 'total', title: 'Faturamento Total', render: (p) => `R$ ${Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
+            { accessor: 'ultima_interacao', title: 'Última Interação', width: 150 },
+          ]}
+          records={parceirosOportunidades}
+          striped
+          highlightOnHover
+          withBorder
+          withColumnBorders
+        />
+
+        <Divider my="xl" />
+
+        <Title order={3} mb="md">Parceiros Sem Interação</Title>
+        <DataTable
+          columns={[
+            { accessor: 'parceiro', title: 'Parceiro', width: 200 },
+            { accessor: 'status', title: 'Status', width: 120 },
+            { accessor: 'total', title: 'Faturamento Total', render: (p) => `R$ ${Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` },
+            { accessor: 'ultima_interacao', title: 'Última Interação', width: 150 },
+          ]}
+          records={parceirosSemInteracoes}
+          striped
+          highlightOnHover
+          withBorder
+          withColumnBorders
+        />
       </Container>
     </SidebarGestor>
   );
