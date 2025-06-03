@@ -1,149 +1,146 @@
 import { useState } from 'react';
 import {
-  Container, Title, Button, Table, ScrollArea, Card, Loader, Group, Select, Grid
+  Container,
+  Title,
+  Button,
+  Select,
+  Table,
+  Pagination,
+  Card,
+  Group,
+  ScrollArea,
+  Loader,
 } from '@mantine/core';
-import { DatePickerInput } from '@mantine/dates'; // Atenção: Mantine Dates v5 usa STRING
 import SidebarGestor from '../components/SidebarGestor';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 
 export default function Relatorios() {
-  const [relatorioSelecionado, setRelatorioSelecionado] = useState<string | null>(null);
-  const [dataInicial, setDataInicial] = useState<string | null>(null);
-  const [dataFinal, setDataFinal] = useState<string | null>(null);
-  const [dados, setDados] = useState<any[]>([]);
+  const [tipoRelatorio, setTipoRelatorio] = useState<string | null>(null);
+  const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [pagina, setPagina] = useState(1);
 
-  const token = localStorage.getItem('token');
-  const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user || '';
+  const registrosPorPagina = 10;
 
   const buscarRelatorio = async () => {
-    if (!relatorioSelecionado) return;
-
+    if (!tipoRelatorio) return;
     setLoading(true);
+
     try {
+      const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
 
       let endpoint = '';
-      if (relatorioSelecionado === 'interacoes') endpoint = '/dashboard/interacoes/';
-      if (relatorioSelecionado === 'faturamento') endpoint = '/dashboard/faturamento/';
-      if (relatorioSelecionado === 'oportunidades') endpoint = '/dashboard/oportunidades/';
-      if (relatorioSelecionado === 'status') endpoint = '/dashboard/status/';
 
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}${endpoint}`, {
-        headers,
-        params: {
-          data_inicial: dataInicial,
-          data_final: dataFinal,
-        },
-      });
+      switch (tipoRelatorio) {
+        case 'interacoes':
+          endpoint = '/relatorios/interacoes';
+          break;
+        case 'faturamento':
+          endpoint = '/relatorios/faturamento';
+          break;
+        case 'oportunidades':
+          endpoint = '/relatorios/oportunidades';
+          break;
+        case 'status':
+          endpoint = '/relatorios/status';
+          break;
+        default:
+          return;
+      }
 
-      setDados(response.data || []);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}${endpoint}`, { headers });
+      setData(response.data);
     } catch (error) {
-      console.error('Erro ao buscar relatório:', error);
+      console.error('Erro ao buscar o relatório:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const exportarExcel = () => {
-    if (!dados.length) return;
-
-    const ws = XLSX.utils.json_to_sheet(dados);
+    const ws = XLSX.utils.json_to_sheet(data);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Relatorio');
-    XLSX.writeFile(wb, `relatorio-${relatorioSelecionado}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
+    XLSX.writeFile(wb, `${tipoRelatorio}_relatorio.xlsx`);
   };
 
+  const dadosPaginados = data.slice(
+    (pagina - 1) * registrosPorPagina,
+    pagina * registrosPorPagina
+  );
+
   return (
-    <SidebarGestor tipoUser={tipoUser}>
-      <Container fluid style={{ padding: 20, maxWidth: '100%' }}>
-        <Title order={2} style={{ color: '#005A64', marginBottom: '20px' }}>
+    <SidebarGestor tipoUser="ADMIN">
+      <Container size="xl" mt="xl">
+        <Title order={2} mb="md" ta="center" style={{ color: '#005A64' }}>
           Relatórios
         </Title>
 
-        <Card withBorder shadow="md" mb="lg">
-          <Grid>
-            <Grid.Col span={4}>
-              <Select
-                label="Tipo de Relatório"
-                placeholder="Selecione o relatório"
-                data={[
-                  { value: 'interacoes', label: 'Relatório de Interações' },
-                  { value: 'faturamento', label: 'Relatório de Faturamento' },
-                  { value: 'oportunidades', label: 'Relatório de Oportunidades' },
-                  { value: 'status', label: 'Relatório de Status' },
-                ]}
-                value={relatorioSelecionado}
-                onChange={setRelatorioSelecionado}
-                size="md"
-              />
-            </Grid.Col>
+        <Group mb="md" grow>
+          <Select
+            label="Tipo de Relatório"
+            placeholder="Selecione o relatório"
+            value={tipoRelatorio}
+            onChange={setTipoRelatorio}
+            data={[
+              { value: 'interacoes', label: 'Relatório de Interações' },
+              { value: 'faturamento', label: 'Relatório de Faturamento' },
+              { value: 'oportunidades', label: 'Relatório de Oportunidades' },
+              { value: 'status', label: 'Relatório de Status' },
+            ]}
+          />
+        </Group>
 
-            <Grid.Col span={4}>
-              <DatePickerInput
-                label="Data Inicial"
-                placeholder="Selecione a data inicial"
-                value={dataInicial}
-                onChange={setDataInicial}
-                locale="pt-br"
-                size="md"
-                valueFormat="DD/MM/YYYY"
-              />
-            </Grid.Col>
-
-            <Grid.Col span={4}>
-              <DatePickerInput
-                label="Data Final"
-                placeholder="Selecione a data final"
-                value={dataFinal}
-                onChange={setDataFinal}
-                locale="pt-br"
-                size="md"
-                valueFormat="DD/MM/YYYY"
-              />
-            </Grid.Col>
-          </Grid>
-
-          <Group mt="md">
-            <Button onClick={buscarRelatorio} color="teal" size="md">
-              Buscar Relatório
-            </Button>
-            <Button onClick={exportarExcel} color="blue" size="md" disabled={!dados.length}>
-              Exportar Excel
-            </Button>
-          </Group>
-        </Card>
+        <Group justify="center" mt="md" mb="xl">
+          <Button onClick={buscarRelatorio} disabled={!tipoRelatorio}>
+            Buscar Relatório
+          </Button>
+        </Group>
 
         {loading ? (
-          <Loader size="xl" color="teal" />
+          <Group justify="center" mt="xl">
+            <Loader color="teal" />
+          </Group>
         ) : (
-          <>
-            {dados.length > 0 && (
-              <Card withBorder shadow="sm">
-                <ScrollArea>
-                  <Table striped highlightOnHover withColumnBorders>
-                    <thead>
-                      <tr>
-                        {Object.keys(dados[0] || {}).map((key) => (
-                          <th key={key}>{key.toUpperCase()}</th>
+          data.length > 0 && (
+            <Card withBorder radius="md" mt="lg" shadow="sm">
+              <Group justify="flex-end" mb="md">
+                <Button variant="outline" color="green" size="xs" onClick={exportarExcel}>
+                  Exportar Excel
+                </Button>
+              </Group>
+
+              <ScrollArea>
+                <Table highlightOnHover withColumnBorders striped>
+                  <thead>
+                    <tr>
+                      {Object.keys(data[0] || {}).map((key) => (
+                        <th key={key}>{key.toUpperCase()}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dadosPaginados.map((item, index) => (
+                      <tr key={index}>
+                        {Object.values(item).map((valor, idx) => (
+                          <td key={idx}>{String(valor)}</td>
                         ))}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {dados.map((item, index) => (
-                        <tr key={index}>
-                          {Object.values(item).map((value, idx) => (
-                            <td key={idx}>{String(value)}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </ScrollArea>
-              </Card>
-            )}
-          </>
+                    ))}
+                  </tbody>
+                </Table>
+              </ScrollArea>
+
+              <Pagination
+                total={Math.ceil(data.length / registrosPorPagina)}
+                value={pagina}
+                onChange={setPagina}
+                mt="md"
+              />
+            </Card>
+          )
         )}
       </Container>
     </SidebarGestor>
