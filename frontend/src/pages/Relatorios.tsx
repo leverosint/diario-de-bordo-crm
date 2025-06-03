@@ -11,19 +11,20 @@ import axios from 'axios';
 import { DatesProvider } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
 
-interface Parceiro {
+interface RelatorioData {
   id: number;
   nome: string;
   status: string;
   faturamento: number;
   data: string;
+  tipo: string; // <- agora tipo de relatorio
 }
 
 export default function Relatorios() {
   const [tipoRelatorio, setTipoRelatorio] = useState<string | null>(null);
-  const [periodo, setPeriodo] = useState<DatesRangeValue>([null, null]); // <- trocado para null
+  const [periodo, setPeriodo] = useState<DatesRangeValue>([null, null]);
   const [statusFiltro, setStatusFiltro] = useState<string | null>(null);
-  const [dados, setDados] = useState<Parceiro[]>([]);
+  const [dados, setDados] = useState<RelatorioData[]>([]);
 
   const fetchRelatorioData = async () => {
     try {
@@ -45,11 +46,12 @@ export default function Relatorios() {
     return dados.filter((item) => {
       const dataItem = new Date(item.data);
       const [dataInicio, dataFim] = periodo;
+      const tipoOk = tipoRelatorio ? item.tipo.toLowerCase() === tipoRelatorio.toLowerCase() : true;
       const statusOk = statusFiltro ? item.status === statusFiltro : true;
       const dataOk =
         (!dataInicio || dataItem >= dataInicio) && (!dataFim || dataItem <= dataFim);
 
-      return statusOk && dataOk;
+      return tipoOk && statusOk && dataOk;
     });
   };
 
@@ -134,6 +136,7 @@ export default function Relatorios() {
                   <th>Status</th>
                   <th style={{ textAlign: 'center' }}>Faturamento</th>
                   <th style={{ textAlign: 'center' }}>Data</th>
+                  <th style={{ textAlign: 'center' }}>Tipo</th>
                 </tr>
               </thead>
               <tbody>
@@ -146,6 +149,9 @@ export default function Relatorios() {
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       {new Date(item.data).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      {item.tipo}
                     </td>
                   </tr>
                 ))}
