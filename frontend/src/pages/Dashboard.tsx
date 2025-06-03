@@ -14,6 +14,7 @@ import {
   Button,
   Group,
   Container,
+  Pagination,
 } from '@mantine/core';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -41,6 +42,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   const [statusFiltro, setStatusFiltro] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [recordsPerPage] = useState(5);
   const token = localStorage.getItem('token');
 
   const fetchDashboardData = async () => {
@@ -101,9 +104,12 @@ export default function Dashboard() {
     ? tabelaParceiros.filter((p: any) => statusFiltro.includes(p.status))
     : tabelaParceiros;
 
-  const parceirosSemInteracoes = parceirosFiltrados.filter(p => !p.tem_interacao);
   const parceirosInteracoes = parceirosFiltrados.filter(p => p.tem_interacao);
   const parceirosOportunidades = parceirosFiltrados.filter(p => p.tem_oportunidade);
+  const parceirosPendentes = parceirosFiltrados.filter(p => !p.tem_interacao);
+
+  const startIndex = (page - 1) * recordsPerPage;
+  const paginatedData = parceirosFiltrados.slice(startIndex, startIndex + recordsPerPage);
 
   const exportToExcel = (data: any[], fileName: string) => {
     const ws = XLSX.utils.json_to_sheet(data);
@@ -112,36 +118,9 @@ export default function Dashboard() {
     XLSX.writeFile(wb, `${fileName}.xlsx`);
   };
 
-  const renderTable = (data: any[]) => (
-    <ScrollArea>
-      <Table striped highlightOnHover withColumnBorders verticalSpacing="sm">
-        <thead style={{ backgroundColor: '#f1f3f5' }}>
-          <tr>
-            <th style={{ textAlign: 'center' }}>Parceiro</th>
-            <th style={{ textAlign: 'center' }}>Status</th>
-            <th style={{ textAlign: 'center' }}>Faturamento Total</th>
-            <th style={{ textAlign: 'center' }}>Última Interação</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((p: any, idx: number) => (
-            <tr key={idx}>
-              <td style={{ textAlign: 'center' }}>{p.parceiro}</td>
-              <td style={{ textAlign: 'center' }}>{p.status}</td>
-              <td style={{ textAlign: 'center' }}>
-                R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </td>
-              <td style={{ textAlign: 'center' }}>{p.ultima_interacao || '-'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-    </ScrollArea>
-  );
-
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <Container fluid p="md">
+      <Container fluid style={{ padding: 20 }}>
         <Title order={2} mb="md" style={{ color: '#005A64' }}>
           {tipoUser === 'GESTOR' && 'Dashboard do Gestor'}
           {tipoUser === 'VENDEDOR' && 'Dashboard do Vendedor'}
@@ -149,26 +128,28 @@ export default function Dashboard() {
         </Title>
 
         {/* Filtros */}
-        <Grid mb="xl">
-          <Grid.Col span={{ base: 12, md: 6 }}>
-            <MultiSelect
-              data={['30 dias', '60 dias', '90 dias', '120 dias']}
-              label="Filtrar por Status"
-              placeholder="Selecione status"
-              value={statusFiltro}
-              onChange={setStatusFiltro}
-            />
-          </Grid.Col>
-        </Grid>
+        <Group mb="xl" justify="space-between" style={{ width: '100%' }}>
+          <MultiSelect
+            data={['30 dias', '60 dias', '90 dias', '120 dias']}
+            label="Filtrar por Status"
+            placeholder="Selecione status"
+            value={statusFiltro}
+            onChange={setStatusFiltro}
+            style={{ flex: 1, marginRight: 10 }}
+          />
+          <Button variant="light" color="red" onClick={() => setStatusFiltro([])}>
+            Resetar Filtros
+          </Button>
+        </Group>
 
-        {/* KPIs */}
+        {/* KPIs - Quantidade Parceiros */}
         <Title order={3} mb="sm">Quantidade de Parceiros Sem Interações</Title>
         <Grid mb="xl">
           {['30 dias', '60 dias', '90 dias', '120 dias'].map(status => (
-            <Grid.Col span={{ base: 12, md: 3 }} key={status}>
+            <Grid.Col span={{ base: 12, sm: 6, md: 3 }} key={status}>
               <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}>
-                <Title order={4} ta="center">{status}</Title>
-                <Text size="xl" fw={700} ta="center">
+                <Title order={4} style={{ textAlign: 'center' }}>{status}</Title>
+                <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
                   {kpis.find(k => k.title === status)?.value || 0}
                 </Text>
               </Card>
@@ -178,14 +159,14 @@ export default function Dashboard() {
 
         <Divider my="lg" />
 
-        {/* Indicadores */}
+        {/* KPIs - Indicadores */}
         <Title order={3} mb="sm">Indicadores de Atividades e Resultados</Title>
         <Grid mb="xl">
           {['Interações', 'Oportunidades', 'Valor Gerado', 'Ticket Médio'].map(title => (
-            <Grid.Col span={{ base: 12, md: 3 }} key={title}>
+            <Grid.Col span={{ base: 12, sm: 6, md: 3 }} key={title}>
               <Card shadow="md" padding="lg" radius="lg" withBorder>
-                <Title order={4} ta="center">{title}</Title>
-                <Text size="xl" fw={700} ta="center">
+                <Title order={4} style={{ textAlign: 'center' }}>{title}</Title>
+                <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
                   {kpis.find(k => k.title === title)?.value || 0}
                 </Text>
               </Card>
@@ -195,14 +176,14 @@ export default function Dashboard() {
 
         <Divider my="lg" />
 
-        {/* Taxas */}
+        {/* KPIs - Taxas */}
         <Title order={3} mb="sm">Taxas de Conversão por Etapa</Title>
         <Grid mb="xl">
           {['Taxa Interação > Oportunidade', 'Taxa Oportunidade > Orçamento', 'Taxa Orçamento > Pedido'].map(title => (
-            <Grid.Col span={{ base: 12, md: 4 }} key={title}>
+            <Grid.Col span={{ base: 12, sm: 6, md: 4 }} key={title}>
               <Card shadow="md" padding="lg" radius="lg" withBorder>
-                <Title order={4} ta="center">{title}</Title>
-                <Text size="xl" fw={700} ta="center">
+                <Title order={4} style={{ textAlign: 'center' }}>{title}</Title>
+                <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
                   {kpis.find(k => k.title === title)?.value || '0%'}
                 </Text>
               </Card>
@@ -210,11 +191,13 @@ export default function Dashboard() {
           ))}
         </Grid>
 
+        <Divider my="lg" />
+
         {/* Gráficos */}
         <Grid>
           <Grid.Col span={{ base: 12, md: 4 }}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
-              <Title order={5} mb="md" ta="center" style={{ color: '#005A64' }}>Funil de Conversão</Title>
+              <Title order={5} mb="md" style={{ color: '#005A64' }}>Funil de Conversão</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <FunnelChart>
                   <Funnel dataKey="value" data={dadosFunil} isAnimationActive>
@@ -227,7 +210,7 @@ export default function Dashboard() {
 
           <Grid.Col span={{ base: 12, md: 4 }}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
-              <Title order={5} mb="md" ta="center" style={{ color: '#005A64' }}>Distribuição de Status</Title>
+              <Title order={5} mb="md" style={{ color: '#005A64' }}>Distribuição de Status</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -249,7 +232,7 @@ export default function Dashboard() {
 
           <Grid.Col span={{ base: 12, md: 4 }}>
             <Card shadow="sm" padding="lg" radius="lg" withBorder>
-              <Title order={5} mb="md" ta="center" style={{ color: '#005A64' }}>Evolução Mensal</Title>
+              <Title order={5} mb="md" style={{ color: '#005A64' }}>Evolução Mensal</Title>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={dadosBarra}>
                   <XAxis dataKey="mes" />
@@ -265,10 +248,10 @@ export default function Dashboard() {
         {/* Tabelas */}
         <Divider my="xl" />
         {[
-          { title: "Todos os Parceiros", data: parceirosFiltrados, exportName: "parceiros" },
+          { title: "Todos os Parceiros", data: paginatedData, exportName: "parceiros" },
           { title: "Parceiros com Interação", data: parceirosInteracoes, exportName: "parceiros_interacoes" },
           { title: "Parceiros com Oportunidade", data: parceirosOportunidades, exportName: "parceiros_oportunidades" },
-          { title: "Parceiros sem Interação", data: parceirosSemInteracoes, exportName: "parceiros_sem_interacoes" },
+          { title: "Parceiros Pendentes", data: parceirosPendentes, exportName: "parceiros_pendentes" },
         ].map((section, index) => (
           <div key={index}>
             <Title order={3} mb="md">{section.title}</Title>
@@ -278,7 +261,38 @@ export default function Dashboard() {
                   Exportar Excel
                 </Button>
               </Group>
-              {renderTable(section.data)}
+              <ScrollArea>
+                <Table striped highlightOnHover withColumnBorders>
+                  <thead style={{ backgroundColor: '#f1f3f5' }}>
+                    <tr>
+                      <th>Parceiro</th>
+                      <th>Status</th>
+                      <th style={{ textAlign: 'center' }}>Faturamento Total</th>
+                      <th style={{ textAlign: 'center' }}>Última Interação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {section.data.map((p: any, idx: number) => (
+                      <tr key={idx}>
+                        <td>{p.parceiro}</td>
+                        <td>{p.status}</td>
+                        <td style={{ textAlign: 'center' }}>R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                        <td style={{ textAlign: 'center' }}>{p.ultima_interacao || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </ScrollArea>
+              {section.title === "Todos os Parceiros" && (
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
+                  <Pagination
+                    value={page}
+                    onChange={setPage}
+                    total={Math.ceil(parceirosFiltrados.length / recordsPerPage)}
+                    size="sm"
+                  />
+                </div>
+              )}
             </Card>
           </div>
         ))}
