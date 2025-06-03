@@ -69,6 +69,17 @@ export default function Dashboard() {
     }
   };
 
+  const fetchHistoricoInteracoes = async (parceiroId: number) => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/interacoes/historico/?parceiro_id=${parceiroId}`, { headers });
+      return response.data;
+    } catch (error) {
+      console.error(`Erro ao buscar histórico para parceiro ${parceiroId}:`, error);
+      return [];
+    }
+  };
+
   useEffect(() => {
     if (!token) {
       navigate('/');
@@ -115,15 +126,42 @@ export default function Dashboard() {
     return data.slice(startIndex, startIndex + recordsPerPage);
   };
 
-  const exportToExcel = (data: any[], fileName: string) => {
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-    XLSX.writeFile(wb, `${fileName}.xlsx`);
-  };
-
   const handlePageChange = (key: string, page: number) => {
     setPageMap(prev => ({ ...prev, [key]: page }));
+  };
+
+  const exportToExcel = async (data: any[], fileName: string, exportarHistorico = false) => {
+    const wb = XLSX.utils.book_new();
+
+    // Aba 1: Resumo
+    const sheetData = data.map((p) => ({
+      Parceiro: p.parceiro,
+      Status: p.status,
+      'Faturamento Total': p.total,
+      'Última Interação': p.ultima_interacao || '-',
+    }));
+    const ws = XLSX.utils.json_to_sheet(sheetData);
+    XLSX.utils.book_append_sheet(wb, ws, 'Resumo Parceiros');
+
+    if (exportarHistorico) {
+      let historicoData: any[] = [];
+
+      for (const parceiro of data) {
+        const interacoes = await fetchHistoricoInteracoes(parceiro.id);
+        const interacoesFormatadas = interacoes.map((i: any) => ({
+          Parceiro: parceiro.parceiro,
+          Tipo: i.tipo,
+          'Data da Interação': i.data_interacao,
+          'Entrou em Contato': i.entrou_em_contato ? 'Sim' : 'Não',
+        }));
+        historicoData = historicoData.concat(interacoesFormatadas);
+      }
+
+      const wsHistorico = XLSX.utils.json_to_sheet(historicoData);
+      XLSX.utils.book_append_sheet(wb, wsHistorico, 'Histórico Interações');
+    }
+
+    XLSX.writeFile(wb, `${fileName}.xlsx`);
   };
 
   return (
@@ -258,7 +296,7 @@ export default function Dashboard() {
           <Divider my="xl" />
           {[
             { title: "Todos os Parceiros", data: parceirosFiltrados, exportName: "parceiros" },
-            { title: "Parceiros com Interação", data: parceirosInteracoes, exportName: "parceiros_interacoes" },
+            { title: "Parceiros com Interação", data: parceirosInteracoes, exportName: "parceiros_interacoes", exportarHistorico: true },
             { title: "Parceiros com Oportunidade", data: parceirosOportunidades, exportName: "parceiros_oportunidades" },
             { title: "Parceiros Pendentes", data: parceirosPendentes, exportName: "parceiros_pendentes" },
           ].map((section, index) => (
@@ -266,7 +304,12 @@ export default function Dashboard() {
               <Title order={3} mb="md">{section.title} ({section.data.length})</Title>
               <Card shadow="md" padding="md" radius="md" withBorder mb="lg">
                 <Group justify="space-between" mb="sm">
-                  <Button variant="outline" color="teal" size="xs" onClick={() => exportToExcel(section.data, section.exportName)}>
+                  <Button
+                    variant="outline"
+                    color="teal"
+                    size="xs"
+                    onClick={() => exportToExcel(section.data, section.exportName, section.exportarHistorico)}
+                  >
                     Exportar Excel
                   </Button>
                 </Group>
@@ -285,7 +328,9 @@ export default function Dashboard() {
                         <tr key={idx}>
                           <td>{p.parceiro}</td>
                           <td>{p.status}</td>
-                          <td style={{ textAlign: 'center' }}>R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                          <td style={{ textAlign: 'center' }}>
+                            R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </td>
                           <td style={{ textAlign: 'center' }}>{p.ultima_interacao || '-'}</td>
                         </tr>
                       ))}
