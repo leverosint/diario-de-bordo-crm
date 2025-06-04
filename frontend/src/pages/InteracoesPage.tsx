@@ -21,10 +21,8 @@ import {
   Grid,
   TextInput,
   Textarea,
-  FileInput,
-  Notification,
+  FileButton,
 } from '@mantine/core';
-
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
 
@@ -37,7 +35,7 @@ interface Interacao {
   entrou_em_contato?: boolean;
   data_interacao?: string;
   tipo?: string;
-  nome_gatilho?: string; // novo campo gatilho extra
+  gatilho?: string; // <-- NOVO CAMPO
 }
 
 export default function InteracoesPage() {
@@ -51,11 +49,10 @@ export default function InteracoesPage() {
   const [expandirId, setExpandirId] = useState<number | null>(null);
   const [valorOportunidade, setValorOportunidade] = useState('');
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
 
-  const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user;
+  const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const tipoUser = usuario?.tipo_user;
   const token = localStorage.getItem('token');
 
   const carregarDados = async () => {
@@ -92,12 +89,14 @@ export default function InteracoesPage() {
     try {
       const headers = { Authorization: `Bearer ${token}` };
 
+      // 1. Cria a interação
       await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, {
         parceiro: parceiroId,
         tipo,
         entrou_em_contato: true,
       }, { headers });
 
+      // 2. Se for oportunidade, cria a oportunidade também
       if (oportunidade && valor) {
         await axios.post(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
           parceiro: parceiroId,
@@ -117,27 +116,22 @@ export default function InteracoesPage() {
     }
   };
 
-  const handleUpload = async () => {
-    if (!file) return;
-
+  const handleUploadGatilho = async () => {
+    if (!arquivoGatilho) return alert('Selecione um arquivo antes de enviar.');
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', arquivoGatilho);
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
+      const headers = { Authorization: `Bearer ${token}` };
+      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilho/`, formData, {
+        headers,
       });
-      setUploadSuccess(true);
-      setUploadError(null);
-      setFile(null);
-      carregarDados();
+      alert('Gatilhos extras enviados com sucesso!');
+      setArquivoGatilho(null);
+      carregarDados(); // Atualiza tabela depois do upload
     } catch (err) {
-      console.error('Erro no upload de gatilhos extras:', err);
-      setUploadError('Erro no upload. Verifique o formato do arquivo.');
-      setUploadSuccess(false);
+      console.error('Erro ao enviar arquivo de gatilhos extras:', err);
+      alert('Erro ao enviar arquivo de gatilhos extras. Verifique o formato.');
     }
   };
 
@@ -149,36 +143,24 @@ export default function InteracoesPage() {
     <SidebarGestor tipoUser={tipoUser}>
       <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
 
-      {tipoUser === 'GESTOR' && (
-        <Group mb="md">
-          <FileInput
-            placeholder="Selecione o arquivo Excel (.xlsx)"
-            accept=".xlsx"
-            value={file}
-            onChange={setFile}
-          />
-          <Button onClick={handleUpload} disabled={!file}>
-            Upload Gatilhos Extras
-          </Button>
-        </Group>
-      )}
-
-      {uploadSuccess && (
-        <Notification color="teal" title="Sucesso" onClose={() => setUploadSuccess(false)}>
-          Gatilhos extras importados com sucesso!
-        </Notification>
-      )}
-
-      {uploadError && (
-        <Notification color="red" title="Erro" onClose={() => setUploadError(null)}>
-          {uploadError}
-        </Notification>
-      )}
-
       <Group justify="space-between" mb="md">
         <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
           Meta do dia: {metaAtual}/{metaTotal}
         </Badge>
+        {tipoUser === 'GESTOR' && (
+          <Group>
+            <FileButton onChange={setArquivoGatilho} accept=".xlsx">
+              {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
+            </FileButton>
+            <Button
+              color="blue"
+              onClick={handleUploadGatilho}
+              disabled={!arquivoGatilho}
+            >
+              Enviar Gatilhos Extras
+            </Button>
+          </Group>
+        )}
       </Group>
 
       {carregando ? (
@@ -193,7 +175,7 @@ export default function InteracoesPage() {
               {pendentes.length === 0 ? (
                 <Text>Nenhuma interação pendente encontrada.</Text>
               ) : (
-                <ScrollArea h={300}>
+                <ScrollArea h={400}>
                   <Table striped highlightOnHover withTableBorder>
                     <TableThead>
                       <TableTr>
@@ -201,7 +183,7 @@ export default function InteracoesPage() {
                         <TableTh>Unidade</TableTh>
                         <TableTh>Classificação</TableTh>
                         <TableTh>Status</TableTh>
-                        <TableTh>Gatilho Extra</TableTh>
+                        <TableTh>Gatilho Extra</TableTh> {/* NOVA COLUNA */}
                         <TableTh>Tipo</TableTh>
                         <TableTh>Ação</TableTh>
                       </TableTr>
@@ -211,13 +193,19 @@ export default function InteracoesPage() {
                         <>
                           <TableTr
                             key={item.id}
-                            style={{ backgroundColor: item.nome_gatilho ? '#fff8dc' : 'transparent' }}
+                            style={item.gatilho ? { backgroundColor: '#ffe5e5' } : {}} // DESTACAR GATILHO
                           >
                             <TableTd>{item.parceiro}</TableTd>
                             <TableTd>{item.unidade}</TableTd>
                             <TableTd>{item.classificacao}</TableTd>
                             <TableTd>{item.status}</TableTd>
-                            <TableTd>{item.nome_gatilho || '-'}</TableTd>
+                            <TableTd>
+                              {item.gatilho ? (
+                                <Badge color="red" variant="filled">{item.gatilho}</Badge>
+                              ) : (
+                                "-"
+                              )}
+                            </TableTd>
                             <TableTd>
                               <Select
                                 placeholder="Tipo"
@@ -304,7 +292,7 @@ export default function InteracoesPage() {
               {interagidos.length === 0 ? (
                 <Text>Nenhum parceiro interagido hoje.</Text>
               ) : (
-                <ScrollArea h={300}>
+                <ScrollArea h={400}>
                   <Table striped highlightOnHover withTableBorder>
                     <TableThead>
                       <TableTr>
