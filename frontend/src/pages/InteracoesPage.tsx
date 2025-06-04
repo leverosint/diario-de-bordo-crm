@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import axios from 'axios';
 import {
   Table,
@@ -35,7 +35,7 @@ interface Interacao {
   entrou_em_contato?: boolean;
   data_interacao?: string;
   tipo?: string;
-  gatilho_extra?: string;  // 🟢 Nome correto igual ao backend
+  gatilho_extra?: string; // 🟢 Nome correto
 }
 
 export default function InteracoesPage() {
@@ -186,7 +186,7 @@ export default function InteracoesPage() {
                     </TableThead>
                     <TableTbody>
                       {pendentes.map((item) => (
-                        <div key={item.id}>
+                        <Fragment key={item.id}>
                           <TableTr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
                             <TableTd>{item.parceiro}</TableTd>
                             <TableTd>{item.unidade}</TableTd>
@@ -272,7 +272,7 @@ export default function InteracoesPage() {
                               </TableTd>
                             </TableTr>
                           )}
-                        </div>
+                        </Fragment>
                       ))}
                     </TableTbody>
                   </Table>
