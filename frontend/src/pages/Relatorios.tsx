@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Container, Select, Button, Table, Title, Group, Pagination } from '@mantine/core';
-import SidebarGestor from '../components/SidebarGestor'; // ✅ Importação correta
+import SidebarGestor from '../components/SidebarGestor';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
 
@@ -25,7 +25,16 @@ export default function Relatorios() {
       }
 
       const response = await axios.get(endpoint, { headers });
-      setDados(response.data);
+
+      if (tipoRelatorio === 'parceiros') {
+        const parceirosTratados = response.data.map((item: any) => ({
+          ...item,
+          canal_venda: item.canal_venda?.nome || '',
+        }));
+        setDados(parceirosTratados);
+      } else {
+        setDados(response.data);
+      }
     } catch (error) {
       console.error('Erro ao buscar relatório:', error);
     }
@@ -40,6 +49,34 @@ export default function Relatorios() {
 
   const dadosPaginados = dados.slice((pagina - 1) * registrosPorPagina, pagina * registrosPorPagina);
 
+  // Traduções de colunas
+  const traducoes: { [key: string]: string } = {
+    parceiro: 'Nome do Parceiro',
+    codigo: 'Código',
+    classificacao: 'Classificação',
+    consultor: 'Consultor',
+    unidade: 'Unidade',
+    cidade: 'Cidade',
+    uf: 'UF',
+    canal_venda: 'Canal de Venda',
+    total_geral: 'Total Geral (R$)',
+    tm: 'Ticket Médio (R$)',
+    recorrencia: 'Recorrência',
+    status: 'Status',
+    primeiro_fat: 'Primeiro Faturamento',
+    ultimo_fat: 'Último Faturamento',
+    atualizado_em: 'Atualizado Em',
+    parceiro_nome: 'Nome do Parceiro',
+    usuario_nome: 'Usuário',
+    tipo: 'Tipo de Interação',
+    data_interacao: 'Data da Interação',
+    entrou_em_contato: 'Entrou em Contato',
+    valor: 'Valor (R$)',
+    etapa: 'Etapa',
+    observacao: 'Observação',
+    data_criacao: 'Data de Criação',
+  };
+
   return (
     <SidebarGestor tipoUser={localStorage.getItem('tipo_user') || ''}>
       <Container size="xl" py="xl">
@@ -52,7 +89,7 @@ export default function Relatorios() {
             label="Escolha o tipo de relatório"
             placeholder="Selecione"
             value={tipoRelatorio}
-            onChange={(value) => setTipoRelatorio(value as string)}
+            onChange={(value) => setTipoRelatorio(value || 'parceiros')}
             data={[
               { value: 'parceiros', label: 'Parceiros' },
               { value: 'interacoes', label: 'Interações' },
@@ -68,7 +105,9 @@ export default function Relatorios() {
             <tr>
               {dados.length > 0 &&
                 Object.keys(dados[0] ?? {}).map((key) => (
-                  <th key={key}>{key.toUpperCase()}</th>
+                  <th key={key}>
+                    {traducoes[key] || key.toUpperCase()}
+                  </th>
                 ))}
             </tr>
           </thead>
