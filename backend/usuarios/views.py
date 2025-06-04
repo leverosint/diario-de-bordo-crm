@@ -178,6 +178,9 @@ class InteracoesPendentesView(APIView):
         else:
             parceiros = Parceiro.objects.all()
 
+        # 🚨 Importante: Trazer Gatilhos
+        from .models import GatilhoExtra
+
         parceiros_pendentes = []
         parceiros_interagidos = []
 
@@ -191,6 +194,10 @@ class InteracoesPendentesView(APIView):
                 ultima_interacao.data_interacao.date() < hoje
             )
 
+            # 🔥 Buscando o Gatilho Extra
+            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
+            descricao_gatilho = gatilho.descricao if gatilho else None
+
             if interagido_hoje:
                 parceiros_interagidos.append({
                     'id': parceiro.id,
@@ -201,6 +208,7 @@ class InteracoesPendentesView(APIView):
                     'tipo': ultima_interacao.tipo,
                     'data_interacao': ultima_interacao.data_interacao,
                     'entrou_em_contato': ultima_interacao.entrou_em_contato,
+                    'gatilho_extra': descricao_gatilho,
                 })
             elif not em_periodo_bloqueio:
                 parceiros_pendentes.append({
@@ -212,12 +220,14 @@ class InteracoesPendentesView(APIView):
                     'tipo': '',
                     'data_interacao': '',
                     'entrou_em_contato': False,
+                    'gatilho_extra': descricao_gatilho,   # 👈 Adiciona aqui
                 })
 
         tipo_lista = request.query_params.get('tipo', 'pendentes')
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
         return Response(parceiros_pendentes)
+
 
 class InteracoesMetasView(APIView):
     permission_classes = [IsAuthenticated]

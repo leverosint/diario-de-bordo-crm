@@ -35,7 +35,7 @@ interface Interacao {
   entrou_em_contato?: boolean;
   data_interacao?: string;
   tipo?: string;
-  gatilho?: string; // <-- NOVO CAMPO
+  gatilho_extra?: string;  // 🟢 Nome correto igual ao backend
 }
 
 export default function InteracoesPage() {
@@ -89,14 +89,12 @@ export default function InteracoesPage() {
     try {
       const headers = { Authorization: `Bearer ${token}` };
 
-      // 1. Cria a interação
       await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, {
         parceiro: parceiroId,
         tipo,
         entrou_em_contato: true,
       }, { headers });
 
-      // 2. Se for oportunidade, cria a oportunidade também
       if (oportunidade && valor) {
         await axios.post(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
           parceiro: parceiroId,
@@ -123,12 +121,10 @@ export default function InteracoesPage() {
 
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilho/`, formData, {
-        headers,
-      });
+      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilho/`, formData, { headers });
       alert('Gatilhos extras enviados com sucesso!');
       setArquivoGatilho(null);
-      carregarDados(); // Atualiza tabela depois do upload
+      carregarDados();
     } catch (err) {
       console.error('Erro ao enviar arquivo de gatilhos extras:', err);
       alert('Erro ao enviar arquivo de gatilhos extras. Verifique o formato.');
@@ -183,25 +179,22 @@ export default function InteracoesPage() {
                         <TableTh>Unidade</TableTh>
                         <TableTh>Classificação</TableTh>
                         <TableTh>Status</TableTh>
-                        <TableTh>Gatilho Extra</TableTh> {/* NOVA COLUNA */}
+                        <TableTh>Gatilho Extra</TableTh>
                         <TableTh>Tipo</TableTh>
                         <TableTh>Ação</TableTh>
                       </TableTr>
                     </TableThead>
                     <TableTbody>
                       {pendentes.map((item) => (
-                        <>
-                          <TableTr
-                            key={item.id}
-                            style={item.gatilho ? { backgroundColor: '#ffe5e5' } : {}} // DESTACAR GATILHO
-                          >
+                        <div key={item.id}>
+                          <TableTr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
                             <TableTd>{item.parceiro}</TableTd>
                             <TableTd>{item.unidade}</TableTd>
                             <TableTd>{item.classificacao}</TableTd>
                             <TableTd>{item.status}</TableTd>
                             <TableTd>
-                              {item.gatilho ? (
-                                <Badge color="red" variant="filled">{item.gatilho}</Badge>
+                              {item.gatilho_extra ? (
+                                <Badge color="red" variant="filled">{item.gatilho_extra}</Badge>
                               ) : (
                                 "-"
                               )}
@@ -279,7 +272,7 @@ export default function InteracoesPage() {
                               </TableTd>
                             </TableTr>
                           )}
-                        </>
+                        </div>
                       ))}
                     </TableTbody>
                   </Table>
