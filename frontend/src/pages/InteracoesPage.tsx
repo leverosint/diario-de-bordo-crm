@@ -35,6 +35,7 @@ interface Interacao {
   entrou_em_contato?: boolean;
   data_interacao?: string;
   tipo?: string;
+  gatilho_extra?: string; // <-- NOVO CAMPO
 }
 
 export default function InteracoesPage() {
@@ -148,94 +149,98 @@ export default function InteracoesPage() {
                         <TableTh>Classificação</TableTh>
                         <TableTh>Status</TableTh>
                         <TableTh>Tipo</TableTh>
+                        <TableTh>G.E.</TableTh> {/* <-- NOVA COLUNA */}
                         <TableTh>Ação</TableTh>
                       </TableTr>
                     </TableThead>
                     <TableTbody>
-  {pendentes.map((item) => (
-    <>
-      <TableTr key={item.id}>
-        <TableTd>{item.parceiro}</TableTd>
-        <TableTd>{item.unidade}</TableTd>
-        <TableTd>{item.classificacao}</TableTd>
-        <TableTd>{item.status}</TableTd>
-        <TableTd>
-          <Select
-            placeholder="Tipo"
-            value={tipoSelecionado[item.id] || ''}
-            onChange={(value) => {
-              if (value) {
-                setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
-              }
-            }}
-            data={[
-              { value: 'whatsapp', label: 'WhatsApp' },
-              { value: 'email', label: 'E-mail' },
-              { value: 'ligacao', label: 'Ligação' },
-            ]}
-          />
-        </TableTd>
-        <TableTd>
-          <Button size="xs" onClick={() => setExpandirId(item.id)}>
-            Marcar como interagido
-          </Button>
-        </TableTd>
-      </TableTr>
-      {expandirId === item.id && (
-        <TableTr>
-          <TableTd colSpan={6}>
-            <Group grow style={{ marginTop: 10 }}>
-              <TextInput
-                label="Valor da Oportunidade (R$)"
-                placeholder="5000"
-                value={valorOportunidade}
-                onChange={(e) => setValorOportunidade(e.currentTarget.value)}
-              />
-              <Textarea
-                label="Observação"
-                placeholder="Detalhes adicionais..."
-                value={observacaoOportunidade}
-                onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
-              />
-            </Group>
-            <Group mt="md" justify="flex-end">
-              <Button
-                color="blue"
-                onClick={() => registrarInteracao(
-                  item.id,
-                  tipoSelecionado[item.id] || '',
-                  true,
-                  parseFloat(valorOportunidade.replace(',', '.')),
-                  observacaoOportunidade
-                )}
-              >
-                Salvar e Criar Oportunidade
-              </Button>
-              <Button
-                color="gray"
-                onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
-              >
-                Só Interagir
-              </Button>
-              <Button
-                color="red"
-                variant="outline"
-                onClick={() => {
-                  setExpandirId(null);
-                  setValorOportunidade('');
-                  setObservacaoOportunidade('');
-                }}
-              >
-                Cancelar
-              </Button>
-            </Group>
-          </TableTd>
-        </TableTr>
-      )}
-    </>
-  ))}
-</TableTbody>
-
+                      {pendentes.map((item) => (
+                        <>
+                          <TableTr 
+                            key={item.id}
+                            style={{ backgroundColor: item.gatilho_extra ? '#FFFACD' : undefined }} // Amarelo claro se tiver G.E.
+                          >
+                            <TableTd>{item.parceiro}</TableTd>
+                            <TableTd>{item.unidade}</TableTd>
+                            <TableTd>{item.classificacao}</TableTd>
+                            <TableTd>{item.status}</TableTd>
+                            <TableTd>
+                              <Select
+                                placeholder="Tipo"
+                                value={tipoSelecionado[item.id] || ''}
+                                onChange={(value) => {
+                                  if (value) {
+                                    setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
+                                  }
+                                }}
+                                data={[
+                                  { value: 'whatsapp', label: 'WhatsApp' },
+                                  { value: 'email', label: 'E-mail' },
+                                  { value: 'ligacao', label: 'Ligação' },
+                                ]}
+                              />
+                            </TableTd>
+                            <TableTd>{item.gatilho_extra || ''}</TableTd> {/* <-- NOVO */}
+                            <TableTd>
+                              <Button size="xs" onClick={() => setExpandirId(item.id)}>
+                                Marcar como interagido
+                              </Button>
+                            </TableTd>
+                          </TableTr>
+                          {expandirId === item.id && (
+                            <TableTr>
+                              <TableTd colSpan={7}>
+                                <Group grow style={{ marginTop: 10 }}>
+                                  <TextInput
+                                    label="Valor da Oportunidade (R$)"
+                                    placeholder="5000"
+                                    value={valorOportunidade}
+                                    onChange={(e) => setValorOportunidade(e.currentTarget.value)}
+                                  />
+                                  <Textarea
+                                    label="Observação"
+                                    placeholder="Detalhes adicionais..."
+                                    value={observacaoOportunidade}
+                                    onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
+                                  />
+                                </Group>
+                                <Group mt="md" justify="flex-end">
+                                  <Button
+                                    color="blue"
+                                    onClick={() => registrarInteracao(
+                                      item.id,
+                                      tipoSelecionado[item.id] || '',
+                                      true,
+                                      parseFloat(valorOportunidade.replace(',', '.')),
+                                      observacaoOportunidade
+                                    )}
+                                  >
+                                    Salvar e Criar Oportunidade
+                                  </Button>
+                                  <Button
+                                    color="gray"
+                                    onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
+                                  >
+                                    Só Interagir
+                                  </Button>
+                                  <Button
+                                    color="red"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setExpandirId(null);
+                                      setValorOportunidade('');
+                                      setObservacaoOportunidade('');
+                                    }}
+                                  >
+                                    Cancelar
+                                  </Button>
+                                </Group>
+                              </TableTd>
+                            </TableTr>
+                          )}
+                        </>
+                      ))}
+                    </TableTbody>
                   </Table>
                 </ScrollArea>
               )}

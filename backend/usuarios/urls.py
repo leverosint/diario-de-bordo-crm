@@ -49,3 +49,9 @@ urlpatterns += [
     path('dashboard/funil/', DashboardFunilView.as_view(), name='dashboard-funil'),
     path('dashboard/oportunidades-mensais/', DashboardOportunidadesMensaisView.as_view(), name='dashboard-oportunidades-mensais'),
 ]
+
+from .views import UploadGatilhosExtrasView
+
+urlpatterns += [
+    path('upload-gatilhos/', UploadGatilhosExtrasView.as_view({'post': 'create'}), name='upload-gatilhos'),
+]

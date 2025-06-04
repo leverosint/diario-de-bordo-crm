@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Parceiro, CanalVenda, Interacao, CustomUser, Oportunidade
+from .models import Parceiro, CanalVenda, Interacao, CustomUser, Oportunidade, GatilhoExtra
 
 # ===== Canal de Venda =====
 class CanalVendaSerializer(serializers.ModelSerializer):
@@ -107,3 +107,11 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             delta = now().date() - ultima_interacao.data_interacao.date()
             return delta.days
         return None
+
+class GatilhoExtraSerializer(serializers.ModelSerializer):
+    parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
+    usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
+
+    class Meta:
+        model = GatilhoExtra
+        fields = ['id', 'parceiro', 'parceiro_nome', 'usuario', 'usuario_nome', 'descricao']

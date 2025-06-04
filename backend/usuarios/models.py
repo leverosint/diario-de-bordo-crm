@@ -141,3 +141,11 @@ class Oportunidade(models.Model):
 
     def __str__(self):
         return f"{self.parceiro.parceiro} - R$ {self.valor} - {self.get_etapa_display()}"
+
+class GatilhoExtra(models.Model):
+    parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='gatilhos_extras')
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='gatilhos_extras')
+    descricao = models.CharField(max_length=255)
+
+    def __str__(self):
+        return f'{self.parceiro.parceiro} - {self.usuario.username} ({self.descricao})'

@@ -12,7 +12,7 @@ from datetime import timedelta, datetime
 import pandas as pd
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Parceiro, CanalVenda, Interacao, Oportunidade
+from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra
 from .serializers import (
     ParceiroSerializer,
     CanalVendaSerializer,
@@ -394,3 +394,105 @@ class DashboardOportunidadesMensaisView(APIView):
             }
             for dado in dados
         ])
+
+
+class InteracoesPendentesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuario = request.user
+        hoje = now().date()
+        limite_data = hoje - timedelta(days=3)
+
+        if usuario.tipo_user == 'VENDEDOR':
+            parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
+        elif usuario.tipo_user == 'GESTOR':
+            parceiros = Parceiro.objects.filter(canal_venda__in=usuario.canais_venda.all())
+        else:
+            parceiros = Parceiro.objects.all()
+
+        parceiros_pendentes = []
+        parceiros_interagidos = []
+
+        for parceiro in parceiros:
+            ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
+            interagido_hoje = ultima_interacao and ultima_interacao.data_interacao.date() == hoje
+            em_periodo_bloqueio = (
+                ultima_interacao and 
+                ultima_interacao.entrou_em_contato and 
+                ultima_interacao.data_interacao.date() > limite_data and
+                ultima_interacao.data_interacao.date() < hoje
+            )
+
+            # 🚀 Verificar se existe gatilho extra
+            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
+
+            if interagido_hoje:
+                parceiros_interagidos.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': ultima_interacao.tipo,
+                    'data_interacao': ultima_interacao.data_interacao,
+                    'entrou_em_contato': ultima_interacao.entrou_em_contato,
+                    'gatilho_extra': gatilho.descricao if gatilho else None,  # 🟡 Adicionado
+                })
+            elif not em_periodo_bloqueio or gatilho:
+                parceiros_pendentes.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': '',
+                    'data_interacao': '',
+                    'entrou_em_contato': False,
+                    'gatilho_extra': gatilho.descricao if gatilho else None,  # 🟡 Adicionado
+                })
+
+        tipo_lista = request.query_params.get('tipo', 'pendentes')
+        if tipo_lista == 'interagidos':
+            return Response(parceiros_interagidos)
+        return Response(parceiros_pendentes)
+
+# ===== Upload Gatilhos Extras (Excel) =====
+from .models import GatilhoExtra  # <-- IMPORTA AQUI O MODEL
+from .serializers import GatilhoExtraSerializer  # <-- IMPORTA AQUI O SERIALIZER
+
+class UploadGatilhosExtrasView(viewsets.ViewSet):
+    parser_classes = [MultiPartParser]
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response({'erro': 'Arquivo não enviado'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            df = pd.read_excel(file_obj)
+        except Exception as e:
+            return Response({'erro': f'Erro ao ler arquivo: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            with transaction.atomic():
+                for _, row in df.iterrows():
+                    parceiro_id = int(row.get('ID Parceiro'))
+                    usuario_id = int(row.get('ID Usuario'))
+                    descricao = str(row.get('Gatilho')).strip()
+
+                    parceiro = Parceiro.objects.get(id=parceiro_id)
+                    usuario = User.objects.get(id=usuario_id)
+
+                    # Evitar duplicidade do mesmo parceiro e usuário
+                    gatilho, created = GatilhoExtra.objects.update_or_create(
+                        parceiro=parceiro,
+                        usuario=usuario,
+                        defaults={'descricao': descricao}
+                    )
+
+            return Response({'mensagem': 'Gatilhos extras importados com sucesso'}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({'erro': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
