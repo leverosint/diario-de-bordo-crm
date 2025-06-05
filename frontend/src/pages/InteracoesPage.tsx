@@ -40,6 +40,8 @@ interface Interacao {
   consultor?: string;
 }
 
+
+
 interface CanalVenda {
   id: number;
   nome: string;
@@ -106,7 +108,7 @@ export default function InteracoesPage() {
 
       if (tipoUser === 'GESTOR') {
         const canais = usuario.canais_venda || [];
-        setCanaisVenda(canais.map((nome: string, index: number) => ({ id: index, nome })));
+setCanaisVenda(canais.map((c: { id: number; nome: string }) => ({ id: c.id, nome: c.nome })));
       }
     } catch (err) {
       console.error('Erro ao carregar interações:', err);
