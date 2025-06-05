@@ -125,11 +125,12 @@ class LoginView(APIView):
                     "canais_venda": [
                         {"id": canal.id, "nome": canal.nome}
                         for canal in user.canais_venda.all()
-                    ],  # 🔥 Agora vem id + nome
+                    ],  # 👈 Agora vem id e nome certinho!
                 }
             })
         else:
             return Response({"erro": "Credenciais inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 
 

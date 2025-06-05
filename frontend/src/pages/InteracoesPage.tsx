@@ -36,7 +36,7 @@ interface Interacao {
   data_interacao?: string;
   tipo?: string;
   gatilho_extra?: string;
-  canal_venda_id?: number;
+  canal_venda_nome?: string;   // <<<< 🔥 AGORA PELO NOME!
   consultor?: string;
 }
 
@@ -86,14 +86,27 @@ export default function InteracoesPage() {
         axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers }),
       ]);
 
-      setPendentes(resPendentes.data);
-      setInteragidos(resInteragidos.data);
+      // 🔥🔥 Corrige: coloca o nome do canal direto nas interações (fake)
+      const canalNome = (codigo: string) => {
+        const canal = usuario.canais_venda?.find((c: string) => c === codigo);
+        return canal || '';
+      };
+
+      setPendentes(resPendentes.data.map((p: any) => ({
+        ...p,
+        canal_venda_nome: canalNome(p.canal_venda_id),
+      })));
+      setInteragidos(resInteragidos.data.map((p: any) => ({
+        ...p,
+        canal_venda_nome: canalNome(p.canal_venda_id),
+      })));
+
       setMetaAtual(resMeta.data.interacoes_realizadas);
       setMetaTotal(resMeta.data.meta_diaria);
 
       if (tipoUser === 'GESTOR') {
         const canais = usuario.canais_venda || [];
-        setCanaisVenda(canais); // ✅ Agora é [{id, nome}]
+        setCanaisVenda(canais.map((nome: string, index: number) => ({ id: index, nome })));
       }
     } catch (err) {
       console.error('Erro ao carregar interações:', err);
@@ -176,14 +189,14 @@ export default function InteracoesPage() {
   }, []);
 
   const pendentesFiltrados = pendentes.filter((p) => {
-    const canalOk = !canalSelecionado || String(p.canal_venda_id) === canalSelecionado;
+    const canalOk = !canalSelecionado || p.canal_venda_nome === canalSelecionado;
     const vendedorOk = !vendedorSelecionado || p.consultor === vendedorSelecionado;
     return canalOk && vendedorOk;
   });
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
+          <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
 
       <Group justify="space-between" mb="md">
         <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
