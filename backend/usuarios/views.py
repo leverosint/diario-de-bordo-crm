@@ -3,22 +3,23 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import api_view, permission_classes
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.timezone import now
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncMonth
-from datetime import timedelta, datetime
+from datetime import timedelta
 import pandas as pd
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra
+from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra, CustomUser
 from .serializers import (
     ParceiroSerializer,
     CanalVendaSerializer,
     InteracaoSerializer,
-    InteracaoPendentesSerializer,
     OportunidadeSerializer,
+    GatilhoExtraSerializer,
 )
 
 User = get_user_model()
@@ -178,9 +179,6 @@ class InteracoesPendentesView(APIView):
         else:
             parceiros = Parceiro.objects.all()
 
-        # 🚨 Importante: Trazer Gatilhos
-        from .models import GatilhoExtra
-
         parceiros_pendentes = []
         parceiros_interagidos = []
 
@@ -194,9 +192,8 @@ class InteracoesPendentesView(APIView):
                 ultima_interacao.data_interacao.date() < hoje
             )
 
-            # 🔥 Buscando o Gatilho Extra
-            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
-            descricao_gatilho = gatilho.descricao if gatilho else None
+            responsavel_id = parceiro.consultor
+            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario__id_vendedor=responsavel_id).first()
 
             if interagido_hoje:
                 parceiros_interagidos.append({
@@ -208,9 +205,9 @@ class InteracoesPendentesView(APIView):
                     'tipo': ultima_interacao.tipo,
                     'data_interacao': ultima_interacao.data_interacao,
                     'entrou_em_contato': ultima_interacao.entrou_em_contato,
-                    'gatilho_extra': descricao_gatilho,
+                    'gatilho_extra': gatilho.descricao if gatilho else None,
                 })
-            elif not em_periodo_bloqueio:
+            elif not em_periodo_bloqueio or gatilho:
                 parceiros_pendentes.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -220,14 +217,13 @@ class InteracoesPendentesView(APIView):
                     'tipo': '',
                     'data_interacao': '',
                     'entrou_em_contato': False,
-                    'gatilho_extra': descricao_gatilho,   # 👈 Adiciona aqui
+                    'gatilho_extra': gatilho.descricao if gatilho else None,
                 })
 
         tipo_lista = request.query_params.get('tipo', 'pendentes')
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
         return Response(parceiros_pendentes)
-
 
 class InteracoesMetasView(APIView):
     permission_classes = [IsAuthenticated]
@@ -285,6 +281,7 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
 
+# ... 🛑 o código é muito grande para caber aqui, quer que eu continue com o Dashboard KPIs, Funil, Oportunidades Mensais e o endpoint usuarios_por_canal em mais uma sequência?
 # ===== Dashboard KPIs + Parceiros =====
 class DashboardKPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -405,72 +402,7 @@ class DashboardOportunidadesMensaisView(APIView):
             for dado in dados
         ])
 
-
-class InteracoesPendentesView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        usuario = request.user
-        hoje = now().date()
-        limite_data = hoje - timedelta(days=3)
-
-        if usuario.tipo_user == 'VENDEDOR':
-            parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
-        elif usuario.tipo_user == 'GESTOR':
-            parceiros = Parceiro.objects.filter(canal_venda__in=usuario.canais_venda.all())
-        else:
-            parceiros = Parceiro.objects.all()
-
-        parceiros_pendentes = []
-        parceiros_interagidos = []
-
-        for parceiro in parceiros:
-            ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
-            interagido_hoje = ultima_interacao and ultima_interacao.data_interacao.date() == hoje
-            em_periodo_bloqueio = (
-                ultima_interacao and 
-                ultima_interacao.entrou_em_contato and 
-                ultima_interacao.data_interacao.date() > limite_data and
-                ultima_interacao.data_interacao.date() < hoje
-            )
-
-            # 🚀 Verificar se existe gatilho extra
-            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
-
-            if interagido_hoje:
-                parceiros_interagidos.append({
-                    'id': parceiro.id,
-                    'parceiro': parceiro.parceiro,
-                    'unidade': parceiro.unidade,
-                    'classificacao': parceiro.classificacao,
-                    'status': parceiro.status,
-                    'tipo': ultima_interacao.tipo,
-                    'data_interacao': ultima_interacao.data_interacao,
-                    'entrou_em_contato': ultima_interacao.entrou_em_contato,
-                    'gatilho_extra': gatilho.descricao if gatilho else None,  # 🟡 Adicionado
-                })
-            elif not em_periodo_bloqueio or gatilho:
-                parceiros_pendentes.append({
-                    'id': parceiro.id,
-                    'parceiro': parceiro.parceiro,
-                    'unidade': parceiro.unidade,
-                    'classificacao': parceiro.classificacao,
-                    'status': parceiro.status,
-                    'tipo': '',
-                    'data_interacao': '',
-                    'entrou_em_contato': False,
-                    'gatilho_extra': gatilho.descricao if gatilho else None,  # 🟡 Adicionado
-                })
-
-        tipo_lista = request.query_params.get('tipo', 'pendentes')
-        if tipo_lista == 'interagidos':
-            return Response(parceiros_interagidos)
-        return Response(parceiros_pendentes)
-
 # ===== Upload Gatilhos Extras (Excel) =====
-from .models import GatilhoExtra  # <-- IMPORTA AQUI O MODEL
-from .serializers import GatilhoExtraSerializer  # <-- IMPORTA AQUI O SERIALIZER
-
 class UploadGatilhosExtrasView(viewsets.ViewSet):
     parser_classes = [MultiPartParser]
     permission_classes = [IsAuthenticated]
@@ -480,14 +412,11 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
         if not file_obj:
             return Response({'erro': 'Arquivo não enviado'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Verificar se é .xlsx
         if not file_obj.name.endswith('.xlsx'):
             return Response({'erro': 'Formato inválido. Envie um arquivo .xlsx.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             df = pd.read_excel(file_obj)
-
-            # Validação de colunas
             required_columns = ['ID Parceiro', 'ID Usuario', 'Gatilho']
             if not all(col in df.columns for col in required_columns):
                 return Response({'erro': f'Colunas inválidas. As colunas obrigatórias são: {", ".join(required_columns)}'}, status=status.HTTP_400_BAD_REQUEST)
@@ -499,12 +428,11 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
                     descricao = str(row.get('Gatilho')).strip()
 
                     if pd.isna(parceiro_id) or pd.isna(usuario_id) or not descricao:
-                        continue  # Pula linhas inválidas
+                        continue
 
                     parceiro = Parceiro.objects.get(id=int(parceiro_id))
                     usuario = User.objects.get(id=int(usuario_id))
 
-                    # Evitar duplicidade
                     GatilhoExtra.objects.update_or_create(
                         parceiro=parceiro,
                         usuario=usuario,
@@ -516,11 +444,7 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
         except Exception as e:
             return Response({'erro': f'Erro ao processar arquivo: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from .models import CustomUser, CanalVenda
-
+# ===== Usuários por Canal (Para Gestor) =====
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def usuarios_por_canal(request):
@@ -533,11 +457,9 @@ def usuarios_por_canal(request):
     if not canal_id:
         return Response({'detail': 'Parâmetro canal_id é obrigatório.'}, status=400)
 
-    # 🚨 Checagem: esse canal pertence a esse gestor?
     if not user.canais_venda.filter(id=canal_id).exists():
         return Response({'detail': 'Acesso negado ao canal informado.'}, status=403)
 
-    # Se passou na checagem, busca os vendedores desse canal
     usuarios = CustomUser.objects.filter(
         tipo_user='VENDEDOR',
         canais_venda__id=canal_id
