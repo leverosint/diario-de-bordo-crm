@@ -35,7 +35,20 @@ interface Interacao {
   entrou_em_contato?: boolean;
   data_interacao?: string;
   tipo?: string;
-  gatilho_extra?: string; // 🟢 Nome correto
+  gatilho_extra?: string;
+  canal_venda_id?: number;
+  consultor?: string;
+}
+
+interface CanalVenda {
+  id: number;
+  nome: string;
+}
+
+interface Vendedor {
+  id: number;
+  username: string;
+  id_vendedor: string;
 }
 
 export default function InteracoesPage() {
@@ -50,6 +63,12 @@ export default function InteracoesPage() {
   const [valorOportunidade, setValorOportunidade] = useState('');
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
+
+  // Novos estados para filtros
+  const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
+  const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+  const [canalSelecionado, setCanalSelecionado] = useState<string>('');
+  const [vendedorSelecionado, setVendedorSelecionado] = useState<string>('');
 
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   const tipoUser = usuario?.tipo_user;
@@ -71,11 +90,34 @@ export default function InteracoesPage() {
       setInteragidos(resInteragidos.data);
       setMetaAtual(resMeta.data.interacoes_realizadas);
       setMetaTotal(resMeta.data.meta_diaria);
+
+      // Carrega canais disponíveis para o Gestor
+      if (tipoUser === 'GESTOR') {
+        const canais = usuario.canais_venda || [];
+        setCanaisVenda(canais.map((c: string, index: number) => ({ id: index, nome: c }))); // AQUI ajusta conforme estrutura que seu login devolve
+      }
     } catch (err) {
       console.error('Erro ao carregar interações:', err);
       setErro('Erro ao carregar interações. Verifique sua conexão ou login.');
     } finally {
       setCarregando(false);
+    }
+  };
+
+  // Carrega vendedores ao selecionar o canal
+  const handleCanalChange = async (value: string | null) => {
+    setCanalSelecionado(value || '');
+    setVendedorSelecionado('');
+    if (!value) {
+      setVendedores([]);
+      return;
+    }
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${value}`, { headers });
+      setVendedores(res.data);
+    } catch (error) {
+      console.error('Erro ao carregar vendedores:', error);
     }
   };
 
@@ -135,6 +177,13 @@ export default function InteracoesPage() {
     carregarDados();
   }, []);
 
+  // Filtra pendentes
+  const pendentesFiltrados = pendentes.filter((p) => {
+    const canalOk = !canalSelecionado || String(p.canal_venda_id) === canalSelecionado;
+    const vendedorOk = !vendedorSelecionado || p.consultor === vendedorSelecionado;
+    return canalOk && vendedorOk;
+  });
+
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
@@ -159,6 +208,29 @@ export default function InteracoesPage() {
         )}
       </Group>
 
+      {/* Filtros de Canal e Vendedor */}
+      {tipoUser === 'GESTOR' && (
+        <Group mb="xl">
+          <Select
+            label="Filtrar por Canal de Venda"
+            placeholder="Selecione um canal"
+            value={canalSelecionado}
+            onChange={handleCanalChange}
+            data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
+            clearable
+          />
+          <Select
+            label="Filtrar por Vendedor"
+            placeholder="Selecione um vendedor"
+            value={vendedorSelecionado}
+            onChange={(value) => setVendedorSelecionado(value || '')}
+            data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
+            disabled={!canalSelecionado}
+            clearable
+          />
+        </Group>
+      )}
+
       {carregando ? (
         <Center><Loader /></Center>
       ) : erro ? (
@@ -166,9 +238,10 @@ export default function InteracoesPage() {
       ) : (
         <>
           <Grid>
+            {/* Lista de pendentes filtrados */}
             <Grid.Col span={6}>
               <Divider label="A Interagir" mb="xs" />
-              {pendentes.length === 0 ? (
+              {pendentesFiltrados.length === 0 ? (
                 <Text>Nenhuma interação pendente encontrada.</Text>
               ) : (
                 <ScrollArea h={400}>
@@ -185,7 +258,7 @@ export default function InteracoesPage() {
                       </TableTr>
                     </TableThead>
                     <TableTbody>
-                      {pendentes.map((item) => (
+                      {pendentesFiltrados.map((item) => (
                         <Fragment key={item.id}>
                           <TableTr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
                             <TableTd>{item.parceiro}</TableTd>

@@ -55,3 +55,9 @@ from .views import UploadGatilhosExtrasView
 urlpatterns += [
     path('upload-gatilhos/', UploadGatilhosExtrasView.as_view({'post': 'create'}), name='upload-gatilhos'),
 ]
+
+from .views import usuarios_por_canal
+
+urlpatterns += [
+    path('usuarios-por-canal/', usuarios_por_canal, name='usuarios-por-canal'),
+]

@@ -516,3 +516,31 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
         except Exception as e:
             return Response({'erro': f'Erro ao processar arquivo: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .models import CustomUser, CanalVenda
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def usuarios_por_canal(request):
+    user = request.user
+    canal_id = request.query_params.get('canal_id')
+
+    if user.tipo_user != 'GESTOR':
+        return Response({'detail': 'Acesso não autorizado.'}, status=403)
+
+    if not canal_id:
+        return Response({'detail': 'Parâmetro canal_id é obrigatório.'}, status=400)
+
+    # 🚨 Checagem: esse canal pertence a esse gestor?
+    if not user.canais_venda.filter(id=canal_id).exists():
+        return Response({'detail': 'Acesso negado ao canal informado.'}, status=403)
+
+    # Se passou na checagem, busca os vendedores desse canal
+    usuarios = CustomUser.objects.filter(
+        tipo_user='VENDEDOR',
+        canais_venda__id=canal_id
+    ).values('id', 'username', 'id_vendedor')
+
+    return Response(usuarios)
