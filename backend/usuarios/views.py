@@ -122,11 +122,15 @@ class LoginView(APIView):
                     "email": user.email,
                     "tipo_user": user.tipo_user,
                     "id_vendedor": user.id_vendedor,
-                    "canais_venda": [canal.nome for canal in user.canais_venda.all()],
+                    "canais_venda": [
+                        {"id": canal.id, "nome": canal.nome}
+                        for canal in user.canais_venda.all()
+                    ],
                 }
             })
         else:
             return Response({"erro": "Credenciais inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
+
 
 # ===== Canal Venda =====
 class CanalVendaListView(generics.ListAPIView):

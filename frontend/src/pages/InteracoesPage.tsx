@@ -95,7 +95,7 @@ export default function InteracoesPage() {
       // Carrega canais disponíveis para o Gestor
       if (tipoUser === 'GESTOR') {
         const canais = usuario.canais_venda || [];
-        setCanaisVenda(canais.map((c: string, index: number) => ({ id: index, nome: c })));
+        setCanaisVenda(canais); // já vem com id e nome certinhos
       }
     } catch (err) {
       console.error('Erro ao carregar interações:', err);
