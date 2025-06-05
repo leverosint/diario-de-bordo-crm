@@ -3,25 +3,25 @@ from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.decorators import api_view, permission_classes
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils.timezone import now
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncMonth
-from datetime import timedelta
+from datetime import timedelta, datetime
 import pandas as pd
 from rest_framework_simplejwt.tokens import RefreshToken
 
-# Importação correta do seu CustomUser
-from .models import CustomUser as User
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra
 from .serializers import (
     ParceiroSerializer,
     CanalVendaSerializer,
     InteracaoSerializer,
+    InteracaoPendentesSerializer,
     OportunidadeSerializer,
-    GatilhoExtraSerializer
 )
+
+User = get_user_model()
 
 # ===== Parceiro =====
 class ParceiroViewSet(viewsets.ModelViewSet):
@@ -178,6 +178,9 @@ class InteracoesPendentesView(APIView):
         else:
             parceiros = Parceiro.objects.all()
 
+        # 🚨 Importante: Trazer Gatilhos
+        from .models import GatilhoExtra
+
         parceiros_pendentes = []
         parceiros_interagidos = []
 
@@ -191,7 +194,9 @@ class InteracoesPendentesView(APIView):
                 ultima_interacao.data_interacao.date() < hoje
             )
 
+            # 🔥 Buscando o Gatilho Extra
             gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
+            descricao_gatilho = gatilho.descricao if gatilho else None
 
             if interagido_hoje:
                 parceiros_interagidos.append({
@@ -203,9 +208,9 @@ class InteracoesPendentesView(APIView):
                     'tipo': ultima_interacao.tipo,
                     'data_interacao': ultima_interacao.data_interacao,
                     'entrou_em_contato': ultima_interacao.entrou_em_contato,
-                    'gatilho_extra': gatilho.descricao if gatilho else None,
+                    'gatilho_extra': descricao_gatilho,
                 })
-            elif not em_periodo_bloqueio or gatilho:
+            elif not em_periodo_bloqueio:
                 parceiros_pendentes.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -215,13 +220,14 @@ class InteracoesPendentesView(APIView):
                     'tipo': '',
                     'data_interacao': '',
                     'entrou_em_contato': False,
-                    'gatilho_extra': gatilho.descricao if gatilho else None,
+                    'gatilho_extra': descricao_gatilho,   # 👈 Adiciona aqui
                 })
 
         tipo_lista = request.query_params.get('tipo', 'pendentes')
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
         return Response(parceiros_pendentes)
+
 
 class InteracoesMetasView(APIView):
     permission_classes = [IsAuthenticated]
@@ -279,7 +285,192 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
 
+# ===== Dashboard KPIs + Parceiros =====
+class DashboardKPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.tipo_user == 'ADMIN':
+            parceiros = Parceiro.objects.all()
+            interacoes = Interacao.objects.all()
+            oportunidades = Oportunidade.objects.all()
+        elif user.tipo_user == 'GESTOR':
+            parceiros = Parceiro.objects.filter(canal_venda__in=user.canais_venda.all())
+            interacoes = Interacao.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+            oportunidades = Oportunidade.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+        else:
+            parceiros = Parceiro.objects.filter(consultor=user.id_vendedor)
+            interacoes = Interacao.objects.filter(usuario=user)
+            oportunidades = Oportunidade.objects.filter(usuario=user)
+
+        status_counts = {
+            '30 dias': parceiros.filter(status='30d s/ Fat').count(),
+            '60 dias': parceiros.filter(status='60d s/ Fat').count(),
+            '90 dias': parceiros.filter(status='90d s/ Fat').count(),
+            '120 dias': parceiros.filter(status='120d s/ Fat').count(),
+        }
+
+        total_interacoes = interacoes.count()
+        total_oportunidades = oportunidades.count()
+        total_orcamentos = oportunidades.filter(etapa='orcamento').count()
+        total_pedidos = oportunidades.filter(etapa='pedido').count()
+
+        valor_total = oportunidades.aggregate(Sum('valor'))['valor__sum'] or 0
+        ticket_medio = (valor_total / total_pedidos) if total_pedidos > 0 else 0
+
+        taxa_interacao_oportunidade = (total_oportunidades / total_interacoes * 100) if total_interacoes > 0 else 0
+        taxa_oportunidade_orcamento = (total_orcamentos / total_oportunidades * 100) if total_oportunidades > 0 else 0
+        taxa_orcamento_pedido = (total_pedidos / total_orcamentos * 100) if total_orcamentos > 0 else 0
+
+        kpis = [
+            {"title": "30 dias", "value": status_counts['30 dias']},
+            {"title": "60 dias", "value": status_counts['60 dias']},
+            {"title": "90 dias", "value": status_counts['90 dias']},
+            {"title": "120 dias", "value": status_counts['120 dias']},
+            {"title": "Interações", "value": total_interacoes},
+            {"title": "Oportunidades", "value": total_oportunidades},
+            {"title": "Taxa Interação > Oportunidade", "value": f"{taxa_interacao_oportunidade:.1f}%"},
+            {"title": "Taxa Oportunidade > Orçamento", "value": f"{taxa_oportunidade_orcamento:.1f}%"},
+            {"title": "Taxa Orçamento > Pedido", "value": f"{taxa_orcamento_pedido:.1f}%"},
+            {"title": "Valor Gerado", "value": f"R$ {valor_total:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
+            {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
+        ]
+
+        parceiros_data = []
+        for parceiro in parceiros:
+            ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
+            parceiros_data.append({
+                "id": parceiro.id,
+                "parceiro": parceiro.parceiro,
+                "status": parceiro.status,
+                "total": float(parceiro.total_geral or 0),
+                "ultima_interacao": ultima_interacao.data_interacao.strftime("%d/%m/%Y") if ultima_interacao else None,
+                "tem_interacao": parceiro.interacoes.exists(),
+                "tem_oportunidade": parceiro.oportunidades.exists(),
+            })
+
+        return Response({
+            "kpis": kpis,
+            "parceiros": parceiros_data
+        })
+
+# ===== Funil de Conversão =====
+class DashboardFunilView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.tipo_user == 'ADMIN':
+            interacoes = Interacao.objects.all()
+            oportunidades = Oportunidade.objects.all()
+        elif user.tipo_user == 'GESTOR':
+            interacoes = Interacao.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+            oportunidades = Oportunidade.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+        else:
+            interacoes = Interacao.objects.filter(usuario=user)
+            oportunidades = Oportunidade.objects.filter(usuario=user)
+
+        return Response([
+            {"name": "Interações", "value": interacoes.count()},
+            {"name": "Oportunidades", "value": oportunidades.filter(etapa='oportunidade').count()},
+            {"name": "Orçamentos", "value": oportunidades.filter(etapa='orcamento').count()},
+            {"name": "Pedidos", "value": oportunidades.filter(etapa='pedido').count()},
+            {"name": "Perdidas", "value": oportunidades.filter(etapa='perdida').count()},
+        ])
+
+# ===== Evolução Mensal de Oportunidades =====
+class DashboardOportunidadesMensaisView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if user.tipo_user == 'ADMIN':
+            oportunidades = Oportunidade.objects.all()
+        elif user.tipo_user == 'GESTOR':
+            oportunidades = Oportunidade.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+        else:
+            oportunidades = Oportunidade.objects.filter(usuario=user)
+
+        dados = oportunidades.annotate(mes=TruncMonth('data_criacao')) \
+            .values('mes') \
+            .annotate(total=Count('id')) \
+            .order_by('mes')
+
+        return Response([
+            {
+                "mes": dado['mes'].strftime('%b %Y'),
+                "oportunidades": dado['total']
+            }
+            for dado in dados
+        ])
+
+
+class InteracoesPendentesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        usuario = request.user
+        hoje = now().date()
+        limite_data = hoje - timedelta(days=3)
+
+        if usuario.tipo_user == 'VENDEDOR':
+            parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
+        elif usuario.tipo_user == 'GESTOR':
+            parceiros = Parceiro.objects.filter(canal_venda__in=usuario.canais_venda.all())
+        else:
+            parceiros = Parceiro.objects.all()
+
+        parceiros_pendentes = []
+        parceiros_interagidos = []
+
+        for parceiro in parceiros:
+            ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
+            interagido_hoje = ultima_interacao and ultima_interacao.data_interacao.date() == hoje
+            em_periodo_bloqueio = (
+                ultima_interacao and 
+                ultima_interacao.entrou_em_contato and 
+                ultima_interacao.data_interacao.date() > limite_data and
+                ultima_interacao.data_interacao.date() < hoje
+            )
+
+            # 🚀 Verificar se existe gatilho extra
+            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
+
+            if interagido_hoje:
+                parceiros_interagidos.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': ultima_interacao.tipo,
+                    'data_interacao': ultima_interacao.data_interacao,
+                    'entrou_em_contato': ultima_interacao.entrou_em_contato,
+                    'gatilho_extra': gatilho.descricao if gatilho else None,  # 🟡 Adicionado
+                })
+            elif not em_periodo_bloqueio or gatilho:
+                parceiros_pendentes.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': '',
+                    'data_interacao': '',
+                    'entrou_em_contato': False,
+                    'gatilho_extra': gatilho.descricao if gatilho else None,  # 🟡 Adicionado
+                })
+
+        tipo_lista = request.query_params.get('tipo', 'pendentes')
+        if tipo_lista == 'interagidos':
+            return Response(parceiros_interagidos)
+        return Response(parceiros_pendentes)
+
 # ===== Upload Gatilhos Extras (Excel) =====
+from .models import GatilhoExtra  # <-- IMPORTA AQUI O MODEL
+from .serializers import GatilhoExtraSerializer  # <-- IMPORTA AQUI O SERIALIZER
+
 class UploadGatilhosExtrasView(viewsets.ViewSet):
     parser_classes = [MultiPartParser]
     permission_classes = [IsAuthenticated]
@@ -289,15 +480,17 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
         if not file_obj:
             return Response({'erro': 'Arquivo não enviado'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Verificar se é .xlsx
         if not file_obj.name.endswith('.xlsx'):
             return Response({'erro': 'Formato inválido. Envie um arquivo .xlsx.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             df = pd.read_excel(file_obj)
 
+            # Validação de colunas
             required_columns = ['ID Parceiro', 'ID Usuario', 'Gatilho']
             if not all(col in df.columns for col in required_columns):
-                return Response({'erro': f'Colunas inválidas: {", ".join(required_columns)}'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'erro': f'Colunas inválidas. As colunas obrigatórias são: {", ".join(required_columns)}'}, status=status.HTTP_400_BAD_REQUEST)
 
             with transaction.atomic():
                 for _, row in df.iterrows():
@@ -306,11 +499,12 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
                     descricao = str(row.get('Gatilho')).strip()
 
                     if pd.isna(parceiro_id) or pd.isna(usuario_id) or not descricao:
-                        continue
+                        continue  # Pula linhas inválidas
 
                     parceiro = Parceiro.objects.get(id=int(parceiro_id))
                     usuario = User.objects.get(id=int(usuario_id))
 
+                    # Evitar duplicidade
                     GatilhoExtra.objects.update_or_create(
                         parceiro=parceiro,
                         usuario=usuario,
@@ -322,7 +516,11 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
         except Exception as e:
             return Response({'erro': f'Erro ao processar arquivo: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# ===== Usuários por Canal =====
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from .models import CustomUser, CanalVenda
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def usuarios_por_canal(request):
@@ -332,4 +530,17 @@ def usuarios_por_canal(request):
     if user.tipo_user != 'GESTOR':
         return Response({'detail': 'Acesso não autorizado.'}, status=403)
 
-   
+    if not canal_id:
+        return Response({'detail': 'Parâmetro canal_id é obrigatório.'}, status=400)
+
+    # 🚨 Checagem: esse canal pertence a esse gestor?
+    if not user.canais_venda.filter(id=canal_id).exists():
+        return Response({'detail': 'Acesso negado ao canal informado.'}, status=403)
+
+    # Se passou na checagem, busca os vendedores desse canal
+    usuarios = CustomUser.objects.filter(
+        tipo_user='VENDEDOR',
+        canais_venda__id=canal_id
+    ).values('id', 'username', 'id_vendedor')
+
+    return Response(usuarios)
