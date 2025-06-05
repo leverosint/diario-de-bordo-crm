@@ -1,5 +1,6 @@
 import { useEffect, useState, Fragment } from 'react';
 import axios from 'axios';
+import useAuth from '../hooks/useAuth';  // <-- depende de onde está
 import {
   Table,
   Loader,
@@ -25,6 +26,7 @@ import {
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
+
 
 interface Interacao {
   id: number;
@@ -65,6 +67,7 @@ export default function InteracoesPage() {
   const [valorOportunidade, setValorOportunidade] = useState('');
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
+  useAuth();  // <--- tem que estar AQUI}
 
   // Filtros
   const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
