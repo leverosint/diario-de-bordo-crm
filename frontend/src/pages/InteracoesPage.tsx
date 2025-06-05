@@ -64,7 +64,7 @@ export default function InteracoesPage() {
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
 
-  // Novos estados para filtros
+  // Filtros
   const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const [canalSelecionado, setCanalSelecionado] = useState<string>('');
@@ -74,7 +74,6 @@ export default function InteracoesPage() {
   const tipoUser = usuario?.tipo_user;
   const token = localStorage.getItem('token');
 
-  // Carrega dados (pendentes, interagidos e metas)
   const carregarDados = async () => {
     setCarregando(true);
     setErro(null);
@@ -92,10 +91,9 @@ export default function InteracoesPage() {
       setMetaAtual(resMeta.data.interacoes_realizadas);
       setMetaTotal(resMeta.data.meta_diaria);
 
-      // Carrega canais disponíveis para o Gestor
       if (tipoUser === 'GESTOR') {
         const canais = usuario.canais_venda || [];
-        setCanaisVenda(canais); // já vem com id e nome certinhos
+        setCanaisVenda(canais); // ✅ Agora é [{id, nome}]
       }
     } catch (err) {
       console.error('Erro ao carregar interações:', err);
@@ -105,49 +103,20 @@ export default function InteracoesPage() {
     }
   };
 
-  // 🚀 Atualiza a lista de pendentes com filtro aplicado
-  const carregarPendentesFiltrado = async (canalId?: string, vendedorId?: string) => {
-    try {
-      const headers = { Authorization: `Bearer ${token}` };
-
-      let url = `${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes`;
-      if (canalId) {
-        url += `&canal_id=${canalId}`;
-      }
-      if (vendedorId) {
-        url += `&vendedor_id=${vendedorId}`;
-      }
-
-      const res = await axios.get(url, { headers });
-      setPendentes(res.data);
-    } catch (error) {
-      console.error('Erro ao carregar pendentes filtrados:', error);
-    }
-  };
-
-  // Carrega vendedores ao selecionar o canal
   const handleCanalChange = async (value: string | null) => {
     setCanalSelecionado(value || '');
     setVendedorSelecionado('');
     if (!value) {
       setVendedores([]);
-      await carregarPendentesFiltrado();
       return;
     }
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const res = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${value}`, { headers });
       setVendedores(res.data);
-      await carregarPendentesFiltrado(value); // 🟢 já recarrega pendentes filtrando canal
     } catch (error) {
       console.error('Erro ao carregar vendedores:', error);
     }
-  };
-
-  // Carrega pendentes ao selecionar o vendedor
-  const handleVendedorChange = async (value: string | null) => {
-    setVendedorSelecionado(value || '');
-    await carregarPendentesFiltrado(canalSelecionado, value || '');
   };
 
   const registrarInteracao = async (
@@ -178,7 +147,7 @@ export default function InteracoesPage() {
       setExpandirId(null);
       setValorOportunidade('');
       setObservacaoOportunidade('');
-      await carregarPendentesFiltrado(canalSelecionado, vendedorSelecionado);
+      await carregarDados();
     } catch (err) {
       console.error('Erro ao registrar interação ou oportunidade:', err);
       alert('Erro ao registrar interação ou oportunidade. Tente novamente.');
@@ -195,7 +164,7 @@ export default function InteracoesPage() {
       await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, { headers });
       alert('Gatilhos extras enviados com sucesso!');
       setArquivoGatilho(null);
-      await carregarPendentesFiltrado(canalSelecionado, vendedorSelecionado);
+      carregarDados();
     } catch (err) {
       console.error('Erro ao enviar arquivo de gatilhos extras:', err);
       alert('Erro ao enviar arquivo de gatilhos extras. Verifique o formato.');
@@ -205,6 +174,12 @@ export default function InteracoesPage() {
   useEffect(() => {
     carregarDados();
   }, []);
+
+  const pendentesFiltrados = pendentes.filter((p) => {
+    const canalOk = !canalSelecionado || String(p.canal_venda_id) === canalSelecionado;
+    const vendedorOk = !vendedorSelecionado || p.consultor === vendedorSelecionado;
+    return canalOk && vendedorOk;
+  });
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
@@ -230,7 +205,6 @@ export default function InteracoesPage() {
         )}
       </Group>
 
-      {/* Filtros de Canal e Vendedor */}
       {tipoUser === 'GESTOR' && (
         <Group mb="xl">
           <Select
@@ -245,7 +219,7 @@ export default function InteracoesPage() {
             label="Filtrar por Vendedor"
             placeholder="Selecione um vendedor"
             value={vendedorSelecionado}
-            onChange={handleVendedorChange}
+            onChange={(value) => setVendedorSelecionado(value || '')}
             data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
             disabled={!canalSelecionado}
             clearable
@@ -260,10 +234,9 @@ export default function InteracoesPage() {
       ) : (
         <>
           <Grid>
-            {/* Lista de pendentes */}
             <Grid.Col span={6}>
               <Divider label="A Interagir" mb="xs" />
-              {pendentes.length === 0 ? (
+              {pendentesFiltrados.length === 0 ? (
                 <Text>Nenhuma interação pendente encontrada.</Text>
               ) : (
                 <ScrollArea h={400}>
@@ -280,7 +253,7 @@ export default function InteracoesPage() {
                       </TableTr>
                     </TableThead>
                     <TableTbody>
-                      {pendentes.map((item) => (
+                      {pendentesFiltrados.map((item) => (
                         <Fragment key={item.id}>
                           <TableTr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
                             <TableTd>{item.parceiro}</TableTd>
@@ -375,7 +348,6 @@ export default function InteracoesPage() {
               )}
             </Grid.Col>
 
-            {/* Lista de interagidos */}
             <Grid.Col span={6}>
               <Divider label="Interagidos Hoje" mb="xs" />
               {interagidos.length === 0 ? (
