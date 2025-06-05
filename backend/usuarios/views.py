@@ -185,6 +185,15 @@ class InteracoesPendentesView(APIView):
         else:
             parceiros = Parceiro.objects.all()
 
+ # 🎯 Filtros por canal_id ou consultor
+        canal_id = request.query_params.get('canal_id')
+        consultor = request.query_params.get('consultor')
+
+        if canal_id:
+            parceiros = parceiros.filter(canal_venda_id=canal_id)
+        if consultor:
+            parceiros = parceiros.filter(consultor=consultor)
+
         parceiros_pendentes = []
         parceiros_interagidos = []
 
@@ -273,16 +282,26 @@ class RegistrarInteracaoView(generics.CreateAPIView):
 class OportunidadeViewSet(viewsets.ModelViewSet):
     serializer_class = OportunidadeSerializer
     permission_classes = [IsAuthenticated]
-
+        
     def get_queryset(self):
         user = self.request.user
-        if user.tipo_user == 'ADMIN':
-            return Oportunidade.objects.all()
-        elif user.tipo_user == 'GESTOR':
-            return Oportunidade.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+        queryset = Oportunidade.objects.all()
+
+        if user.tipo_user == 'GESTOR':
+            queryset = queryset.filter(parceiro__canal_venda__in=user.canais_venda.all())
         elif user.tipo_user == 'VENDEDOR':
-            return Oportunidade.objects.filter(parceiro__consultor=user.id_vendedor)
-        return Oportunidade.objects.none()
+            queryset = queryset.filter(parceiro__consultor=user.id_vendedor)
+
+        canal_id = self.request.query_params.get('canal_id')
+        consultor = self.request.query_params.get('consultor')
+
+        if canal_id:
+            queryset = queryset.filter(parceiro__canal_venda_id=canal_id)
+        if consultor:
+            queryset = queryset.filter(parceiro__consultor=consultor)
+
+        return queryset
+    
 
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)

@@ -1,6 +1,6 @@
 import { useEffect, useState, Fragment } from 'react';
 import axios from 'axios';
-import useAuth from '../hooks/useAuth';  // <-- depende de onde está
+import useAuth from '../hooks/useAuth';
 import {
   Table,
   Loader,
@@ -27,7 +27,6 @@ import {
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
 
-
 interface Interacao {
   id: number;
   parceiro: string;
@@ -38,11 +37,9 @@ interface Interacao {
   data_interacao?: string;
   tipo?: string;
   gatilho_extra?: string;
-  canal_venda_nome?: string;   // <<<< 🔥 AGORA PELO NOME!
+  canal_venda_nome?: string;
   consultor?: string;
 }
-
-
 
 interface CanalVenda {
   id: number;
@@ -67,9 +64,9 @@ export default function InteracoesPage() {
   const [valorOportunidade, setValorOportunidade] = useState('');
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
-  useAuth();  // <--- tem que estar AQUI}
 
-  // Filtros
+  useAuth();
+
   const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const [canalSelecionado, setCanalSelecionado] = useState<string>('');
@@ -85,16 +82,19 @@ export default function InteracoesPage() {
     try {
       const headers = { Authorization: `Bearer ${token}` };
 
+      const params = new URLSearchParams();
+      if (canalSelecionado) params.append('canal_id', canalSelecionado);
+      if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
+
       const [resPendentes, resInteragidos, resMeta] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes`, { headers }),
-        axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=interagidos`, { headers }),
+        axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes&${params.toString()}`, { headers }),
+        axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=interagidos&${params.toString()}`, { headers }),
         axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers }),
       ]);
 
-      // 🔥🔥 Corrige: coloca o nome do canal direto nas interações (fake)
-      const canalNome = (codigo: string) => {
-        const canal = usuario.canais_venda?.find((c: string) => c === codigo);
-        return canal || '';
+      const canalNome = (id: number) => {
+        const canal = usuario.canais_venda?.find((c: any) => c.id === id);
+        return canal ? canal.nome : '';
       };
 
       setPendentes(resPendentes.data.map((p: any) => ({
@@ -111,7 +111,7 @@ export default function InteracoesPage() {
 
       if (tipoUser === 'GESTOR') {
         const canais = usuario.canais_venda || [];
-setCanaisVenda(canais.map((c: { id: number; nome: string }) => ({ id: c.id, nome: c.nome })));
+        setCanaisVenda(canais.map((c: { id: number; nome: string }) => ({ id: c.id, nome: c.nome })));
       }
     } catch (err) {
       console.error('Erro ao carregar interações:', err);
@@ -126,15 +126,19 @@ setCanaisVenda(canais.map((c: { id: number; nome: string }) => ({ id: c.id, nome
     setVendedorSelecionado('');
     if (!value) {
       setVendedores([]);
-      return;
+    } else {
+      try {
+        const headers = { Authorization: `Bearer ${token}` };
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${value}`, { headers });
+        setVendedores(res.data);
+      } catch (error) {
+        console.error('Erro ao carregar vendedores:', error);
+      }
     }
-    try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${value}`, { headers });
-      setVendedores(res.data);
-    } catch (error) {
-      console.error('Erro ao carregar vendedores:', error);
-    }
+  };
+
+  const handleVendedorChange = (value: string | null) => {
+    setVendedorSelecionado(value || '');
   };
 
   const registrarInteracao = async (
@@ -191,17 +195,13 @@ setCanaisVenda(canais.map((c: { id: number; nome: string }) => ({ id: c.id, nome
 
   useEffect(() => {
     carregarDados();
-  }, []);
+  }, [canalSelecionado, vendedorSelecionado]);
 
-  const pendentesFiltrados = pendentes.filter((p) => {
-    const canalOk = !canalSelecionado || p.canal_venda_nome === canalSelecionado;
-    const vendedorOk = !vendedorSelecionado || p.consultor === vendedorSelecionado;
-    return canalOk && vendedorOk;
-  });
+  const pendentesFiltrados = pendentes;
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-          <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
+      <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
 
       <Group justify="space-between" mb="md">
         <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
@@ -229,7 +229,9 @@ setCanaisVenda(canais.map((c: { id: number; nome: string }) => ({ id: c.id, nome
             label="Filtrar por Canal de Venda"
             placeholder="Selecione um canal"
             value={canalSelecionado}
-            onChange={handleCanalChange}
+            onChange={async (value) => {
+              await handleCanalChange(value);
+            }}
             data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
             clearable
           />
@@ -237,7 +239,9 @@ setCanaisVenda(canais.map((c: { id: number; nome: string }) => ({ id: c.id, nome
             label="Filtrar por Vendedor"
             placeholder="Selecione um vendedor"
             value={vendedorSelecionado}
-            onChange={(value) => setVendedorSelecionado(value || '')}
+            onChange={(value) => {
+              handleVendedorChange(value);
+            }}
             data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
             disabled={!canalSelecionado}
             clearable

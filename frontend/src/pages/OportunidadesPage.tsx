@@ -6,6 +6,7 @@ import {
   Text,
   Group,
   ScrollArea,
+  Select,
 } from '@mantine/core';
 import {
   DragDropContext,
@@ -27,6 +28,17 @@ interface Oportunidade {
   dias_sem_interacao: number;
 }
 
+interface CanalVenda {
+  id: number;
+  nome: string;
+}
+
+interface Vendedor {
+  id: number;
+  username: string;
+  id_vendedor: string;
+}
+
 const etapasKanban = [
   { id: 'oportunidade', titulo: 'Oportunidade', color: '#228be6' },
   { id: 'orcamento', titulo: 'Orçamento', color: '#40c057' },
@@ -38,7 +50,13 @@ export default function OportunidadesPage() {
   const [oportunidades, setOportunidades] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user;
+  const [canalSelecionado, setCanalSelecionado] = useState<string>('');
+  const [vendedorSelecionado, setVendedorSelecionado] = useState<string>('');
+  const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
+  const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+
+  const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const tipoUser = usuario?.tipo_user;
   const token = localStorage.getItem('token');
 
   const carregarOportunidades = async () => {
@@ -46,13 +64,40 @@ export default function OportunidadesPage() {
     setErro(null);
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, { headers });
+      const params = new URLSearchParams();
+      if (canalSelecionado) params.append('canal_id', canalSelecionado);
+      if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
+
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/?${params.toString()}`, { headers });
       setOportunidades(response.data);
     } catch (err) {
       console.error('Erro ao carregar oportunidades:', err);
       setErro('Erro ao carregar oportunidades.');
     } finally {
       setCarregando(false);
+    }
+  };
+
+  const carregarCanaisVendedores = () => {
+    if (tipoUser === 'GESTOR') {
+      const canais = usuario.canais_venda || [];
+      setCanaisVenda(canais.map((c: { id: number; nome: string }) => ({ id: c.id, nome: c.nome })));
+    }
+  };
+
+  const handleCanalChange = async (value: string | null) => {
+    setCanalSelecionado(value || '');
+    setVendedorSelecionado('');
+    if (!value) {
+      setVendedores([]);
+      return;
+    }
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${value}`, { headers });
+      setVendedores(res.data);
+    } catch (error) {
+      console.error('Erro ao carregar vendedores:', error);
     }
   };
 
@@ -74,14 +119,37 @@ export default function OportunidadesPage() {
   };
 
   useEffect(() => {
+    carregarCanaisVendedores();
     carregarOportunidades();
-  }, []);
+  }, [canalSelecionado, vendedorSelecionado]);
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <div style={{ textAlign: 'center', marginBottom: '20px' }}>
         <Title order={2}>Oportunidades (Kanban)</Title>
       </div>
+
+      {tipoUser === 'GESTOR' && (
+        <Group mb="xl" justify="center">
+          <Select
+            label="Filtrar por Canal de Venda"
+            placeholder="Selecione um canal"
+            value={canalSelecionado}
+            onChange={handleCanalChange}
+            data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
+            clearable
+          />
+          <Select
+            label="Filtrar por Vendedor"
+            placeholder="Selecione um vendedor"
+            value={vendedorSelecionado}
+            onChange={(value) => setVendedorSelecionado(value || '')}
+            data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
+            disabled={!canalSelecionado}
+            clearable
+          />
+        </Group>
+      )}
 
       {carregando ? (
         <Text style={{ textAlign: 'center' }}>Carregando...</Text>
