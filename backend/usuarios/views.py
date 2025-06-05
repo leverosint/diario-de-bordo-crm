@@ -480,23 +480,32 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
         if not file_obj:
             return Response({'erro': 'Arquivo não enviado'}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Verificar se é .xlsx
+        if not file_obj.name.endswith('.xlsx'):
+            return Response({'erro': 'Formato inválido. Envie um arquivo .xlsx.'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             df = pd.read_excel(file_obj)
-        except Exception as e:
-            return Response({'erro': f'Erro ao ler arquivo: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
+            # Validação de colunas
+            required_columns = ['ID Parceiro', 'ID Usuario', 'Gatilho']
+            if not all(col in df.columns for col in required_columns):
+                return Response({'erro': f'Colunas inválidas. As colunas obrigatórias são: {", ".join(required_columns)}'}, status=status.HTTP_400_BAD_REQUEST)
+
             with transaction.atomic():
                 for _, row in df.iterrows():
-                    parceiro_id = int(row.get('ID Parceiro'))
-                    usuario_id = int(row.get('ID Usuario'))
+                    parceiro_id = row.get('ID Parceiro')
+                    usuario_id = row.get('ID Usuario')
                     descricao = str(row.get('Gatilho')).strip()
 
-                    parceiro = Parceiro.objects.get(id=parceiro_id)
-                    usuario = User.objects.get(id=usuario_id)
+                    if pd.isna(parceiro_id) or pd.isna(usuario_id) or not descricao:
+                        continue  # Pula linhas inválidas
 
-                    # Evitar duplicidade do mesmo parceiro e usuário
-                    gatilho, created = GatilhoExtra.objects.update_or_create(
+                    parceiro = Parceiro.objects.get(id=int(parceiro_id))
+                    usuario = User.objects.get(id=int(usuario_id))
+
+                    # Evitar duplicidade
+                    GatilhoExtra.objects.update_or_create(
                         parceiro=parceiro,
                         usuario=usuario,
                         defaults={'descricao': descricao}
@@ -505,4 +514,5 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
             return Response({'mensagem': 'Gatilhos extras importados com sucesso'}, status=status.HTTP_200_OK)
 
         except Exception as e:
-            return Response({'erro': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'erro': f'Erro ao processar arquivo: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

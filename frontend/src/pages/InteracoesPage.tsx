@@ -121,7 +121,7 @@ export default function InteracoesPage() {
 
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilho/`, formData, { headers });
+      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, { headers });
       alert('Gatilhos extras enviados com sucesso!');
       setArquivoGatilho(null);
       carregarDados();
