@@ -248,7 +248,7 @@ export default function InteracoesPage() {
         ) : (
           <>
             <Grid>
-              <Grid.Col xs={12} md={6}>
+            <Grid.Col span={{ base: 12, md: 6 }}>
                 <Divider label="A Interagir" mb="xs" />
                 {pendentesFiltrados.length === 0 ? (
                   <Text>Nenhuma interação pendente encontrada.</Text>
@@ -356,7 +356,7 @@ export default function InteracoesPage() {
                 )}
               </Grid.Col>
 
-              <Grid.Col xs={12} md={6}>
+              <Grid.Col span={{ base: 12, md: 6 }}>
                 <Divider label="Interagidos Hoje" mb="xs" />
                 {interagidos.length === 0 ? (
                   <Text>Nenhum parceiro interagido hoje.</Text>
