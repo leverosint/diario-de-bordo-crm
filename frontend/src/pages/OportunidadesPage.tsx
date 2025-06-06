@@ -16,7 +16,7 @@ import {
 import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 
 import SidebarGestor from '../components/SidebarGestor';
-import styles from './OportunidadesPage.module.css'; // <-- Import CSS
+import styles from './OportunidadesPage.module.css';
 
 interface Oportunidade {
   id: number;
@@ -191,17 +191,17 @@ export default function OportunidadesPage() {
                                   p="md"
                                   className={styles.cardItem}
                                 >
-                                  <Text fw={700} size="md">{o.parceiro_nome}</Text>
-                                  <Text size="sm" color="gray">
+                                  <div className={styles.cardTitle}>{o.parceiro_nome}</div>
+                                  <div className={styles.cardSubtext}>
                                     Valor: R$ {o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                  </Text>
-                                  <Text size="xs" color="dimmed" mt={5}>
+                                  </div>
+                                  <div className={styles.cardSubtext} style={{ marginTop: 5 }}>
                                     Sem interação: {o.dias_sem_interacao} dias
-                                  </Text>
+                                  </div>
                                   {o.observacao && (
-                                    <Text size="xs" mt={5} color="gray">
+                                    <div className={styles.cardSubtext} style={{ marginTop: 5 }}>
                                       {o.observacao}
-                                    </Text>
+                                    </div>
                                   )}
                                 </Card>
                               )}

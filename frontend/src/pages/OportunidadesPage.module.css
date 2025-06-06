@@ -8,70 +8,76 @@
 
 .kanbanBoard {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
-  width: 100%;
-  box-sizing: border-box;
+  flex-wrap: nowrap; /* 👈 Faz os quadros ficarem lado a lado */
+  justify-content: flex-start;
+  gap: 24px;
+  overflow-x: auto;
+  padding-bottom: 16px;
 }
 
 .kanbanColumn {
-  background-color: #f9fafb;
-  border: 2px solid #ccc;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 300px;
-  min-height: 400px;
+  flex: 0 0 280px; /* 👈 largura fixa */
+  min-height: 500px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   padding: 16px;
-  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.kanbanColumn:hover {
+  transform: translateY(-5px);
 }
 
 .kanbanTitle {
-  text-align: center;
   font-weight: 700;
-  margin-bottom: 16px;
   font-size: 18px;
+  text-align: center;
+  margin-bottom: 12px;
 }
 
 .kanbanCards {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-grow: 1;
   overflow-y: auto;
-  max-height: 500px;
-  padding-right: 8px;
+  padding-right: 6px;
 }
 
 .cardItem {
-  background: white;
+  background: linear-gradient(145deg, #ffffff, #f0f0f0);
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 16px;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
 .cardItem:hover {
-  transform: scale(1.03);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transform: scale(1.02);
 }
 
-/* Responsividade para tablet e celular */
-@media (max-width: 1024px) {
+.cardTitle {
+  font-weight: 700;
+  font-size: 16px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.cardSubtext {
+  font-size: 14px;
+  color: #666;
+}
+
+@media (max-width: 768px) {
   .kanbanBoard {
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* 👈 Empilha em telas pequenas */
     justify-content: center;
   }
 
   .kanbanColumn {
-    max-width: 45%;
-  }
-}
-
-@media (max-width: 768px) {
-  .kanbanColumn {
-    max-width: 100%;
+    flex: 0 0 100%;
+    max-width: 90%;
   }
 }
