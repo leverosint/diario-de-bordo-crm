@@ -7,11 +7,6 @@ import {
   Center,
   Text,
   ScrollArea,
-  TableThead,
-  TableTbody,
-  TableTr,
-  TableTh,
-  TableTd,
   Alert,
   Button,
   Group,
@@ -229,9 +224,7 @@ export default function InteracoesPage() {
             label="Filtrar por Canal de Venda"
             placeholder="Selecione um canal"
             value={canalSelecionado}
-            onChange={async (value) => {
-              await handleCanalChange(value);
-            }}
+            onChange={handleCanalChange}
             data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
             clearable
           />
@@ -239,9 +232,7 @@ export default function InteracoesPage() {
             label="Filtrar por Vendedor"
             placeholder="Selecione um vendedor"
             value={vendedorSelecionado}
-            onChange={(value) => {
-              handleVendedorChange(value);
-            }}
+            onChange={handleVendedorChange}
             data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
             disabled={!canalSelecionado}
             clearable
@@ -262,55 +253,32 @@ export default function InteracoesPage() {
                 <Text>Nenhuma interação pendente encontrada.</Text>
               ) : (
                 <ScrollArea h={400} style={{ width: '100%' }}>
-                  <Table 
-                    striped 
-                    highlightOnHover 
-                    withTableBorder 
-                    style={{
-                      width: '100%',
-                      tableLayout: 'auto',
-                    }}
-                  >
-                    <TableThead>
-                      <TableTr>
-                        <TableTh>Parceiro</TableTh>
-                        <TableTh>Unidade</TableTh>
-                        <TableTh>Classificação</TableTh>
-                        <TableTh>Status</TableTh>
-                        <TableTh>Gatilho Extra</TableTh>
-                        <TableTh>Tipo</TableTh>
-                        <TableTh>Ação</TableTh>
-                      </TableTr>
-                    </TableThead>
-                    <TableTbody>
+                  <Table striped highlightOnHover withTableBorder style={{ tableLayout: 'auto', width: '100%' }}>
+                    <thead>
+                      <tr>
+                        <th>Parceiro</th>
+                        <th>Unidade</th>
+                        <th>Classificação</th>
+                        <th>Status</th>
+                        <th>Gatilho Extra</th>
+                        <th>Tipo</th>
+                        <th>Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {pendentesFiltrados.map((item) => (
                         <Fragment key={item.id}>
-                          <TableTr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
-                            <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.parceiro}</TableTd>
-                            <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.unidade}</TableTd>
-                            <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.classificacao}</TableTd>
-                            <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.status}</TableTd>
-                            <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
+                          <tr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
+                            <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.parceiro}</td>
+                            <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.unidade}</td>
+                            <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.classificacao}</td>
+                            <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.status}</td>
+                            <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
                               {item.gatilho_extra ? (
-                                <Badge
-                                  color="red"
-                                  variant="filled"
-                                  style={{
-                                    display: 'inline-block',
-                                    maxWidth: '100%',
-                                    overflowWrap: 'break-word',
-                                    wordBreak: 'break-word',
-                                    whiteSpace: 'normal',
-                                    textAlign: 'center',
-                                  }}
-                                >
-                                  {item.gatilho_extra}
-                                </Badge>
-                              ) : (
-                                "-"
-                              )}
-                            </TableTd>
-                            <TableTd>
+                                <Badge color="red" variant="filled">{item.gatilho_extra}</Badge>
+                              ) : "-"}
+                            </td>
+                            <td>
                               <Select
                                 placeholder="Tipo"
                                 value={tipoSelecionado[item.id] || ''}
@@ -325,17 +293,15 @@ export default function InteracoesPage() {
                                   { value: 'ligacao', label: 'Ligação' },
                                 ]}
                               />
-                            </TableTd>
-                            <TableTd>
-                              <Button size="xs" onClick={() => setExpandirId(item.id)}>
-                                Marcar como interagido
-                              </Button>
-                            </TableTd>
-                          </TableTr>
+                            </td>
+                            <td>
+                              <Button size="xs" onClick={() => setExpandirId(item.id)}>Marcar como interagido</Button>
+                            </td>
+                          </tr>
                           {expandirId === item.id && (
-                            <TableTr>
-                              <TableTd colSpan={7}>
-                                <Group grow style={{ marginTop: 10 }}>
+                            <tr>
+                              <td colSpan={7}>
+                                <Group grow mt="md">
                                   <TextInput
                                     label="Valor da Oportunidade (R$)"
                                     placeholder="5000"
@@ -380,12 +346,12 @@ export default function InteracoesPage() {
                                     Cancelar
                                   </Button>
                                 </Group>
-                              </TableTd>
-                            </TableTr>
+                              </td>
+                            </tr>
                           )}
                         </Fragment>
                       ))}
-                    </TableTbody>
+                    </tbody>
                   </Table>
                 </ScrollArea>
               )}
@@ -397,36 +363,31 @@ export default function InteracoesPage() {
                 <Text>Nenhum parceiro interagido hoje.</Text>
               ) : (
                 <ScrollArea h={400} style={{ width: '100%' }}>
-                  <Table 
-                    striped 
-                    highlightOnHover 
-                    withTableBorder 
-                    style={{ width: '100%', tableLayout: 'auto' }}
-                  >
-                    <TableThead>
-                      <TableTr>
-                        <TableTh>Parceiro</TableTh>
-                        <TableTh>Unidade</TableTh>
-                        <TableTh>Classificação</TableTh>
-                        <TableTh>Status</TableTh>
-                        <TableTh>Data</TableTh>
-                        <TableTh>Tipo</TableTh>
-                      </TableTr>
-                    </TableThead>
-                    <TableTbody>
+                  <Table striped highlightOnHover withTableBorder style={{ tableLayout: 'auto', width: '100%' }}>
+                    <thead>
+                      <tr>
+                        <th>Parceiro</th>
+                        <th>Unidade</th>
+                        <th>Classificação</th>
+                        <th>Status</th>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {interagidos.map((item) => (
-                        <TableTr key={item.id}>
-                          <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.parceiro}</TableTd>
-                          <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.unidade}</TableTd>
-                          <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.classificacao}</TableTd>
-                          <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.status}</TableTd>
-                          <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
+                        <tr key={item.id}>
+                          <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.parceiro}</td>
+                          <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.unidade}</td>
+                          <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.classificacao}</td>
+                          <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.status}</td>
+                          <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
                             {item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}
-                          </TableTd>
-                          <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.tipo}</TableTd>
-                        </TableTr>
+                          </td>
+                          <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.tipo}</td>
+                        </tr>
                       ))}
-                    </TableTbody>
+                    </tbody>
                   </Table>
                 </ScrollArea>
               )}
