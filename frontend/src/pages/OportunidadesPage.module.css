@@ -10,11 +10,11 @@
   gap: 20px;
   padding-bottom: 16px;
   justify-content: flex-start; /* Alinha ao início */
-  overflow-x: auto; /* Scroll horizontal se necessário */
+  overflow-x: auto; /* Permite overflow horizontal apenas se necessário */
 }
 
 .kanbanColumn {
-  flex: 1 0 280px; /* Largura mínima e não reduz mais */
+  flex: 1 0 280px; /* Mantém o tamanho mínimo */
   background-color: #fff;
   border: 2px solid;
   border-radius: 8px;
@@ -22,7 +22,7 @@
   height: 70vh;
   display: flex;
   flex-direction: column;
-  max-width: 320px; /* Limite máximo */
+  max-width: 320px; /* Impede de crescer demais */
 }
 
 .kanbanTitle {
@@ -46,12 +46,12 @@
   background-color: #fff;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08);
   padding: 12px;
-  border-top: 6px solid transparent; /* Top border color will be dynamic */
+  border-top: 6px solid transparent; /* Top border color dinamicamente */
   transition: transform 0.2s ease-in-out;
 }
 
 .cardItem:hover {
-  transform: scale(1.02); /* Efeito leve ao passar mouse */
+  transform: scale(1.02); /* Efeito sutil no hover */
 }
 
 @media (max-width: 1200px) {
