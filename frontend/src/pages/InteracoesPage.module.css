@@ -2,19 +2,19 @@
 
 .tableWrapper {
     width: 100%;
-    overflow-x: auto; /* Faz a tabela ser responsiva */
+    overflow-x: auto;
     max-width: 100%;
     box-sizing: border-box;
   }
   
-  /* Estiliza a tabela */
   .table {
     width: 100%;
-    min-width: 960px; /* Define uma largura mínima para a tabela ficar legível */
+    table-layout: fixed; /* Impede expandir */
+    min-width: 960px; /* largura mínima para não ficar colado */
     border-collapse: collapse;
   }
   
-  /* Estilo para cabeçalhos */
+  /* Cabeçalho fixo bonito */
   .table thead th {
     background-color: #f9fafb;
     font-weight: 600;
@@ -22,27 +22,39 @@
     padding: 12px;
     border-bottom: 2px solid #e5e7eb;
     text-align: left;
-    white-space: nowrap; /* Evita quebra de texto nos cabeçalhos */
+    white-space: nowrap;
     position: sticky;
     top: 0;
     z-index: 2;
   }
   
-  /* Estilo para células */
+  /* Corpo */
   .table tbody td {
     padding: 12px;
     font-size: 14px;
     word-break: break-word;
     white-space: normal;
-    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
-  /* Quando for necessário, estilo para background do gatilho */
+  /* Limitar selects e botões */
+  .select {
+    max-width: 140px;
+    width: 100%;
+  }
+  
+  .button {
+    max-width: 140px;
+    width: 100%;
+  }
+  
+  /* Linha especial com Gatilho Extra */
   .gatilhoRow {
     background-color: #ffe5e5;
   }
   
-  /* Estilo responsivo para telas menores */
+  /* Responsividade: celulares */
   @media (max-width: 768px) {
     .table {
       min-width: 700px;
