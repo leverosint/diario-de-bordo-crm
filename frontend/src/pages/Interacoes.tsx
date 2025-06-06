@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  Container, Title, Group, Badge, Button, Table, Loader, Modal, Alert,
+  Title, Group, Badge, Button, Table, Loader, Modal, Alert,
 } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import axios from 'axios';
@@ -20,7 +20,6 @@ interface Parceiro {
   classificacao: string;
   status: string;
 }
-
 
 export default function Interacoes() {
   const [pendentes, setPendentes] = useState<Parceiro[]>([]);
@@ -95,7 +94,7 @@ export default function Interacoes() {
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <Container>
+      <div style={{ width: '100%', padding: '1rem' }}>
         <Title order={2} mb="md">Interações</Title>
 
         {erro && (
@@ -109,58 +108,65 @@ export default function Interacoes() {
           <Button variant="outline">Exportar Excel</Button>
         </Group>
 
-        <Table striped highlightOnHover withTableBorder withColumnBorders mb="xl">
-          <thead>
-            <tr>
-              <th>Parceiro</th>
-              <th>Canal</th>
-              <th>Classificação</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {pendentes.length === 0 ? (
-              <tr><td colSpan={5}>Nenhum parceiro pendente.</td></tr>
-            ) : (
-              pendentes.map(p => (
-                <tr key={p.id}>
-                  <td>{p.parceiro}</td>
-                  <td>{p.canal_venda}</td>
-                  <td>{p.classificacao}</td>
-                  <td>{renderStatus(p.status)}</td>
-                  <td>
-                    <Button size="xs" variant="light" onClick={() => abrirHistorico(p.id)}>
-                      Ver histórico
-                    </Button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </Table>
+        {/* TABELA COM OVERFLOW */}
+        <div style={{ width: '100%', overflowX: 'auto' }}>
+          <Table striped highlightOnHover withTableBorder style={{ minWidth: '900px', width: '100%' }}>
+            <thead>
+              <tr>
+                <th>Parceiro</th>
+                <th>Canal</th>
+                <th>Classificação</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pendentes.length === 0 ? (
+                <tr><td colSpan={5}>Nenhum parceiro pendente.</td></tr>
+              ) : (
+                pendentes.map(p => (
+                  <tr key={p.id}>
+                    <td>{p.parceiro}</td>
+                    <td>{p.canal_venda}</td>
+                    <td>{p.classificacao}</td>
+                    <td>{renderStatus(p.status)}</td>
+                    <td>
+                      <Button size="xs" variant="light" onClick={() => abrirHistorico(p.id)}>
+                        Ver histórico
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </div>
 
-        <Title order={4} mb="sm">Interagidos hoje ({interagidos.length})</Title>
-        <Table striped highlightOnHover withTableBorder withColumnBorders>
-          <thead>
-            <tr>
-              <th>Parceiro</th>
-              <th>Data</th>
-            </tr>
-          </thead>
-          <tbody>
-            {interagidos.length === 0 ? (
-              <tr><td colSpan={2}>Nenhuma interação registrada hoje.</td></tr>
-            ) : (
-              interagidos.map((i) => (
-                <tr key={i.id}>
-                  <td>{i.parceiro_nome || 'Sem nome'}</td>
-                  <td>{new Date(i.data_interacao).toLocaleString()}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </Table>
+        <Title order={4} mt="xl" mb="sm">Interagidos hoje ({interagidos.length})</Title>
+
+        {/* SEGUNDA TABELA COM OVERFLOW */}
+        <div style={{ width: '100%', overflowX: 'auto' }}>
+          <Table striped highlightOnHover withTableBorder style={{ minWidth: '600px', width: '100%' }}>
+            <thead>
+              <tr>
+                <th>Parceiro</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              {interagidos.length === 0 ? (
+                <tr><td colSpan={2}>Nenhuma interação registrada hoje.</td></tr>
+              ) : (
+                interagidos.map((i) => (
+                  <tr key={i.id}>
+                    <td>{i.parceiro_nome || 'Sem nome'}</td>
+                    <td>{new Date(i.data_interacao).toLocaleString()}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </div>
 
         <Modal
           opened={modalAberto}
@@ -168,7 +174,7 @@ export default function Interacoes() {
           title={`Histórico - ${parceiroSelecionado}`}
           size="lg"
         >
-          <Table striped highlightOnHover withTableBorder withColumnBorders>
+          <Table striped highlightOnHover withTableBorder style={{ minWidth: '600px', width: '100%' }}>
             <thead>
               <tr>
                 <th>Data</th>
@@ -191,7 +197,7 @@ export default function Interacoes() {
             </tbody>
           </Table>
         </Modal>
-      </Container>
+      </div>
     </SidebarGestor>
   );
 }
