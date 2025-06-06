@@ -5,7 +5,7 @@ import {
   Table,
   Loader,
   Center,
-   ScrollArea,
+  ScrollArea,
   Alert,
   Button,
   Group,
@@ -16,6 +16,7 @@ import {
   TextInput,
   Textarea,
   FileButton,
+  rem,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
@@ -190,9 +191,11 @@ export default function InteracoesPage() {
     carregarDados();
   }, [canalSelecionado, vendedorSelecionado]);
 
-  const textCellStyle = {
-    whiteSpace: 'normal' as const,
-    wordBreak: 'break-word' as const,
+  const textCellStyle: React.CSSProperties = {
+    whiteSpace: 'normal',
+    wordBreak: 'break-word',
+    padding: rem(8),
+    fontSize: rem(14),
   };
 
   return (
@@ -248,9 +251,9 @@ export default function InteracoesPage() {
       ) : (
         <>
           <Divider label="A Interagir" mb="xs" />
-          <ScrollArea h={400}>
+          <ScrollArea type="always" offsetScrollbars>
             <Table striped highlightOnHover withTableBorder>
-              <thead>
+              <thead style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                 <tr>
                   <th>Parceiro</th>
                   <th>Unidade</th>
@@ -358,9 +361,9 @@ export default function InteracoesPage() {
           </ScrollArea>
 
           <Divider label="Interagidos Hoje" mt="xl" mb="md" />
-          <ScrollArea h={400}>
+          <ScrollArea type="always" offsetScrollbars>
             <Table striped highlightOnHover withTableBorder>
-              <thead>
+              <thead style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
                 <tr>
                   <th>Parceiro</th>
                   <th>Unidade</th>
