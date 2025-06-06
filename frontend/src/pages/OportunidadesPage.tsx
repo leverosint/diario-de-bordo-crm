@@ -53,6 +53,7 @@ export default function OportunidadesPage() {
   const [vendedorSelecionado, setVendedorSelecionado] = useState<string>('');
   const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
 
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   const tipoUser = usuario?.tipo_user;
@@ -111,10 +112,15 @@ export default function OportunidadesPage() {
   };
 
   const onDragEnd = (result: any) => {
+    setDraggingId(null);
     if (!result.destination) return;
     const oportunidadeId = parseInt(result.draggableId);
     const novaEtapa = result.destination.droppableId;
     moverOportunidade(oportunidadeId, novaEtapa);
+  };
+
+  const onDragStart = (start: any) => {
+    setDraggingId(start.draggableId);
   };
 
   useEffect(() => {
@@ -160,7 +166,7 @@ export default function OportunidadesPage() {
             <Text color="red">{erro}</Text>
           </Center>
         ) : (
-          <DragDropContext onDragEnd={onDragEnd}>
+          <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
             <div className={styles.kanbanBoard}>
               {etapasKanban.map((etapa) => (
                 <Droppable droppableId={etapa.id} key={etapa.id}>
@@ -170,7 +176,7 @@ export default function OportunidadesPage() {
                       {...provided.droppableProps}
                       className={styles.kanbanColumn}
                       style={{
-                        borderTopColor: etapa.color, // Colorir topo da coluna
+                        borderTopColor: etapa.color,
                         borderColor: etapa.color,
                       }}
                     >
@@ -192,9 +198,9 @@ export default function OportunidadesPage() {
                                   shadow="md"
                                   radius="md"
                                   p="md"
-                                  className={styles.cardItem}
+                                  className={`${styles.cardItem} ${draggingId === o.id.toString() ? styles.dragging : ''}`}
                                   style={{
-                                    borderTopColor: etapa.color, // Colorir topo do card
+                                    borderTopColor: etapa.color,
                                   }}
                                 >
                                   <Text fw={700} size="md">{o.parceiro_nome}</Text>
