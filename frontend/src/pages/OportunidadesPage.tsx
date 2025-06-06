@@ -16,7 +16,7 @@ import {
 import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 
 import SidebarGestor from '../components/SidebarGestor';
-import styles from './OportunidadesPage.module.css'; // Importa o CSS
+import styles from './OportunidadesPage.module.css'; // Import CSS
 
 interface Oportunidade {
   id: number;
@@ -190,6 +190,9 @@ export default function OportunidadesPage() {
                                   radius="md"
                                   p="md"
                                   className={styles.cardItem}
+                                  style={{
+                                    borderTopColor: etapa.color,
+                                  }}
                                 >
                                   <Text fw={700} size="md">{o.parceiro_nome}</Text>
                                   <Text size="sm" color="gray">
