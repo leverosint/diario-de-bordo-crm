@@ -1,0 +1,58 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .tableContainer {
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .table {
+    width: 100%;
+    min-width: 800px;
+    border-collapse: collapse;
+  }
+  
+  .table th {
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    background-color: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  
+  .table td {
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    white-space: normal;
+    word-break: break-word;
+    min-width: 120px;
+  }
+  
+  .rowGatilho {
+    background-color: #ffe5e5;
+  }
+  
+  .scrollArea {
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .badgeRed {
+    background-color: #f87171;
+    color: white;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  
+  .expandArea {
+    padding: 1rem;
+  }
+  
