@@ -1,78 +1,76 @@
+/* OportunidadesPage.module.css */
+
 .pageContainer {
     width: 100%;
-    max-width: 1400px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 16px;
-    box-sizing: border-box;
   }
   
   .kanbanBoard {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 20px;
-    width: 100%;
-    box-sizing: border-box;
+    flex-wrap: nowrap; /* Impede quebra de linha */
+    overflow-x: auto; /* Scroll horizontal se precisar */
+    gap: 24px;
+    padding-bottom: 24px;
   }
   
   .kanbanColumn {
-    background-color: #f9fafb;
-    border: 2px solid #ccc;
-    border-radius: 8px;
-    width: 100%;
-    max-width: 300px;
-    min-height: 400px;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    flex: 0 0 280px; /* largura fixa das colunas */
     display: flex;
     flex-direction: column;
-    padding: 16px;
-    box-sizing: border-box;
+    border: 2px solid;
+    padding: 12px;
   }
   
   .kanbanTitle {
     text-align: center;
     font-weight: 700;
-    margin-bottom: 16px;
     font-size: 18px;
+    margin-bottom: 12px;
   }
   
   .kanbanCards {
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
     gap: 12px;
-    overflow-y: auto;
-    max-height: 500px;
-    padding-right: 8px;
   }
   
   .cardItem {
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 12px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border: none;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: grab;
+    background-color: #f9fafb;
+  }
+  
+  .cardItem:active {
+    cursor: grabbing;
   }
   
   .cardItem:hover {
-    transform: scale(1.03);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
   
-  /* Responsividade para tablet e celular */
-  @media (max-width: 1024px) {
-    .kanbanBoard {
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-  
-    .kanbanColumn {
-      max-width: 45%;
-    }
+  .cardItem .mantine-Card-root {
+    background-color: inherit;
   }
   
   @media (max-width: 768px) {
+    .pageContainer {
+      padding: 8px;
+    }
+  
+    .kanbanBoard {
+      gap: 16px;
+    }
+  
     .kanbanColumn {
-      max-width: 100%;
+      flex: 0 0 240px;
     }
   }
   
