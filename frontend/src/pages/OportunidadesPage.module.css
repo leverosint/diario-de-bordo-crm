@@ -1,108 +1,61 @@
 .pageContainer {
+  padding: 16px;
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 16px;
-  box-sizing: border-box;
 }
 
 .kanbanBoard {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 24px;
-  margin-top: 24px;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 16px;
+  flex-wrap: nowrap;
 }
 
 .kanbanColumn {
-  flex: 1 1 280px;
+  flex: 1;
+  background-color: #fff;
+  border: 2px solid;
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 280px;
   max-width: 320px;
-  min-height: 500px;
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  height: 70vh;
   display: flex;
   flex-direction: column;
-  padding: 16px;
-  transition: all 0.3s ease;
-}
-
-.kanbanColumn:hover {
-  transform: translateY(-5px);
 }
 
 .kanbanTitle {
-  font-weight: 700;
-  font-size: 18px;
   text-align: center;
-  margin-bottom: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
 }
 
 .kanbanCards {
-  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   overflow-y: auto;
-  padding-right: 6px;
+  flex: 1;
 }
 
 .cardItem {
-  background: #f9f9f9;
-  border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 16px;
-  transition: box-shadow 0.3s ease, transform 0.2s ease;
-  animation: fadeIn 0.3s ease-in;
-  cursor: grab;
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08);
+  background-color: #fff;
+  transition: none;
+  padding: 12px;
 }
 
 .cardItem:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  transform: scale(1.03);
+  transform: none;
 }
 
-/* Cores específicas */
-.oportunidade {
-  border-top: 4px solid #228be6;
-}
-
-.orcamento {
-  border-top: 4px solid #40c057;
-}
-
-.pedido {
-  border-top: 4px solid #fab005;
-}
-
-.perdida {
-  border-top: 4px solid #fa5252;
-}
-
-.cardTitle {
-  font-weight: 700;
-  font-size: 16px;
-  margin-bottom: 8px;
-  color: #333;
-}
-
-.cardSubtext {
-  font-size: 14px;
-  color: #666;
-}
-
-/* Animação */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 768px) {
-  .kanbanColumn {
-    flex: 1 1 100%;
-    max-width: 100%;
+@media (max-width: 1200px) {
+  .kanbanBoard {
+    overflow-x: auto;
   }
 }

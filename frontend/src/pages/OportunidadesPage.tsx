@@ -16,7 +16,7 @@ import {
 import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 
 import SidebarGestor from '../components/SidebarGestor';
-import styles from './OportunidadesPage.module.css'; // <-- Import CSS
+import styles from './OportunidadesPage.module.css'; // Importa o CSS
 
 interface Oportunidade {
   id: number;
@@ -39,10 +39,10 @@ interface Vendedor {
 }
 
 const etapasKanban = [
-  { id: 'oportunidade', titulo: 'Oportunidade', color: '#228be6' }, // Azul
-  { id: 'orcamento', titulo: 'Orçamento', color: '#40c057' },       // Verde
-  { id: 'pedido', titulo: 'Pedido', color: '#fab005' },             // Amarelo
-  { id: 'perdida', titulo: 'Venda Perdida', color: '#fa5252' },     // Vermelho
+  { id: 'oportunidade', titulo: 'Oportunidade', color: '#228be6' },
+  { id: 'orcamento', titulo: 'Orçamento', color: '#40c057' },
+  { id: 'pedido', titulo: 'Pedido', color: '#fab005' },
+  { id: 'perdida', titulo: 'Venda Perdida', color: '#fa5252' },
 ];
 
 export default function OportunidadesPage() {
@@ -115,11 +115,6 @@ export default function OportunidadesPage() {
     const oportunidadeId = parseInt(result.draggableId);
     const novaEtapa = result.destination.droppableId;
     moverOportunidade(oportunidadeId, novaEtapa);
-  };
-
-  const getColor = (etapaId: string) => {
-    const etapa = etapasKanban.find((e) => e.id === etapaId);
-    return etapa ? etapa.color : '#ccc';
   };
 
   useEffect(() => {
@@ -195,7 +190,6 @@ export default function OportunidadesPage() {
                                   radius="md"
                                   p="md"
                                   className={styles.cardItem}
-                                  style={{ borderTop: `5px solid ${getColor(o.etapa)}` }}
                                 >
                                   <Text fw={700} size="md">{o.parceiro_nome}</Text>
                                   <Text size="sm" color="gray">
