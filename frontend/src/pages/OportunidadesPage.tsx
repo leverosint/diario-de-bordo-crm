@@ -16,7 +16,7 @@ import {
 import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 
 import SidebarGestor from '../components/SidebarGestor';
-import styles from './OportunidadesPage.module.css'; // Import CSS
+import styles from './OportunidadesPage.module.css'; // Importa o CSS
 
 interface Oportunidade {
   id: number;
@@ -169,7 +169,10 @@ export default function OportunidadesPage() {
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={styles.kanbanColumn}
-                      style={{ borderColor: etapa.color }}
+                      style={{
+                        borderTopColor: etapa.color, // Colorir topo da coluna
+                        borderColor: etapa.color,
+                      }}
                     >
                       <div className={styles.kanbanTitle} style={{ color: etapa.color }}>
                         {etapa.titulo} ({oportunidades.filter((o) => o.etapa === etapa.id).length})
@@ -191,7 +194,7 @@ export default function OportunidadesPage() {
                                   p="md"
                                   className={styles.cardItem}
                                   style={{
-                                    borderTopColor: etapa.color,
+                                    borderTopColor: etapa.color, // Colorir topo do card
                                   }}
                                 >
                                   <Text fw={700} size="md">{o.parceiro_nome}</Text>

@@ -7,39 +7,31 @@
 
 .kanbanBoard {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   padding-bottom: 16px;
-  justify-content: flex-start; /* Alinha ao início */
+  justify-content: flex-start;
   overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #ccc transparent;
 }
 
-/* Scrollbar bonita no Chrome */
 .kanbanBoard::-webkit-scrollbar {
-  height: 8px;
+  height: 6px;
 }
 
 .kanbanBoard::-webkit-scrollbar-thumb {
   background: #ccc;
-  border-radius: 8px;
-}
-
-.kanbanBoard::-webkit-scrollbar-track {
-  background: transparent;
+  border-radius: 6px;
 }
 
 .kanbanColumn {
-  flex: 0 0 280px; /* Fixa largura mínima */
+  flex: 0 0 280px;
   background-color: #fff;
-  border: 2px solid;
   border-radius: 8px;
-  padding: 16px;
-  height: 70vh;
+  padding: 12px;
+  height: 72vh;
   display: flex;
   flex-direction: column;
-  max-width: 320px;
-  min-width: 280px;
+  border: 3px solid transparent; /* Borda colorida no topo via inline style */
+  border-top-width: 6px;
 }
 
 .kanbanTitle {
@@ -55,6 +47,7 @@
   gap: 12px;
   overflow-y: auto;
   flex: 1;
+  padding-right: 4px;
 }
 
 .cardItem {
@@ -63,32 +56,17 @@
   background-color: #fff;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08);
   padding: 12px;
+  border: 2px solid #eee;
   border-top: 6px solid transparent;
   transition: transform 0.2s ease-in-out;
 }
 
 .cardItem:hover {
-  transform: scale(1.02);
+  transform: scale(1.01);
 }
 
-/* Melhorias em telas menores */
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
   .kanbanBoard {
-    gap: 12px;
-    padding-bottom: 12px;
-  }
-
-  .kanbanColumn {
-    min-width: 240px;
-    height: 65vh;
-    padding: 12px;
-  }
-
-  .kanbanTitle {
-    font-size: 16px;
-  }
-
-  .cardItem {
-    padding: 10px;
+    flex-wrap: nowrap;
   }
 }
