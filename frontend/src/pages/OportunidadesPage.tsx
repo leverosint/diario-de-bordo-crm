@@ -16,7 +16,7 @@ import {
 import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 
 import SidebarGestor from '../components/SidebarGestor';
-import styles from './OportunidadesPage.module.css'; // <-- Importando CSS
+import styles from './OportunidadesPage.module.css'; // <-- Import CSS
 
 interface Oportunidade {
   id: number;
@@ -39,10 +39,10 @@ interface Vendedor {
 }
 
 const etapasKanban = [
-  { id: 'oportunidade', titulo: 'Oportunidade', color: '#228be6' },
-  { id: 'orcamento', titulo: 'Orçamento', color: '#40c057' },
-  { id: 'pedido', titulo: 'Pedido', color: '#fab005' },
-  { id: 'perdida', titulo: 'Venda Perdida', color: '#fa5252' },
+  { id: 'oportunidade', titulo: 'Oportunidade', color: '#228be6' }, // Azul
+  { id: 'orcamento', titulo: 'Orçamento', color: '#40c057' },       // Verde
+  { id: 'pedido', titulo: 'Pedido', color: '#fab005' },             // Amarelo
+  { id: 'perdida', titulo: 'Venda Perdida', color: '#fa5252' },     // Vermelho
 ];
 
 export default function OportunidadesPage() {
@@ -117,6 +117,11 @@ export default function OportunidadesPage() {
     moverOportunidade(oportunidadeId, novaEtapa);
   };
 
+  const getColor = (etapaId: string) => {
+    const etapa = etapasKanban.find((e) => e.id === etapaId);
+    return etapa ? etapa.color : '#ccc';
+  };
+
   useEffect(() => {
     carregarCanaisVendedores();
     carregarOportunidades();
@@ -169,7 +174,7 @@ export default function OportunidadesPage() {
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={styles.kanbanColumn}
-                      style={{ borderTop: `5px solid ${etapa.color}` }}
+                      style={{ borderColor: etapa.color }}
                     >
                       <div className={styles.kanbanTitle} style={{ color: etapa.color }}>
                         {etapa.titulo} ({oportunidades.filter((o) => o.etapa === etapa.id).length})
@@ -189,19 +194,18 @@ export default function OportunidadesPage() {
                                   shadow="md"
                                   radius="md"
                                   p="md"
-                                  className={`${styles.cardItem} ${styles[o.etapa]}`}
+                                  className={styles.cardItem}
+                                  style={{ borderTop: `5px solid ${getColor(o.etapa)}` }}
                                 >
-                                  <Text fw={700} size="md" className={styles.cardTitle}>
-                                    {o.parceiro_nome}
-                                  </Text>
-                                  <Text size="sm" color="gray" className={styles.cardSubtext}>
+                                  <Text fw={700} size="md">{o.parceiro_nome}</Text>
+                                  <Text size="sm" color="gray">
                                     Valor: R$ {o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                   </Text>
-                                  <Text size="xs" color="dimmed" mt={5} className={styles.cardSubtext}>
+                                  <Text size="xs" color="dimmed" mt={5}>
                                     Sem interação: {o.dias_sem_interacao} dias
                                   </Text>
                                   {o.observacao && (
-                                    <Text size="xs" mt={5} color="gray" className={styles.cardSubtext}>
+                                    <Text size="xs" mt={5} color="gray">
                                       {o.observacao}
                                     </Text>
                                   )}
