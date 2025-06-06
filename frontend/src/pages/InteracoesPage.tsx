@@ -194,8 +194,21 @@ export default function InteracoesPage() {
   const textCellStyle: React.CSSProperties = {
     whiteSpace: 'normal',
     wordBreak: 'break-word',
-    padding: rem(8),
+    padding: rem(12),
     fontSize: rem(14),
+    minWidth: '120px',
+  };
+
+  const thStyle: React.CSSProperties = {
+    padding: rem(14),
+    fontSize: rem(15),
+    fontWeight: 600,
+    backgroundColor: '#f9fafb',
+    borderBottom: '2px solid #e5e7eb',
+    textAlign: 'left',
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
   };
 
   return (
@@ -251,17 +264,17 @@ export default function InteracoesPage() {
       ) : (
         <>
           <Divider label="A Interagir" mb="xs" />
-          <ScrollArea type="always" offsetScrollbars>
-            <Table striped highlightOnHover withTableBorder>
-              <thead style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
+          <ScrollArea type="auto" offsetScrollbars>
+            <Table striped highlightOnHover withTableBorder verticalSpacing="sm" horizontalSpacing="md">
+              <thead>
                 <tr>
-                  <th>Parceiro</th>
-                  <th>Unidade</th>
-                  <th>Classificação</th>
-                  <th>Status</th>
-                  <th>Gatilho Extra</th>
-                  <th>Tipo</th>
-                  <th>Ação</th>
+                  <th style={thStyle}>Parceiro</th>
+                  <th style={thStyle}>Unidade</th>
+                  <th style={thStyle}>Classificação</th>
+                  <th style={thStyle}>Status</th>
+                  <th style={thStyle}>Gatilho Extra</th>
+                  <th style={thStyle}>Tipo</th>
+                  <th style={thStyle}>Ação</th>
                 </tr>
               </thead>
               <tbody>
@@ -274,14 +287,14 @@ export default function InteracoesPage() {
                       <td style={textCellStyle}>{item.status}</td>
                       <td style={textCellStyle}>
                         {item.gatilho_extra ? (
-                          <Badge color="red" variant="filled">
+                          <Badge color="red" size="sm" variant="filled" radius="xs">
                             {item.gatilho_extra}
                           </Badge>
                         ) : (
                           "-"
                         )}
                       </td>
-                      <td>
+                      <td style={textCellStyle}>
                         <Select
                           placeholder="Tipo"
                           value={tipoSelecionado[item.id] || ''}
@@ -297,7 +310,7 @@ export default function InteracoesPage() {
                           ]}
                         />
                       </td>
-                      <td>
+                      <td style={textCellStyle}>
                         <Button size="xs" onClick={() => setExpandirId(item.id)}>
                           Marcar como interagido
                         </Button>
@@ -305,7 +318,7 @@ export default function InteracoesPage() {
                     </tr>
                     {expandirId === item.id && (
                       <tr>
-                        <td colSpan={7}>
+                        <td colSpan={7} style={{ padding: rem(16) }}>
                           <Group grow style={{ marginTop: 10 }}>
                             <TextInput
                               label="Valor da Oportunidade (R$)"
@@ -361,16 +374,16 @@ export default function InteracoesPage() {
           </ScrollArea>
 
           <Divider label="Interagidos Hoje" mt="xl" mb="md" />
-          <ScrollArea type="always" offsetScrollbars>
-            <Table striped highlightOnHover withTableBorder>
-              <thead style={{ position: 'sticky', top: 0, backgroundColor: 'white', zIndex: 1 }}>
+          <ScrollArea type="auto" offsetScrollbars>
+            <Table striped highlightOnHover withTableBorder verticalSpacing="sm" horizontalSpacing="md">
+              <thead>
                 <tr>
-                  <th>Parceiro</th>
-                  <th>Unidade</th>
-                  <th>Classificação</th>
-                  <th>Status</th>
-                  <th>Data</th>
-                  <th>Tipo</th>
+                  <th style={thStyle}>Parceiro</th>
+                  <th style={thStyle}>Unidade</th>
+                  <th style={thStyle}>Classificação</th>
+                  <th style={thStyle}>Status</th>
+                  <th style={thStyle}>Data</th>
+                  <th style={thStyle}>Tipo</th>
                 </tr>
               </thead>
               <tbody>
