@@ -16,7 +16,7 @@ import {
 import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 
 import SidebarGestor from '../components/SidebarGestor';
-import styles from './OportunidadesPage.module.css';
+import styles from './OportunidadesPage.module.css'; // <-- Importando CSS
 
 interface Oportunidade {
   id: number;
@@ -169,7 +169,7 @@ export default function OportunidadesPage() {
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={styles.kanbanColumn}
-                      style={{ borderColor: etapa.color }}
+                      style={{ borderTop: `5px solid ${etapa.color}` }}
                     >
                       <div className={styles.kanbanTitle} style={{ color: etapa.color }}>
                         {etapa.titulo} ({oportunidades.filter((o) => o.etapa === etapa.id).length})
@@ -189,19 +189,21 @@ export default function OportunidadesPage() {
                                   shadow="md"
                                   radius="md"
                                   p="md"
-                                  className={styles.cardItem}
+                                  className={`${styles.cardItem} ${styles[o.etapa]}`}
                                 >
-                                  <div className={styles.cardTitle}>{o.parceiro_nome}</div>
-                                  <div className={styles.cardSubtext}>
+                                  <Text fw={700} size="md" className={styles.cardTitle}>
+                                    {o.parceiro_nome}
+                                  </Text>
+                                  <Text size="sm" color="gray" className={styles.cardSubtext}>
                                     Valor: R$ {o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                  </div>
-                                  <div className={styles.cardSubtext} style={{ marginTop: 5 }}>
+                                  </Text>
+                                  <Text size="xs" color="dimmed" mt={5} className={styles.cardSubtext}>
                                     Sem interação: {o.dias_sem_interacao} dias
-                                  </div>
+                                  </Text>
                                   {o.observacao && (
-                                    <div className={styles.cardSubtext} style={{ marginTop: 5 }}>
+                                    <Text size="xs" mt={5} color="gray" className={styles.cardSubtext}>
                                       {o.observacao}
-                                    </div>
+                                    </Text>
                                   )}
                                 </Card>
                               )}
