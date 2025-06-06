@@ -1,54 +1,77 @@
 .pageContainer {
-    width: 100%;
-    padding: 16px;
-    box-sizing: border-box;
-  }
-  
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.kanbanBoard {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.kanbanColumn {
+  background-color: #f9fafb;
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 300px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.kanbanTitle {
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 16px;
+  font-size: 18px;
+}
+
+.kanbanCards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 500px;
+  padding-right: 8px;
+}
+
+.cardItem {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cardItem:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsividade para tablet e celular */
+@media (max-width: 1024px) {
   .kanbanBoard {
-    display: flex;
-    gap: 16px;
-    overflow-x: auto;
-    padding-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
   }
-  
+
   .kanbanColumn {
-    flex: 1;
-    min-width: 280px;
-    max-width: 320px;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    border: 2px solid;
-    display: flex;
-    flex-direction: column;
-    height: 600px;
+    max-width: 45%;
   }
-  
-  .kanbanTitle {
-    text-align: center;
-    font-weight: bold;
-    padding: 12px 0;
+}
+
+@media (max-width: 768px) {
+  .kanbanColumn {
+    max-width: 100%;
   }
-  
-  .kanbanCards {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0 10px;
-  }
-  
-  .cardItem {
-    margin-bottom: 12px;
-  }
-  
-  @media (max-width: 768px) {
-    .kanbanBoard {
-      flex-direction: column;
-      overflow-x: hidden;
-    }
-  
-    .kanbanColumn {
-      width: 100%;
-      max-width: none;
-      height: auto;
-    }
-  }
-  
+}

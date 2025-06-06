@@ -110,7 +110,7 @@ export default function Interacoes() {
 
         {/* TABELA COM OVERFLOW */}
         <div style={{ width: '100%', overflowX: 'auto' }}>
-          <Table striped highlightOnHover withTableBorder style={{ minWidth: '900px', width: '100%' }}>
+          <Table striped highlightOnHover withTableBorder style={{ minWidth: '800px', width: '100%' }}>
             <thead>
               <tr>
                 <th>Parceiro</th>
