@@ -6,7 +6,6 @@ import {
   Loader,
   Center,
   Text,
-  ScrollArea,
   Alert,
   Button,
   Group,
@@ -18,6 +17,7 @@ import {
   TextInput,
   Textarea,
   FileButton,
+  Container,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
@@ -196,64 +196,64 @@ export default function InteracoesPage() {
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
+      <Container size="xl">
+        <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
 
-      <Group justify="space-between" mb="md">
-        <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
-          Meta do dia: {metaAtual}/{metaTotal}
-        </Badge>
+        <Group justify="space-between" mb="md">
+          <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
+            Meta do dia: {metaAtual}/{metaTotal}
+          </Badge>
+          {tipoUser === 'GESTOR' && (
+            <Group>
+              <FileButton onChange={setArquivoGatilho} accept=".xlsx">
+                {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
+              </FileButton>
+              <Button
+                color="blue"
+                onClick={handleUploadGatilho}
+                disabled={!arquivoGatilho}
+              >
+                Enviar Gatilhos Extras
+              </Button>
+            </Group>
+          )}
+        </Group>
+
         {tipoUser === 'GESTOR' && (
-          <Group>
-            <FileButton onChange={setArquivoGatilho} accept=".xlsx">
-              {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
-            </FileButton>
-            <Button
-              color="blue"
-              onClick={handleUploadGatilho}
-              disabled={!arquivoGatilho}
-            >
-              Enviar Gatilhos Extras
-            </Button>
+          <Group mb="xl">
+            <Select
+              label="Filtrar por Canal de Venda"
+              placeholder="Selecione um canal"
+              value={canalSelecionado}
+              onChange={handleCanalChange}
+              data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
+              clearable
+            />
+            <Select
+              label="Filtrar por Vendedor"
+              placeholder="Selecione um vendedor"
+              value={vendedorSelecionado}
+              onChange={handleVendedorChange}
+              data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
+              disabled={!canalSelecionado}
+              clearable
+            />
           </Group>
         )}
-      </Group>
 
-      {tipoUser === 'GESTOR' && (
-        <Group mb="xl">
-          <Select
-            label="Filtrar por Canal de Venda"
-            placeholder="Selecione um canal"
-            value={canalSelecionado}
-            onChange={handleCanalChange}
-            data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
-            clearable
-          />
-          <Select
-            label="Filtrar por Vendedor"
-            placeholder="Selecione um vendedor"
-            value={vendedorSelecionado}
-            onChange={handleVendedorChange}
-            data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
-            disabled={!canalSelecionado}
-            clearable
-          />
-        </Group>
-      )}
-
-      {carregando ? (
-        <Center><Loader /></Center>
-      ) : erro ? (
-        <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
-      ) : (
-        <>
-          <Grid>
-            <Grid.Col span={6}>
-              <Divider label="A Interagir" mb="xs" />
-              {pendentesFiltrados.length === 0 ? (
-                <Text>Nenhuma interação pendente encontrada.</Text>
-              ) : (
-                <ScrollArea h={400} style={{ width: '100%' }}>
-                  <Table striped highlightOnHover withTableBorder style={{ tableLayout: 'auto', width: '100%' }}>
+        {carregando ? (
+          <Center><Loader /></Center>
+        ) : erro ? (
+          <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
+        ) : (
+          <>
+            <Grid>
+              <Grid.Col xs={12} md={6}>
+                <Divider label="A Interagir" mb="xs" />
+                {pendentesFiltrados.length === 0 ? (
+                  <Text>Nenhuma interação pendente encontrada.</Text>
+                ) : (
+                  <Table striped highlightOnHover withTableBorder>
                     <thead>
                       <tr>
                         <th>Parceiro</th>
@@ -269,11 +269,11 @@ export default function InteracoesPage() {
                       {pendentesFiltrados.map((item) => (
                         <Fragment key={item.id}>
                           <tr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
-                            <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.parceiro}</td>
-                            <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.unidade}</td>
-                            <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.classificacao}</td>
-                            <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.status}</td>
-                            <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
+                            <td style={{ wordBreak: 'break-word' }}>{item.parceiro}</td>
+                            <td style={{ wordBreak: 'break-word' }}>{item.unidade}</td>
+                            <td style={{ wordBreak: 'break-word' }}>{item.classificacao}</td>
+                            <td style={{ wordBreak: 'break-word' }}>{item.status}</td>
+                            <td style={{ wordBreak: 'break-word' }}>
                               {item.gatilho_extra ? (
                                 <Badge color="red" variant="filled">{item.gatilho_extra}</Badge>
                               ) : "-"}
@@ -353,17 +353,15 @@ export default function InteracoesPage() {
                       ))}
                     </tbody>
                   </Table>
-                </ScrollArea>
-              )}
-            </Grid.Col>
+                )}
+              </Grid.Col>
 
-            <Grid.Col span={6}>
-              <Divider label="Interagidos Hoje" mb="xs" />
-              {interagidos.length === 0 ? (
-                <Text>Nenhum parceiro interagido hoje.</Text>
-              ) : (
-                <ScrollArea h={400} style={{ width: '100%' }}>
-                  <Table striped highlightOnHover withTableBorder style={{ tableLayout: 'auto', width: '100%' }}>
+              <Grid.Col xs={12} md={6}>
+                <Divider label="Interagidos Hoje" mb="xs" />
+                {interagidos.length === 0 ? (
+                  <Text>Nenhum parceiro interagido hoje.</Text>
+                ) : (
+                  <Table striped highlightOnHover withTableBorder>
                     <thead>
                       <tr>
                         <th>Parceiro</th>
@@ -377,27 +375,27 @@ export default function InteracoesPage() {
                     <tbody>
                       {interagidos.map((item) => (
                         <tr key={item.id}>
-                          <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.parceiro}</td>
-                          <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.unidade}</td>
-                          <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.classificacao}</td>
-                          <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.status}</td>
-                          <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
+                          <td style={{ wordBreak: 'break-word' }}>{item.parceiro}</td>
+                          <td style={{ wordBreak: 'break-word' }}>{item.unidade}</td>
+                          <td style={{ wordBreak: 'break-word' }}>{item.classificacao}</td>
+                          <td style={{ wordBreak: 'break-word' }}>{item.status}</td>
+                          <td style={{ wordBreak: 'break-word' }}>
                             {item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}
                           </td>
-                          <td style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.tipo}</td>
+                          <td style={{ wordBreak: 'break-word' }}>{item.tipo}</td>
                         </tr>
                       ))}
                     </tbody>
                   </Table>
-                </ScrollArea>
-              )}
-            </Grid.Col>
-          </Grid>
+                )}
+              </Grid.Col>
+            </Grid>
 
-          <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
-          <OportunidadesKanban />
-        </>
-      )}
+            <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
+            <OportunidadesKanban />
+          </>
+        )}
+      </Container>
     </SidebarGestor>
   );
 }
