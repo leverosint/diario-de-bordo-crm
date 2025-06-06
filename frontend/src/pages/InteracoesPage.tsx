@@ -5,8 +5,7 @@ import {
   Table,
   Loader,
   Center,
-  Text,
-  ScrollArea,
+   ScrollArea,
   Alert,
   Button,
   Group,
@@ -14,7 +13,6 @@ import {
   Divider,
   Badge,
   Select,
-  Grid,
   TextInput,
   Textarea,
   FileButton,
@@ -76,6 +74,7 @@ export default function InteracoesPage() {
     setErro(null);
     try {
       const headers = { Authorization: `Bearer ${token}` };
+
       const params = new URLSearchParams();
       if (canalSelecionado) params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
@@ -191,18 +190,16 @@ export default function InteracoesPage() {
     carregarDados();
   }, [canalSelecionado, vendedorSelecionado]);
 
-  const cellStyle = {
+  const textCellStyle = {
     whiteSpace: 'normal' as const,
     wordBreak: 'break-word' as const,
-    overflowWrap: 'break-word' as const,
-    maxWidth: '160px'
   };
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
 
-      <Group justify="space-between" mb="md">
+      <Group justify="space-between" mb="md" style={{ flexWrap: 'wrap' }}>
         <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
           Meta do dia: {metaAtual}/{metaTotal}
         </Badge>
@@ -223,12 +220,12 @@ export default function InteracoesPage() {
       </Group>
 
       {tipoUser === 'GESTOR' && (
-        <Group mb="xl">
+        <Group mb="xl" style={{ flexWrap: 'wrap' }}>
           <Select
             label="Filtrar por Canal de Venda"
             placeholder="Selecione um canal"
             value={canalSelecionado}
-            onChange={async (value) => await handleCanalChange(value)}
+            onChange={handleCanalChange}
             data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
             clearable
           />
@@ -236,7 +233,7 @@ export default function InteracoesPage() {
             label="Filtrar por Vendedor"
             placeholder="Selecione um vendedor"
             value={vendedorSelecionado}
-            onChange={(value) => handleVendedorChange(value)}
+            onChange={handleVendedorChange}
             data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
             disabled={!canalSelecionado}
             clearable
@@ -250,155 +247,145 @@ export default function InteracoesPage() {
         <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
       ) : (
         <>
-          <Grid>
-            <Grid.Col span={12}>
-              <Divider label="A Interagir" mb="xs" />
-              {pendentes.length === 0 ? (
-                <Text>Nenhuma interação pendente encontrada.</Text>
-              ) : (
-                <ScrollArea style={{ width: '100%' }} h={400}>
-                  <Table striped highlightOnHover withTableBorder style={{ width: '100%', tableLayout: 'fixed' }}>
-                    <thead>
+          <Divider label="A Interagir" mb="xs" />
+          <ScrollArea h={400}>
+            <Table striped highlightOnHover withTableBorder>
+              <thead>
+                <tr>
+                  <th>Parceiro</th>
+                  <th>Unidade</th>
+                  <th>Classificação</th>
+                  <th>Status</th>
+                  <th>Gatilho Extra</th>
+                  <th>Tipo</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pendentes.map((item) => (
+                  <Fragment key={item.id}>
+                    <tr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
+                      <td style={textCellStyle}>{item.parceiro}</td>
+                      <td style={textCellStyle}>{item.unidade}</td>
+                      <td style={textCellStyle}>{item.classificacao}</td>
+                      <td style={textCellStyle}>{item.status}</td>
+                      <td style={textCellStyle}>
+                        {item.gatilho_extra ? (
+                          <Badge color="red" variant="filled">
+                            {item.gatilho_extra}
+                          </Badge>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                      <td>
+                        <Select
+                          placeholder="Tipo"
+                          value={tipoSelecionado[item.id] || ''}
+                          onChange={(value) => {
+                            if (value) {
+                              setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
+                            }
+                          }}
+                          data={[
+                            { value: 'whatsapp', label: 'WhatsApp' },
+                            { value: 'email', label: 'E-mail' },
+                            { value: 'ligacao', label: 'Ligação' },
+                          ]}
+                        />
+                      </td>
+                      <td>
+                        <Button size="xs" onClick={() => setExpandirId(item.id)}>
+                          Marcar como interagido
+                        </Button>
+                      </td>
+                    </tr>
+                    {expandirId === item.id && (
                       <tr>
-                        <th>Parceiro</th>
-                        <th>Unidade</th>
-                        <th>Classificação</th>
-                        <th>Status</th>
-                        <th>Gatilho Extra</th>
-                        <th>Tipo</th>
-                        <th>Ação</th>
+                        <td colSpan={7}>
+                          <Group grow style={{ marginTop: 10 }}>
+                            <TextInput
+                              label="Valor da Oportunidade (R$)"
+                              placeholder="5000"
+                              value={valorOportunidade}
+                              onChange={(e) => setValorOportunidade(e.currentTarget.value)}
+                            />
+                            <Textarea
+                              label="Observação"
+                              placeholder="Detalhes adicionais..."
+                              value={observacaoOportunidade}
+                              onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
+                            />
+                          </Group>
+                          <Group mt="md" justify="flex-end">
+                            <Button
+                              color="blue"
+                              onClick={() => registrarInteracao(
+                                item.id,
+                                tipoSelecionado[item.id] || '',
+                                true,
+                                parseFloat(valorOportunidade.replace(',', '.')),
+                                observacaoOportunidade
+                              )}
+                            >
+                              Salvar e Criar Oportunidade
+                            </Button>
+                            <Button
+                              color="gray"
+                              onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
+                            >
+                              Só Interagir
+                            </Button>
+                            <Button
+                              color="red"
+                              variant="outline"
+                              onClick={() => {
+                                setExpandirId(null);
+                                setValorOportunidade('');
+                                setObservacaoOportunidade('');
+                              }}
+                            >
+                              Cancelar
+                            </Button>
+                          </Group>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {pendentes.map((item) => (
-                        <Fragment key={item.id}>
-                          <tr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
-                            <td style={cellStyle}>{item.parceiro}</td>
-                            <td style={cellStyle}>{item.unidade}</td>
-                            <td style={cellStyle}>{item.classificacao}</td>
-                            <td style={cellStyle}>{item.status}</td>
-                            <td style={cellStyle}>
-                              {item.gatilho_extra ? (
-                                <Badge color="red" variant="filled">
-                                  {item.gatilho_extra}
-                                </Badge>
-                              ) : "-"}
-                            </td>
-                            <td>
-                              <Select
-                                placeholder="Tipo"
-                                value={tipoSelecionado[item.id] || ''}
-                                onChange={(value) => {
-                                  if (value) {
-                                    setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
-                                  }
-                                }}
-                                data={[
-                                  { value: 'whatsapp', label: 'WhatsApp' },
-                                  { value: 'email', label: 'E-mail' },
-                                  { value: 'ligacao', label: 'Ligação' },
-                                ]}
-                              />
-                            </td>
-                            <td>
-                              <Button size="xs" onClick={() => setExpandirId(item.id)}>
-                                Marcar como interagido
-                              </Button>
-                            </td>
-                          </tr>
-                          {expandirId === item.id && (
-                            <tr>
-                              <td colSpan={7}>
-                                <Group grow style={{ marginTop: 10 }}>
-                                  <TextInput
-                                    label="Valor da Oportunidade (R$)"
-                                    placeholder="5000"
-                                    value={valorOportunidade}
-                                    onChange={(e) => setValorOportunidade(e.currentTarget.value)}
-                                  />
-                                  <Textarea
-                                    label="Observação"
-                                    placeholder="Detalhes adicionais..."
-                                    value={observacaoOportunidade}
-                                    onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
-                                  />
-                                </Group>
-                                <Group mt="md" justify="flex-end">
-                                  <Button
-                                    color="blue"
-                                    onClick={() => registrarInteracao(
-                                      item.id,
-                                      tipoSelecionado[item.id] || '',
-                                      true,
-                                      parseFloat(valorOportunidade.replace(',', '.')),
-                                      observacaoOportunidade
-                                    )}
-                                  >
-                                    Salvar e Criar Oportunidade
-                                  </Button>
-                                  <Button
-                                    color="gray"
-                                    onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
-                                  >
-                                    Só Interagir
-                                  </Button>
-                                  <Button
-                                    color="red"
-                                    variant="outline"
-                                    onClick={() => {
-                                      setExpandirId(null);
-                                      setValorOportunidade('');
-                                      setObservacaoOportunidade('');
-                                    }}
-                                  >
-                                    Cancelar
-                                  </Button>
-                                </Group>
-                              </td>
-                            </tr>
-                          )}
-                        </Fragment>
-                      ))}
-                    </tbody>
-                  </Table>
-                </ScrollArea>
-              )}
-            </Grid.Col>
+                    )}
+                  </Fragment>
+                ))}
+              </tbody>
+            </Table>
+          </ScrollArea>
 
-            <Grid.Col span={12}>
-              <Divider label="Interagidos Hoje" mb="xs" />
-              {interagidos.length === 0 ? (
-                <Text>Nenhum parceiro interagido hoje.</Text>
-              ) : (
-                <ScrollArea style={{ width: '100%' }} h={400}>
-                  <Table striped highlightOnHover withTableBorder style={{ width: '100%', tableLayout: 'fixed' }}>
-                    <thead>
-                      <tr>
-                        <th>Parceiro</th>
-                        <th>Unidade</th>
-                        <th>Classificação</th>
-                        <th>Status</th>
-                        <th>Data</th>
-                        <th>Tipo</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {interagidos.map((item) => (
-                        <tr key={item.id}>
-                          <td style={cellStyle}>{item.parceiro}</td>
-                          <td style={cellStyle}>{item.unidade}</td>
-                          <td style={cellStyle}>{item.classificacao}</td>
-                          <td style={cellStyle}>{item.status}</td>
-                          <td style={cellStyle}>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
-                          <td style={cellStyle}>{item.tipo}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </ScrollArea>
-              )}
-            </Grid.Col>
-          </Grid>
+          <Divider label="Interagidos Hoje" mt="xl" mb="md" />
+          <ScrollArea h={400}>
+            <Table striped highlightOnHover withTableBorder>
+              <thead>
+                <tr>
+                  <th>Parceiro</th>
+                  <th>Unidade</th>
+                  <th>Classificação</th>
+                  <th>Status</th>
+                  <th>Data</th>
+                  <th>Tipo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {interagidos.map((item) => (
+                  <tr key={item.id}>
+                    <td style={textCellStyle}>{item.parceiro}</td>
+                    <td style={textCellStyle}>{item.unidade}</td>
+                    <td style={textCellStyle}>{item.classificacao}</td>
+                    <td style={textCellStyle}>{item.status}</td>
+                    <td style={textCellStyle}>
+                      {item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}
+                    </td>
+                    <td style={textCellStyle}>{item.tipo}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </ScrollArea>
 
           <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
           <OportunidadesKanban />
