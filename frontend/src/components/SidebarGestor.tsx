@@ -1,4 +1,3 @@
-// src/components/SidebarGestor.tsx
 import { useState } from 'react';
 import {
   AppShell,
@@ -128,7 +127,10 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
         </Group>
       </AppShellNavbar>
 
-      <AppShellMain>{children}</AppShellMain>
+      {/* ⚡ Aqui o segredo: Trava o main pra nunca estourar */}
+      <AppShellMain style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden' }}>
+        {children}
+      </AppShellMain>
     </AppShell>
   );
 }
