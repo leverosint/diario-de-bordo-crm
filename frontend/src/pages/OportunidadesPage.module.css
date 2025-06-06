@@ -7,11 +7,9 @@
 .kanbanBoard {
   display: flex;
   gap: 20px;
+  overflow-x: auto; /* Apenas scroll lateral se necessário */
   padding-bottom: 16px;
-  justify-content: flex-start;
-  flex-wrap: nowrap; /* Nunca quebra linha */
-  overflow-x: auto; /* Scroll horizontal só se precisar */
-  scrollbar-width: thin;
+  justify-content: flex-start; /* Começa colado na esquerda */
 }
 
 .kanbanBoard::-webkit-scrollbar {
@@ -24,16 +22,15 @@
 }
 
 .kanbanColumn {
-  flex: 0 0 300px; /* Largura fixa por coluna */
+  flex: 0 0 300px; /* Largura fixa */
   background-color: #fff;
+  border: 2px solid transparent;
   border-radius: 8px;
   padding: 16px;
   height: 72vh;
   display: flex;
   flex-direction: column;
-  border: 2px solid transparent;
-  border-top: 8px solid transparent;
-  transition: border-color 0.3s;
+  border-top: 8px solid transparent; /* Cor de topo */
 }
 
 .kanbanTitle {
@@ -56,22 +53,22 @@
   width: 100%;
   border-radius: 8px;
   background-color: #fff;
-  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.12); /* Suave */
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08); /* sombra suave */
   padding: 16px;
   border: 1px solid #eee;
-  border-top: 6px solid transparent;
-  transition: background-color 0.2s ease; /* Só cor, sem zoom */
+  border-top: 6px solid transparent; /* Borda de cor no topo */
+  transition: background-color 0.2s;
 }
 
-/* Remove zoom e hover pesado */
+/* No hover, só mudar o fundo (leve) */
 .cardItem:hover {
-  background-color: #f9f9f9; /* Bem sutil */
+  background-color: #f9f9f9;
 }
 
-/* Estilo para o item sendo arrastado */
+/* Estilo enquanto arrasta */
 .dragging {
   background-color: #f0f0f0;
-  opacity: 0.8;
+  opacity: 0.85;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.15);
 }
 

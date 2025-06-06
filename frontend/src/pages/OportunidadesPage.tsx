@@ -16,7 +16,7 @@ import {
 import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 
 import SidebarGestor from '../components/SidebarGestor';
-import styles from './OportunidadesPage.module.css'; // Importa o CSS
+import styles from './OportunidadesPage.module.css'; // Importa CSS fluido!
 
 interface Oportunidade {
   id: number;
@@ -53,7 +53,6 @@ export default function OportunidadesPage() {
   const [vendedorSelecionado, setVendedorSelecionado] = useState<string>('');
   const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
 
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   const tipoUser = usuario?.tipo_user;
@@ -112,15 +111,10 @@ export default function OportunidadesPage() {
   };
 
   const onDragEnd = (result: any) => {
-    setDraggingId(null);
     if (!result.destination) return;
     const oportunidadeId = parseInt(result.draggableId);
     const novaEtapa = result.destination.droppableId;
     moverOportunidade(oportunidadeId, novaEtapa);
-  };
-
-  const onDragStart = (start: any) => {
-    setDraggingId(start.draggableId);
   };
 
   useEffect(() => {
@@ -166,7 +160,7 @@ export default function OportunidadesPage() {
             <Text color="red">{erro}</Text>
           </Center>
         ) : (
-          <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
+          <DragDropContext onDragEnd={onDragEnd}>
             <div className={styles.kanbanBoard}>
               {etapasKanban.map((etapa) => (
                 <Droppable droppableId={etapa.id} key={etapa.id}>
@@ -175,10 +169,7 @@ export default function OportunidadesPage() {
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={styles.kanbanColumn}
-                      style={{
-                        borderTopColor: etapa.color,
-                        borderColor: etapa.color,
-                      }}
+                      style={{ borderColor: etapa.color, borderTopColor: etapa.color }}
                     >
                       <div className={styles.kanbanTitle} style={{ color: etapa.color }}>
                         {etapa.titulo} ({oportunidades.filter((o) => o.etapa === etapa.id).length})
@@ -189,19 +180,16 @@ export default function OportunidadesPage() {
                           .sort((a, b) => b.dias_sem_interacao - a.dias_sem_interacao)
                           .map((o, index) => (
                             <Draggable draggableId={o.id.toString()} index={index} key={o.id}>
-                              {(provided: DraggableProvided) => (
+                              {(provided: DraggableProvided, snapshot) => (
                                 <Card
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
                                   withBorder
-                                  shadow="md"
                                   radius="md"
                                   p="md"
-                                  className={`${styles.cardItem} ${draggingId === o.id.toString() ? styles.dragging : ''}`}
-                                  style={{
-                                    borderTopColor: etapa.color,
-                                  }}
+                                  className={`${styles.cardItem} ${snapshot.isDragging ? styles.dragging : ''}`}
+                                  style={{ borderTopColor: etapa.color }}
                                 >
                                   <Text fw={700} size="md">{o.parceiro_nome}</Text>
                                   <Text size="sm" color="gray">
