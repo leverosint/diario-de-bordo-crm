@@ -5,8 +5,8 @@ import {
   Title,
   Text,
   Group,
-  ScrollArea,
   Select,
+  Center,
 } from '@mantine/core';
 import {
   DragDropContext,
@@ -16,15 +16,14 @@ import {
 import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 
 import SidebarGestor from '../components/SidebarGestor';
+import styles from './OportunidadesPage.module.css'; // <-- Import CSS
 
 interface Oportunidade {
   id: number;
-  parceiro: string;
   parceiro_nome: string;
   valor: number;
   observacao: string;
   etapa: string;
-  data_criacao: string;
   dias_sem_interacao: number;
 }
 
@@ -125,102 +124,99 @@ export default function OportunidadesPage() {
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-        <Title order={2}>Oportunidades (Kanban)</Title>
-      </div>
+      <div className={styles.pageContainer}>
+        <Center mb="md">
+          <Title order={2}>Oportunidades (Kanban)</Title>
+        </Center>
 
-      {tipoUser === 'GESTOR' && (
-        <Group mb="xl" justify="center">
-          <Select
-            label="Filtrar por Canal de Venda"
-            placeholder="Selecione um canal"
-            value={canalSelecionado}
-            onChange={handleCanalChange}
-            data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
-            clearable
-          />
-          <Select
-            label="Filtrar por Vendedor"
-            placeholder="Selecione um vendedor"
-            value={vendedorSelecionado}
-            onChange={(value) => setVendedorSelecionado(value || '')}
-            data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
-            disabled={!canalSelecionado}
-            clearable
-          />
-        </Group>
-      )}
-
-      {carregando ? (
-        <Text style={{ textAlign: 'center' }}>Carregando...</Text>
-      ) : erro ? (
-        <Text style={{ textAlign: 'center', color: 'red' }}>{erro}</Text>
-      ) : (
-        <DragDropContext onDragEnd={onDragEnd}>
-          <Group align="start" wrap="nowrap" style={{ overflowX: 'auto', paddingBottom: '20px' }}>
-            {etapasKanban.map((etapa) => (
-              <Droppable droppableId={etapa.id} key={etapa.id}>
-                {(provided: DroppableProvided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    style={{
-                      minWidth: 280,
-                      maxWidth: 320,
-                      padding: 10,
-                      backgroundColor: '#f8f9fa',
-                      borderRadius: 8,
-                      border: `2px solid ${etapa.color}`,
-                      margin: '0 10px',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <div style={{ textAlign: 'center', color: etapa.color, marginBottom: 10 }}>
-                      <Title order={4}>
-                        {etapa.titulo} ({oportunidades.filter((o) => o.etapa === etapa.id).length})
-                      </Title>
-                    </div>
-
-                    <ScrollArea h={500}>
-                      {oportunidades
-                        .filter((o) => o.etapa === etapa.id)
-                        .sort((a, b) => b.dias_sem_interacao - a.dias_sem_interacao)
-                        .map((o, index) => (
-                          <Draggable draggableId={o.id.toString()} index={index} key={o.id}>
-                            {(provided: DraggableProvided) => (
-                              <Card
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                                withBorder
-                                shadow="md"
-                                radius="md"
-                                p="md"
-                                style={{ marginBottom: 15 }}
-                              >
-                                <Text fw={700} size="md">{o.parceiro_nome}</Text>
-                                <Text size="sm" color="gray">Valor: R$ {o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</Text>
-                                <Text size="xs" color="dimmed" mt={5}>
-                                  Sem interação: {o.dias_sem_interacao} dias
-                                </Text>
-                                {o.observacao && (
-                                  <Text size="xs" mt={5} color="gray">
-                                    {o.observacao}
-                                  </Text>
-                                )}
-                              </Card>
-                            )}
-                          </Draggable>
-                        ))}
-                      {provided.placeholder}
-                    </ScrollArea>
-                  </div>
-                )}
-              </Droppable>
-            ))}
+        {tipoUser === 'GESTOR' && (
+          <Group mb="xl" justify="center">
+            <Select
+              label="Filtrar por Canal de Venda"
+              placeholder="Selecione um canal"
+              value={canalSelecionado}
+              onChange={handleCanalChange}
+              data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
+              clearable
+            />
+            <Select
+              label="Filtrar por Vendedor"
+              placeholder="Selecione um vendedor"
+              value={vendedorSelecionado}
+              onChange={(value) => setVendedorSelecionado(value || '')}
+              data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
+              disabled={!canalSelecionado}
+              clearable
+            />
           </Group>
-        </DragDropContext>
-      )}
+        )}
+
+        {carregando ? (
+          <Center>
+            <Text>Carregando...</Text>
+          </Center>
+        ) : erro ? (
+          <Center>
+            <Text color="red">{erro}</Text>
+          </Center>
+        ) : (
+          <DragDropContext onDragEnd={onDragEnd}>
+            <div className={styles.kanbanBoard}>
+              {etapasKanban.map((etapa) => (
+                <Droppable droppableId={etapa.id} key={etapa.id}>
+                  {(provided: DroppableProvided) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={styles.kanbanColumn}
+                      style={{ borderColor: etapa.color }}
+                    >
+                      <div className={styles.kanbanTitle} style={{ color: etapa.color }}>
+                        {etapa.titulo} ({oportunidades.filter((o) => o.etapa === etapa.id).length})
+                      </div>
+                      <div className={styles.kanbanCards}>
+                        {oportunidades
+                          .filter((o) => o.etapa === etapa.id)
+                          .sort((a, b) => b.dias_sem_interacao - a.dias_sem_interacao)
+                          .map((o, index) => (
+                            <Draggable draggableId={o.id.toString()} index={index} key={o.id}>
+                              {(provided: DraggableProvided) => (
+                                <Card
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  withBorder
+                                  shadow="md"
+                                  radius="md"
+                                  p="md"
+                                  className={styles.cardItem}
+                                >
+                                  <Text fw={700} size="md">{o.parceiro_nome}</Text>
+                                  <Text size="sm" color="gray">
+                                    Valor: R$ {o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                  </Text>
+                                  <Text size="xs" color="dimmed" mt={5}>
+                                    Sem interação: {o.dias_sem_interacao} dias
+                                  </Text>
+                                  {o.observacao && (
+                                    <Text size="xs" mt={5} color="gray">
+                                      {o.observacao}
+                                    </Text>
+                                  )}
+                                </Card>
+                              )}
+                            </Draggable>
+                          ))}
+                        {provided.placeholder}
+                      </div>
+                    </div>
+                  )}
+                </Droppable>
+              ))}
+            </div>
+          </DragDropContext>
+        )}
+      </div>
     </SidebarGestor>
   );
 }
