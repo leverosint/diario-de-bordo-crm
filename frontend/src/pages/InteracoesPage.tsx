@@ -16,11 +16,10 @@ import {
   TextInput,
   Textarea,
   FileButton,
-  rem,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
-import styles from './InteracoesPage.module.css';
+import styles from './InteracoesPage.module.css'; // Importa o CSS module
 
 interface Interacao {
   id: number;
@@ -357,6 +356,36 @@ export default function InteracoesPage() {
           </div>
 
           <Divider label="Interagidos Hoje" mt="xl" mb="md" />
+          <div className={styles.tableWrapper}>
+            <ScrollArea type="auto" offsetScrollbars>
+              <Table striped highlightOnHover withTableBorder verticalSpacing="sm" horizontalSpacing="md" className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Parceiro</th>
+                    <th>Unidade</th>
+                    <th>Classificação</th>
+                    <th>Status</th>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {interagidos.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.parceiro}</td>
+                      <td>{item.unidade}</td>
+                      <td>{item.classificacao}</td>
+                      <td>{item.status}</td>
+                      <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : '-'}</td>
+                      <td>{item.tipo}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </ScrollArea>
+          </div>
+
+          <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
           <OportunidadesKanban />
         </>
       )}
