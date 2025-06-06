@@ -1,77 +1,78 @@
 .pageContainer {
     width: 100%;
-    max-width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
     padding: 16px;
     box-sizing: border-box;
   }
   
-  .tableWrapper {
+  .kanbanBoard {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
     width: 100%;
-    overflow-x: auto; /* Faz a tabela rolar horizontalmente se precisar */
-    margin-bottom: 32px;
+    box-sizing: border-box;
   }
   
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 900px; /* Evita que quebre em telas muito pequenas */
-  }
-  
-  .table th,
-  .table td {
-    text-align: left;
-    padding: 12px 16px;
-    white-space: normal;
-    word-break: break-word;
-    font-size: 14px;
-  }
-  
-  .table th {
+  .kanbanColumn {
     background-color: #f9fafb;
-    font-weight: 600;
-    font-size: 15px;
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    border-bottom: 2px solid #e5e7eb;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 300px;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    box-sizing: border-box;
   }
   
-  .gatilhoRow {
-    background-color: #ffe5e5;
+  .kanbanTitle {
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 16px;
+    font-size: 18px;
   }
   
-  .select {
-    width: 150px;
-    min-width: 150px;
+  .kanbanCards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    max-height: 500px;
+    padding-right: 8px;
   }
   
-  .button {
-    min-width: 120px;
+  .cardItem {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
   
+  .cardItem:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Responsividade para tablet e celular */
   @media (max-width: 1024px) {
-    .select {
-      width: 100%;
+    .kanbanBoard {
+      flex-wrap: wrap;
+      justify-content: center;
     }
   
-    .button {
-      width: 100%;
-    }
-  
-    .table {
-      min-width: 700px;
+    .kanbanColumn {
+      max-width: 45%;
     }
   }
   
   @media (max-width: 768px) {
-    .table {
-      min-width: 600px;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .table {
-      min-width: 500px;
+    .kanbanColumn {
+      max-width: 100%;
     }
   }
   
