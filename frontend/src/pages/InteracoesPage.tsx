@@ -261,120 +261,133 @@ export default function InteracoesPage() {
               {pendentesFiltrados.length === 0 ? (
                 <Text>Nenhuma interação pendente encontrada.</Text>
               ) : (
-                <ScrollArea h={400} scrollbarSize={8}>
-  <Table 
-    striped 
-    highlightOnHover 
-    withTableBorder 
-    style={{ tableLayout: 'auto', width: '100%' }}
-  >
-    <TableThead>
-      <TableTr>
-        <TableTh>Parceiro</TableTh>
-        <TableTh>Unidade</TableTh>
-        <TableTh>Classificação</TableTh>
-        <TableTh>Status</TableTh>
-        <TableTh>Gatilho Extra</TableTh>
-        <TableTh>Tipo</TableTh>
-        <TableTh>Ação</TableTh>
-      </TableTr>
-    </TableThead>
-    <TableTbody>
-      {pendentesFiltrados.map((item) => (
-        <Fragment key={item.id}>
-          <TableTr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
-            <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
-              {item.parceiro}
-            </TableTd>
-            <TableTd>{item.unidade}</TableTd>
-            <TableTd>{item.classificacao}</TableTd>
-            <TableTd>{item.status}</TableTd>
-            <TableTd>
-              {item.gatilho_extra ? (
-                <Badge color="red" variant="filled">{item.gatilho_extra}</Badge>
-              ) : (
-                "-"
-              )}
-            </TableTd>
-            <TableTd>
-              <Select
-                placeholder="Tipo"
-                value={tipoSelecionado[item.id] || ''}
-                onChange={(value) => {
-                  if (value) {
-                    setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
-                  }
-                }}
-                data={[
-                  { value: 'whatsapp', label: 'WhatsApp' },
-                  { value: 'email', label: 'E-mail' },
-                  { value: 'ligacao', label: 'Ligação' },
-                ]}
-              />
-            </TableTd>
-            <TableTd>
-              <Button size="xs" onClick={() => setExpandirId(item.id)}>
-                Marcar como interagido
-              </Button>
-            </TableTd>
-          </TableTr>
-          {expandirId === item.id && (
-            <TableTr>
-              <TableTd colSpan={7}>
-                <Group grow style={{ marginTop: 10 }}>
-                  <TextInput
-                    label="Valor da Oportunidade (R$)"
-                    placeholder="5000"
-                    value={valorOportunidade}
-                    onChange={(e) => setValorOportunidade(e.currentTarget.value)}
-                  />
-                  <Textarea
-                    label="Observação"
-                    placeholder="Detalhes adicionais..."
-                    value={observacaoOportunidade}
-                    onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
-                  />
-                </Group>
-                <Group mt="md" justify="flex-end">
-                  <Button
-                    color="blue"
-                    onClick={() => registrarInteracao(
-                      item.id,
-                      tipoSelecionado[item.id] || '',
-                      true,
-                      parseFloat(valorOportunidade.replace(',', '.')),
-                      observacaoOportunidade
-                    )}
-                  >
-                    Salvar e Criar Oportunidade
-                  </Button>
-                  <Button
-                    color="gray"
-                    onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
-                  >
-                    Só Interagir
-                  </Button>
-                  <Button
-                    color="red"
-                    variant="outline"
-                    onClick={() => {
-                      setExpandirId(null);
-                      setValorOportunidade('');
-                      setObservacaoOportunidade('');
+                <ScrollArea h={400} style={{ width: '100%' }}>
+                  <Table 
+                    striped 
+                    highlightOnHover 
+                    withTableBorder 
+                    style={{
+                      width: '100%',
+                      tableLayout: 'auto',
                     }}
                   >
-                    Cancelar
-                  </Button>
-                </Group>
-              </TableTd>
-            </TableTr>
-          )}
-        </Fragment>
-      ))}
-    </TableTbody>
-  </Table>
-</ScrollArea>
-
+                    <TableThead>
+                      <TableTr>
+                        <TableTh>Parceiro</TableTh>
+                        <TableTh>Unidade</TableTh>
+                        <TableTh>Classificação</TableTh>
+                        <TableTh>Status</TableTh>
+                        <TableTh>Gatilho Extra</TableTh>
+                        <TableTh>Tipo</TableTh>
+                        <TableTh>Ação</TableTh>
+                      </TableTr>
+                    </TableThead>
+                    <TableTbody>
+                      {pendentesFiltrados.map((item) => (
+                        <Fragment key={item.id}>
+                          <TableTr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
+                            <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.parceiro}</TableTd>
+                            <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.unidade}</TableTd>
+                            <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.classificacao}</TableTd>
+                            <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.status}</TableTd>
+                            <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
+                              {item.gatilho_extra ? (
+                                <Badge
+                                  color="red"
+                                  variant="filled"
+                                  style={{
+                                    display: 'inline-block',
+                                    maxWidth: '100%',
+                                    overflowWrap: 'break-word',
+                                    wordBreak: 'break-word',
+                                    whiteSpace: 'normal',
+                                    textAlign: 'center',
+                                  }}
+                                >
+                                  {item.gatilho_extra}
+                                </Badge>
+                              ) : (
+                                "-"
+                              )}
+                            </TableTd>
+                            <TableTd>
+                              <Select
+                                placeholder="Tipo"
+                                value={tipoSelecionado[item.id] || ''}
+                                onChange={(value) => {
+                                  if (value) {
+                                    setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
+                                  }
+                                }}
+                                data={[
+                                  { value: 'whatsapp', label: 'WhatsApp' },
+                                  { value: 'email', label: 'E-mail' },
+                                  { value: 'ligacao', label: 'Ligação' },
+                                ]}
+                              />
+                            </TableTd>
+                            <TableTd>
+                              <Button size="xs" onClick={() => setExpandirId(item.id)}>
+                                Marcar como interagido
+                              </Button>
+                            </TableTd>
+                          </TableTr>
+                          {expandirId === item.id && (
+                            <TableTr>
+                              <TableTd colSpan={7}>
+                                <Group grow style={{ marginTop: 10 }}>
+                                  <TextInput
+                                    label="Valor da Oportunidade (R$)"
+                                    placeholder="5000"
+                                    value={valorOportunidade}
+                                    onChange={(e) => setValorOportunidade(e.currentTarget.value)}
+                                  />
+                                  <Textarea
+                                    label="Observação"
+                                    placeholder="Detalhes adicionais..."
+                                    value={observacaoOportunidade}
+                                    onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
+                                  />
+                                </Group>
+                                <Group mt="md" justify="flex-end">
+                                  <Button
+                                    color="blue"
+                                    onClick={() => registrarInteracao(
+                                      item.id,
+                                      tipoSelecionado[item.id] || '',
+                                      true,
+                                      parseFloat(valorOportunidade.replace(',', '.')),
+                                      observacaoOportunidade
+                                    )}
+                                  >
+                                    Salvar e Criar Oportunidade
+                                  </Button>
+                                  <Button
+                                    color="gray"
+                                    onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
+                                  >
+                                    Só Interagir
+                                  </Button>
+                                  <Button
+                                    color="red"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setExpandirId(null);
+                                      setValorOportunidade('');
+                                      setObservacaoOportunidade('');
+                                    }}
+                                  >
+                                    Cancelar
+                                  </Button>
+                                </Group>
+                              </TableTd>
+                            </TableTr>
+                          )}
+                        </Fragment>
+                      ))}
+                    </TableTbody>
+                  </Table>
+                </ScrollArea>
               )}
             </Grid.Col>
 
@@ -383,8 +396,13 @@ export default function InteracoesPage() {
               {interagidos.length === 0 ? (
                 <Text>Nenhum parceiro interagido hoje.</Text>
               ) : (
-                <ScrollArea h={400}>
-                  <Table striped highlightOnHover withTableBorder>
+                <ScrollArea h={400} style={{ width: '100%' }}>
+                  <Table 
+                    striped 
+                    highlightOnHover 
+                    withTableBorder 
+                    style={{ width: '100%', tableLayout: 'auto' }}
+                  >
                     <TableThead>
                       <TableTr>
                         <TableTh>Parceiro</TableTh>
@@ -398,12 +416,14 @@ export default function InteracoesPage() {
                     <TableTbody>
                       {interagidos.map((item) => (
                         <TableTr key={item.id}>
-                          <TableTd>{item.parceiro}</TableTd>
-                          <TableTd>{item.unidade}</TableTd>
-                          <TableTd>{item.classificacao}</TableTd>
-                          <TableTd>{item.status}</TableTd>
-                          <TableTd>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</TableTd>
-                          <TableTd>{item.tipo}</TableTd>
+                          <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.parceiro}</TableTd>
+                          <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.unidade}</TableTd>
+                          <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.classificacao}</TableTd>
+                          <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.status}</TableTd>
+                          <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>
+                            {item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}
+                          </TableTd>
+                          <TableTd style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}>{item.tipo}</TableTd>
                         </TableTr>
                       ))}
                     </TableTbody>
