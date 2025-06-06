@@ -16,10 +16,11 @@ import {
   TextInput,
   Textarea,
   FileButton,
+  rem,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
-import styles from './InteracoesPage.module.css'; // Importando o CSS
+import styles from './InteracoesPage.module.css';
 
 interface Interacao {
   id: number;
@@ -244,146 +245,118 @@ export default function InteracoesPage() {
       ) : (
         <>
           <Divider label="A Interagir" mb="xs" />
-          <ScrollArea className={styles.scrollContainer} type="auto" offsetScrollbars>
-            <Table className={styles.table} striped highlightOnHover withTableBorder verticalSpacing="sm" horizontalSpacing="md">
-              <thead>
-                <tr>
-                  <th className={styles.th}>Parceiro</th>
-                  <th className={styles.th}>Unidade</th>
-                  <th className={styles.th}>Classificação</th>
-                  <th className={styles.th}>Status</th>
-                  <th className={styles.th}>Gatilho Extra</th>
-                  <th className={styles.th}>Tipo</th>
-                  <th className={styles.th}>Ação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendentes.map((item) => (
-                  <Fragment key={item.id}>
-                    <tr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
-                      <td className={styles.td}>{item.parceiro}</td>
-                      <td className={styles.td}>{item.unidade}</td>
-                      <td className={styles.td}>{item.classificacao}</td>
-                      <td className={styles.td}>{item.status}</td>
-                      <td className={styles.td}>
-                        {item.gatilho_extra ? (
-                          <Badge color="red" size="sm" variant="filled" radius="xs">
-                            {item.gatilho_extra}
-                          </Badge>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
-                      <td className={styles.td}>
-                        <Select
-                          placeholder="Tipo"
-                          value={tipoSelecionado[item.id] || ''}
-                          onChange={(value) => {
-                            if (value) {
-                              setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
-                            }
-                          }}
-                          data={[
-                            { value: 'whatsapp', label: 'WhatsApp' },
-                            { value: 'email', label: 'E-mail' },
-                            { value: 'ligacao', label: 'Ligação' },
-                          ]}
-                        />
-                      </td>
-                      <td className={styles.td}>
-                        <Button size="xs" onClick={() => setExpandirId(item.id)}>
-                          Marcar como interagido
-                        </Button>
-                      </td>
-                    </tr>
-                    {expandirId === item.id && (
-                      <tr>
-                        <td colSpan={7} className={styles.td}>
-                          <Group grow style={{ marginTop: 10 }}>
-                            <TextInput
-                              label="Valor da Oportunidade (R$)"
-                              placeholder="5000"
-                              value={valorOportunidade}
-                              onChange={(e) => setValorOportunidade(e.currentTarget.value)}
-                            />
-                            <Textarea
-                              label="Observação"
-                              placeholder="Detalhes adicionais..."
-                              value={observacaoOportunidade}
-                              onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
-                            />
-                          </Group>
-                          <Group mt="md" justify="flex-end">
-                            <Button
-                              color="blue"
-                              onClick={() => registrarInteracao(
-                                item.id,
-                                tipoSelecionado[item.id] || '',
-                                true,
-                                parseFloat(valorOportunidade.replace(',', '.')),
-                                observacaoOportunidade
-                              )}
-                            >
-                              Salvar e Criar Oportunidade
-                            </Button>
-                            <Button
-                              color="gray"
-                              onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
-                            >
-                              Só Interagir
-                            </Button>
-                            <Button
-                              color="red"
-                              variant="outline"
-                              onClick={() => {
-                                setExpandirId(null);
-                                setValorOportunidade('');
-                                setObservacaoOportunidade('');
-                              }}
-                            >
-                              Cancelar
-                            </Button>
-                          </Group>
+          <div className={styles.tableWrapper}>
+            <ScrollArea type="auto" offsetScrollbars>
+              <Table striped highlightOnHover withTableBorder verticalSpacing="sm" horizontalSpacing="md" className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Parceiro</th>
+                    <th>Unidade</th>
+                    <th>Classificação</th>
+                    <th>Status</th>
+                    <th>Gatilho Extra</th>
+                    <th>Tipo</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendentes.map((item) => (
+                    <Fragment key={item.id}>
+                      <tr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
+                        <td>{item.parceiro}</td>
+                        <td>{item.unidade}</td>
+                        <td>{item.classificacao}</td>
+                        <td>{item.status}</td>
+                        <td>
+                          {item.gatilho_extra ? (
+                            <Badge color="red" size="sm" variant="filled" radius="xs">
+                              {item.gatilho_extra}
+                            </Badge>
+                          ) : (
+                            "-"
+                          )}
+                        </td>
+                        <td>
+                          <Select
+                            placeholder="Tipo"
+                            value={tipoSelecionado[item.id] || ''}
+                            onChange={(value) => {
+                              if (value) {
+                                setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
+                              }
+                            }}
+                            data={[
+                              { value: 'whatsapp', label: 'WhatsApp' },
+                              { value: 'email', label: 'E-mail' },
+                              { value: 'ligacao', label: 'Ligação' },
+                            ]}
+                          />
+                        </td>
+                        <td>
+                          <Button size="xs" onClick={() => setExpandirId(item.id)}>
+                            Marcar como interagido
+                          </Button>
                         </td>
                       </tr>
-                    )}
-                  </Fragment>
-                ))}
-              </tbody>
-            </Table>
-          </ScrollArea>
+                      {expandirId === item.id && (
+                        <tr>
+                          <td colSpan={7}>
+                            <Group grow style={{ marginTop: 10 }}>
+                              <TextInput
+                                label="Valor da Oportunidade (R$)"
+                                placeholder="5000"
+                                value={valorOportunidade}
+                                onChange={(e) => setValorOportunidade(e.currentTarget.value)}
+                              />
+                              <Textarea
+                                label="Observação"
+                                placeholder="Detalhes adicionais..."
+                                value={observacaoOportunidade}
+                                onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
+                              />
+                            </Group>
+                            <Group mt="md" justify="flex-end">
+                              <Button
+                                color="blue"
+                                onClick={() => registrarInteracao(
+                                  item.id,
+                                  tipoSelecionado[item.id] || '',
+                                  true,
+                                  parseFloat(valorOportunidade.replace(',', '.')),
+                                  observacaoOportunidade
+                                )}
+                              >
+                                Salvar e Criar Oportunidade
+                              </Button>
+                              <Button
+                                color="gray"
+                                onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
+                              >
+                                Só Interagir
+                              </Button>
+                              <Button
+                                color="red"
+                                variant="outline"
+                                onClick={() => {
+                                  setExpandirId(null);
+                                  setValorOportunidade('');
+                                  setObservacaoOportunidade('');
+                                }}
+                              >
+                                Cancelar
+                              </Button>
+                            </Group>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </Table>
+            </ScrollArea>
+          </div>
 
           <Divider label="Interagidos Hoje" mt="xl" mb="md" />
-          <ScrollArea className={styles.scrollContainer} type="auto" offsetScrollbars>
-            <Table className={styles.table} striped highlightOnHover withTableBorder verticalSpacing="sm" horizontalSpacing="md">
-              <thead>
-                <tr>
-                  <th className={styles.th}>Parceiro</th>
-                  <th className={styles.th}>Unidade</th>
-                  <th className={styles.th}>Classificação</th>
-                  <th className={styles.th}>Status</th>
-                  <th className={styles.th}>Data</th>
-                  <th className={styles.th}>Tipo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {interagidos.map((item) => (
-                  <tr key={item.id}>
-                    <td className={styles.td}>{item.parceiro}</td>
-                    <td className={styles.td}>{item.unidade}</td>
-                    <td className={styles.td}>{item.classificacao}</td>
-                    <td className={styles.td}>{item.status}</td>
-                    <td className={styles.td}>
-                      {item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}
-                    </td>
-                    <td className={styles.td}>{item.tipo}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </ScrollArea>
-
-          <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
           <OportunidadesKanban />
         </>
       )}

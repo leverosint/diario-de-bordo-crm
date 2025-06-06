@@ -1,58 +1,63 @@
-.container {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-  }
-  
-  .tableContainer {
+/* Wrapper geral para tabela com responsividade máxima */
+.tableWrapper {
     width: 100%;
     overflow-x: auto;
+    padding: 0 1rem; /* um pouco de respiro nas laterais */
   }
   
+  /* Deixa a tabela mais elegante e com largura 100% */
   .table {
     width: 100%;
-    min-width: 800px;
+    min-width: 800px; /* largura mínima pra não quebrar os títulos */
     border-collapse: collapse;
+    table-layout: auto;
   }
   
-  .table th {
-    padding: 1rem;
-    font-size: 1rem;
-    font-weight: 600;
+  /* Estilo para o cabeçalho fixo */
+  .table thead th {
     background-color: #f9fafb;
-    border-bottom: 2px solid #e5e7eb;
-    text-align: left;
     position: sticky;
     top: 0;
-    z-index: 1;
-  }
-  
-  .table td {
-    padding: 0.75rem;
-    font-size: 0.95rem;
-    white-space: normal;
-    word-break: break-word;
-    min-width: 120px;
-  }
-  
-  .rowGatilho {
-    background-color: #ffe5e5;
-  }
-  
-  .scrollArea {
-    width: 100%;
-    overflow-x: auto;
-  }
-  
-  .badgeRed {
-    background-color: #f87171;
-    color: white;
+    z-index: 10;
+    padding: 12px 16px;
+    font-size: 15px;
     font-weight: 600;
-    padding: 4px 8px;
-    border-radius: 4px;
+    text-align: left;
+    border-bottom: 2px solid #e5e7eb;
+    white-space: nowrap; /* Não quebra o título */
   }
   
-  .expandArea {
-    padding: 1rem;
+  /* Estilo para o conteúdo das células */
+  .table td {
+    padding: 12px 16px;
+    font-size: 14px;
+    border-bottom: 1px solid #e5e7eb;
+    white-space: nowrap; /* Não quebra o texto das células */
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adiciona "..." se o texto for muito grande */
+  }
+  
+  /* Deixa a tabela responsiva em telas pequenas */
+  @media (max-width: 768px) {
+    .table {
+      min-width: 600px;
+    }
+  
+    .table td, 
+    .table th {
+      font-size: 13px;
+      padding: 10px 12px;
+    }
+  }
+  
+  /* Tira a barra horizontal se a tabela couber certinha */
+  .tableWrapper::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .tableWrapper::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 4px;
   }
   
