@@ -1,30 +1,36 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import axios from 'axios';
 import {
-  Card,
-  Title,
-  Text,
-  Group,
-  Select,
+  Table,
+  Loader,
   Center,
+  Alert,
+  Button,
+  Group,
+  Title,
+  Divider,
+  Badge,
+  Select,
+  TextInput,
+  Textarea,
+  FileButton,
 } from '@mantine/core';
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-} from '@hello-pangea/dnd';
-import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
-
 import SidebarGestor from '../components/SidebarGestor';
-import styles from './OportunidadesPage.module.css'; // <-- Import CSS
+import OportunidadesKanban from './OportunidadesPage';
+import styles from './InteracoesPage.module.css';
 
-interface Oportunidade {
+interface Interacao {
   id: number;
-  parceiro_nome: string;
-  valor: number;
-  observacao: string;
-  etapa: string;
-  dias_sem_interacao: number;
+  parceiro: string;
+  unidade: string;
+  classificacao: string;
+  status: string;
+  entrou_em_contato?: boolean;
+  data_interacao?: string;
+  tipo?: string;
+  gatilho_extra?: string;
+  canal_venda_nome?: string;
+  consultor?: string;
 }
 
 interface CanalVenda {
@@ -38,49 +44,70 @@ interface Vendedor {
   id_vendedor: string;
 }
 
-const etapasKanban = [
-  { id: 'oportunidade', titulo: 'Oportunidade', color: '#228be6' },
-  { id: 'orcamento', titulo: 'Orçamento', color: '#40c057' },
-  { id: 'pedido', titulo: 'Pedido', color: '#fab005' },
-  { id: 'perdida', titulo: 'Venda Perdida', color: '#fa5252' },
-];
-
-export default function OportunidadesPage() {
-  const [oportunidades, setOportunidades] = useState<Oportunidade[]>([]);
+export default function InteracoesPage() {
+  const [pendentes, setPendentes] = useState<Interacao[]>([]);
+  const [interagidos, setInteragidos] = useState<Interacao[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [canalSelecionado, setCanalSelecionado] = useState<string>('');
-  const [vendedorSelecionado, setVendedorSelecionado] = useState<string>('');
+  const [metaAtual, setMetaAtual] = useState(0);
+  const [metaTotal, setMetaTotal] = useState(10);
+  const [tipoSelecionado, setTipoSelecionado] = useState<{ [key: number]: string }>({});
+  const [expandirId, setExpandirId] = useState<number | null>(null);
+  const [valorOportunidade, setValorOportunidade] = useState('');
+  const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
+  const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
+
   const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+  const [canalSelecionado, setCanalSelecionado] = useState<string>('');
+  const [vendedorSelecionado, setVendedorSelecionado] = useState<string>('');
 
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   const tipoUser = usuario?.tipo_user;
   const token = localStorage.getItem('token');
 
-  const carregarOportunidades = async () => {
+  const carregarDados = async () => {
     setCarregando(true);
     setErro(null);
     try {
       const headers = { Authorization: `Bearer ${token}` };
+
       const params = new URLSearchParams();
       if (canalSelecionado) params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
 
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/?${params.toString()}`, { headers });
-      setOportunidades(response.data);
+      const [resPendentes, resInteragidos, resMeta] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes&${params.toString()}`, { headers }),
+        axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=interagidos&${params.toString()}`, { headers }),
+        axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers }),
+      ]);
+
+      const canalNome = (id: number) => {
+        const canal = usuario.canais_venda?.find((c: any) => c.id === id);
+        return canal ? canal.nome : '';
+      };
+
+      setPendentes(resPendentes.data.map((p: any) => ({
+        ...p,
+        canal_venda_nome: canalNome(p.canal_venda_id),
+      })));
+      setInteragidos(resInteragidos.data.map((p: any) => ({
+        ...p,
+        canal_venda_nome: canalNome(p.canal_venda_id),
+      })));
+
+      setMetaAtual(resMeta.data.interacoes_realizadas);
+      setMetaTotal(resMeta.data.meta_diaria);
+
+      if (tipoUser === 'GESTOR') {
+        const canais = usuario.canais_venda || [];
+        setCanaisVenda(canais.map((c: { id: number; nome: string }) => ({ id: c.id, nome: c.nome })));
+      }
     } catch (err) {
-      console.error('Erro ao carregar oportunidades:', err);
-      setErro('Erro ao carregar oportunidades.');
+      console.error('Erro ao carregar interações:', err);
+      setErro('Erro ao carregar interações. Verifique sua conexão ou login.');
     } finally {
       setCarregando(false);
-    }
-  };
-
-  const carregarCanaisVendedores = () => {
-    if (tipoUser === 'GESTOR') {
-      const canais = usuario.canais_venda || [];
-      setCanaisVenda(canais.map((c: { id: number; nome: string }) => ({ id: c.id, nome: c.nome })));
     }
   };
 
@@ -89,48 +116,106 @@ export default function OportunidadesPage() {
     setVendedorSelecionado('');
     if (!value) {
       setVendedores([]);
-      return;
-    }
-    try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${value}`, { headers });
-      setVendedores(res.data);
-    } catch (error) {
-      console.error('Erro ao carregar vendedores:', error);
+    } else {
+      try {
+        const headers = { Authorization: `Bearer ${token}` };
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${value}`, { headers });
+        setVendedores(res.data);
+      } catch (error) {
+        console.error('Erro ao carregar vendedores:', error);
+      }
     }
   };
 
-  const moverOportunidade = async (id: number, novaEtapa: string) => {
+  const handleVendedorChange = (value: string | null) => {
+    setVendedorSelecionado(value || '');
+  };
+
+  const registrarInteracao = async (
+    parceiroId: number,
+    tipo: string,
+    oportunidade: boolean,
+    valor?: number,
+    observacao?: string
+  ) => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, { etapa: novaEtapa }, { headers });
-      await carregarOportunidades();
+
+      await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, {
+        parceiro: parceiroId,
+        tipo,
+        entrou_em_contato: true,
+      }, { headers });
+
+      if (oportunidade && valor) {
+        await axios.post(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
+          parceiro: parceiroId,
+          valor: valor,
+          observacao: observacao,
+          etapa: 'oportunidade',
+        }, { headers });
+      }
+
+      setExpandirId(null);
+      setValorOportunidade('');
+      setObservacaoOportunidade('');
+      await carregarDados();
     } catch (err) {
-      console.error('Erro ao mover oportunidade:', err);
+      console.error('Erro ao registrar interação ou oportunidade:', err);
+      alert('Erro ao registrar interação ou oportunidade. Tente novamente.');
     }
   };
 
-  const onDragEnd = (result: any) => {
-    if (!result.destination) return;
-    const oportunidadeId = parseInt(result.draggableId);
-    const novaEtapa = result.destination.droppableId;
-    moverOportunidade(oportunidadeId, novaEtapa);
+  const handleUploadGatilho = async () => {
+    if (!arquivoGatilho) return alert('Selecione um arquivo antes de enviar.');
+    const formData = new FormData();
+    formData.append('file', arquivoGatilho);
+
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, { headers });
+      alert('Gatilhos extras enviados com sucesso!');
+      setArquivoGatilho(null);
+      carregarDados();
+    } catch (err) {
+      console.error('Erro ao enviar arquivo de gatilhos extras:', err);
+      alert('Erro ao enviar arquivo de gatilhos extras. Verifique o formato.');
+    }
   };
 
   useEffect(() => {
-    carregarCanaisVendedores();
-    carregarOportunidades();
+    carregarDados();
   }, [canalSelecionado, vendedorSelecionado]);
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <div className={styles.pageContainer}>
         <Center mb="md">
-          <Title order={2}>Oportunidades (Kanban)</Title>
+          <Title order={2}>Interações de Parceiros Pendentes</Title>
         </Center>
 
+        <Group justify="space-between" mb="md" style={{ flexWrap: 'wrap' }}>
+          <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
+            Meta do dia: {metaAtual}/{metaTotal}
+          </Badge>
+          {tipoUser === 'GESTOR' && (
+            <Group>
+              <FileButton onChange={setArquivoGatilho} accept=".xlsx">
+                {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
+              </FileButton>
+              <Button
+                color="blue"
+                onClick={handleUploadGatilho}
+                disabled={!arquivoGatilho}
+              >
+                Enviar Gatilhos Extras
+              </Button>
+            </Group>
+          )}
+        </Group>
+
         {tipoUser === 'GESTOR' && (
-          <Group mb="xl" justify="center">
+          <Group mb="xl" style={{ flexWrap: 'wrap' }}>
             <Select
               label="Filtrar por Canal de Venda"
               placeholder="Selecione um canal"
@@ -143,7 +228,7 @@ export default function OportunidadesPage() {
               label="Filtrar por Vendedor"
               placeholder="Selecione um vendedor"
               value={vendedorSelecionado}
-              onChange={(value) => setVendedorSelecionado(value || '')}
+              onChange={handleVendedorChange}
               data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
               disabled={!canalSelecionado}
               clearable
@@ -152,69 +237,151 @@ export default function OportunidadesPage() {
         )}
 
         {carregando ? (
-          <Center>
-            <Text>Carregando...</Text>
-          </Center>
+          <Center><Loader /></Center>
         ) : erro ? (
-          <Center>
-            <Text color="red">{erro}</Text>
-          </Center>
+          <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
         ) : (
-          <DragDropContext onDragEnd={onDragEnd}>
-            <div className={styles.kanbanBoard}>
-              {etapasKanban.map((etapa) => (
-                <Droppable droppableId={etapa.id} key={etapa.id}>
-                  {(provided: DroppableProvided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={styles.kanbanColumn}
-                      style={{ borderColor: etapa.color }}
-                    >
-                      <div className={styles.kanbanTitle} style={{ color: etapa.color }}>
-                        {etapa.titulo} ({oportunidades.filter((o) => o.etapa === etapa.id).length})
-                      </div>
-                      <div className={styles.kanbanCards}>
-                        {oportunidades
-                          .filter((o) => o.etapa === etapa.id)
-                          .sort((a, b) => b.dias_sem_interacao - a.dias_sem_interacao)
-                          .map((o, index) => (
-                            <Draggable draggableId={o.id.toString()} index={index} key={o.id}>
-                              {(provided: DraggableProvided) => (
-                                <Card
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  withBorder
-                                  shadow="md"
-                                  radius="md"
-                                  p="md"
-                                  className={styles.cardItem}
-                                >
-                                  <Text fw={700} size="md">{o.parceiro_nome}</Text>
-                                  <Text size="sm" color="gray">
-                                    Valor: R$ {o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                  </Text>
-                                  <Text size="xs" color="dimmed" mt={5}>
-                                    Sem interação: {o.dias_sem_interacao} dias
-                                  </Text>
-                                  {o.observacao && (
-                                    <Text size="xs" mt={5} color="gray">
-                                      {o.observacao}
-                                    </Text>
-                                  )}
-                                </Card>
-                              )}
-                            </Draggable>
-                          ))}
-                        {provided.placeholder}
-                      </div>
-                    </div>
-                  )}
-                </Droppable>
-              ))}
+          <>
+            <Divider label="A Interagir" mb="xs" />
+            <div className={styles.tableWrapper}>
+              <Table striped highlightOnHover withTableBorder className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Parceiro</th>
+                    <th>Unidade</th>
+                    <th>Classificação</th>
+                    <th>Status</th>
+                    <th>Gatilho Extra</th>
+                    <th>Tipo</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendentes.map((item) => (
+                    <Fragment key={item.id}>
+                      <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
+                        <td>{item.parceiro}</td>
+                        <td>{item.unidade}</td>
+                        <td>{item.classificacao}</td>
+                        <td>{item.status}</td>
+                        <td>
+                          {item.gatilho_extra ? (
+                            <Badge color="red" size="sm" variant="filled" radius="xs">
+                              {item.gatilho_extra}
+                            </Badge>
+                          ) : "-"}
+                        </td>
+                        <td>
+                          <Select
+                            placeholder="Tipo"
+                            className={styles.select}
+                            value={tipoSelecionado[item.id] || ''}
+                            onChange={(value) => {
+                              if (value) {
+                                setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
+                              }
+                            }}
+                            data={[
+                              { value: 'whatsapp', label: 'WhatsApp' },
+                              { value: 'email', label: 'E-mail' },
+                              { value: 'ligacao', label: 'Ligação' },
+                            ]}
+                          />
+                        </td>
+                        <td>
+                          <Button size="xs" className={styles.button} onClick={() => setExpandirId(item.id)}>
+                            Marcar como interagido
+                          </Button>
+                        </td>
+                      </tr>
+                      {expandirId === item.id && (
+                        <tr>
+                          <td colSpan={7}>
+                            <Group grow style={{ marginTop: 10 }}>
+                              <TextInput
+                                label="Valor da Oportunidade (R$)"
+                                placeholder="5000"
+                                value={valorOportunidade}
+                                onChange={(e) => setValorOportunidade(e.currentTarget.value)}
+                              />
+                              <Textarea
+                                label="Observação"
+                                placeholder="Detalhes adicionais..."
+                                value={observacaoOportunidade}
+                                onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
+                              />
+                            </Group>
+                            <Group mt="md" justify="flex-end">
+                              <Button
+                                color="blue"
+                                onClick={() => registrarInteracao(
+                                  item.id,
+                                  tipoSelecionado[item.id] || '',
+                                  true,
+                                  parseFloat(valorOportunidade.replace(',', '.')),
+                                  observacaoOportunidade
+                                )}
+                              >
+                                Salvar e Criar Oportunidade
+                              </Button>
+                              <Button
+                                color="gray"
+                                onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
+                              >
+                                Só Interagir
+                              </Button>
+                              <Button
+                                color="red"
+                                variant="outline"
+                                onClick={() => {
+                                  setExpandirId(null);
+                                  setValorOportunidade('');
+                                  setObservacaoOportunidade('');
+                                }}
+                              >
+                                Cancelar
+                              </Button>
+                            </Group>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </Table>
             </div>
-          </DragDropContext>
+
+            <Divider label="Interagidos Hoje" mt="xl" mb="md" />
+            <div className={styles.tableWrapper}>
+              <Table striped highlightOnHover withTableBorder className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Parceiro</th>
+                    <th>Unidade</th>
+                    <th>Classificação</th>
+                    <th>Status</th>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {interagidos.map((item) => (
+                    <tr key={item.id}>
+                      <td>{item.parceiro}</td>
+                      <td>{item.unidade}</td>
+                      <td>{item.classificacao}</td>
+                      <td>{item.status}</td>
+                      <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
+                      <td>{item.tipo}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+
+            <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
+            <OportunidadesKanban />
+          </>
         )}
       </div>
     </SidebarGestor>
