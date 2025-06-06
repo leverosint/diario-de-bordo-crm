@@ -18,6 +18,7 @@ import {
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
+import styles from './InteracoesPage.module.css'; // <<--- Importando CSS
 
 interface Interacao {
   id: number;
@@ -242,8 +243,8 @@ export default function InteracoesPage() {
       ) : (
         <>
           <Divider label="A Interagir" mb="xs" />
-          <div style={{ width: '100%', overflowX: 'auto' }}>
-            <Table striped highlightOnHover withTableBorder style={{ minWidth: '900px', width: '100%' }}>
+          <div className={styles.tableWrapper}>
+            <Table striped highlightOnHover withTableBorder className={styles.table}>
               <thead>
                 <tr>
                   <th>Parceiro</th>
@@ -258,7 +259,7 @@ export default function InteracoesPage() {
               <tbody>
                 {pendentes.map((item) => (
                   <Fragment key={item.id}>
-                    <tr>
+                    <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
                       <td>{item.parceiro}</td>
                       <td>{item.unidade}</td>
                       <td>{item.classificacao}</td>
@@ -275,6 +276,7 @@ export default function InteracoesPage() {
                       <td>
                         <Select
                           placeholder="Tipo"
+                          className={styles.select}
                           value={tipoSelecionado[item.id] || ''}
                           onChange={(value) => {
                             if (value) {
@@ -352,8 +354,8 @@ export default function InteracoesPage() {
           </div>
 
           <Divider label="Interagidos Hoje" mt="xl" mb="md" />
-          <div style={{ width: '100%', overflowX: 'auto' }}>
-            <Table striped highlightOnHover withTableBorder style={{ minWidth: '900px', width: '100%' }}>
+          <div className={styles.tableWrapper}>
+            <Table striped highlightOnHover withTableBorder className={styles.table}>
               <thead>
                 <tr>
                   <th>Parceiro</th>
@@ -371,7 +373,9 @@ export default function InteracoesPage() {
                     <td>{item.unidade}</td>
                     <td>{item.classificacao}</td>
                     <td>{item.status}</td>
-                    <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
+                    <td>
+                      {item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}
+                    </td>
                     <td>{item.tipo}</td>
                   </tr>
                 ))}
