@@ -1,6 +1,5 @@
 import { useEffect, useState, Fragment } from 'react';
 import axios from 'axios';
-import useAuth from '../hooks/useAuth';
 import {
   Table,
   Loader,
@@ -18,7 +17,7 @@ import {
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
-import styles from './InteracoesPage.module.css'; // <<--- Importando CSS
+import styles from './InteracoesPage.module.css';
 
 interface Interacao {
   id: number;
@@ -57,8 +56,6 @@ export default function InteracoesPage() {
   const [valorOportunidade, setValorOportunidade] = useState('');
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
-
-  useAuth();
 
   const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
@@ -192,201 +189,201 @@ export default function InteracoesPage() {
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
+      <div className={styles.pageContainer}>
+        <Center mb="md">
+          <Title order={2}>Interações de Parceiros Pendentes</Title>
+        </Center>
 
-      <Group justify="space-between" mb="md" style={{ flexWrap: 'wrap' }}>
-        <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
-          Meta do dia: {metaAtual}/{metaTotal}
-        </Badge>
+        <Group justify="space-between" mb="md" style={{ flexWrap: 'wrap' }}>
+          <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
+            Meta do dia: {metaAtual}/{metaTotal}
+          </Badge>
+          {tipoUser === 'GESTOR' && (
+            <Group>
+              <FileButton onChange={setArquivoGatilho} accept=".xlsx">
+                {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
+              </FileButton>
+              <Button
+                color="blue"
+                onClick={handleUploadGatilho}
+                disabled={!arquivoGatilho}
+              >
+                Enviar Gatilhos Extras
+              </Button>
+            </Group>
+          )}
+        </Group>
+
         {tipoUser === 'GESTOR' && (
-          <Group>
-            <FileButton onChange={setArquivoGatilho} accept=".xlsx">
-              {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
-            </FileButton>
-            <Button
-              color="blue"
-              onClick={handleUploadGatilho}
-              disabled={!arquivoGatilho}
-            >
-              Enviar Gatilhos Extras
-            </Button>
+          <Group mb="xl" style={{ flexWrap: 'wrap' }}>
+            <Select
+              label="Filtrar por Canal de Venda"
+              placeholder="Selecione um canal"
+              value={canalSelecionado}
+              onChange={handleCanalChange}
+              data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
+              clearable
+            />
+            <Select
+              label="Filtrar por Vendedor"
+              placeholder="Selecione um vendedor"
+              value={vendedorSelecionado}
+              onChange={handleVendedorChange}
+              data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
+              disabled={!canalSelecionado}
+              clearable
+            />
           </Group>
         )}
-      </Group>
 
-      {tipoUser === 'GESTOR' && (
-        <Group mb="xl" style={{ flexWrap: 'wrap' }}>
-          <Select
-            label="Filtrar por Canal de Venda"
-            placeholder="Selecione um canal"
-            value={canalSelecionado}
-            onChange={handleCanalChange}
-            data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
-            clearable
-          />
-          <Select
-            label="Filtrar por Vendedor"
-            placeholder="Selecione um vendedor"
-            value={vendedorSelecionado}
-            onChange={handleVendedorChange}
-            data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
-            disabled={!canalSelecionado}
-            clearable
-          />
-        </Group>
-      )}
+        {carregando ? (
+          <Center><Loader /></Center>
+        ) : erro ? (
+          <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
+        ) : (
+          <>
+            <Divider label="A Interagir" mb="xs" />
+            <div className={styles.tableWrapper}>
+              <Table striped highlightOnHover withTableBorder className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Parceiro</th>
+                    <th>Unidade</th>
+                    <th>Classificação</th>
+                    <th>Status</th>
+                    <th>Gatilho Extra</th>
+                    <th>Tipo</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendentes.map((item) => (
+                    <Fragment key={item.id}>
+                      <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
+                        <td>{item.parceiro}</td>
+                        <td>{item.unidade}</td>
+                        <td>{item.classificacao}</td>
+                        <td>{item.status}</td>
+                        <td>
+                          {item.gatilho_extra ? (
+                            <Badge color="red" size="sm" variant="filled" radius="xs">
+                              {item.gatilho_extra}
+                            </Badge>
+                          ) : "-"}
+                        </td>
+                        <td>
+                          <Select
+                            placeholder="Tipo"
+                            className={styles.select}
+                            value={tipoSelecionado[item.id] || ''}
+                            onChange={(value) => {
+                              if (value) {
+                                setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
+                              }
+                            }}
+                            data={[
+                              { value: 'whatsapp', label: 'WhatsApp' },
+                              { value: 'email', label: 'E-mail' },
+                              { value: 'ligacao', label: 'Ligação' },
+                            ]}
+                          />
+                        </td>
+                        <td>
+                          <Button size="xs" className={styles.button} onClick={() => setExpandirId(item.id)}>
+                            Marcar como interagido
+                          </Button>
+                        </td>
+                      </tr>
+                      {expandirId === item.id && (
+                        <tr>
+                          <td colSpan={7}>
+                            <Group grow style={{ marginTop: 10 }}>
+                              <TextInput
+                                label="Valor da Oportunidade (R$)"
+                                placeholder="5000"
+                                value={valorOportunidade}
+                                onChange={(e) => setValorOportunidade(e.currentTarget.value)}
+                              />
+                              <Textarea
+                                label="Observação"
+                                placeholder="Detalhes adicionais..."
+                                value={observacaoOportunidade}
+                                onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
+                              />
+                            </Group>
+                            <Group mt="md" justify="flex-end">
+                              <Button
+                                color="blue"
+                                onClick={() => registrarInteracao(
+                                  item.id,
+                                  tipoSelecionado[item.id] || '',
+                                  true,
+                                  parseFloat(valorOportunidade.replace(',', '.')),
+                                  observacaoOportunidade
+                                )}
+                              >
+                                Salvar e Criar Oportunidade
+                              </Button>
+                              <Button
+                                color="gray"
+                                onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
+                              >
+                                Só Interagir
+                              </Button>
+                              <Button
+                                color="red"
+                                variant="outline"
+                                onClick={() => {
+                                  setExpandirId(null);
+                                  setValorOportunidade('');
+                                  setObservacaoOportunidade('');
+                                }}
+                              >
+                                Cancelar
+                              </Button>
+                            </Group>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
 
-      {carregando ? (
-        <Center><Loader /></Center>
-      ) : erro ? (
-        <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
-      ) : (
-        <>
-          <Divider label="A Interagir" mb="xs" />
-          <div className={styles.tableWrapper}>
-            <Table striped highlightOnHover withTableBorder className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Parceiro</th>
-                  <th>Unidade</th>
-                  <th>Classificação</th>
-                  <th>Status</th>
-                  <th>Gatilho Extra</th>
-                  <th>Tipo</th>
-                  <th>Ação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {pendentes.map((item) => (
-                  <Fragment key={item.id}>
-                    <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
+            <Divider label="Interagidos Hoje" mt="xl" mb="md" />
+            <div className={styles.tableWrapper}>
+              <Table striped highlightOnHover withTableBorder className={styles.table}>
+                <thead>
+                  <tr>
+                    <th>Parceiro</th>
+                    <th>Unidade</th>
+                    <th>Classificação</th>
+                    <th>Status</th>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {interagidos.map((item) => (
+                    <tr key={item.id}>
                       <td>{item.parceiro}</td>
                       <td>{item.unidade}</td>
                       <td>{item.classificacao}</td>
                       <td>{item.status}</td>
-                      <td>
-                        {item.gatilho_extra ? (
-                          <Badge color="red" size="sm" variant="filled" radius="xs">
-                            {item.gatilho_extra}
-                          </Badge>
-                        ) : (
-                          "-"
-                        )}
-                      </td>
-                      <td>
-                        <Select
-                          placeholder="Tipo"
-                          className={styles.select}
-                          value={tipoSelecionado[item.id] || ''}
-                          onChange={(value) => {
-                            if (value) {
-                              setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
-                            }
-                          }}
-                          data={[
-                            { value: 'whatsapp', label: 'WhatsApp' },
-                            { value: 'email', label: 'E-mail' },
-                            { value: 'ligacao', label: 'Ligação' },
-                          ]}
-                        />
-                      </td>
-                      <td>
-                        <Button size="xs" onClick={() => setExpandirId(item.id)}>
-                          Marcar como interagido
-                        </Button>
-                      </td>
+                      <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
+                      <td>{item.tipo}</td>
                     </tr>
-                    {expandirId === item.id && (
-                      <tr>
-                        <td colSpan={7}>
-                          <Group grow style={{ marginTop: 10 }}>
-                            <TextInput
-                              label="Valor da Oportunidade (R$)"
-                              placeholder="5000"
-                              value={valorOportunidade}
-                              onChange={(e) => setValorOportunidade(e.currentTarget.value)}
-                            />
-                            <Textarea
-                              label="Observação"
-                              placeholder="Detalhes adicionais..."
-                              value={observacaoOportunidade}
-                              onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
-                            />
-                          </Group>
-                          <Group mt="md" justify="flex-end">
-                            <Button
-                              color="blue"
-                              onClick={() => registrarInteracao(
-                                item.id,
-                                tipoSelecionado[item.id] || '',
-                                true,
-                                parseFloat(valorOportunidade.replace(',', '.')),
-                                observacaoOportunidade
-                              )}
-                            >
-                              Salvar e Criar Oportunidade
-                            </Button>
-                            <Button
-                              color="gray"
-                              onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
-                            >
-                              Só Interagir
-                            </Button>
-                            <Button
-                              color="red"
-                              variant="outline"
-                              onClick={() => {
-                                setExpandirId(null);
-                                setValorOportunidade('');
-                                setObservacaoOportunidade('');
-                              }}
-                            >
-                              Cancelar
-                            </Button>
-                          </Group>
-                        </td>
-                      </tr>
-                    )}
-                  </Fragment>
-                ))}
-              </tbody>
-            </Table>
-          </div>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
 
-          <Divider label="Interagidos Hoje" mt="xl" mb="md" />
-          <div className={styles.tableWrapper}>
-            <Table striped highlightOnHover withTableBorder className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Parceiro</th>
-                  <th>Unidade</th>
-                  <th>Classificação</th>
-                  <th>Status</th>
-                  <th>Data</th>
-                  <th>Tipo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {interagidos.map((item) => (
-                  <tr key={item.id}>
-                    <td>{item.parceiro}</td>
-                    <td>{item.unidade}</td>
-                    <td>{item.classificacao}</td>
-                    <td>{item.status}</td>
-                    <td>
-                      {item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}
-                    </td>
-                    <td>{item.tipo}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-
-          <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
-          <OportunidadesKanban />
-        </>
-      )}
+            <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
+            <OportunidadesKanban />
+          </>
+        )}
+      </div>
     </SidebarGestor>
   );
 }

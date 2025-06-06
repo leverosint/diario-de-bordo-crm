@@ -1,19 +1,20 @@
 .pageContainer {
     width: 100%;
+    max-width: 100%;
     padding: 16px;
     box-sizing: border-box;
   }
   
   .tableWrapper {
     width: 100%;
-    overflow-x: auto; /* Responsivo para telas menores */
+    overflow-x: auto; /* Faz a tabela rolar horizontalmente se precisar */
     margin-bottom: 32px;
   }
   
   .table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 900px; /* Largura mínima */
+    min-width: 900px; /* Evita que quebre em telas muito pequenas */
   }
   
   .table th,
@@ -22,12 +23,13 @@
     padding: 12px 16px;
     white-space: normal;
     word-break: break-word;
+    font-size: 14px;
   }
   
   .table th {
     background-color: #f9fafb;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 15px;
     position: sticky;
     top: 0;
     z-index: 5;
@@ -39,31 +41,37 @@
   }
   
   .select {
-    width: 140px;
-    min-width: 140px;
+    width: 150px;
+    min-width: 150px;
   }
   
   .button {
     min-width: 120px;
   }
   
-  /* Melhorias responsivas extras */
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     .select {
       width: 100%;
-      min-width: 100px;
     }
   
     .button {
       width: 100%;
     }
   
-    .tableWrapper {
-      overflow-x: auto;
+    .table {
+      min-width: 700px;
     }
+  }
   
+  @media (max-width: 768px) {
     .table {
       min-width: 600px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .table {
+      min-width: 500px;
     }
   }
   
