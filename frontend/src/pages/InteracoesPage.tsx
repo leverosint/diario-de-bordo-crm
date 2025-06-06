@@ -6,6 +6,7 @@ import {
   Loader,
   Center,
   Text,
+  ScrollArea,
   Alert,
   Button,
   Group,
@@ -17,7 +18,6 @@ import {
   TextInput,
   Textarea,
   FileButton,
-  Container,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import OportunidadesKanban from './OportunidadesPage';
@@ -76,7 +76,6 @@ export default function InteracoesPage() {
     setErro(null);
     try {
       const headers = { Authorization: `Bearer ${token}` };
-
       const params = new URLSearchParams();
       if (canalSelecionado) params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
@@ -192,68 +191,73 @@ export default function InteracoesPage() {
     carregarDados();
   }, [canalSelecionado, vendedorSelecionado]);
 
-  const pendentesFiltrados = pendentes;
+  const cellStyle = {
+    whiteSpace: 'normal' as const,
+    wordBreak: 'break-word' as const,
+    overflowWrap: 'break-word' as const,
+    maxWidth: '160px'
+  };
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <Container size="xl">
-        <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
+      <Title order={2} mb="xs">Interações de Parceiros Pendentes</Title>
 
-        <Group justify="space-between" mb="md">
-          <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
-            Meta do dia: {metaAtual}/{metaTotal}
-          </Badge>
-          {tipoUser === 'GESTOR' && (
-            <Group>
-              <FileButton onChange={setArquivoGatilho} accept=".xlsx">
-                {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
-              </FileButton>
-              <Button
-                color="blue"
-                onClick={handleUploadGatilho}
-                disabled={!arquivoGatilho}
-              >
-                Enviar Gatilhos Extras
-              </Button>
-            </Group>
-          )}
-        </Group>
-
+      <Group justify="space-between" mb="md">
+        <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
+          Meta do dia: {metaAtual}/{metaTotal}
+        </Badge>
         {tipoUser === 'GESTOR' && (
-          <Group mb="xl">
-            <Select
-              label="Filtrar por Canal de Venda"
-              placeholder="Selecione um canal"
-              value={canalSelecionado}
-              onChange={handleCanalChange}
-              data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
-              clearable
-            />
-            <Select
-              label="Filtrar por Vendedor"
-              placeholder="Selecione um vendedor"
-              value={vendedorSelecionado}
-              onChange={handleVendedorChange}
-              data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
-              disabled={!canalSelecionado}
-              clearable
-            />
+          <Group>
+            <FileButton onChange={setArquivoGatilho} accept=".xlsx">
+              {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
+            </FileButton>
+            <Button
+              color="blue"
+              onClick={handleUploadGatilho}
+              disabled={!arquivoGatilho}
+            >
+              Enviar Gatilhos Extras
+            </Button>
           </Group>
         )}
+      </Group>
 
-        {carregando ? (
-          <Center><Loader /></Center>
-        ) : erro ? (
-          <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
-        ) : (
-          <>
-            <Grid>
-            <Grid.Col span={{ base: 12, md: 6 }}>
-                <Divider label="A Interagir" mb="xs" />
-                {pendentesFiltrados.length === 0 ? (
-                  <Text>Nenhuma interação pendente encontrada.</Text>
-                ) : (
-                  <Table striped highlightOnHover withTableBorder>
+      {tipoUser === 'GESTOR' && (
+        <Group mb="xl">
+          <Select
+            label="Filtrar por Canal de Venda"
+            placeholder="Selecione um canal"
+            value={canalSelecionado}
+            onChange={async (value) => await handleCanalChange(value)}
+            data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
+            clearable
+          />
+          <Select
+            label="Filtrar por Vendedor"
+            placeholder="Selecione um vendedor"
+            value={vendedorSelecionado}
+            onChange={(value) => handleVendedorChange(value)}
+            data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
+            disabled={!canalSelecionado}
+            clearable
+          />
+        </Group>
+      )}
+
+      {carregando ? (
+        <Center><Loader /></Center>
+      ) : erro ? (
+        <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
+      ) : (
+        <>
+          <Grid>
+            <Grid.Col span={12}>
+              <Divider label="A Interagir" mb="xs" />
+              {pendentes.length === 0 ? (
+                <Text>Nenhuma interação pendente encontrada.</Text>
+              ) : (
+                <ScrollArea style={{ width: '100%' }} h={400}>
+                  <Table striped highlightOnHover withTableBorder style={{ width: '100%', tableLayout: 'fixed' }}>
                     <thead>
                       <tr>
                         <th>Parceiro</th>
@@ -266,16 +270,18 @@ export default function InteracoesPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {pendentesFiltrados.map((item) => (
+                      {pendentes.map((item) => (
                         <Fragment key={item.id}>
                           <tr style={item.gatilho_extra ? { backgroundColor: '#ffe5e5' } : {}}>
-                            <td style={{ wordBreak: 'break-word' }}>{item.parceiro}</td>
-                            <td style={{ wordBreak: 'break-word' }}>{item.unidade}</td>
-                            <td style={{ wordBreak: 'break-word' }}>{item.classificacao}</td>
-                            <td style={{ wordBreak: 'break-word' }}>{item.status}</td>
-                            <td style={{ wordBreak: 'break-word' }}>
+                            <td style={cellStyle}>{item.parceiro}</td>
+                            <td style={cellStyle}>{item.unidade}</td>
+                            <td style={cellStyle}>{item.classificacao}</td>
+                            <td style={cellStyle}>{item.status}</td>
+                            <td style={cellStyle}>
                               {item.gatilho_extra ? (
-                                <Badge color="red" variant="filled">{item.gatilho_extra}</Badge>
+                                <Badge color="red" variant="filled">
+                                  {item.gatilho_extra}
+                                </Badge>
                               ) : "-"}
                             </td>
                             <td>
@@ -295,13 +301,15 @@ export default function InteracoesPage() {
                               />
                             </td>
                             <td>
-                              <Button size="xs" onClick={() => setExpandirId(item.id)}>Marcar como interagido</Button>
+                              <Button size="xs" onClick={() => setExpandirId(item.id)}>
+                                Marcar como interagido
+                              </Button>
                             </td>
                           </tr>
                           {expandirId === item.id && (
                             <tr>
                               <td colSpan={7}>
-                                <Group grow mt="md">
+                                <Group grow style={{ marginTop: 10 }}>
                                   <TextInput
                                     label="Valor da Oportunidade (R$)"
                                     placeholder="5000"
@@ -353,15 +361,17 @@ export default function InteracoesPage() {
                       ))}
                     </tbody>
                   </Table>
-                )}
-              </Grid.Col>
+                </ScrollArea>
+              )}
+            </Grid.Col>
 
-              <Grid.Col span={{ base: 12, md: 6 }}>
-                <Divider label="Interagidos Hoje" mb="xs" />
-                {interagidos.length === 0 ? (
-                  <Text>Nenhum parceiro interagido hoje.</Text>
-                ) : (
-                  <Table striped highlightOnHover withTableBorder>
+            <Grid.Col span={12}>
+              <Divider label="Interagidos Hoje" mb="xs" />
+              {interagidos.length === 0 ? (
+                <Text>Nenhum parceiro interagido hoje.</Text>
+              ) : (
+                <ScrollArea style={{ width: '100%' }} h={400}>
+                  <Table striped highlightOnHover withTableBorder style={{ width: '100%', tableLayout: 'fixed' }}>
                     <thead>
                       <tr>
                         <th>Parceiro</th>
@@ -375,27 +385,25 @@ export default function InteracoesPage() {
                     <tbody>
                       {interagidos.map((item) => (
                         <tr key={item.id}>
-                          <td style={{ wordBreak: 'break-word' }}>{item.parceiro}</td>
-                          <td style={{ wordBreak: 'break-word' }}>{item.unidade}</td>
-                          <td style={{ wordBreak: 'break-word' }}>{item.classificacao}</td>
-                          <td style={{ wordBreak: 'break-word' }}>{item.status}</td>
-                          <td style={{ wordBreak: 'break-word' }}>
-                            {item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}
-                          </td>
-                          <td style={{ wordBreak: 'break-word' }}>{item.tipo}</td>
+                          <td style={cellStyle}>{item.parceiro}</td>
+                          <td style={cellStyle}>{item.unidade}</td>
+                          <td style={cellStyle}>{item.classificacao}</td>
+                          <td style={cellStyle}>{item.status}</td>
+                          <td style={cellStyle}>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
+                          <td style={cellStyle}>{item.tipo}</td>
                         </tr>
                       ))}
                     </tbody>
                   </Table>
-                )}
-              </Grid.Col>
-            </Grid>
+                </ScrollArea>
+              )}
+            </Grid.Col>
+          </Grid>
 
-            <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
-            <OportunidadesKanban />
-          </>
-        )}
-      </Container>
+          <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
+          <OportunidadesKanban />
+        </>
+      )}
     </SidebarGestor>
   );
 }
