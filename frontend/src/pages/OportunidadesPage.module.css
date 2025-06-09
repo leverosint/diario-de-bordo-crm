@@ -1,28 +1,29 @@
 .pageContainer {
   padding: 16px;
   width: 100%;
-  max-width: 100%;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
 .kanbanBoard {
   display: flex;
+  justify-content: space-between;
   gap: 20px;
   padding-bottom: 16px;
-  justify-content: flex-start; /* Alinha ao início */
-  overflow-x: auto; /* Scroll horizontal se necessário */
+  flex-wrap: nowrap;
 }
 
 .kanbanColumn {
-  flex: 1 0 280px; /* Largura mínima e não reduz mais */
+  flex: 1;
   background-color: #fff;
   border: 2px solid;
   border-radius: 8px;
   padding: 16px;
+  min-width: 280px;
+  max-width: 320px;
   height: 70vh;
   display: flex;
   flex-direction: column;
-  max-width: 320px; /* Limite máximo */
 }
 
 .kanbanTitle {
@@ -43,19 +44,18 @@
 .cardItem {
   width: 100%;
   border-radius: 8px;
+  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08);
   background-color: #fff;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08);
+  transition: none;
   padding: 12px;
-  border-top: 6px solid transparent; /* Top border color will be dynamic */
-  transition: transform 0.2s ease-in-out;
 }
 
 .cardItem:hover {
-  transform: scale(1.02); /* Efeito leve ao passar mouse */
+  transform: none;
 }
 
 @media (max-width: 1200px) {
   .kanbanBoard {
-    flex-wrap: nowrap;
+    overflow-x: auto;
   }
 }
