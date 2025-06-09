@@ -126,7 +126,7 @@ export default function OportunidadesPage() {
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <div className={styles.pageContainer}>
-        {/* Título e Filtros centralizados */}
+        {/* Container apenas para o título e filtros */}
         <Container size="lg">
           <Center mb="md">
             <Title order={2}>Oportunidades (Kanban)</Title>
@@ -155,7 +155,7 @@ export default function OportunidadesPage() {
           )}
         </Container>
 
-        {/* Kanban fora do container */}
+        {/* Kanban fora do Container */}
         {carregando ? (
           <Center>
             <Text>Carregando...</Text>
