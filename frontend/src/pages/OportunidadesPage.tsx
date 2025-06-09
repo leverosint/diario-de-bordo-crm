@@ -16,7 +16,7 @@ import {
 import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 
 import SidebarGestor from '../components/SidebarGestor';
-import styles from './OportunidadesPage.module.css'; // Importa o CSS
+import styles from './OportunidadesPage.module.css'; // Import CSS
 
 interface Oportunidade {
   id: number;
@@ -169,7 +169,7 @@ export default function OportunidadesPage() {
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={styles.kanbanColumn}
-                      style={{ borderColor: etapa.color, borderTopColor: etapa.color }}
+                      style={{ borderColor: etapa.color }}
                     >
                       <div className={styles.kanbanTitle} style={{ color: etapa.color }}>
                         {etapa.titulo} ({oportunidades.filter((o) => o.etapa === etapa.id).length})
@@ -180,16 +180,19 @@ export default function OportunidadesPage() {
                           .sort((a, b) => b.dias_sem_interacao - a.dias_sem_interacao)
                           .map((o, index) => (
                             <Draggable draggableId={o.id.toString()} index={index} key={o.id}>
-                              {(provided: DraggableProvided, snapshot) => (
+                              {(provided: DraggableProvided) => (
                                 <Card
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
                                   withBorder
+                                  shadow="md"
                                   radius="md"
                                   p="md"
-                                  className={`${styles.cardItem} ${snapshot.isDragging ? styles.dragging : ''}`}
-                                  style={{ borderTopColor: etapa.color }}
+                                  className={styles.cardItem}
+                                  style={{
+                                    borderTopColor: etapa.color, // Dinamicamente muda a cor do top border
+                                  }}
                                 >
                                   <Text fw={700} size="md">{o.parceiro_nome}</Text>
                                   <Text size="sm" color="gray">

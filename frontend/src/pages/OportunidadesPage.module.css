@@ -1,45 +1,28 @@
 .pageContainer {
-  width: 100%;
-  height: 100%;
   padding: 16px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 .kanbanBoard {
   display: flex;
-  flex-grow: 1;
   gap: 20px;
-  justify-content: space-evenly; /* Distribui bem os cards */
-  align-items: flex-start;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  height: 100%;
-}
-
-.kanbanBoard::-webkit-scrollbar {
-  height: 8px;
-}
-
-.kanbanBoard::-webkit-scrollbar-thumb {
-  background-color: #ccc;
-  border-radius: 4px;
+  padding-bottom: 16px;
+  justify-content: flex-start; /* Alinha ao início */
+  overflow-x: auto; /* Scroll horizontal se necessário */
 }
 
 .kanbanColumn {
+  flex: 1 0 280px; /* Largura mínima e não reduz mais */
   background-color: #fff;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  flex: 1;
-  min-width: 260px;
-  max-width: 300px;
-  height: 75vh;
+  border: 2px solid;
+  border-radius: 8px;
+  padding: 16px;
+  height: 70vh;
   display: flex;
   flex-direction: column;
-  padding: 16px;
-  border-top: 8px solid transparent;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  max-width: 320px; /* Limite máximo */
 }
 
 .kanbanTitle {
@@ -50,38 +33,29 @@
 }
 
 .kanbanCards {
-  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
-}
-
-.kanbanCards::-webkit-scrollbar {
-  width: 6px;
-}
-
-.kanbanCards::-webkit-scrollbar-thumb {
-  background-color: #ddd;
-  border-radius: 4px;
+  flex: 1;
 }
 
 .cardItem {
-  background-color: #fff;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  padding: 16px;
   width: 100%;
-  border-top: 6px solid transparent; /* Borda colorida */
-  transition: background-color 0.3s;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08);
+  padding: 12px;
+  border-top: 6px solid transparent; /* Top border color will be dynamic */
+  transition: transform 0.2s ease-in-out;
 }
 
 .cardItem:hover {
-  background-color: #f9f9f9;
+  transform: scale(1.02); /* Efeito leve ao passar mouse */
 }
 
-.dragging {
-  background-color: #f0f0f0;
-  opacity: 0.9;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15);
+@media (max-width: 1200px) {
+  .kanbanBoard {
+    flex-wrap: nowrap;
+  }
 }
