@@ -1,19 +1,19 @@
 .pageContainer {
-  width: 100%;
-  padding: 0; /* <-- REMOVE padding lateral */
-  margin: 0; /* <-- REMOVE margin */
+  width: 100vw; /* 100% da largura da viewport */
+  padding: 0;
+  margin: 0; /* <-- REMOVE auto */
   box-sizing: border-box;
-  overflow-x: hidden; /* Evita overflow desnecessário */
+  overflow-x: hidden;
 }
 
 .kanbanBoard {
   display: flex;
-  flex-wrap: nowrap; /* Não quebra linha */
-  overflow-x: auto; /* Scroll horizontal se precisar */
+  flex-wrap: nowrap;
   gap: 20px;
-  padding: 24px; /* Só padding interno para o Kanban */
-  align-items: flex-start; /* Alinha colunas no topo */
-  justify-content: flex-start; /* <-- IMPORTANTE: começa na esquerda */
+  padding: 24px;
+  justify-content: flex-start;  /* 👈 Alinha bem no canto esquerdo */
+  align-items: flex-start;
+  overflow-x: auto;
 }
 
 .kanbanColumn {
