@@ -42,14 +42,15 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
   return (
     <AppShell
       padding="md"
-      style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}  // <-- ESSA LINHA IMPORTANTE
+      style={{ width: '100%', height: '100vh', overflowX: 'hidden' }}
       navbar={{
-        width: 260,
+        width: 260, // Largura da Sidebar
         breakpoint: 'sm',
         collapsed: { mobile: !opened, desktop: !opened },
       }}
       header={{ height: 60 }}
     >
+      {/* Cabeçalho */}
       <AppShellHeader withBorder={false} style={{ background: '#005A64' }}>
         <Group h="100%" px="md" justify="space-between">
           <Group>
@@ -66,6 +67,7 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
         </Group>
       </AppShellHeader>
 
+      {/* Barra lateral */}
       <AppShellNavbar p="xs" style={{ display: 'flex', flexDirection: 'column' }}>
         <Group justify="center" mt="xs" mb="md">
           <Text size="xl" fw={700} c="teal">
@@ -79,13 +81,11 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
             leftSection={<LayoutDashboard size={18} />}
             onClick={() => navigate('/dashboard')}
           />
-
           <NavLink
             label="Interações"
             leftSection={<MessageCircle size={18} />}
             onClick={() => navigate('/interacoes')}
           />
-
           {(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
             <>
               <NavLink
@@ -100,13 +100,11 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
               />
             </>
           )}
-
           <NavLink
             label="Relatórios"
             leftSection={<BarChart2 size={18} />}
             onClick={() => navigate('/relatorios')}
           />
-
           <NavLink
             label="Sair"
             leftSection={<LogOut size={18} />}
@@ -128,7 +126,13 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
         </Group>
       </AppShellNavbar>
 
-      <AppShellMain style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+      {/* Conteúdo principal ajustado */}
+      <AppShellMain
+        style={{
+          padding: 0, // Remove o padding automático
+          overflowX: 'hidden', // Controla o overflow horizontal
+        }}
+      >
         {children}
       </AppShellMain>
     </AppShell>
