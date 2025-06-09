@@ -124,7 +124,7 @@ export default function OportunidadesPage() {
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <div className={styles.pageContainer}>
+     <div className={styles.pageContainer} style={{ padding: 0 }}>
         {/* Título sem container */}
         <Center mb="md">
           <Title order={2}>Oportunidades (Kanban)</Title>
