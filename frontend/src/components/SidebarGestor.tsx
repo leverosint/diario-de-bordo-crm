@@ -49,12 +49,13 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
       }}
       header={{ height: 60 }}
       withBorder={false}
-      styles={{
+      styles={(_) => ({
         main: {
-          paddingLeft: 0,   // <-- TIRA O PADDING LATERAL
-          paddingTop: 60,   // <-- Só considera o topo
+          paddingLeft: opened ? 260 : 60,  // <<< AQUI
+          paddingTop: 60, // altura do header
+          transition: 'padding-left 0.3s ease', // animação suave
         },
-      }}
+      })}
     >
       <AppShellHeader withBorder={false} style={{ background: '#005A64' }}>
         <Group h="100%" px="md" justify="space-between">
