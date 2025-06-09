@@ -8,15 +8,15 @@
 
 .kanbanBoard {
   display: flex;
-  gap: 24px;
-  flex-wrap: wrap;                /* <-- PERMITE QUEBRAR LINHA */
-  justify-content: flex-start;     /* Alinha à esquerda */
+  flex-wrap: wrap;               /* Cards podem quebrar linha */
+  gap: 24px;                      /* Espaço entre cards */
+  justify-content: flex-start;    /* Começa na esquerda */
   padding-bottom: 24px;
 }
 
 .kanbanColumn {
-  flex: 1 1 260px;                 /* <-- Permite encolher e quebrar */
-  max-width: 300px;                /* Limita largura */
+  flex: 1 1 280px;                /* 1º número grow, 2º número shrink, 3º base width */
+  max-width: 300px;               /* Máximo de largura */
   background-color: #ffffff;
   border: 2px solid;
   border-radius: 12px;
@@ -61,7 +61,7 @@
   }
 
   .kanbanColumn {
-    flex: 1 1 100%;             /* Em mobile o card ocupa 100% */
+    flex: 1 1 100%;            /* Em mobile 100% da linha */
     max-width: 100%;
   }
 }
