@@ -32,5 +32,6 @@ createRoot(document.getElementById('root')!).render(
         </BrowserRouter>
       </ModalsProvider>
     </MantineProvider>
+    
   </StrictMode>
 );
