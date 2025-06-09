@@ -42,7 +42,7 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
   return (
     <AppShell
       padding="md"
-      style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}  // <-- ESSA LINHA IMPORTANTE
+      style={{ width: '100%', height: '100vh', overflowX: 'hidden' }}
       navbar={{
         width: 260,
         breakpoint: 'sm',
@@ -128,7 +128,15 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
         </Group>
       </AppShellNavbar>
 
-      <AppShellMain style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+      {/* 🚨 AQUI ESTÁ O AJUSTE PRINCIPAL */}
+      <AppShellMain
+        style={{
+          width: '100%',
+          maxWidth: 'none', // 🔥 Remove limitação
+          padding: 0,        // 🔥 Remove padding extra
+          overflowX: 'hidden',
+        }}
+      >
         {children}
       </AppShellMain>
     </AppShell>
