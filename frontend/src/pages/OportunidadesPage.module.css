@@ -1,21 +1,23 @@
 .pageContainer {
   width: 100%;
-  padding: 16px;
+  padding: 0; /* <-- REMOVE padding lateral */
+  margin: 0; /* <-- REMOVE margin */
   box-sizing: border-box;
-  overflow-x: hidden; /* Evita rolagem lateral desnecessária */
+  overflow-x: hidden; /* Evita overflow desnecessário */
 }
 
 .kanbanBoard {
   display: flex;
-  flex-wrap: nowrap; /* <-- SEM QUEBRAR LINHA */
-  overflow-x: auto; /* <-- Scroll horizontal se precisar */
+  flex-wrap: nowrap; /* Não quebra linha */
+  overflow-x: auto; /* Scroll horizontal se precisar */
   gap: 20px;
-  padding-bottom: 24px;
-  align-items: flex-start; /* Alinha topo */
+  padding: 24px; /* Só padding interno para o Kanban */
+  align-items: flex-start; /* Alinha colunas no topo */
+  justify-content: flex-start; /* <-- IMPORTANTE: começa na esquerda */
 }
 
 .kanbanColumn {
-  flex: 0 0 280px; /* <-- largura fixa */
+  flex: 0 0 280px;
   background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -25,7 +27,7 @@
   padding: 16px;
   height: 70vh;
   min-width: 280px;
-  max-width: 300px; /* Limita crescimento */
+  max-width: 300px;
 }
 
 .kanbanTitle {
@@ -57,10 +59,8 @@
   cursor: grabbing;
 }
 
-/* Removido zoom */
 .cardItem:hover {
   transform: none;
-  box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .cardItemTop {
