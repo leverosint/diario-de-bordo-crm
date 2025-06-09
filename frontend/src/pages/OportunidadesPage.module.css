@@ -7,7 +7,7 @@
 .kanbanBoard {
   display: flex;
   justify-content: flex-start; /* <-- Alinha os cards para começar da esquerda */
-  gap: 24px;
+  gap: 4px;
   padding-bottom: 24px;
   flex-wrap: nowrap; /* <-- Impede quebra */
 }
@@ -17,7 +17,7 @@
   border: 2px solid;
   border-radius: 12px;
   padding: 12px;
-  height: 70vh;
+  height: 20vh;
   width: 300px; /* <-- Largura maior dos cards */
   display: flex;
   flex-direction: column;
