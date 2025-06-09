@@ -1,76 +1,68 @@
-/* OportunidadesPage.module.css */
-
 .pageContainer {
     width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
     padding: 16px;
+    box-sizing: border-box;
   }
   
-  .kanbanBoard {
-    display: flex;
-    flex-wrap: nowrap; /* Impede quebra de linha */
-    overflow-x: auto; /* Scroll horizontal se precisar */
-    gap: 24px;
-    padding-bottom: 24px;
+  .tableWrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 32px;
   }
   
-  .kanbanColumn {
-    background-color: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    flex: 0 0 280px; /* largura fixa das colunas */
-    display: flex;
-    flex-direction: column;
-    border: 2px solid;
-    padding: 12px;
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 900px;
   }
   
-  .kanbanTitle {
-    text-align: center;
-    font-weight: 700;
-    font-size: 18px;
-    margin-bottom: 12px;
+  .table th,
+  .table td {
+    text-align: left;
+    padding: 12px 16px;
+    white-space: normal;
+    word-break: break-word;
   }
   
-  .kanbanCards {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .cardItem {
-    border: none;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    cursor: grab;
+  .table th {
     background-color: #f9fafb;
+    font-weight: 600;
+    font-size: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    border-bottom: 2px solid #e5e7eb;
   }
   
-  .cardItem:active {
-    cursor: grabbing;
+  .gatilhoRow {
+    background-color: #ffe5e5;
   }
   
-  .cardItem:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  .select {
+    width: 140px;
+    min-width: 140px;
   }
   
-  .cardItem .mantine-Card-root {
-    background-color: inherit;
+  .button {
+    min-width: 120px;
   }
   
   @media (max-width: 768px) {
-    .pageContainer {
-      padding: 8px;
+    .select {
+      width: 100%;
+      min-width: 100px;
     }
   
-    .kanbanBoard {
-      gap: 16px;
+    .button {
+      width: 100%;
     }
   
-    .kanbanColumn {
-      flex: 0 0 240px;
+    .tableWrapper {
+      overflow-x: auto;
+    }
+  
+    .table {
+      min-width: 600px;
     }
   }
   
