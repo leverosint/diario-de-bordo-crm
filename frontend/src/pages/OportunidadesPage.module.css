@@ -1,32 +1,31 @@
 .pageContainer {
   width: 100%;
-  padding: 16px;
+  padding: 16px 32px; /* padding apenas pros lados */
   box-sizing: border-box;
+  margin: 0; /* <-- IMPORTANTE: tira margem automática */
 }
 
 /* Kanban Board ajustado */
 .kanbanBoard {
-  display: grid;
-  grid-template-columns: repeat(4, 300px); /* 4 colunas fixas */
+  display: flex;
+  flex-wrap: nowrap;
   gap: 20px;
   width: 100%;
-  justify-content: start; /* Começar da esquerda */
-  overflow-x: auto; /* Scroll horizontal se precisar */
-  padding-left: 32px; /* Adiciona espaço da esquerda */
-  padding-right: 16px;
+  overflow-x: auto; /* Scroll horizontal */
+  padding-bottom: 8px;
 }
 
-/* Colunas do Kanban */
+/* Coluna do Kanban */
 .kanbanColumn {
   background-color: #ffffff;
   border: 2px solid;
   border-radius: 12px;
   padding: 12px;
   height: 70vh;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  min-width: 300px;
 }
 
 /* Título da Coluna */
@@ -60,16 +59,9 @@
   transform: none;
 }
 
-/* Responsivo Tablet */
+/* Responsivo */
 @media (max-width: 1024px) {
-  .kanbanBoard {
-    grid-template-columns: repeat(2, 300px); /* 2 colunas tablet */
-  }
-}
-
-/* Responsivo Mobile */
-@media (max-width: 600px) {
-  .kanbanBoard {
-    grid-template-columns: 300px; /* 1 coluna mobile */
+  .kanbanColumn {
+    min-width: 300px;
   }
 }
