@@ -6,7 +6,6 @@ import {
   Text,
   Group,
   Select,
-  Center,
 } from '@mantine/core';
 import {
   DragDropContext,
@@ -124,11 +123,11 @@ export default function OportunidadesPage() {
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-     <div className={styles.pageContainer} style={{ padding: 0 }}>
-        {/* Título sem container */}
-        <Center mb="md">
+      <div className={styles.pageContainer}>
+        {/* 🔥 Título agora alinhado à esquerda */}
+        <div style={{ width: '100%', marginBottom: '1rem' }}>
           <Title order={2}>Oportunidades (Kanban)</Title>
-        </Center>
+        </div>
 
         {/* Filtros */}
         {tipoUser === 'GESTOR' && (
@@ -153,15 +152,11 @@ export default function OportunidadesPage() {
           </Group>
         )}
 
-        {/* Kanban fora de qualquer container */}
+        {/* Kanban */}
         {carregando ? (
-          <Center>
-            <Text>Carregando...</Text>
-          </Center>
+          <Text>Carregando...</Text>
         ) : erro ? (
-          <Center>
-            <Text color="red">{erro}</Text>
-          </Center>
+          <Text color="red">{erro}</Text>
         ) : (
           <DragDropContext onDragEnd={onDragEnd}>
             <div className={styles.kanbanBoard}>
