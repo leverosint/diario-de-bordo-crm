@@ -21,7 +21,7 @@
   align-items: flex-start;
 
   margin-left: -240px; /* 👉 Compensa Sidebar aberta */
-  margin-right: 240px; /* 👉 Compensa Sidebar aberta */
+
 }
 
 /* Sidebar recolhida (mobile) */
@@ -39,7 +39,7 @@
   border-radius: 12px;
   padding: 12px;
   height: 70vh;
-  min-width: 300px;
+  min-width: 250px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
