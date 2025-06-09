@@ -42,19 +42,13 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
   return (
     <AppShell
       padding="md"
+      style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}  // <-- ESSA LINHA IMPORTANTE
       navbar={{
         width: 260,
         breakpoint: 'sm',
         collapsed: { mobile: !opened, desktop: !opened },
       }}
       header={{ height: 60 }}
-      withBorder={false}
-      styles={{
-        main: {
-          paddingLeft: 0,   // <-- TIRA O PADDING LATERAL
-          paddingTop: 60,   // <-- Só considera o topo
-        },
-      }}
     >
       <AppShellHeader withBorder={false} style={{ background: '#005A64' }}>
         <Group h="100%" px="md" justify="space-between">
@@ -134,7 +128,7 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
         </Group>
       </AppShellNavbar>
 
-      <AppShellMain>
+      <AppShellMain style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
         {children}
       </AppShellMain>
     </AppShell>

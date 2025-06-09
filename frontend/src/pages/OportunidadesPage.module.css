@@ -1,12 +1,12 @@
 .pageContainer {
-      width: 100%;
-    height: 100%;
-    padding: 0; /* <<< Sem padding aqui */
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
+  width: 100%;
+  height: 100%;
+  padding: 0; /* Sem padding */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
 
 /* Kanban Board 100% colado na esquerda */
 .kanbanBoard {
@@ -14,11 +14,14 @@
   flex-wrap: nowrap;
   gap: 20px;
   overflow-x: auto;
-  padding-left: 8px;  /* Só 8px na esquerda */
-  padding-right: 16px; /* E o normal na direita */
+  padding-left: 8px;
+  padding-right: 16px;
   width: 100%;
   box-sizing: border-box;
   align-items: flex-start;
+
+  /* 🚨 Este é o ajuste mágico */
+  margin-left: -60px; /* Compensa o padding-left da Sidebar aberta/fechada */
 }
 
 /* Coluna do Kanban */
