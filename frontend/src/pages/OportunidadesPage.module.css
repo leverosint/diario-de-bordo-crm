@@ -7,21 +7,17 @@
 }
 
 .kanbanBoard {
-  display: flex;
-  justify-content: space-between; /* Espaço distribuído */
-  flex-wrap: nowrap;              /* Não quebra linha */
-  gap: 16px;                      /* Espaçamento entre colunas */
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 colunas iguais */
+  gap: 16px;
 }
 
 .kanbanColumn {
-  flex: 1 1 0;                     /* Faz todos os cards ocuparem espaço proporcional */
-  min-width: 200px;                /* Largura mínima */
-  max-width: 280px;                /* Largura máxima */
   background-color: #ffffff;
   border: 2px solid;
   border-radius: 12px;
   padding: 12px;
-  height: 65vh;
+  height: 70vh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -55,15 +51,15 @@
   transform: none;
 }
 
-/* Para telas menores */
-@media (max-width: 768px) {
+/* Responsivo para tablet e mobile */
+@media (max-width: 1024px) {
   .kanbanBoard {
-    flex-wrap: wrap;               /* Só no mobile quebra */
+    grid-template-columns: repeat(2, 1fr); /* 2 colunas */
   }
+}
 
-  .kanbanColumn {
-    flex: 1 1 100%;
-    min-width: 100%;
-    max-width: 100%;
+@media (max-width: 600px) {
+  .kanbanBoard {
+    grid-template-columns: 1fr; /* 1 coluna */
   }
 }
