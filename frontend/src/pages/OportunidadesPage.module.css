@@ -21,7 +21,7 @@
   align-items: flex-start;
 
   margin-left: -240px; /* 👉 Compensa Sidebar aberta */
-  margin-right: -240px; /* 👉 Compensa Sidebar aberta */
+  margin-right: 240px; /* 👉 Compensa Sidebar aberta */
 }
 
 /* Sidebar recolhida (mobile) */
