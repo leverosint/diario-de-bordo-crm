@@ -4,26 +4,27 @@
   box-sizing: border-box;
 }
 
+/* Kanban sem margem centralizada */
 .kanbanBoard {
-  display: flex;
-  justify-content: flex-start; /* <-- Alinha os cards para começar da esquerda */
-  gap: 4px;
-  padding-bottom: 24px;
-  flex-wrap: nowrap; /* <-- Impede quebra */
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* 4 colunas sempre */
+  gap: 20px;
+  width: 100%;
 }
 
+/* Cartão da Coluna */
 .kanbanColumn {
   background-color: #ffffff;
   border: 2px solid;
   border-radius: 12px;
   padding: 12px;
-  height: 20vh;
-  width: 300px; /* <-- Largura maior dos cards */
+  height: 70vh;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
 }
 
+/* Título da Coluna */
 .kanbanTitle {
   text-align: center;
   font-weight: 700;
@@ -31,6 +32,7 @@
   margin-bottom: 12px;
 }
 
+/* Área dos Cards dentro da Coluna */
 .kanbanCards {
   flex-grow: 1;
   display: flex;
@@ -39,6 +41,7 @@
   overflow-y: auto;
 }
 
+/* Card individual */
 .cardItem {
   background-color: #fff;
   border-radius: 8px;
@@ -52,26 +55,16 @@
   transform: none;
 }
 
-/* Responsivo para tablet */
+/* Responsivo Tablet */
 @media (max-width: 1024px) {
   .kanbanBoard {
-    flex-wrap: wrap;
-    justify-content: center; /* <-- Quando for menor, centraliza bonitinho */
-  }
-
-  .kanbanColumn {
-    width: 45%;
+    grid-template-columns: repeat(2, 1fr); /* 2 colunas em tablet */
   }
 }
 
-/* Responsivo para mobile */
+/* Responsivo Mobile */
 @media (max-width: 600px) {
   .kanbanBoard {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .kanbanColumn {
-    width: 90%;
+    grid-template-columns: 1fr; /* 1 coluna em mobile */
   }
 }
