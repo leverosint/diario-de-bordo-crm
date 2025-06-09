@@ -8,20 +8,27 @@
   align-items: flex-start;
 }
 
-/* Kanban Board 100% colado na esquerda */
+/* Kanban Board */
 .kanbanBoard {
   display: flex;
   flex-wrap: nowrap;
   gap: 20px;
   overflow-x: auto;
   padding-left: 8px;
-  padding-right: 16px;
+  padding-right: 60px; /* 👉 Maior espaço na direita */
   width: 100%;
   box-sizing: border-box;
   align-items: flex-start;
 
-  /* 🚨 Este é o ajuste mágico */
-  margin-left: -240px; /* Compensa o padding-left da Sidebar aberta/fechada */
+  margin-left: -240px; /* 👉 Compensa Sidebar aberta */
+}
+
+/* Sidebar recolhida (mobile) */
+@media (max-width: 768px) {
+  .kanbanBoard {
+    margin-left: -60px; /* 👉 Compensa Sidebar recolhida */
+    padding-right: 40px; /* 👉 Ajuste pra direita menor no mobile */
+  }
 }
 
 /* Coluna do Kanban */
@@ -31,7 +38,7 @@
   border-radius: 12px;
   padding: 12px;
   height: 70vh;
-  min-width: 300px; /* Colunas fixas */
+  min-width: 300px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -63,7 +70,7 @@
   border-top: 6px solid transparent;
 }
 
-/* Scroll Bonito */
+/* Scroll bonito */
 .kanbanBoard::-webkit-scrollbar {
   height: 8px;
 }
