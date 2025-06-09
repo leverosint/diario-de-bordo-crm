@@ -1,27 +1,29 @@
 .pageContainer {
   width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
   padding: 16px;
   box-sizing: border-box;
 }
 
 .kanbanBoard {
   display: flex;
-  flex-wrap: wrap;               /* Cards podem quebrar linha */
-  gap: 24px;                      /* Espaço entre cards */
-  justify-content: flex-start;    /* Começa na esquerda */
-  padding-bottom: 24px;
+  justify-content: space-between; /* Espaço distribuído */
+  flex-wrap: nowrap;              /* Não quebra linha */
+  gap: 16px;                      /* Espaçamento entre colunas */
 }
 
 .kanbanColumn {
-  flex: 1 1 280px;                /* 1º número grow, 2º número shrink, 3º base width */
-  max-width: 300px;               /* Máximo de largura */
+  flex: 1 1 0;                     /* Faz todos os cards ocuparem espaço proporcional */
+  min-width: 200px;                /* Largura mínima */
+  max-width: 280px;                /* Largura máxima */
   background-color: #ffffff;
   border: 2px solid;
   border-radius: 12px;
   padding: 12px;
+  height: 65vh;
   display: flex;
   flex-direction: column;
-  height: 65vh;
   box-sizing: border-box;
 }
 
@@ -53,13 +55,15 @@
   transform: none;
 }
 
+/* Para telas menores */
 @media (max-width: 768px) {
   .kanbanBoard {
-    gap: 16px;
+    flex-wrap: wrap;               /* Só no mobile quebra */
   }
 
   .kanbanColumn {
-    flex: 1 1 100%;            /* Em mobile 100% da linha */
+    flex: 1 1 100%;
+    min-width: 100%;
     max-width: 100%;
   }
 }
