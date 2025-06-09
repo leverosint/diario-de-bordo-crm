@@ -16,7 +16,7 @@
   overflow-x: auto;
   white-space: nowrap;
   padding-left: 8px;
-  padding-right: 120px; /* mais espaço à direita */
+  padding-right: 60px; /* mais espaço à direita */
   width: 100%;
   box-sizing: border-box;
   align-items: flex-start;
