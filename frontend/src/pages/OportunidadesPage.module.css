@@ -14,13 +14,13 @@
   flex-wrap: nowrap;
   gap: 20px;
   overflow-x: auto;
+  white-space: nowrap;
   padding-left: 8px;
-  padding-right: 60px; /* 👉 Maior espaço na direita */
+  padding-right: 120px; /* mais espaço à direita */
   width: 100%;
   box-sizing: border-box;
   align-items: flex-start;
-
-  margin-left: -240px; /* 👉 Compensa Sidebar aberta */
+  margin-left: -240px;
 }
 
 /* Sidebar recolhida (mobile) */
@@ -38,7 +38,7 @@
   border-radius: 12px;
   padding: 12px;
   height: 70vh;
-  min-width: 250px;
+  min-width: 300px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
