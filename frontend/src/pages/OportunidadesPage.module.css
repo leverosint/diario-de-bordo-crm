@@ -2,29 +2,30 @@
   width: 100%;
   padding: 16px;
   box-sizing: border-box;
+  overflow-x: hidden; /* Evita rolagem lateral desnecessária */
 }
 
 .kanbanBoard {
   display: flex;
-  justify-content: flex-start; /* <-- começa grudado na esquerda */
-  flex-wrap: wrap; /* <-- permite quebrar linha se necessário */
-  gap: 24px;
+  flex-wrap: nowrap; /* <-- SEM QUEBRAR LINHA */
+  overflow-x: auto; /* <-- Scroll horizontal se precisar */
+  gap: 20px;
   padding-bottom: 24px;
-  width: 100%;
+  align-items: flex-start; /* Alinha topo */
 }
 
 .kanbanColumn {
+  flex: 0 0 280px; /* <-- largura fixa */
   background-color: #ffffff;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  flex: 1 1 280px; /* <-- responsivo e cresce */
-  min-width: 280px;
-  max-width: 320px;
-  height: 70vh;
   display: flex;
   flex-direction: column;
   border: 2px solid;
   padding: 16px;
+  height: 70vh;
+  min-width: 280px;
+  max-width: 300px; /* Limita crescimento */
 }
 
 .kanbanTitle {
@@ -56,20 +57,13 @@
   cursor: grabbing;
 }
 
-/* Removi o hover que dava zoom */
+/* Removido zoom */
 .cardItem:hover {
   transform: none;
   box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-/* Deixa o topo colorido dinamicamente */
 .cardItemTop {
   height: 5px;
   border-radius: 8px 8px 0 0;
-}
-
-@media (max-width: 768px) {
-  .kanbanBoard {
-    flex-wrap: wrap;
-  }
 }
