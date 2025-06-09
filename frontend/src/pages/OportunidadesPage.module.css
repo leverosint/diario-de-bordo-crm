@@ -14,8 +14,9 @@
   flex-wrap: nowrap;
   gap: 20px;
   overflow-x: auto;
-  padding: 16px;
-  width: 100%; /* <-- Força ocupar tudo */
+  padding-left: 8px;  /* Só 8px na esquerda */
+  padding-right: 16px; /* E o normal na direita */
+  width: 100%;
   box-sizing: border-box;
   align-items: flex-start;
 }
