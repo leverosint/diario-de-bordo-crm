@@ -1,30 +1,30 @@
 .pageContainer {
-  width: 100vw;
-  margin: 0;
+  width: 100%;              /* Igual ao das interações */
+  max-width: 1200px;         /* Largura igual à tabela */
+  margin: 0 auto;            /* Centralizado igual as tabelas */
   padding: 16px;
   box-sizing: border-box;
 }
 
 .kanbanBoard {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 20px;
-  justify-content: flex-start;  /* <-- Esse aqui alinha o primeiro card à esquerda */
-  align-items: flex-start;
-  overflow-x: auto;
-  padding-bottom: 16px;
+  gap: 24px;                 /* Mesmo gap da tabela */
+  flex-wrap: nowrap;         /* Não quebra linha */
+  overflow-x: auto;           /* Só rola horizontal se precisar */
+  padding-bottom: 24px;
+  justify-content: flex-start; /* ALINHA À ESQUERDA ✅ */
 }
 
 .kanbanColumn {
-  flex: 0 0 280px; /* largura fixa dos cards */
-  max-width: 300px;
+  flex: 0 0 260px;          /* Largura dos cartões (um pouco menor pra caber mais) */
+  max-width: 280px;
   background-color: #ffffff;
   border: 2px solid;
   border-radius: 12px;
-  padding: 16px;
-  height: 70vh;
+  padding: 12px;
   display: flex;
   flex-direction: column;
+  height: 65vh;             /* Altura proporcional */
 }
 
 .kanbanTitle {
@@ -39,6 +39,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow-y: auto;
 }
 
 .cardItem {
@@ -46,8 +47,10 @@
   border-radius: 8px;
   padding: 12px;
   box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08);
+  border-top: 6px solid transparent; /* Linha colorida no topo */
+  transition: none;
 }
 
 .cardItem:hover {
-  transform: none; /* Sem zoom pra ser fluido */
+  transform: none; /* Sem animação de zoom */
 }
