@@ -16,7 +16,7 @@ import {
 import type { DroppableProvided, DraggableProvided } from '@hello-pangea/dnd';
 
 import SidebarGestor from '../components/SidebarGestor';
-import styles from './OportunidadesPage.module.css'; // Importa CSS fluido!
+import styles from './OportunidadesPage.module.css'; // Importa o CSS
 
 interface Oportunidade {
   id: number;
