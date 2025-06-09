@@ -21,7 +21,7 @@
   align-items: flex-start;
 
   /* 🚨 Este é o ajuste mágico */
-  margin-left: -60px; /* Compensa o padding-left da Sidebar aberta/fechada */
+  margin-left: -240px; /* Compensa o padding-left da Sidebar aberta/fechada */
 }
 
 /* Coluna do Kanban */
