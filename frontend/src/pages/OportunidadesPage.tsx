@@ -7,7 +7,6 @@ import {
   Group,
   Select,
   Center,
-  Container,
 } from '@mantine/core';
 import {
   DragDropContext,
@@ -126,36 +125,35 @@ export default function OportunidadesPage() {
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <div className={styles.pageContainer}>
-        {/* Container apenas para o título e filtros */}
-        <Container size="lg">
-          <Center mb="md">
-            <Title order={2}>Oportunidades (Kanban)</Title>
-          </Center>
+        {/* Título sem container */}
+        <Center mb="md">
+          <Title order={2}>Oportunidades (Kanban)</Title>
+        </Center>
 
-          {tipoUser === 'GESTOR' && (
-            <Group mb="xl" justify="center">
-              <Select
-                label="Filtrar por Canal de Venda"
-                placeholder="Selecione um canal"
-                value={canalSelecionado}
-                onChange={handleCanalChange}
-                data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
-                clearable
-              />
-              <Select
-                label="Filtrar por Vendedor"
-                placeholder="Selecione um vendedor"
-                value={vendedorSelecionado}
-                onChange={(value) => setVendedorSelecionado(value || '')}
-                data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
-                disabled={!canalSelecionado}
-                clearable
-              />
-            </Group>
-          )}
-        </Container>
+        {/* Filtros */}
+        {tipoUser === 'GESTOR' && (
+          <Group mb="xl" pl="md" pr="md" style={{ flexWrap: 'wrap' }}>
+            <Select
+              label="Filtrar por Canal de Venda"
+              placeholder="Selecione um canal"
+              value={canalSelecionado}
+              onChange={handleCanalChange}
+              data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
+              clearable
+            />
+            <Select
+              label="Filtrar por Vendedor"
+              placeholder="Selecione um vendedor"
+              value={vendedorSelecionado}
+              onChange={(value) => setVendedorSelecionado(value || '')}
+              data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
+              disabled={!canalSelecionado}
+              clearable
+            />
+          </Group>
+        )}
 
-        {/* Kanban fora do Container */}
+        {/* Kanban fora de qualquer container */}
         {carregando ? (
           <Center>
             <Text>Carregando...</Text>

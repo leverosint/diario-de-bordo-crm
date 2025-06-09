@@ -7,12 +7,13 @@
 /* Kanban Board ajustado */
 .kanbanBoard {
   display: grid;
-  grid-template-columns: repeat(4, 300px); /* 4 colunas de 300px fixas */
+  grid-template-columns: repeat(4, 300px); /* 4 colunas fixas */
   gap: 20px;
   width: 100%;
-  justify-content: start; /* Começa da esquerda */
-  overflow-x: auto; /* Scroll horizontal se não couber */
-  padding: 0 16px;
+  justify-content: start; /* Começar da esquerda */
+  overflow-x: auto; /* Scroll horizontal se precisar */
+  padding-left: 32px; /* Adiciona espaço da esquerda */
+  padding-right: 16px;
 }
 
 /* Colunas do Kanban */
@@ -62,13 +63,13 @@
 /* Responsivo Tablet */
 @media (max-width: 1024px) {
   .kanbanBoard {
-    grid-template-columns: repeat(2, 300px); /* 2 colunas no tablet */
+    grid-template-columns: repeat(2, 300px); /* 2 colunas tablet */
   }
 }
 
 /* Responsivo Mobile */
 @media (max-width: 600px) {
   .kanbanBoard {
-    grid-template-columns: 300px; /* 1 coluna no mobile */
+    grid-template-columns: 300px; /* 1 coluna mobile */
   }
 }
