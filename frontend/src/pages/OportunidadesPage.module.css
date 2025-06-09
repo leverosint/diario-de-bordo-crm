@@ -1,27 +1,24 @@
 .pageContainer {
-  padding: 16px;
   width: 100%;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 16px;
 }
 
 .kanbanBoard {
   display: flex;
-  justify-content: space-between;
-  gap: 20px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 24px;
   padding-bottom: 16px;
-  flex-wrap: nowrap;
 }
 
 .kanbanColumn {
-  flex: 1;
-  background-color: #fff;
-  border: 2px solid;
-  border-radius: 8px;
-  padding: 16px;
+  flex: 1 1 280px;
   min-width: 280px;
   max-width: 320px;
   height: 70vh;
+  border: 2px solid;
+  border-radius: 8px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
 }
