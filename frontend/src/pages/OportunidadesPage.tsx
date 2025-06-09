@@ -47,8 +47,6 @@ const etapasKanban = [
 
 export default function OportunidadesPage() {
   const [oportunidades, setOportunidades] = useState<Oportunidade[]>([]);
-  const [carregando, setCarregando] = useState(true);
-  const [erro, setErro] = useState<string | null>(null);
   const [canalSelecionado, setCanalSelecionado] = useState<string>('');
   const [vendedorSelecionado, setVendedorSelecionado] = useState<string>('');
   const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
@@ -59,8 +57,6 @@ export default function OportunidadesPage() {
   const token = localStorage.getItem('token');
 
   const carregarOportunidades = async () => {
-    setCarregando(true);
-    setErro(null);
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const params = new URLSearchParams();
@@ -71,9 +67,6 @@ export default function OportunidadesPage() {
       setOportunidades(response.data);
     } catch (err) {
       console.error('Erro ao carregar oportunidades:', err);
-      setErro('Erro ao carregar oportunidades.');
-    } finally {
-      setCarregando(false);
     }
   };
 
@@ -151,71 +144,61 @@ export default function OportunidadesPage() {
           </Group>
         )}
 
-        {carregando ? (
-          <Center>
-            <Text>Carregando...</Text>
-          </Center>
-        ) : erro ? (
-          <Center>
-            <Text color="red">{erro}</Text>
-          </Center>
-        ) : (
-          <DragDropContext onDragEnd={onDragEnd}>
-            <div className={styles.kanbanBoard}>
-              {etapasKanban.map((etapa) => (
-                <Droppable droppableId={etapa.id} key={etapa.id}>
-                  {(provided: DroppableProvided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      className={styles.kanbanColumn}
-                      style={{ borderColor: etapa.color }}
-                    >
-                      <div className={styles.kanbanTitle} style={{ color: etapa.color }}>
-                        {etapa.titulo} ({oportunidades.filter((o) => o.etapa === etapa.id).length})
-                      </div>
-                      <div className={styles.kanbanCards}>
-                        {oportunidades
-                          .filter((o) => o.etapa === etapa.id)
-                          .sort((a, b) => b.dias_sem_interacao - a.dias_sem_interacao)
-                          .map((o, index) => (
-                            <Draggable draggableId={o.id.toString()} index={index} key={o.id}>
-                              {(provided: DraggableProvided) => (
-                                <Card
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  withBorder
-                                  shadow="md"
-                                  radius="md"
-                                  p="md"
-                                  className={styles.cardItem}
-                                >
-                                  <Text fw={700} size="md">{o.parceiro_nome}</Text>
-                                  <Text size="sm" color="gray">
-                                    Valor: R$ {o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                  </Text>
-                                  <Text size="xs" color="dimmed" mt={5}>
-                                    Sem interação: {o.dias_sem_interacao} dias
-                                  </Text>
-                                  {o.observacao && (
-                                    <Text size="xs" mt={5} color="gray">
-                                      {o.observacao}
-                                    </Text>
-                                  )}
-                                </Card>
-                              )}
-                            </Draggable>
-                          ))}
-                        {provided.placeholder}
-                      </div>
+        <DragDropContext onDragEnd={onDragEnd}>
+          <div className={styles.kanbanBoard}>
+            {etapasKanban.map((etapa) => (
+              <Droppable droppableId={etapa.id} key={etapa.id}>
+                {(provided: DroppableProvided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={styles.kanbanColumn}
+                    style={{ borderColor: etapa.color }}
+                  >
+                    <div className={styles.kanbanTitle} style={{ color: etapa.color }}>
+                      {etapa.titulo} ({oportunidades.filter((o) => o.etapa === etapa.id).length})
                     </div>
-                  )}
-                </Droppable>
-              ))}
-            </div>
-          </DragDropContext>
-        )}
+                    <div className={styles.kanbanCards}>
+                      {oportunidades
+                        .filter((o) => o.etapa === etapa.id)
+                        .sort((a, b) => b.dias_sem_interacao - a.dias_sem_interacao)
+                        .map((o, index) => (
+                          <Draggable draggableId={o.id.toString()} index={index} key={o.id}>
+                            {(provided: DraggableProvided) => (
+                              <Card
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                withBorder
+                                shadow="md"
+                                radius="md"
+                                p="md"
+                                className={styles.cardItem}
+                              >
+                                <Text fw={700} size="md">{o.parceiro_nome}</Text>
+                                <Text size="sm" color="gray">
+                                  Valor: R$ {o.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                </Text>
+                                <Text size="xs" color="dimmed" mt={5}>
+                                  Sem interação: {o.dias_sem_interacao} dias
+                                </Text>
+                                {o.observacao && (
+                                  <Text size="xs" mt={5} color="gray">
+                                    {o.observacao}
+                                  </Text>
+                                )}
+                              </Card>
+                            )}
+                          </Draggable>
+                        ))}
+                      {provided.placeholder}
+                    </div>
+                  </div>
+                )}
+              </Droppable>
+            ))}
+          </div>
+        </DragDropContext>
       </div>
     </SidebarGestor>
   );
