@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from datetime import datetime, timedelta
-from django.conf import settings  # <--- IMPORTANTE para pegar o user
+from django.conf import settings  # para pegar o AUTH_USER_MODEL
 
 # Canal de venda associado a usuários e parceiros
 class CanalVenda(models.Model):
@@ -77,35 +77,38 @@ class Parceiro(models.Model):
         meses_com_valor = [m[1] for m in meses if m[1] and m[1] > 0]
         self.tm = self.total_geral / len(meses_com_valor) if meses_com_valor else 0
         self.recorrencia = len(meses_com_valor)
+
         mes_ref = {
             'janeiro': (1, 2025), 'fevereiro': (2, 2025), 'marco': (3, 2025), 'abril': (4, 2025),
             'maio': (5, 2025), 'junho': (6, 2025), 'julho': (7, 2025), 'agosto': (8, 2025),
             'setembro': (9, 2025), 'outubro': (10, 2025), 'novembro': (11, 2025), 'dezembro': (12, 2025),
             'janeiro_2': (1, 2026), 'fevereiro_2': (2, 2026), 'marco_2': (3, 2026)
         }
+
         ultimo_fat_data = None
         for nome, valor in reversed(meses):
             if valor and valor > 0:
                 mes_num, ano = mes_ref[nome]
                 ultimo_fat_data = datetime(ano, mes_num, 1)
                 break
+
         if ultimo_fat_data:
             hoje = datetime.today()
-            ano_atual, mes_atual = hoje.year, hoje.month
-            ultimo_dia_mes_anterior = datetime(ano_atual, mes_atual, 1) - timedelta(days=1)
-            dias_diferenca = (ultimo_dia_mes_anterior - ultimo_fat_data).days
-            if dias_diferenca <= 30:
-                self.status = "30d s/ Fat"
-            elif dias_diferenca <= 60:
-                self.status = "60d s/ Fat"
-            elif dias_diferenca <= 90:
-                self.status = "90d s/ Fat"
+            dias_diferenca = (hoje - ultimo_fat_data).days
+
+            if dias_diferenca < 30:
+                self.status = "Base Ativa"
+            elif dias_diferenca < 60:
+                self.status = "30 dias s/ Fat"
+            elif dias_diferenca < 90:
+                self.status = "60 dias s/ Fat"
+            elif dias_diferenca < 120:
+                self.status = "90 dias s/ Fat"
             else:
-                self.status = "120d s/ Fat"
-            if ultimo_fat_data.month in [mes_atual, mes_atual - 1] and ultimo_fat_data.year == ano_atual:
-                self.status = "Recorrente"
+                self.status = "120 dias s/ Fat"
         else:
-            self.status = "Sem Faturamento"
+            self.status = "Novo"
+
         super().save(*args, **kwargs)
 
 # Modelo de Interação
@@ -124,7 +127,7 @@ class Interacao(models.Model):
     def __str__(self):
         return f"{self.parceiro.parceiro} - {self.usuario.username} ({self.tipo})"
 
-# 🚀 Modelo de Oportunidade atualizado
+# Modelo de Oportunidade
 class Oportunidade(models.Model):
     ETAPA_CHOICES = [
         ('oportunidade', 'Oportunidade'),
@@ -133,7 +136,7 @@ class Oportunidade(models.Model):
         ('perdida', 'Venda Perdida'),
     ]
     parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='oportunidades')
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='oportunidades')  # <--- ADICIONADO
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='oportunidades')
     valor = models.DecimalField(max_digits=12, decimal_places=2)
     etapa = models.CharField(max_length=20, choices=ETAPA_CHOICES, default='oportunidade')
     observacao = models.TextField(blank=True, null=True)
@@ -142,6 +145,7 @@ class Oportunidade(models.Model):
     def __str__(self):
         return f"{self.parceiro.parceiro} - R$ {self.valor} - {self.get_etapa_display()}"
 
+# Gatilhos extras (eventos manuais)
 class GatilhoExtra(models.Model):
     parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='gatilhos_extras')
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='gatilhos_extras')
