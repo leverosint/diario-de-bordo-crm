@@ -10,10 +10,10 @@
   flex-wrap: nowrap;
   gap: 10px;
   overflow-x: auto;
-  width: calc(100vw - 260px); /* 260px da sidebar */
+  width: 100%;
   padding-left: 0;
-  padding-right: 0px;
-  margin-left: 0px; /* compensar o padding da pageContainer */
+  padding-right: 0;
+  margin-left: -16px; /* força grudar na esquerda, compensando o padding da pageContainer */
   box-sizing: border-box;
 }
 
