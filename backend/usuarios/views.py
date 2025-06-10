@@ -52,7 +52,6 @@ class UploadParceirosView(viewsets.ViewSet):
             return Response({'erro': 'Arquivo não enviado'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Pula o cabeçalho (linha 1) e define os nomes fixos para as colunas
             df = pd.read_excel(file_obj, skiprows=1, header=None)
             df.columns = [
                 'codigo', 'parceiro', 'classificacao', 'consultor', 'unidade',
@@ -126,6 +125,9 @@ class UploadParceirosView(viewsets.ViewSet):
                         defaults=parceiro_data
                     )
 
+                    # 🔄 Garante que o .save() com lógica personalizada seja executado
+                    parceiro_obj.save()
+
                     if created:
                         criadas += 1
                     else:
@@ -139,6 +141,7 @@ class UploadParceirosView(viewsets.ViewSet):
 
         except Exception as e:
             return Response({'erro': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 
@@ -373,10 +376,12 @@ class DashboardKPIView(APIView):
             oportunidades = Oportunidade.objects.filter(usuario=user)
 
         status_counts = {
-            '30 dias': parceiros.filter(status='30d s/ Fat').count(),
-            '60 dias': parceiros.filter(status='60d s/ Fat').count(),
-            '90 dias': parceiros.filter(status='90d s/ Fat').count(),
-            '120 dias': parceiros.filter(status='120d s/ Fat').count(),
+            'Sem Faturamento': parceiros.filter(status='Sem Faturamento').count(),
+            'Base Ativa': parceiros.filter(status='Base Ativa').count(),
+            '30 dias': parceiros.filter(status='30 dias').count(),
+            '60 dias': parceiros.filter(status='60 dias').count(),
+            '90 dias': parceiros.filter(status='90 dias').count(),
+            '120 dias': parceiros.filter(status='120 dias').count(),
         }
 
         total_interacoes = interacoes.count()
@@ -392,6 +397,8 @@ class DashboardKPIView(APIView):
         taxa_orcamento_pedido = (total_pedidos / total_orcamentos * 100) if total_orcamentos > 0 else 0
 
         kpis = [
+            {"title": "Sem Faturamento", "value": status_counts['Sem Faturamento']},
+            {"title": "Base Ativa", "value": status_counts['Base Ativa']},
             {"title": "30 dias", "value": status_counts['30 dias']},
             {"title": "60 dias", "value": status_counts['60 dias']},
             {"title": "90 dias", "value": status_counts['90 dias']},
@@ -422,6 +429,7 @@ class DashboardKPIView(APIView):
             "kpis": kpis,
             "parceiros": parceiros_data
         })
+
 
 # ===== Funil de Conversão =====
 class DashboardFunilView(APIView):

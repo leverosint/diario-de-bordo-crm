@@ -24,13 +24,16 @@ import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
 
 const STATUS_COLORS: { [key: string]: string } = {
+  'Sem Faturamento': '#228be6',
+  'Base Ativa': '#15aabf',
   '30 dias': '#40c057',
   '60 dias': '#fab005',
   '90 dias': '#fd7e14',
   '120 dias': '#fa5252',
 };
 
-const COLORS = ['#005A64', '#4CDDDD', '#40c057', '#fab005', '#fa5252'];
+const STATUS_ORDER = ['Sem Faturamento', 'Base Ativa', '30 dias', '60 dias', '90 dias', '120 dias'];
+const COLORS = ['#005A64', '#4CDDDD', '#40c057', '#fab005', '#fa5252', '#228be6', '#15aabf'];
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -133,7 +136,6 @@ export default function Dashboard() {
   const exportToExcel = async (data: any[], fileName: string, exportarHistorico = false) => {
     const wb = XLSX.utils.book_new();
 
-    // Aba 1: Resumo
     const sheetData = data.map((p) => ({
       Parceiro: p.parceiro,
       Status: p.status,
@@ -177,7 +179,7 @@ export default function Dashboard() {
           {/* Filtros */}
           <Group mb="xl" justify="space-between" style={{ width: '100%' }}>
             <MultiSelect
-              data={['30 dias', '60 dias', '90 dias', '120 dias']}
+              data={STATUS_ORDER}
               label="Filtrar por Status"
               placeholder="Selecione status"
               value={statusFiltro}
@@ -189,11 +191,11 @@ export default function Dashboard() {
             </Button>
           </Group>
 
-          {/* KPIs - Quantidade Parceiros */}
+          {/* KPIs - Status */}
           <Title order={3} mb="sm">Quantidade de Parceiros Sem Faturamento por Status</Title>
           <Grid mb="xl">
-            {['30 dias', '60 dias', '90 dias', '120 dias'].map(status => (
-              <Grid.Col span={{ base: 12, sm: 6, md: 3 }} key={status}>
+            {STATUS_ORDER.map(status => (
+              <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={status}>
                 <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}>
                   <Title order={4} style={{ textAlign: 'center' }}>{status}</Title>
                   <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
@@ -261,15 +263,15 @@ export default function Dashboard() {
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={kpis.filter(kpi => ['30 dias', '60 dias', '90 dias', '120 dias'].includes(kpi.title))}
+                      data={kpis.filter(kpi => STATUS_ORDER.includes(kpi.title))}
                       dataKey="value"
                       nameKey="title"
                       outerRadius={100}
                       label
                     >
-                      {(kpis.map((_, index) => (
+                      {STATUS_ORDER.map((_, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      )))}
+                      ))}
                     </Pie>
                     <Legend />
                   </PieChart>

@@ -66,7 +66,10 @@ class Parceiro(models.Model):
     def __str__(self):
         return f"{self.codigo or ''} - {self.parceiro or ''}"
 
+##SAVE##
+
     def save(self, *args, **kwargs):
+        # Soma e métricas mensais
         meses = [
             ('janeiro', self.janeiro), ('fevereiro', self.fevereiro), ('marco', self.marco), ('abril', self.abril),
             ('maio', self.maio), ('junho', self.junho), ('julho', self.julho), ('agosto', self.agosto),
@@ -78,6 +81,7 @@ class Parceiro(models.Model):
         self.tm = self.total_geral / len(meses_com_valor) if meses_com_valor else 0
         self.recorrencia = len(meses_com_valor)
 
+        # Referência de datas dos meses
         mes_ref = {
             'janeiro': (1, 2025), 'fevereiro': (2, 2025), 'marco': (3, 2025), 'abril': (4, 2025),
             'maio': (5, 2025), 'junho': (6, 2025), 'julho': (7, 2025), 'agosto': (8, 2025),
@@ -85,6 +89,7 @@ class Parceiro(models.Model):
             'janeiro_2': (1, 2026), 'fevereiro_2': (2, 2026), 'marco_2': (3, 2026)
         }
 
+        # Determina o último mês com valor > 0
         ultimo_fat_data = None
         for nome, valor in reversed(meses):
             if valor and valor > 0:
@@ -92,24 +97,29 @@ class Parceiro(models.Model):
                 ultimo_fat_data = datetime(ano, mes_num, 1)
                 break
 
-        if ultimo_fat_data:
+        # Classificação de status
+        if self.total_geral == 0:
+            self.status = "Sem Faturamento"
+        elif ultimo_fat_data:
             hoje = datetime.today()
             dias_diferenca = (hoje - ultimo_fat_data).days
 
             if dias_diferenca < 30:
                 self.status = "Base Ativa"
             elif dias_diferenca < 60:
-                self.status = "30 dias s/ Fat"
+                self.status = "30 dias"
             elif dias_diferenca < 90:
-                self.status = "60 dias s/ Fat"
+                self.status = "60 dias"
             elif dias_diferenca < 120:
-                self.status = "90 dias s/ Fat"
+                self.status = "90 dias"
             else:
-                self.status = "120 dias s/ Fat"
+                self.status = "120 dias"
         else:
-            self.status = "Novo"
+            self.status = "Sem Faturamento"
 
-        super().save(*args, **kwargs)
+        super(Parceiro, self).save(*args, **kwargs)
+
+
 
 # Modelo de Interação
 class Interacao(models.Model):
