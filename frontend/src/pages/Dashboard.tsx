@@ -38,10 +38,27 @@ const STATUS_ORDER = [
   '30 dias s/ Fat',
   '60 dias s/ Fat',
   '90 dias s/ Fat',
-  '120 dias s/ Fat'
+  '120 dias s/ Fat',
 ];
 
+const STATUS_LABELS: { [key: string]: string } = {
+  'Sem Faturamento': 'Sem Fat.',
+  'Base Ativa': 'Base Ativa',
+  '30 dias s/ Fat': '30 dias',
+  '60 dias s/ Fat': '60 dias',
+  '90 dias s/ Fat': '90 dias',
+  '120 dias s/ Fat': '120 dias',
+};
+
+const STATUS_OPTIONS = STATUS_ORDER.map((status) => ({
+  value: status,
+  label: STATUS_LABELS[status] || status
+}));
+
+
 const COLORS = Object.values(STATUS_COLORS); // ✅ Adicione ESSA LINHA aqui
+
+
 
 
 export default function Dashboard() {
@@ -188,33 +205,57 @@ export default function Dashboard() {
           {/* Filtros */}
           <Group mb="xl" justify="space-between" style={{ width: '100%' }}>
             <MultiSelect
-              data={STATUS_ORDER}
+              data={STATUS_OPTIONS}
               label="Filtrar por Status"
               placeholder="Selecione status"
               value={statusFiltro}
               onChange={setStatusFiltro}
               style={{ flex: 1, marginRight: 10 }}
+              searchable
             />
             <Button variant="light" color="red" onClick={() => setStatusFiltro([])}>
               Resetar Filtros
             </Button>
           </Group>
 
-          {/* KPIs - Status */}
-          <Title order={3} mb="sm">Quantidade de Parceiros Sem Faturamento por Status</Title>
-          <Grid mb="xl">
-            {STATUS_ORDER.map(status => (
-              <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={status}>
-                <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}>
-                  <Title order={4} style={{ textAlign: 'center' }}>{status}</Title>
-                  <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-                    {kpis.find(k => k.title === status)?.value || 0}
-                  </Text>
-                </Card>
-              </Grid.Col>
-            ))}
-          </Grid>
+        {/* KPIs - Status */}
+<Title order={3} mb="sm">Quantidade de Parceiros Sem Faturamento por Status</Title>
+<Grid mb="xl">
+  {STATUS_ORDER.map((status) => {
+    const kpiEncontrado = kpis.find((k) => k.title === status);
+    const valor = kpiEncontrado ? kpiEncontrado.value : 0;
 
+    return (
+      <Grid.Col
+        span={{ base: 12, sm: 6, md: 2 }}
+        key={status}
+        style={{ display: 'flex' }} // 🔄 Garante altura igual
+      >
+        <Card
+          shadow="md"
+          padding="lg"
+          radius="lg"
+          withBorder
+          style={{
+            backgroundColor: STATUS_COLORS[status],
+            color: 'white',
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}
+        >
+          <Title order={4} style={{ textAlign: 'center' }}>
+            {STATUS_LABELS[status] || status}
+          </Title>
+          <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
+            {valor}
+          </Text>
+        </Card>
+      </Grid.Col>
+    );
+  })}
+</Grid>
           <Divider my="lg" />
 
           {/* KPIs - Indicadores */}
