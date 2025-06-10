@@ -12,7 +12,7 @@
   overflow-x: auto;
   width: calc(100vw - 260px); /* 260px da sidebar */
   padding-left: 0;
-  padding-right: 24px;
+  padding-right: 0px;
   margin-left: -16px; /* compensar o padding da pageContainer */
   box-sizing: border-box;
 }
