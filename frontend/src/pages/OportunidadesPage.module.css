@@ -1,36 +1,45 @@
 .pageContainer {
   width: 100%;
-  padding: 0;
-  margin: 0;
+  padding: 0; /* 🔥 remove espaçamento externo */
   box-sizing: border-box;
 }
 
-/* Kanban sem scroll e sem margem */
+/* Board do Kanban */
 .kanbanBoard {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 6px;
-  width: 100%;
-  padding: -120;
-  margin: -120;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 16px;
+  overflow-x: hidden; /* 🔥 remove scroll lateral */
+  padding-left: 0;
+  padding-right: 16px;
   box-sizing: border-box;
+  transition: margin-left 0.3s ease;
 }
 
-/* Coluna do Kanban */
+/* Em telas pequenas */
+@media (max-width: 768px) {
+  .kanbanBoard {
+    overflow-x: auto; /* 🔄 ativa scroll horizontal apenas em telas pequenas */
+  }
+}
+
+/* Coluna */
 .kanbanColumn {
   background-color: #ffffff;
   border: 2px solid;
   border-radius: 12px;
   padding: 12px;
-  min-height: 70vh;
+  height: 70vh;
+  min-width: 280px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
-/* Título da Coluna */
+/* Título */
 .kanbanTitle {
-  text-align: left;
+  text-align: center;
   font-weight: 700;
   font-size: 18px;
   margin-bottom: 12px;
@@ -45,11 +54,23 @@
   overflow-y: auto;
 }
 
-/* Card */
+/* Card item */
 .cardItem {
   background-color: #fff;
   border-radius: 8px;
   padding: 12px;
   box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08);
   border-top: 6px solid transparent;
+}
+
+/* Scroll bonito horizontal */
+.kanbanBoard::-webkit-scrollbar {
+  height: 8px;
+}
+.kanbanBoard::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+.kanbanBoard::-webkit-scrollbar-track {
+  background: transparent;
 }
