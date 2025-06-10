@@ -51,19 +51,34 @@ class UploadParceirosView(viewsets.ViewSet):
             return Response({'erro': 'Arquivo não enviado'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            # Lê a planilha sem confiar no cabeçalho
             df = pd.read_excel(file_obj, header=None)
-
-            # Define manualmente os nomes das colunas pela ordem da planilha
             df.columns = [
                 'codigo', 'parceiro', 'classificacao', 'consultor', 'unidade',
-                'cidade', 'uf', 'primeiro_fat', 'ultimo_fat', 'janeiro', 'fevereiro',
-                'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro',
-                'outubro', 'novembro', 'dezembro', 'janeiro_2', 'fevereiro_2', 'marco_2'
+                'cidade', 'uf', 'primeiro_fat', 'ultimo_fat',
+                'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho',
+                'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro',
+                'janeiro_2', 'fevereiro_2', 'marco_2'
             ]
-
         except Exception as e:
             return Response({'erro': f'Erro ao ler arquivo: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        def parse_data(val):
+            if pd.isna(val):
+                return None
+            if isinstance(val, str):
+                try:
+                    return pd.to_datetime(val).date()
+                except Exception:
+                    return None
+            if isinstance(val, pd.Timestamp):
+                return val.date()
+            return None
+
+        def parse_val(val):
+            try:
+                return float(str(val).replace("R$", "").replace(",", ".").strip())
+            except:
+                return 0
 
         criadas = 0
         atualizadas = 0
@@ -71,20 +86,8 @@ class UploadParceirosView(viewsets.ViewSet):
         try:
             with transaction.atomic():
                 for _, row in df.iterrows():
-                    canal_nome = 'Canal Padrão'  # ou extraia de uma coluna fixa, se quiser
+                    canal_nome = "Canal Padrão"
                     canal, _ = CanalVenda.objects.get_or_create(nome=canal_nome)
-
-                    def parse_data(val):
-                        if pd.isna(val):
-                            return None
-                        if isinstance(val, str):
-                            try:
-                                return pd.to_datetime(val).date()
-                            except Exception:
-                                return None
-                        if isinstance(val, pd.Timestamp):
-                            return val.date()
-                        return None
 
                     parceiro_data = {
                         'codigo': str(row['codigo']).strip(),
@@ -97,21 +100,21 @@ class UploadParceirosView(viewsets.ViewSet):
                         'primeiro_fat': parse_data(row['primeiro_fat']),
                         'ultimo_fat': parse_data(row['ultimo_fat']),
                         'canal_venda': canal,
-                        'janeiro': row['janeiro'] or 0,
-                        'fevereiro': row['fevereiro'] or 0,
-                        'marco': row['marco'] or 0,
-                        'abril': row['abril'] or 0,
-                        'maio': row['maio'] or 0,
-                        'junho': row['junho'] or 0,
-                        'julho': row['julho'] or 0,
-                        'agosto': row['agosto'] or 0,
-                        'setembro': row['setembro'] or 0,
-                        'outubro': row['outubro'] or 0,
-                        'novembro': row['novembro'] or 0,
-                        'dezembro': row['dezembro'] or 0,
-                        'janeiro_2': row['janeiro_2'] or 0,
-                        'fevereiro_2': row['fevereiro_2'] or 0,
-                        'marco_2': row['marco_2'] or 0,
+                        'janeiro': parse_val(row['janeiro']),
+                        'fevereiro': parse_val(row['fevereiro']),
+                        'marco': parse_val(row['marco']),
+                        'abril': parse_val(row['abril']),
+                        'maio': parse_val(row['maio']),
+                        'junho': parse_val(row['junho']),
+                        'julho': parse_val(row['julho']),
+                        'agosto': parse_val(row['agosto']),
+                        'setembro': parse_val(row['setembro']),
+                        'outubro': parse_val(row['outubro']),
+                        'novembro': parse_val(row['novembro']),
+                        'dezembro': parse_val(row['dezembro']),
+                        'janeiro_2': parse_val(row['janeiro_2']),
+                        'fevereiro_2': parse_val(row['fevereiro_2']),
+                        'marco_2': parse_val(row['marco_2']),
                     }
 
                     parceiro_obj, created = Parceiro.objects.update_or_create(
@@ -132,6 +135,7 @@ class UploadParceirosView(viewsets.ViewSet):
 
         except Exception as e:
             return Response({'erro': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # ===== Login JWT =====
 class LoginView(APIView):
