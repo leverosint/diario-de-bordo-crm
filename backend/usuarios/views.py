@@ -67,7 +67,7 @@ class UploadParceirosView(viewsets.ViewSet):
                 return None
             if isinstance(val, str):
                 try:
-                    return pd.to_datetime(val).date()
+                    return pd.to_datetime(val, dayfirst=True).date()
                 except Exception:
                     return None
             if isinstance(val, pd.Timestamp):
@@ -75,8 +75,11 @@ class UploadParceirosView(viewsets.ViewSet):
             return None
 
         def parse_val(val):
+            if pd.isna(val):
+                return 0
             try:
-                return float(str(val).replace("R$", "").replace(",", ".").strip())
+                val_str = str(val).replace("R$", "").replace(".", "").replace(",", ".").strip()
+                return float(val_str)
             except:
                 return 0
 
@@ -135,6 +138,7 @@ class UploadParceirosView(viewsets.ViewSet):
 
         except Exception as e:
             return Response({'erro': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 # ===== Login JWT =====
