@@ -376,13 +376,13 @@ class DashboardKPIView(APIView):
             oportunidades = Oportunidade.objects.filter(usuario=user)
 
         status_counts = {
-            'Sem Faturamento': parceiros.filter(status='Sem Faturamento').count(),
-            'Base Ativa': parceiros.filter(status='Base Ativa').count(),
-            '30 dias s/ Fat': parceiros.filter(status='30 dias s/ Fat').count(),
-            '60 dias s/ Fat': parceiros.filter(status='60 dias s/ Fat').count(),
-            '90 dias s/ Fat': parceiros.filter(status='90 dias s/ Fat').count(),
-            '120 dias s/ Fat': parceiros.filter(status='120 dias s/ Fat').count(),
-        }
+    'Sem Faturamento': parceiros.filter(status='Sem Faturamento').count(),
+    'Base Ativa': parceiros.filter(status='Base Ativa').count(),
+    '30 dias s/ Fat': parceiros.filter(status='30 dias s/ Fat').count(),
+    '60 dias s/ Fat': parceiros.filter(status='60 dias s/ Fat').count(),
+    '90 dias s/ Fat': parceiros.filter(status='90 dias s/ Fat').count(),
+    '120 dias s/ Fat': parceiros.filter(status='120 dias s/ Fat').count(),
+}
 
         total_interacoes = interacoes.count()
         total_oportunidades = oportunidades.count()
@@ -397,12 +397,12 @@ class DashboardKPIView(APIView):
         taxa_orcamento_pedido = (total_pedidos / total_orcamentos * 100) if total_orcamentos > 0 else 0
 
         kpis = [
-            {"title": "Sem Faturamento", "value": status_counts['Sem Faturamento']},
-            {"title": "Base Ativa", "value": status_counts['Base Ativa']},
-            {"title": "30 dias s/ Fat", "value": status_counts['30 dias s/ Fat']},
-            {"title": "60 dias s/ Fat", "value": status_counts['60 dias s/ Fat']},
-            {"title": "90 dias s/ Fat", "value": status_counts['90 dias s/ Fat']},
-            {"title": "120 dias s/ Fat", "value": status_counts['120 dias s/ Fat']},
+              {"title": "Sem Faturamento", "value": status_counts['Sem Faturamento']},
+     {"title": "Base Ativa", "value": status_counts['Base Ativa']},
+    {"title": "30 dias s/ Fat", "value": status_counts['30 dias s/ Fat']},
+    {"title": "60 dias s/ Fat", "value": status_counts['60 dias s/ Fat']},
+    {"title": "90 dias s/ Fat", "value": status_counts['90 dias s/ Fat']},
+    {"title": "120 dias s/ Fat", "value": status_counts['120 dias s/ Fat']},
             {"title": "Interações", "value": total_interacoes},
             {"title": "Oportunidades", "value": total_oportunidades},
             {"title": "Taxa Interação > Oportunidade", "value": f"{taxa_interacao_oportunidade:.1f}%"},
