@@ -1,26 +1,45 @@
+/* Sidebar fixa (caso precise adicionar no layout global ou wrapper) */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 240px; /* ajuste conforme sua sidebar real */
+  height: 100vh;
+  background-color: white;
+  z-index: 1000;
+}
+
+/* Container da página com margem lateral fixa */
 .pageContainer {
-  width: 100%;
-  padding: 0; /* 🔥 remove espaçamento externo */
+  margin-left: 240px; /* espaço reservado da sidebar */
+  width: calc(100% - 240px); /* largura restante da tela */
+  padding: 16px;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* Board do Kanban */
 .kanbanBoard {
   display: flex;
   flex-wrap: nowrap;
-  gap: 5px;
-  overflow-x: hidden; /* 🔥 remove scroll lateral */
-  padding-left: 0;
+  gap: 16px;
+  overflow-x: auto;
   padding-right: 16px;
   box-sizing: border-box;
-  transition: margin-left 0.3s ease;
+  height: 70vh;
+  scroll-behavior: smooth;
 }
 
-/* Em telas pequenas */
-@media (max-width: 768px) {
-  .kanbanBoard {
-    overflow-x: auto; /* 🔄 ativa scroll horizontal apenas em telas pequenas */
-  }
+/* Scroll bonito horizontal */
+.kanbanBoard::-webkit-scrollbar {
+  height: 8px;
+}
+.kanbanBoard::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+.kanbanBoard::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* Coluna */
@@ -29,12 +48,12 @@
   border: 2px solid;
   border-radius: 12px;
   padding: 12px;
-  height: 70vh;
   min-width: 280px;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
   flex-shrink: 0;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 /* Título */
@@ -45,7 +64,7 @@
   margin-bottom: 12px;
 }
 
-/* Cards */
+/* Cards container */
 .kanbanCards {
   flex-grow: 1;
   display: flex;
@@ -63,14 +82,20 @@
   border-top: 6px solid transparent;
 }
 
-/* Scroll bonito horizontal */
-.kanbanBoard::-webkit-scrollbar {
-  height: 8px;
-}
-.kanbanBoard::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
-}
-.kanbanBoard::-webkit-scrollbar-track {
-  background: transparent;
+/* Responsivo para mobile */
+@media (max-width: 768px) {
+  .pageContainer {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .kanbanBoard {
+    overflow-x: auto;
+  }
+
+  .sidebar {
+    position: absolute;
+    width: 200px;
+    z-index: 999;
+  }
 }
