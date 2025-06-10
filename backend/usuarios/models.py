@@ -107,13 +107,13 @@ class Parceiro(models.Model):
             if dias_diferenca < 30:
                 self.status = "Base Ativa"
             elif dias_diferenca < 60:
-                self.status = "30 dias"
+                self.status = "30 dias s/ Fat"
             elif dias_diferenca < 90:
-                self.status = "60 dias"
+                self.status = "60 dias s/ Fat"
             elif dias_diferenca < 120:
-                self.status = "90 dias"
+                self.status = "90 dias s/ Fat"
             else:
-                self.status = "120 dias"
+                self.status = "120 dias s/ Fat"
         else:
             self.status = "Sem Faturamento"
 

@@ -26,14 +26,23 @@ import SidebarGestor from '../components/SidebarGestor';
 const STATUS_COLORS: { [key: string]: string } = {
   'Sem Faturamento': '#228be6',
   'Base Ativa': '#15aabf',
-  '30 dias': '#40c057',
-  '60 dias': '#fab005',
-  '90 dias': '#fd7e14',
-  '120 dias': '#fa5252',
+  '30 dias s/ Fat': '#40c057',
+  '60 dias s/ Fat': '#fab005',
+  '90 dias s/ Fat': '#fd7e14',
+  '120 dias s/ Fat': '#fa5252',
 };
 
-const STATUS_ORDER = ['Sem Faturamento', 'Base Ativa', '30 dias', '60 dias', '90 dias', '120 dias'];
-const COLORS = ['#005A64', '#4CDDDD', '#40c057', '#fab005', '#fa5252', '#228be6', '#15aabf'];
+const STATUS_ORDER = [
+  'Sem Faturamento',
+  'Base Ativa',
+  '30 dias s/ Fat',
+  '60 dias s/ Fat',
+  '90 dias s/ Fat',
+  '120 dias s/ Fat'
+];
+
+const COLORS = Object.values(STATUS_COLORS); // ✅ Adicione ESSA LINHA aqui
+
 
 export default function Dashboard() {
   const navigate = useNavigate();

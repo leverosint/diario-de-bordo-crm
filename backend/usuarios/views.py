@@ -378,10 +378,10 @@ class DashboardKPIView(APIView):
         status_counts = {
             'Sem Faturamento': parceiros.filter(status='Sem Faturamento').count(),
             'Base Ativa': parceiros.filter(status='Base Ativa').count(),
-            '30 dias': parceiros.filter(status='30 dias').count(),
-            '60 dias': parceiros.filter(status='60 dias').count(),
-            '90 dias': parceiros.filter(status='90 dias').count(),
-            '120 dias': parceiros.filter(status='120 dias').count(),
+            '30 dias s/ Fat': parceiros.filter(status='30 dias s/ Fat').count(),
+            '60 dias s/ Fat': parceiros.filter(status='60 dias s/ Fat').count(),
+            '90 dias s/ Fat': parceiros.filter(status='90 dias s/ Fat').count(),
+            '120 dias s/ Fat': parceiros.filter(status='120 dias s/ Fat').count(),
         }
 
         total_interacoes = interacoes.count()
@@ -399,10 +399,10 @@ class DashboardKPIView(APIView):
         kpis = [
             {"title": "Sem Faturamento", "value": status_counts['Sem Faturamento']},
             {"title": "Base Ativa", "value": status_counts['Base Ativa']},
-            {"title": "30 dias", "value": status_counts['30 dias']},
-            {"title": "60 dias", "value": status_counts['60 dias']},
-            {"title": "90 dias", "value": status_counts['90 dias']},
-            {"title": "120 dias", "value": status_counts['120 dias']},
+            {"title": "30 dias s/ Fat", "value": status_counts['30 dias s/ Fat']},
+            {"title": "60 dias s/ Fat", "value": status_counts['60 dias s/ Fat']},
+            {"title": "90 dias s/ Fat", "value": status_counts['90 dias s/ Fat']},
+            {"title": "120 dias s/ Fat", "value": status_counts['120 dias s/ Fat']},
             {"title": "Interações", "value": total_interacoes},
             {"title": "Oportunidades", "value": total_oportunidades},
             {"title": "Taxa Interação > Oportunidade", "value": f"{taxa_interacao_oportunidade:.1f}%"},
@@ -429,6 +429,7 @@ class DashboardKPIView(APIView):
             "kpis": kpis,
             "parceiros": parceiros_data
         })
+
 
 
 # ===== Funil de Conversão =====
