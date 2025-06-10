@@ -16,13 +16,13 @@
   overflow-x: auto;
   white-space: nowrap;
   padding-left: 8px;
-  padding-right: 60px; /* espaço extra à direita */
+  padding-right: 20px; /* espaço extra à direita */
   width: 100%;
   box-sizing: border-box;
   align-items: flex-start;
 
   /* Ajuste para compensar sidebar fixa */
-  margin-left: -240px;
+  margin-left: -220px;
 }
 
 /* Espaço invisível no final para evitar corte do último card */
