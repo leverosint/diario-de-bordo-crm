@@ -35,10 +35,10 @@ const STATUS_COLORS: { [key: string]: string } = {
 const STATUS_ORDER = [
   'Sem Faturamento',
   'Base Ativa',
-  '30 dias',
-  '60 dias',
-  '90 dias',
-  '120 dias'
+  '30 dias s/ Fat',
+  '60 dias s/ Fat',
+  '90 dias s/ Fat',
+  '120 dias s/ Fat'
 ];
 
 const COLORS = Object.values(STATUS_COLORS); // ✅ Adicione ESSA LINHA aqui
