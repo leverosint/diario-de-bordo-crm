@@ -1,43 +1,26 @@
 .pageContainer {
   width: 100%;
-  height: 100%;
-  padding: 0;
+  padding: 16px;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
 }
 
-/* Kanban Board (com scroll horizontal) */
+/* Kanban Board com responsividade e scroll */
 .kanbanBoard {
   display: flex;
   flex-wrap: nowrap;
   gap: 20px;
   overflow-x: auto;
   white-space: nowrap;
-  padding-left: 8px;
-  padding-right: 10px; /* espaço extra à direita */
-  width: 100%;
+  padding: 0 16px 16px 16px;
   box-sizing: border-box;
-  align-items: flex-start;
-
-  /* Ajuste para compensar sidebar fixa */
-  margin-left: -210px;
+  width: 100%;
 }
 
-/* Espaço invisível no final para evitar corte do último card */
+/* Adiciona espaço extra à direita para evitar corte do último card */
 .kanbanBoard::after {
   content: '';
   display: block;
-  min-width: 60px; /* você pode aumentar se quiser mais margem */
-}
-
-/* Sidebar recolhida (mobile) */
-@media (max-width: 768px) {
-  .kanbanBoard {
-    margin-left: -60px;
-    padding-right: 40px;
-  }
+  min-width: 24px;
 }
 
 /* Coluna do Kanban */
@@ -47,7 +30,7 @@
   border-radius: 12px;
   padding: 12px;
   height: 70vh;
-  min-width: 250px;
+  min-width: 280px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
