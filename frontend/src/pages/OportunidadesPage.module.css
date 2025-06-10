@@ -1,6 +1,6 @@
 .pageContainer {
   width: 100%;
-  padding: 16px;
+  padding: 16px 16px 16px 0; /* Padding direito mantido, esquerdo removido */
   box-sizing: border-box;
 }
 
@@ -10,19 +10,22 @@
   flex-wrap: nowrap;
   gap: 10px;
   overflow-x: auto;
-  width: 100%; /* Alterado para 100% */
-  padding: 0; /* Removido padding direito */
+  width: 100%;
+  padding-left: 16px; /* Padding apenas à esquerda */
+  margin-left: -16px; /* Compensa o padding do container */
   box-sizing: border-box;
+  scrollbar-gutter: stable;
 }
 
 /* Para tela menor, Sidebar recolhida */
 @media (max-width: 768px) {
   .kanbanBoard {
-    width: 100%;
+    padding-left: 8px;
+    margin-left: -8px;
   }
 }
 
-/* Restante do seu CSS permanece igual */
+/* Coluna do Kanban */
 .kanbanColumn {
   background-color: #ffffff;
   border: 2px solid;
@@ -35,6 +38,7 @@
   box-sizing: border-box;
 }
 
+/* Título da Coluna */
 .kanbanTitle {
   text-align: center;
   font-weight: 700;
@@ -42,6 +46,7 @@
   margin-bottom: 12px;
 }
 
+/* Container dos Cards */
 .kanbanCards {
   flex-grow: 1;
   display: flex;
@@ -50,6 +55,7 @@
   overflow-y: auto;
 }
 
+/* Card Individual */
 .cardItem {
   background-color: #fff;
   border-radius: 8px;
@@ -58,6 +64,7 @@
   border-top: 6px solid transparent;
 }
 
+/* Estilização da scrollbar */
 .kanbanBoard::-webkit-scrollbar {
   height: 8px;
 }
@@ -67,4 +74,10 @@
 }
 .kanbanBoard::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* Melhoria para Firefox */
+.kanbanBoard {
+  scrollbar-width: thin;
+  scrollbar-color: #ccc transparent;
 }
