@@ -4,25 +4,15 @@
   box-sizing: border-box;
 }
 
-/* Kanban Board colado à esquerda e com rolagem horizontal */
+/* Kanban sem scroll, com grid responsivo */
 .kanbanBoard {
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 10px;
-  overflow-x: auto;
-  width: calc(100vw - 260px); /* 260px da sidebar */
-  padding-left: 0;
-  padding-right: 24px;
-  margin-left: 0px; /* compensar o padding da pageContainer */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
   box-sizing: border-box;
-}
-
-/* Para tela menor, Sidebar recolhida */
-@media (max-width: 768px) {
-  .kanbanBoard {
-    width: 100vw;
-    margin-left: 0;
-  }
 }
 
 /* Coluna do Kanban */
@@ -32,7 +22,6 @@
   border-radius: 12px;
   padding: 12px;
   height: 70vh;
-  min-width: 280px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -64,14 +53,14 @@
   border-top: 6px solid transparent;
 }
 
-/* Scroll bonito */
-.kanbanBoard::-webkit-scrollbar {
-  height: 8px;
+/* Scroll bonito só vertical se houver */
+.kanbanCards::-webkit-scrollbar {
+  width: 6px;
 }
-.kanbanBoard::-webkit-scrollbar-thumb {
+.kanbanCards::-webkit-scrollbar-thumb {
   background: #ccc;
   border-radius: 4px;
 }
-.kanbanBoard::-webkit-scrollbar-track {
+.kanbanCards::-webkit-scrollbar-track {
   background: transparent;
 }
