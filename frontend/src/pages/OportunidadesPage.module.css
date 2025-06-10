@@ -8,7 +8,7 @@
 .kanbanBoard {
   display: flex;
   flex-wrap: nowrap;
-  gap: 16px;
+  gap: 5px;
   overflow-x: hidden; /* 🔥 remove scroll lateral */
   padding-left: 0;
   padding-right: 16px;
