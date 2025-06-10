@@ -41,14 +41,19 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
 
   return (
     <AppShell
-      padding="md"
-      style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}  // <-- ESSA LINHA IMPORTANTE
+      padding={0} // ✅ Sem padding global
       navbar={{
         width: 260,
         breakpoint: 'sm',
         collapsed: { mobile: !opened, desktop: !opened },
       }}
       header={{ height: 60 }}
+      styles={{
+        main: {
+          paddingLeft: opened ? 260 : 60, // ✅ Ajusta o conteúdo baseado na sidebar
+          transition: 'padding-left 0.3s ease',
+        },
+      }}
     >
       <AppShellHeader withBorder={false} style={{ background: '#005A64' }}>
         <Group h="100%" px="md" justify="space-between">
@@ -128,7 +133,7 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
         </Group>
       </AppShellNavbar>
 
-      <AppShellMain style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+      <AppShellMain>
         {children}
       </AppShellMain>
     </AppShell>
