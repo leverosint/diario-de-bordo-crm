@@ -30,6 +30,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/relatorios" element={<Relatorios />} />
           </Routes>
         </BrowserRouter>
+        
       </ModalsProvider>
     </MantineProvider>
     
