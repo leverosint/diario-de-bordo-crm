@@ -52,47 +52,71 @@ class UploadParceirosView(viewsets.ViewSet):
 
         try:
             df = pd.read_excel(file_obj)
+
+            # ✅ Padroniza os nomes das colunas
+            df.columns = [str(col).strip().lower()
+                          .replace(" ", "_")
+                          .replace("á", "a").replace("ã", "a").replace("â", "a")
+                          .replace("é", "e").replace("ê", "e")
+                          .replace("í", "i")
+                          .replace("ó", "o").replace("ô", "o")
+                          .replace("ú", "u")
+                          .replace("ç", "c")
+                          for col in df.columns]
+
         except Exception as e:
             return Response({'erro': f'Erro ao ler arquivo: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+        criadas = 0
+        atualizadas = 0
 
         try:
             with transaction.atomic():
                 for _, row in df.iterrows():
-                    canal_nome = str(row.get('Canal de Venda')).strip()
+                    canal_nome = str(row.get('canal_de_venda', '')).strip()
                     canal, _ = CanalVenda.objects.get_or_create(nome=canal_nome)
 
                     parceiro_data = {
-                        'codigo': str(row.get('Código')).strip(),
-                        'parceiro': row.get('Parceiro', '').strip(),
-                        'classificacao': row.get('Classificação', '').strip(),
-                        'consultor': str(row.get('Consultor')).strip(),
-                        'cidade': row.get('Cidade', '').strip(),
-                        'uf': row.get('UF', '').strip(),
-                        'unidade': row.get('Unidade', '').strip(),
+                        'codigo': str(row.get('codigo', '')).strip(),
+                        'parceiro': str(row.get('parceiro', '')).strip(),
+                        'classificacao': str(row.get('classificacao', '')).strip(),
+                        'consultor': str(row.get('consultor', '')).strip(),
+                        'cidade': str(row.get('cidade', '')).strip(),
+                        'uf': str(row.get('uf', '')).strip(),
+                        'unidade': str(row.get('unidade', '')).strip(),
                         'canal_venda': canal,
-                        'janeiro': row.get('Janeiro', 0) or 0,
-                        'fevereiro': row.get('Fevereiro', 0) or 0,
-                        'marco': row.get('Março', 0) or 0,
-                        'abril': row.get('Abril', 0) or 0,
-                        'maio': row.get('Maio', 0) or 0,
-                        'junho': row.get('Junho', 0) or 0,
-                        'julho': row.get('Julho', 0) or 0,
-                        'agosto': row.get('Agosto', 0) or 0,
-                        'setembro': row.get('Setembro', 0) or 0,
-                        'outubro': row.get('Outubro', 0) or 0,
-                        'novembro': row.get('Novembro', 0) or 0,
-                        'dezembro': row.get('Dezembro', 0) or 0,
-                        'janeiro_2': row.get('Janeiro 2', 0) or 0,
-                        'fevereiro_2': row.get('Fevereiro 2', 0) or 0,
-                        'marco_2': row.get('Março 2', 0) or 0,
+                        'janeiro': row.get('janeiro', 0) or 0,
+                        'fevereiro': row.get('fevereiro', 0) or 0,
+                        'marco': row.get('marco', 0) or 0,
+                        'abril': row.get('abril', 0) or 0,
+                        'maio': row.get('maio', 0) or 0,
+                        'junho': row.get('junho', 0) or 0,
+                        'julho': row.get('julho', 0) or 0,
+                        'agosto': row.get('agosto', 0) or 0,
+                        'setembro': row.get('setembro', 0) or 0,
+                        'outubro': row.get('outubro', 0) or 0,
+                        'novembro': row.get('novembro', 0) or 0,
+                        'dezembro': row.get('dezembro', 0) or 0,
+                        'janeiro_2': row.get('janeiro_2', 0) or 0,
+                        'fevereiro_2': row.get('fevereiro_2', 0) or 0,
+                        'marco_2': row.get('marco_2', 0) or 0,
                     }
 
-                    Parceiro.objects.update_or_create(
+                    parceiro_obj, created = Parceiro.objects.update_or_create(
                         codigo=parceiro_data['codigo'],
                         defaults=parceiro_data
                     )
 
-            return Response({'mensagem': 'Parceiros importados com sucesso'}, status=status.HTTP_200_OK)
+                    if created:
+                        criadas += 1
+                    else:
+                        atualizadas += 1
+
+            return Response({
+                'mensagem': 'Upload concluído com sucesso.',
+                'criadas': criadas,
+                'atualizadas': atualizadas
+            }, status=status.HTTP_200_OK)
 
         except Exception as e:
             return Response({'erro': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
