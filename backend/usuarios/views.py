@@ -41,6 +41,7 @@ class ParceiroViewSet(viewsets.ModelViewSet):
         return Parceiro.objects.none()
 
 # ===== Upload Parceiros (Excel) =====
+# ===== Upload Parceiros (Excel) =====
 class UploadParceirosView(viewsets.ViewSet):
     parser_classes = [MultiPartParser]
     permission_classes = [IsAuthenticated]
@@ -51,7 +52,8 @@ class UploadParceirosView(viewsets.ViewSet):
             return Response({'erro': 'Arquivo não enviado'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            df = pd.read_excel(file_obj, header=None)
+            # Pula o cabeçalho (linha 1) e define os nomes fixos para as colunas
+            df = pd.read_excel(file_obj, skiprows=1, header=None)
             df.columns = [
                 'codigo', 'parceiro', 'classificacao', 'consultor', 'unidade',
                 'cidade', 'uf', 'primeiro_fat', 'ultimo_fat',
@@ -67,7 +69,7 @@ class UploadParceirosView(viewsets.ViewSet):
                 return None
             if isinstance(val, str):
                 try:
-                    return pd.to_datetime(val, dayfirst=True).date()
+                    return pd.to_datetime(val).date()
                 except Exception:
                     return None
             if isinstance(val, pd.Timestamp):
@@ -75,11 +77,10 @@ class UploadParceirosView(viewsets.ViewSet):
             return None
 
         def parse_val(val):
-            if pd.isna(val):
-                return 0
             try:
-                val_str = str(val).replace("R$", "").replace(".", "").replace(",", ".").strip()
-                return float(val_str)
+                if pd.isna(val) or val == "nan":
+                    return 0
+                return float(str(val).replace("R$", "").replace(",", ".").strip())
             except:
                 return 0
 
@@ -138,6 +139,7 @@ class UploadParceirosView(viewsets.ViewSet):
 
         except Exception as e:
             return Response({'erro': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 
