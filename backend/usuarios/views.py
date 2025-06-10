@@ -51,18 +51,16 @@ class UploadParceirosView(viewsets.ViewSet):
             return Response({'erro': 'Arquivo não enviado'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            df = pd.read_excel(file_obj)
+            # Lê a planilha sem confiar no cabeçalho
+            df = pd.read_excel(file_obj, header=None)
 
-            # ✅ Padroniza os nomes das colunas
-            df.columns = [str(col).strip().lower()
-                          .replace(" ", "_")
-                          .replace("á", "a").replace("ã", "a").replace("â", "a")
-                          .replace("é", "e").replace("ê", "e")
-                          .replace("í", "i")
-                          .replace("ó", "o").replace("ô", "o")
-                          .replace("ú", "u")
-                          .replace("ç", "c")
-                          for col in df.columns]
+            # Define manualmente os nomes das colunas pela ordem da planilha
+            df.columns = [
+                'codigo', 'parceiro', 'classificacao', 'consultor', 'unidade',
+                'cidade', 'uf', 'primeiro_fat', 'ultimo_fat', 'janeiro', 'fevereiro',
+                'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro',
+                'outubro', 'novembro', 'dezembro', 'janeiro_2', 'fevereiro_2', 'marco_2'
+            ]
 
         except Exception as e:
             return Response({'erro': f'Erro ao ler arquivo: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
@@ -73,33 +71,47 @@ class UploadParceirosView(viewsets.ViewSet):
         try:
             with transaction.atomic():
                 for _, row in df.iterrows():
-                    canal_nome = str(row.get('canal_de_venda', '')).strip()
+                    canal_nome = 'Canal Padrão'  # ou extraia de uma coluna fixa, se quiser
                     canal, _ = CanalVenda.objects.get_or_create(nome=canal_nome)
 
+                    def parse_data(val):
+                        if pd.isna(val):
+                            return None
+                        if isinstance(val, str):
+                            try:
+                                return pd.to_datetime(val).date()
+                            except Exception:
+                                return None
+                        if isinstance(val, pd.Timestamp):
+                            return val.date()
+                        return None
+
                     parceiro_data = {
-                        'codigo': str(row.get('codigo', '')).strip(),
-                        'parceiro': str(row.get('parceiro', '')).strip(),
-                        'classificacao': str(row.get('classificacao', '')).strip(),
-                        'consultor': str(row.get('consultor', '')).strip(),
-                        'cidade': str(row.get('cidade', '')).strip(),
-                        'uf': str(row.get('uf', '')).strip(),
-                        'unidade': str(row.get('unidade', '')).strip(),
+                        'codigo': str(row['codigo']).strip(),
+                        'parceiro': str(row['parceiro']).strip(),
+                        'classificacao': str(row['classificacao']).strip(),
+                        'consultor': str(row['consultor']).strip(),
+                        'unidade': str(row['unidade']).strip(),
+                        'cidade': str(row['cidade']).strip(),
+                        'uf': str(row['uf']).strip(),
+                        'primeiro_fat': parse_data(row['primeiro_fat']),
+                        'ultimo_fat': parse_data(row['ultimo_fat']),
                         'canal_venda': canal,
-                        'janeiro': row.get('janeiro', 0) or 0,
-                        'fevereiro': row.get('fevereiro', 0) or 0,
-                        'marco': row.get('marco', 0) or 0,
-                        'abril': row.get('abril', 0) or 0,
-                        'maio': row.get('maio', 0) or 0,
-                        'junho': row.get('junho', 0) or 0,
-                        'julho': row.get('julho', 0) or 0,
-                        'agosto': row.get('agosto', 0) or 0,
-                        'setembro': row.get('setembro', 0) or 0,
-                        'outubro': row.get('outubro', 0) or 0,
-                        'novembro': row.get('novembro', 0) or 0,
-                        'dezembro': row.get('dezembro', 0) or 0,
-                        'janeiro_2': row.get('janeiro_2', 0) or 0,
-                        'fevereiro_2': row.get('fevereiro_2', 0) or 0,
-                        'marco_2': row.get('marco_2', 0) or 0,
+                        'janeiro': row['janeiro'] or 0,
+                        'fevereiro': row['fevereiro'] or 0,
+                        'marco': row['marco'] or 0,
+                        'abril': row['abril'] or 0,
+                        'maio': row['maio'] or 0,
+                        'junho': row['junho'] or 0,
+                        'julho': row['julho'] or 0,
+                        'agosto': row['agosto'] or 0,
+                        'setembro': row['setembro'] or 0,
+                        'outubro': row['outubro'] or 0,
+                        'novembro': row['novembro'] or 0,
+                        'dezembro': row['dezembro'] or 0,
+                        'janeiro_2': row['janeiro_2'] or 0,
+                        'fevereiro_2': row['fevereiro_2'] or 0,
+                        'marco_2': row['marco_2'] or 0,
                     }
 
                     parceiro_obj, created = Parceiro.objects.update_or_create(
