@@ -13,7 +13,8 @@
   width: 100%;
   padding-left: 0;
   padding-right: 0;
-  margin-left: -16px; /* força grudar na esquerda, compensando o padding da pageContainer */
+  position: relative;
+  left: -16px;
   box-sizing: border-box;
 }
 
