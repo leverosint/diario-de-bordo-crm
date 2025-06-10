@@ -10,11 +10,10 @@
   flex-wrap: nowrap;
   gap: 10px;
   overflow-x: auto;
-  width: 100%;
+  width: calc(100vw - -20px); /* 260px da sidebar */
   padding-left: 0;
-  padding-right: 0;
-  position: relative;
-  left: -16px;
+  padding-right: 24px;
+  margin-left: -16px; /* compensar o padding da pageContainer */
   box-sizing: border-box;
 }
 
