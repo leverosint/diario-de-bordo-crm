@@ -70,6 +70,9 @@ export default function Dashboard() {
   const [tabelaParceiros, setTabelaParceiros] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [interacoesStatus, setInteracoesStatus] = useState<Record<string, number>>({});
+  const [parceirosContatadosStatus, setParceirosContatadosStatus] = useState<Record<string, number>>({}); // ✅ ADICIONE AQUI
+
+  
 
   
 
@@ -93,6 +96,7 @@ export default function Dashboard() {
 
       setKpis(kpiRes.data.kpis);
       setInteracoesStatus(kpiRes.data.interacoes_status || {});
+      setParceirosContatadosStatus(kpiRes.data.parceiros_contatados_status || {}); // ✅ NOVA LINHA
       setTabelaParceiros(kpiRes.data.parceiros || []);
       setDadosFunil(funilRes.data);
       setDadosBarra(barraRes.data);
@@ -259,6 +263,27 @@ export default function Dashboard() {
 
 
 
+<Divider my="md" />
+<Title order={3} mb="sm">Parceiros Contatados (com Interação) por Status</Title>
+<Grid mb="xl">
+  {STATUS_ORDER.map(status => (
+    <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={`contatados-${status}`}>
+      <Card
+        shadow="md"
+        padding="lg"
+        radius="lg"
+        withBorder
+        style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}
+      >
+        {/* ✅ Nome formatado usando STATUS_LABELS */}
+        <Title order={4} style={{ textAlign: 'center' }}>{STATUS_LABELS[status] || status}</Title>
+        <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
+          {parceirosContatadosStatus[status] || 0}
+        </Text>
+      </Card>
+    </Grid.Col>
+  ))}
+</Grid>
 
 
 
