@@ -209,7 +209,7 @@ class InteracaoViewSet(viewsets.ModelViewSet):
             return Interacao.objects.filter(usuario=user)
         return Interacao.objects.none()
 
-       def perform_create(self, serializer):
+    def perform_create(self, serializer):
         parceiro = serializer.validated_data['parceiro']
         status_no_momento = parceiro.status
         serializer.save(usuario=self.request.user, status=status_no_momento)
@@ -329,7 +329,10 @@ class RegistrarInteracaoView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)
+        parceiro = serializer.validated_data['parceiro']
+        status_no_momento = parceiro.status
+        serializer.save(usuario=self.request.user, status=status_no_momento)
+
 
 # ===== Oportunidades =====
 class OportunidadeViewSet(viewsets.ModelViewSet):
