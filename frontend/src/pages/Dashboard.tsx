@@ -216,6 +216,14 @@ for (const parceiro of parceirosFiltrados) {
     XLSX.writeFile(wb, `${fileName}.xlsx`);
   };
 
+  const statusData = STATUS_ORDER.map(status => ({
+    status: STATUS_LABELS[status] || status,
+    parceiros: kpis.find(k => k.title === status)?.value || 0,
+    interacoes: parceirosContatadosStatusFiltrado[status] || 0,
+    contatados: parceirosContatadosStatus[status] || 0,
+  }));
+  
+
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <Container fluid style={{ padding: 0, maxWidth: '100%' }}>
@@ -244,61 +252,51 @@ for (const parceiro of parceirosFiltrados) {
 
  {/* KPIs - Status */}
 <Title order={3} mb="sm">Quantidade de Parceiros Sem Faturamento por Status</Title>
-<Grid mb="xl">
-  {STATUS_ORDER.map(status => (
-    <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={status}>
-      <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}>
-      <Title order={4} style={{ textAlign: 'center' }}>{STATUS_LABELS[status] || status}</Title>
-        <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-          {kpis.find(k => k.title === status)?.value || 0}
-        </Text>
-      </Card>
-    </Grid.Col>
-  ))}
-</Grid>
+<Card shadow="md" padding="lg" radius="lg" withBorder mb="xl">
+  <ResponsiveContainer width="100%" height={300}>
+    <BarChart data={statusData}>
+      <XAxis dataKey="status" />
+      <YAxis />
+      <RechartsTooltip />
+      <Bar dataKey="parceiros" fill="#228be6" />
+    </BarChart>
+  </ResponsiveContainer>
+</Card>
+
 
 <Divider my="md" />
 
 
 {/* Interações por Status */}
 <Title order={3} mb="sm">Quantidade de Interações por Status</Title>
-<Grid mb="xl">
-  {STATUS_ORDER.map(status => (
-    <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={`inter-${status}`}>
-      <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}>
-        <Title order={4} style={{ textAlign: 'center' }}>{STATUS_LABELS[status] || status}</Title>
-        <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-        {parceirosContatadosStatusFiltrado[status] || 0}
-        </Text>
-      </Card>
-    </Grid.Col>
-  ))}
-</Grid>
+<Card shadow="md" padding="lg" radius="lg" withBorder mb="xl">
+  <ResponsiveContainer width="100%" height={300}>
+    <BarChart data={statusData}>
+      <XAxis dataKey="status" />
+      <YAxis />
+      <RechartsTooltip />
+      <Bar dataKey="interacoes" fill="#40c057" />
+    </BarChart>
+  </ResponsiveContainer>
+</Card>
+  
 
 
 
 
 <Divider my="md" />
 <Title order={3} mb="sm">Parceiros Contatados por Status</Title>
-<Grid mb="xl">
-  {STATUS_ORDER.map(status => (
-    <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={`contatados-${status}`}>
-      <Card
-        shadow="md"
-        padding="lg"
-        radius="lg"
-        withBorder
-        style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}
-      >
-        {/* ✅ Nome formatado usando STATUS_LABELS */}
-        <Title order={4} style={{ textAlign: 'center' }}>{STATUS_LABELS[status] || status}</Title>
-        <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-          {parceirosContatadosStatus[status] || 0}
-        </Text>
-      </Card>
-    </Grid.Col>
-  ))}
-</Grid>
+<Card shadow="md" padding="lg" radius="lg" withBorder mb="xl">
+  <ResponsiveContainer width="100%" height={300}>
+    <BarChart data={statusData}>
+      <XAxis dataKey="status" />
+      <YAxis />
+      <RechartsTooltip />
+      <Bar dataKey="contatados" fill="#fa5252" />
+    </BarChart>
+  </ResponsiveContainer>
+</Card>
+
 
 
 <Divider my="md" />
