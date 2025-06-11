@@ -369,19 +369,32 @@ class DashboardKPIView(APIView):
 
     def get(self, request):
         user = request.user
+        mes = int(request.query_params.get('mes', now().month))
+        ano = int(request.query_params.get('ano', now().year))
+
+        # Data inicial e final do mês
+        from datetime import datetime
+        data_inicio = datetime(ano, mes, 1)
+        if mes == 12:
+            data_fim = datetime(ano + 1, 1, 1)
+        else:
+            data_fim = datetime(ano, mes + 1, 1)
+
+        # Filtro por tipo de usuário
         if user.tipo_user == 'ADMIN':
             parceiros = Parceiro.objects.all()
-            interacoes = Interacao.objects.all()
+            interacoes = Interacao.objects.filter(data_interacao__range=(data_inicio, data_fim))
             oportunidades = Oportunidade.objects.all()
         elif user.tipo_user == 'GESTOR':
             parceiros = Parceiro.objects.filter(canal_venda__in=user.canais_venda.all())
-            interacoes = Interacao.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
+            interacoes = Interacao.objects.filter(parceiro__canal_venda__in=user.canais_venda.all(), data_interacao__range=(data_inicio, data_fim))
             oportunidades = Oportunidade.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
         else:
             parceiros = Parceiro.objects.filter(consultor=user.id_vendedor)
-            interacoes = Interacao.objects.filter(usuario=user)
+            interacoes = Interacao.objects.filter(usuario=user, data_interacao__range=(data_inicio, data_fim))
             oportunidades = Oportunidade.objects.filter(usuario=user)
 
+        # KPIs vivos (base de parceiros atual, sem filtro de mês)
         status_counts = {
             'Sem Faturamento': parceiros.filter(status='Sem Faturamento').count(),
             'Base Ativa': parceiros.filter(status='Base Ativa').count(),
@@ -419,45 +432,31 @@ class DashboardKPIView(APIView):
             {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
         ]
 
-        parceiros_data = []
-        for parceiro in parceiros:
-            ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
-            parceiros_data.append({
-                "id": parceiro.id,
-                "parceiro": parceiro.parceiro,
-                "status": parceiro.status,
-                "total": float(parceiro.total_geral or 0),
-                "ultima_interacao": ultima_interacao.data_interacao.strftime("%d/%m/%Y") if ultima_interacao else None,
-                "tem_interacao": parceiro.interacoes.exists(),
-                "tem_oportunidade": parceiro.oportunidades.exists(),
-            })
-
+        # Interações por status (todas do mês)
         interacoes_por_status = (
             interacoes
-            .values('parceiro__status')
+            .values('status')
             .annotate(total=Count('id'))
         )
 
         interacoes_status_dict = {
-            item['parceiro__status']: item['total']
+            item['status'] or 'Sem Status': item['total']
             for item in interacoes_por_status
-            if item['parceiro__status'] is not None
         }
 
-        parceiros_interagidos = (
-            interacoes
-            .values('parceiro_id', 'parceiro__status')
-            .distinct()
+        # Parceiros contatados por status (primeira interação do mês por parceiro)
+        primeiras_interacoes = (
+            interacoes.order_by('parceiro_id', 'data_interacao')
+            .distinct('parceiro_id')
         )
 
         parceiros_contatados_status = {}
-        for item in parceiros_interagidos:
-            status = item['parceiro__status'] or 'Sem Status'
+        for interacao in primeiras_interacoes:
+            status = interacao.status or 'Sem Status'
             parceiros_contatados_status[status] = parceiros_contatados_status.get(status, 0) + 1
 
         return Response({
             "kpis": kpis,
-            "parceiros": parceiros_data,
             "interacoes_status": interacoes_status_dict,
             "parceiros_contatados_status": parceiros_contatados_status,
         })

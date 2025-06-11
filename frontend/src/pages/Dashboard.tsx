@@ -22,6 +22,7 @@ import {
 } from 'recharts';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
+import { Select } from '@mantine/core'; // ✅ Mantém aqui no topo
 
 const STATUS_COLORS: { [key: string]: string } = {
   'Sem Faturamento': '#228be6',
@@ -59,6 +60,14 @@ const STATUS_OPTIONS = STATUS_ORDER.map((status) => ({
 const COLORS = Object.values(STATUS_COLORS); // ✅ Adicione ESSA LINHA aqui
 
 
+const MESES = [
+  { value: '1', label: 'Janeiro' }, { value: '2', label: 'Fevereiro' }, { value: '3', label: 'Março' },
+  { value: '4', label: 'Abril' }, { value: '5', label: 'Maio' }, { value: '6', label: 'Junho' },
+  { value: '7', label: 'Julho' }, { value: '8', label: 'Agosto' }, { value: '9', label: 'Setembro' },
+  { value: '10', label: 'Outubro' }, { value: '11', label: 'Novembro' }, { value: '12', label: 'Dezembro' },
+];
+
+const ANOS = ['2024', '2025', '2026'].map(ano => ({ value: ano, label: ano }));
 
 
 export default function Dashboard() {
@@ -75,35 +84,40 @@ export default function Dashboard() {
 
   
 
-
+  const [mesSelecionado, setMesSelecionado] = useState<string | null>('6');
+  const [anoSelecionado, setAnoSelecionado] = useState<string | null>('2025');
   const [statusFiltro, setStatusFiltro] = useState<string[]>([]);
   const [pageMap, setPageMap] = useState<{ [key: string]: number }>({});
   const recordsPerPage = 5;
 
   const token = localStorage.getItem('token');
 
+  
   const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const headers = { Authorization: `Bearer ${token}` };
-
-      const [kpiRes, funilRes, barraRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/dashboard/kpis/`, { headers }),
-        axios.get(`${import.meta.env.VITE_API_URL}/dashboard/funil/`, { headers }),
-        axios.get(`${import.meta.env.VITE_API_URL}/dashboard/oportunidades-mensais/`, { headers }),
-      ]);
-
-      setKpis(kpiRes.data.kpis);
-      setParceirosContatadosStatus(kpiRes.data.parceiros_contatados_status || {}); // ✅ NOVA LINHA
-      setTabelaParceiros(kpiRes.data.parceiros || []);
-      setDadosFunil(funilRes.data);
-      setDadosBarra(barraRes.data);
-    } catch (error) {
-      console.error('Erro ao buscar dados do dashboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        setLoading(true);
+        const headers = { Authorization: `Bearer ${token}` };
+        const mes = mesSelecionado || String(new Date().getMonth() + 1);
+        const ano = anoSelecionado || String(new Date().getFullYear());
+    
+        const [kpiRes, funilRes, barraRes] = await Promise.all([
+          axios.get(`${import.meta.env.VITE_API_URL}/dashboard/kpis/?mes=${mes}&ano=${ano}`, { headers }),
+          axios.get(`${import.meta.env.VITE_API_URL}/dashboard/funil/`, { headers }),
+          axios.get(`${import.meta.env.VITE_API_URL}/dashboard/oportunidades-mensais/`, { headers }),
+        ]);
+    
+        setKpis(kpiRes.data.kpis);
+        setParceirosContatadosStatus(kpiRes.data.parceiros_contatados_status || {});
+        setTabelaParceiros(kpiRes.data.parceiros || []);
+        setDadosFunil(funilRes.data);
+        setDadosBarra(barraRes.data);
+      } catch (error) {
+        console.error('Erro ao buscar dados do dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
 
   const fetchHistoricoInteracoes = async (parceiroId: number) => {
     try {
@@ -255,7 +269,29 @@ STATUS_ORDER.forEach(status => {
               Resetar Filtros
             </Button>
           </Group>
+          <Group mb="xl" grow>
+  <Select
+    data={MESES}
+    label="Mês"
+    placeholder="Selecione"
+    value={mesSelecionado}
+    onChange={setMesSelecionado}
+  />
+  <Select
+    data={ANOS}
+    label="Ano"
+    placeholder="Selecione"
+    value={anoSelecionado}
+    onChange={setAnoSelecionado}
+  />
+  <Button color="teal" variant="filled" onClick={fetchDashboardData}>
+    Aplicar Filtro
+  </Button>
+</Group>
 
+         
+         
+          
  {/* KPIs - Status */}
  <Title order={3} mb="sm">Parceiros Sem Faturamento por Status</Title>
 <ResponsiveContainer width="100%" height={300}>
