@@ -92,7 +92,7 @@ export default function Dashboard() {
       ]);
 
       setKpis(kpiRes.data.kpis);
-      setInteracoesStatus(kpiRes.data.interacoes_status || []);
+      setInteracoesStatus(kpiRes.data.interacoes_status || {});
       setTabelaParceiros(kpiRes.data.parceiros || []);
       setDadosFunil(funilRes.data);
       setDadosBarra(barraRes.data);
