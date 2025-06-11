@@ -377,13 +377,13 @@ class DashboardKPIView(APIView):
             oportunidades = Oportunidade.objects.filter(usuario=user)
 
         status_counts = {
-    'Sem Faturamento': parceiros.filter(status='Sem Faturamento').count(),
-    'Base Ativa': parceiros.filter(status='Base Ativa').count(),
-    '30 dias s/ Fat': parceiros.filter(status='30 dias s/ Fat').count(),
-    '60 dias s/ Fat': parceiros.filter(status='60 dias s/ Fat').count(),
-    '90 dias s/ Fat': parceiros.filter(status='90 dias s/ Fat').count(),
-    '120 dias s/ Fat': parceiros.filter(status='120 dias s/ Fat').count(),
-}
+            'Sem Faturamento': parceiros.filter(status='Sem Faturamento').count(),
+            'Base Ativa': parceiros.filter(status='Base Ativa').count(),
+            '30 dias s/ Fat': parceiros.filter(status='30 dias s/ Fat').count(),
+            '60 dias s/ Fat': parceiros.filter(status='60 dias s/ Fat').count(),
+            '90 dias s/ Fat': parceiros.filter(status='90 dias s/ Fat').count(),
+            '120 dias s/ Fat': parceiros.filter(status='120 dias s/ Fat').count(),
+        }
 
         total_interacoes = interacoes.count()
         total_oportunidades = oportunidades.count()
@@ -398,12 +398,12 @@ class DashboardKPIView(APIView):
         taxa_orcamento_pedido = (total_pedidos / total_orcamentos * 100) if total_orcamentos > 0 else 0
 
         kpis = [
-              {"title": "Sem Faturamento", "value": status_counts['Sem Faturamento']},
-     {"title": "Base Ativa", "value": status_counts['Base Ativa']},
-    {"title": "30 dias s/ Fat", "value": status_counts['30 dias s/ Fat']},
-    {"title": "60 dias s/ Fat", "value": status_counts['60 dias s/ Fat']},
-    {"title": "90 dias s/ Fat", "value": status_counts['90 dias s/ Fat']},
-    {"title": "120 dias s/ Fat", "value": status_counts['120 dias s/ Fat']},
+            {"title": "Sem Faturamento", "value": status_counts['Sem Faturamento']},
+            {"title": "Base Ativa", "value": status_counts['Base Ativa']},
+            {"title": "30 dias s/ Fat", "value": status_counts['30 dias s/ Fat']},
+            {"title": "60 dias s/ Fat", "value": status_counts['60 dias s/ Fat']},
+            {"title": "90 dias s/ Fat", "value": status_counts['90 dias s/ Fat']},
+            {"title": "120 dias s/ Fat", "value": status_counts['120 dias s/ Fat']},
             {"title": "Interações", "value": total_interacoes},
             {"title": "Oportunidades", "value": total_oportunidades},
             {"title": "Taxa Interação > Oportunidade", "value": f"{taxa_interacao_oportunidade:.1f}%"},
@@ -426,25 +426,37 @@ class DashboardKPIView(APIView):
                 "tem_oportunidade": parceiro.oportunidades.exists(),
             })
 
-        # === NOVO BLOCO: Interações por Status ===
         interacoes_por_status = (
-             interacoes
-              .values('parceiro__status')
-                 .annotate(total=Count('id'))
-)
+            interacoes
+            .values('parceiro__status')
+            .annotate(total=Count('id'))
+        )
 
         interacoes_status_dict = {
-        item['parceiro__status']: item['total']
-        for item in interacoes_por_status
-        if item['parceiro__status'] is not None
-}
+            item['parceiro__status']: item['total']
+            for item in interacoes_por_status
+            if item['parceiro__status'] is not None
+        }
 
+        parceiros_interagidos = (
+            interacoes
+            .values('parceiro_id', 'parceiro__status')
+            .distinct()
+        )
+
+        parceiros_contatados_status = {}
+        for item in parceiros_interagidos:
+            status = item['parceiro__status'] or 'Sem Status'
+            parceiros_contatados_status[status] = parceiros_contatados_status.get(status, 0) + 1
 
         return Response({
             "kpis": kpis,
             "parceiros": parceiros_data,
-            "interacoes_status": interacoes_status_dict  # ✅ campo adicionado
+            "interacoes_status": interacoes_status_dict,
+            "parceiros_contatados_status": parceiros_contatados_status,
         })
+
+       
 
 
 # ===== Funil de Conversão =====
@@ -470,6 +482,7 @@ class DashboardFunilView(APIView):
             {"name": "Pedidos", "value": oportunidades.filter(etapa='pedido').count()},
             {"name": "Perdidas", "value": oportunidades.filter(etapa='perdida').count()},
         ])
+
 
 # ===== Evolução Mensal de Oportunidades =====
 class DashboardOportunidadesMensaisView(APIView):
