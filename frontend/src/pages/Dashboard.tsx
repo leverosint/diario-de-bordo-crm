@@ -157,6 +157,11 @@ export default function Dashboard() {
   const parceirosInteracoes = parceirosFiltrados.filter(p => p.tem_interacao);
   const parceirosOportunidades = parceirosFiltrados.filter(p => p.tem_oportunidade);
   const parceirosPendentes = parceirosFiltrados.filter(p => !p.tem_interacao);
+  // 📊 Cálculo de KPIs de Contato
+  const totalCarteira = parceirosFiltrados.length;
+  const totalContatados = Object.values(parceirosContatadosStatus).reduce((sum, val) => sum + val, 0);
+  const percentualContatado = totalCarteira > 0 ? (totalContatados / totalCarteira) * 100 : 0;
+
 
   const getPaginatedData = (key: string, data: any[]) => {
     const page = pageMap[key] || 1;
@@ -264,7 +269,7 @@ export default function Dashboard() {
 
 
 <Divider my="md" />
-<Title order={3} mb="sm">Parceiros Contatados (com Interação) por Status</Title>
+<Title order={3} mb="sm">Parceiros Contatados por Status</Title>
 <Grid mb="xl">
   {STATUS_ORDER.map(status => (
     <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={`contatados-${status}`}>
@@ -285,6 +290,37 @@ export default function Dashboard() {
   ))}
 </Grid>
 
+
+<Divider my="md" />
+<Title order={3} mb="sm">Resumo de Contato com Parceiros</Title>
+<Grid mb="xl">
+  <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+    <Card shadow="md" padding="lg" radius="lg" withBorder>
+      <Title order={4} style={{ textAlign: 'center' }}>Parceiros Contactados</Title>
+      <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
+        {totalContatados}
+      </Text>
+    </Card>
+  </Grid.Col>
+
+  <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+    <Card shadow="md" padding="lg" radius="lg" withBorder>
+      <Title order={4} style={{ textAlign: 'center' }}>Carteira Total</Title>
+      <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
+        {totalCarteira}
+      </Text>
+    </Card>
+  </Grid.Col>
+
+  <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
+    <Card shadow="md" padding="lg" radius="lg" withBorder>
+      <Title order={4} style={{ textAlign: 'center' }}>% Contactado</Title>
+      <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
+        {percentualContatado.toFixed(1)}%
+      </Text>
+    </Card>
+  </Grid.Col>
+</Grid>
 
 
 
