@@ -441,7 +441,7 @@ class DashboardKPIView(APIView):
             {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
         ]
 
-        # ========= 4. Interações por Status (agrupado por status da interação no mês) ========= #
+                # ========= 4. Interações por Status (agrupado por status da interação no mês) ========= #
         interacoes_por_status = (
             interacoes.values('status')
             .annotate(total=Count('id'))
@@ -461,10 +461,25 @@ class DashboardKPIView(APIView):
             status = interacao.status or 'Sem Status'
             parceiros_contatados_status[status] += 1
 
+        # ========= 6. Parceiros sem nenhuma interação no mês, agrupado por status ========= #
+        ids_com_interacao = interacoes.values_list('parceiro_id', flat=True).distinct()
+        sem_interacao = parceiros_vivos.exclude(id__in=ids_com_interacao)
+
+        sem_interacao_por_status = (
+            sem_interacao.values('status')
+            .annotate(total=Count('id'))
+        )
+        parceiros_sem_fat_status = {
+            item['status'] or 'Sem Status': item['total']
+            for item in sem_interacao_por_status
+        }
+
+        # ========= ✅ RETORNO FINAL ========= #
         return Response({
             "kpis": kpis,
             "interacoes_status": interacoes_status_dict,
             "parceiros_contatados_status": parceiros_contatados_status,
+            "parceiros_sem_fat_status": parceiros_sem_fat_status
         })
 
 
