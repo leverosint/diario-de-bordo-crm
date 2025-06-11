@@ -236,12 +236,36 @@ STATUS_ORDER.forEach(status => {
     XLSX.writeFile(wb, `${fileName}.xlsx`);
   };
 
-  const statusData = STATUS_ORDER.map(status => ({
+ // Dados com filtro ativo
+const statusDataFiltrado = STATUS_ORDER.map(status => {
+  const parceirosDoStatus = parceirosFiltrados.filter(p => p.status === status);
+  const parceirosComInteracao = parceirosDoStatus.filter(p => p.tem_interacao);
+  const parceirosContatadosUnicos = new Set(parceirosComInteracao.map(p => p.id));
+  return {
     status: STATUS_LABELS[status] || status,
-    parceiros: kpis.find(k => k.title === status)?.value || 0,
-    interacoes: parceirosContatadosStatusFiltrado[status] || 0,
-    contatados: parceirosContatadosStatus[status] || 0,
-  }));
+    parceiros: parceirosDoStatus.length,
+    interacoes: parceirosComInteracao.reduce((sum, p) => sum + (p.qtd_interacoes || 1), 0),
+    contatados: parceirosContatadosUnicos.size,
+  };
+});
+
+// Dados completos (sem filtro)
+const statusDataCompleto = STATUS_ORDER.map(status => {
+  const parceirosDoStatus = tabelaParceiros.filter(p => p.status === status);
+  const parceirosComInteracao = parceirosDoStatus.filter(p => p.tem_interacao);
+  const parceirosContatadosUnicos = new Set(parceirosComInteracao.map(p => p.id));
+  return {
+    status: STATUS_LABELS[status] || status,
+    parceiros: parceirosDoStatus.length,
+    interacoes: parceirosComInteracao.reduce((sum, p) => sum + (p.qtd_interacoes || 1), 0),
+    contatados: parceirosContatadosUnicos.size,
+  };
+});
+
+// Usa dados com ou sem filtro
+const statusData = statusFiltro.length > 0 ? statusDataFiltrado : statusDataCompleto;
+
+  
   
 
   return (

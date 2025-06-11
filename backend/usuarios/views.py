@@ -12,6 +12,7 @@ from django.db.models.functions import TruncMonth
 from datetime import timedelta
 import pandas as pd
 from rest_framework_simplejwt.tokens import RefreshToken
+from collections import defaultdict
 
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra, CustomUser
 from .serializers import (
@@ -380,7 +381,7 @@ class DashboardKPIView(APIView):
         else:
             data_fim = datetime(ano, mes + 1, 1)
 
-        # Filtro por tipo de usuário
+        # Filtros por tipo de usuário
         if user.tipo_user == 'ADMIN':
             parceiros = Parceiro.objects.all()
             interacoes = Interacao.objects.filter(data_interacao__range=(data_inicio, data_fim))
@@ -394,7 +395,7 @@ class DashboardKPIView(APIView):
             interacoes = Interacao.objects.filter(usuario=user, data_interacao__range=(data_inicio, data_fim))
             oportunidades = Oportunidade.objects.filter(usuario=user)
 
-        # KPIs vivos (base de parceiros atual, sem filtro de mês)
+        # KPIs vivos (sem filtro por mês)
         status_counts = {
             'Sem Faturamento': parceiros.filter(status='Sem Faturamento').count(),
             'Base Ativa': parceiros.filter(status='Base Ativa').count(),
@@ -432,24 +433,21 @@ class DashboardKPIView(APIView):
             {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
         ]
 
-        # Interações por status (todas do mês)
+        # Interações por status (sem agrupar por parceiro)
         interacoes_por_status = (
-            interacoes
-            .values('status')
+            interacoes.values('status')
             .annotate(total=Count('id'))
         )
-
         interacoes_status_dict = {
             item['status'] or 'Sem Status': item['total']
             for item in interacoes_por_status
         }
 
-        # Parceiros contatados por status (primeira interação do mês por parceiro)
+        # Parceiros contatados por status (considera só a primeira interação no mês por parceiro)
         primeiras_interacoes = (
             interacoes.order_by('parceiro_id', 'data_interacao')
             .distinct('parceiro_id')
         )
-
         parceiros_contatados_status = {}
         for interacao in primeiras_interacoes:
             status = interacao.status or 'Sem Status'
@@ -461,7 +459,9 @@ class DashboardKPIView(APIView):
             "parceiros_contatados_status": parceiros_contatados_status,
         })
 
-       
+
+
+      
 
 
 # ===== Funil de Conversão =====
