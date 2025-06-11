@@ -22,6 +22,7 @@ from .serializers import (
     GatilhoExtraSerializer,
 )
 
+
 User = get_user_model()
 
 # ===== Parceiro =====
@@ -425,11 +426,26 @@ class DashboardKPIView(APIView):
                 "tem_oportunidade": parceiro.oportunidades.exists(),
             })
 
+        # === NOVO BLOCO: Interações por Status ===
+        interacoes_por_status = (
+            interacoes
+            .values('parceiro__status')
+            .annotate(total=Count('id'))
+        )
+
+        interacoes_status_data = []
+        for item in interacoes_por_status:
+            status_nome = item['parceiro__status'] or 'Sem Status'
+            interacoes_status_data.append({
+                "title": status_nome,
+                "value": item['total']
+            })
+
         return Response({
             "kpis": kpis,
-            "parceiros": parceiros_data
+            "parceiros": parceiros_data,
+            "interacoes_status": interacoes_status_data  # ✅ campo adicionado
         })
-
 
 
 # ===== Funil de Conversão =====

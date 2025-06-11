@@ -69,6 +69,7 @@ export default function Dashboard() {
   const [dadosBarra, setDadosBarra] = useState<any[]>([]);
   const [tabelaParceiros, setTabelaParceiros] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [interacoesStatus, setInteracoesStatus] = useState<{ title: string; value: number }[]>([]);
 
   const [statusFiltro, setStatusFiltro] = useState<string[]>([]);
   const [pageMap, setPageMap] = useState<{ [key: string]: number }>({});
@@ -88,6 +89,7 @@ export default function Dashboard() {
       ]);
 
       setKpis(kpiRes.data.kpis);
+      setInteracoesStatus(kpiRes.data.interacoes_status || []);
       setTabelaParceiros(kpiRes.data.parceiros || []);
       setDadosFunil(funilRes.data);
       setDadosBarra(barraRes.data);
@@ -219,7 +221,7 @@ export default function Dashboard() {
           </Group>
 
         {/* KPIs - Status */}
-<Title order={3} mb="sm">Quantidade de Parceiros Sem Faturamento por Status</Title>
+<Title order={3} mb="sm">Quantidade de Parceiros Sem Faturamento por Status - Mês Atual</Title>
 <Grid mb="xl">
   {STATUS_ORDER.map((status) => {
     const kpiEncontrado = kpis.find((k) => k.title === status);
@@ -256,7 +258,33 @@ export default function Dashboard() {
     );
   })}
 </Grid>
+
+
+{/* KPIs - Interações por Status */}
+<Title order={3} mb="sm">Quantidade de Interações por Status</Title>
+<Grid mb="xl">
+  {STATUS_ORDER.map(status => (
+    <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={status}>
+      <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}>
+        <Title order={4} style={{ textAlign: 'center' }}>{status}</Title>
+        <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
+          {interacoesStatus.find(k => k.title === status)?.value || 0}
+        </Text>
+      </Card>
+    </Grid.Col>
+  ))}
+</Grid>
+
+
+
+
+
+
+
+
           <Divider my="lg" />
+
+          
 
           {/* KPIs - Indicadores */}
           <Title order={3} mb="sm">Indicadores de Atividades e Resultados</Title>
