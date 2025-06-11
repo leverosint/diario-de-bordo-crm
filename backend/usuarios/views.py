@@ -428,23 +428,22 @@ class DashboardKPIView(APIView):
 
         # === NOVO BLOCO: Interações por Status ===
         interacoes_por_status = (
-            interacoes
-            .values('parceiro__status')
-            .annotate(total=Count('id'))
-        )
+             interacoes
+              .values('parceiro__status')
+                 .annotate(total=Count('id'))
+)
 
-        interacoes_status_data = []
-        for item in interacoes_por_status:
-            status_nome = item['parceiro__status'] or 'Sem Status'
-            interacoes_status_data.append({
-                "title": status_nome,
-                "value": item['total']
-            })
+        interacoes_status_dict = {
+        item['parceiro__status']: item['total']
+        for item in interacoes_por_status
+        if item['parceiro__status'] is not None
+}
+
 
         return Response({
             "kpis": kpis,
             "parceiros": parceiros_data,
-            "interacoes_status": interacoes_status_data  # ✅ campo adicionado
+            "interacoes_status": interacoes_status_dict  # ✅ campo adicionado
         })
 
 

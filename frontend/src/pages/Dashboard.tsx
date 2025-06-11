@@ -229,7 +229,7 @@ export default function Dashboard() {
   {STATUS_ORDER.map(status => (
     <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={status}>
       <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}>
-        <Title order={4} style={{ textAlign: 'center' }}>{status}</Title>
+      <Title order={4} style={{ textAlign: 'center' }}>{STATUS_LABELS[status] || status}</Title>
         <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
           {kpis.find(k => k.title === status)?.value || 0}
         </Text>
@@ -238,7 +238,8 @@ export default function Dashboard() {
   ))}
 </Grid>
 
-<Divider my="md" label="Comparativo de Interações" labelPosition="center" />
+<Divider my="md" />
+
 
 {/* Interações por Status */}
 <Title order={3} mb="sm">Quantidade de Interações por Status</Title>
