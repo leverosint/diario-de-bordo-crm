@@ -209,8 +209,11 @@ class InteracaoViewSet(viewsets.ModelViewSet):
             return Interacao.objects.filter(usuario=user)
         return Interacao.objects.none()
 
-    def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)
+       def perform_create(self, serializer):
+        parceiro = serializer.validated_data['parceiro']
+        status_no_momento = parceiro.status
+        serializer.save(usuario=self.request.user, status=status_no_momento)
+
 
 class InteracoesHojeView(generics.ListAPIView):
     serializer_class = InteracaoSerializer

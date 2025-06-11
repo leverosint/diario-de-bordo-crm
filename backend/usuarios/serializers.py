@@ -58,8 +58,10 @@ class InteracaoSerializer(serializers.ModelSerializer):
             'tipo',
             'data_interacao',
             'entrou_em_contato',
+            'status',  # ✅ novo campo
         ]
-        read_only_fields = ['data_interacao', 'usuario']
+        read_only_fields = ['data_interacao', 'usuario', 'status']  # status é só leitura
+
 
 # ===== Interações Pendentes (Simples) =====
 class InteracaoPendentesSerializer(serializers.ModelSerializer):
