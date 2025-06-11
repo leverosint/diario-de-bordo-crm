@@ -171,6 +171,12 @@ for (const parceiro of parceirosFiltrados) {
   const totalCarteira = parceirosFiltrados.length;
   const totalContatados = Object.values(parceirosContatadosStatus).reduce((sum, val) => sum + val, 0);
   const percentualContatado = totalCarteira > 0 ? (totalContatados / totalCarteira) * 100 : 0;
+  const percentualPorStatus: Record<string, number> = {};
+STATUS_ORDER.forEach(status => {
+  const count = parceirosFiltrados.filter(p => p.status === status).length;
+  percentualPorStatus[status] = totalCarteira > 0 ? (count / totalCarteira) * 100 : 0;
+});
+
 
 
   const getPaginatedData = (key: string, data: any[]) => {
@@ -251,51 +257,55 @@ for (const parceiro of parceirosFiltrados) {
           </Group>
 
  {/* KPIs - Status */}
-<Title order={3} mb="sm">Quantidade de Parceiros Sem Faturamento por Status</Title>
-<Card shadow="md" padding="lg" radius="lg" withBorder mb="xl">
-  <ResponsiveContainer width="100%" height={300}>
-    <BarChart data={statusData}>
-      <XAxis dataKey="status" />
-      <YAxis />
-      <RechartsTooltip />
-      <Bar dataKey="parceiros" fill="#228be6" />
-    </BarChart>
-  </ResponsiveContainer>
-</Card>
+ <Title order={3} mb="sm">Parceiros Sem Faturamento por Status</Title>
+<ResponsiveContainer width="100%" height={300}>
+  <BarChart data={statusData}>
+    <XAxis dataKey="status" />
+    <YAxis />
+    <RechartsTooltip />
+    <Bar dataKey="parceiros" fill="#228be6">
+      <LabelList dataKey="parceiros" position="top" />
+    </Bar>
+  </BarChart>
+</ResponsiveContainer>
+
 
 
 <Divider my="md" />
 
 
 {/* Interações por Status */}
-<Title order={3} mb="sm">Quantidade de Interações por Status</Title>
-<Card shadow="md" padding="lg" radius="lg" withBorder mb="xl">
-  <ResponsiveContainer width="100%" height={300}>
-    <BarChart data={statusData}>
-      <XAxis dataKey="status" />
-      <YAxis />
-      <RechartsTooltip />
-      <Bar dataKey="interacoes" fill="#40c057" />
-    </BarChart>
-  </ResponsiveContainer>
-</Card>
-  
+<Title order={3} mb="sm">Interações por Status</Title>
+<ResponsiveContainer width="100%" height={300}>
+  <BarChart data={statusData}>
+    <XAxis dataKey="status" />
+    <YAxis />
+    <RechartsTooltip />
+    <Bar dataKey="interacoes" fill="#40c057">
+      <LabelList dataKey="interacoes" position="top" />
+    </Bar>
+  </BarChart>
+</ResponsiveContainer>
+
+
 
 
 
 
 <Divider my="md" />
 <Title order={3} mb="sm">Parceiros Contatados por Status</Title>
-<Card shadow="md" padding="lg" radius="lg" withBorder mb="xl">
-  <ResponsiveContainer width="100%" height={300}>
-    <BarChart data={statusData}>
-      <XAxis dataKey="status" />
-      <YAxis />
-      <RechartsTooltip />
-      <Bar dataKey="contatados" fill="#fa5252" />
-    </BarChart>
-  </ResponsiveContainer>
-</Card>
+<ResponsiveContainer width="100%" height={300}>
+  <BarChart data={statusData}>
+    <XAxis dataKey="status" />
+    <YAxis />
+    <RechartsTooltip />
+    <Bar dataKey="contatados" fill="#fab005">
+      <LabelList dataKey="contatados" position="top" />
+    </Bar>
+  </BarChart>
+</ResponsiveContainer>
+
+
 
 
 
@@ -329,6 +339,25 @@ for (const parceiro of parceirosFiltrados) {
     </Card>
   </Grid.Col>
 </Grid>
+
+
+<Title order={3} mb="sm">Distribuição de Status na Carteira Filtrada</Title>
+<Grid mb="xl">
+  {STATUS_ORDER.map(status => (
+    <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={`percentual-${status}`}>
+      <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: '#ffffff' }}>
+        <Title order={5} style={{ textAlign: 'center' }}>{STATUS_LABELS[status] || status}</Title>
+        <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
+          {(percentualPorStatus[status] ?? 0).toFixed(1)}%
+        </Text>
+        <Text size="sm" style={{ textAlign: 'center', color: 'gray' }}>
+          ({parceirosFiltrados.filter(p => p.status === status).length} de {totalCarteira})
+        </Text>
+      </Card>
+    </Grid.Col>
+  ))}
+</Grid>
+
 
 
 
