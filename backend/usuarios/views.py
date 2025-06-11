@@ -13,6 +13,9 @@ from datetime import timedelta
 import pandas as pd
 from rest_framework_simplejwt.tokens import RefreshToken
 from collections import defaultdict
+from django.utils.timezone import make_aware
+from datetime import datetime
+
 
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra, CustomUser
 from .serializers import (
@@ -373,43 +376,48 @@ class DashboardKPIView(APIView):
         mes = int(request.query_params.get('mes', now().month))
         ano = int(request.query_params.get('ano', now().year))
 
-        # Data inicial e final do mês
-        from datetime import datetime
-        data_inicio = datetime(ano, mes, 1)
+        # Data do mês filtrado
+        data_inicio = make_aware(datetime(ano, mes, 1))
         if mes == 12:
-            data_fim = datetime(ano + 1, 1, 1)
+            data_fim = make_aware(datetime(ano + 1, 1, 1))
         else:
-            data_fim = datetime(ano, mes + 1, 1)
+            data_fim = make_aware(datetime(ano, mes + 1, 1))
 
-        # Filtros por tipo de usuário
+        # ========= 1. FILTROS POR TIPO DE USUÁRIO ========= #
         if user.tipo_user == 'ADMIN':
-            parceiros = Parceiro.objects.all()
+            parceiros_vivos = Parceiro.objects.all()
             interacoes = Interacao.objects.filter(data_interacao__range=(data_inicio, data_fim))
-            oportunidades = Oportunidade.objects.all()
+            oportunidades = Oportunidade.objects.filter(data_criacao__range=(data_inicio, data_fim))
         elif user.tipo_user == 'GESTOR':
-            parceiros = Parceiro.objects.filter(canal_venda__in=user.canais_venda.all())
-            interacoes = Interacao.objects.filter(parceiro__canal_venda__in=user.canais_venda.all(), data_interacao__range=(data_inicio, data_fim))
-            oportunidades = Oportunidade.objects.filter(parceiro__canal_venda__in=user.canais_venda.all())
-        else:
-            parceiros = Parceiro.objects.filter(consultor=user.id_vendedor)
+            parceiros_vivos = Parceiro.objects.filter(canal_venda__in=user.canais_venda.all())
+            interacoes = Interacao.objects.filter(
+                parceiro__canal_venda__in=user.canais_venda.all(),
+                data_interacao__range=(data_inicio, data_fim)
+            )
+            oportunidades = Oportunidade.objects.filter(
+                parceiro__canal_venda__in=user.canais_venda.all(),
+                data_criacao__range=(data_inicio, data_fim)
+            )
+        else:  # VENDEDOR
+            parceiros_vivos = Parceiro.objects.filter(consultor=user.id_vendedor)
             interacoes = Interacao.objects.filter(usuario=user, data_interacao__range=(data_inicio, data_fim))
-            oportunidades = Oportunidade.objects.filter(usuario=user)
+            oportunidades = Oportunidade.objects.filter(usuario=user, data_criacao__range=(data_inicio, data_fim))
 
-        # KPIs vivos (sem filtro por mês)
+        # ========= 2. KPIs VIVOS (status atual dos parceiros) ========= #
         status_counts = {
-            'Sem Faturamento': parceiros.filter(status='Sem Faturamento').count(),
-            'Base Ativa': parceiros.filter(status='Base Ativa').count(),
-            '30 dias s/ Fat': parceiros.filter(status='30 dias s/ Fat').count(),
-            '60 dias s/ Fat': parceiros.filter(status='60 dias s/ Fat').count(),
-            '90 dias s/ Fat': parceiros.filter(status='90 dias s/ Fat').count(),
-            '120 dias s/ Fat': parceiros.filter(status='120 dias s/ Fat').count(),
+            'Sem Faturamento': parceiros_vivos.filter(status='Sem Faturamento').count(),
+            'Base Ativa': parceiros_vivos.filter(status='Base Ativa').count(),
+            '30 dias s/ Fat': parceiros_vivos.filter(status='30 dias s/ Fat').count(),
+            '60 dias s/ Fat': parceiros_vivos.filter(status='60 dias s/ Fat').count(),
+            '90 dias s/ Fat': parceiros_vivos.filter(status='90 dias s/ Fat').count(),
+            '120 dias s/ Fat': parceiros_vivos.filter(status='120 dias s/ Fat').count(),
         }
 
+        # ========= 3. KPIs numéricos de interações/oportunidades ========= #
         total_interacoes = interacoes.count()
         total_oportunidades = oportunidades.count()
         total_orcamentos = oportunidades.filter(etapa='orcamento').count()
         total_pedidos = oportunidades.filter(etapa='pedido').count()
-
         valor_total = oportunidades.aggregate(Sum('valor'))['valor__sum'] or 0
         ticket_medio = (valor_total / total_pedidos) if total_pedidos > 0 else 0
 
@@ -433,7 +441,7 @@ class DashboardKPIView(APIView):
             {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
         ]
 
-        # Interações por status (sem agrupar por parceiro)
+        # ========= 4. Interações por Status (agrupado por status da interação no mês) ========= #
         interacoes_por_status = (
             interacoes.values('status')
             .annotate(total=Count('id'))
@@ -443,21 +451,22 @@ class DashboardKPIView(APIView):
             for item in interacoes_por_status
         }
 
-        # Parceiros contatados por status (considera só a primeira interação no mês por parceiro)
+        # ========= 5. Parceiros contatados por status (primeira interação do mês) ========= #
         primeiras_interacoes = (
             interacoes.order_by('parceiro_id', 'data_interacao')
             .distinct('parceiro_id')
         )
-        parceiros_contatados_status = {}
+        parceiros_contatados_status = defaultdict(int)
         for interacao in primeiras_interacoes:
             status = interacao.status or 'Sem Status'
-            parceiros_contatados_status[status] = parceiros_contatados_status.get(status, 0) + 1
+            parceiros_contatados_status[status] += 1
 
         return Response({
             "kpis": kpis,
             "interacoes_status": interacoes_status_dict,
             "parceiros_contatados_status": parceiros_contatados_status,
         })
+
 
 
 
