@@ -69,7 +69,6 @@ export default function Dashboard() {
   const [dadosBarra, setDadosBarra] = useState<any[]>([]);
   const [tabelaParceiros, setTabelaParceiros] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [interacoesStatus, setInteracoesStatus] = useState<Record<string, number>>({});
   const [parceirosContatadosStatus, setParceirosContatadosStatus] = useState<Record<string, number>>({}); // ✅ ADICIONE AQUI
 
   
@@ -95,7 +94,6 @@ export default function Dashboard() {
       ]);
 
       setKpis(kpiRes.data.kpis);
-      setInteracoesStatus(kpiRes.data.interacoes_status || {});
       setParceirosContatadosStatus(kpiRes.data.parceiros_contatados_status || {}); // ✅ NOVA LINHA
       setTabelaParceiros(kpiRes.data.parceiros || []);
       setDadosFunil(funilRes.data);
@@ -153,6 +151,17 @@ export default function Dashboard() {
   const parceirosFiltrados = statusFiltro.length > 0
     ? tabelaParceiros.filter((p: any) => statusFiltro.includes(p.status))
     : tabelaParceiros;
+    // Recalcular interações por status com base nos parceiros filtrados
+const interacoesStatusFiltrado: Record<string, number> = {};
+const parceirosContatadosStatusFiltrado: Record<string, number> = {};
+
+for (const parceiro of parceirosFiltrados) {
+  if (parceiro.tem_interacao) {
+    interacoesStatusFiltrado[parceiro.status] = (interacoesStatusFiltrado[parceiro.status] || 0) + (parceiro.qtd_interacoes || 1);
+    parceirosContatadosStatusFiltrado[parceiro.status] = (parceirosContatadosStatusFiltrado[parceiro.status] || 0) + 1;
+  }
+}
+
 
   const parceirosInteracoes = parceirosFiltrados.filter(p => p.tem_interacao);
   const parceirosOportunidades = parceirosFiltrados.filter(p => p.tem_oportunidade);
@@ -258,7 +267,7 @@ export default function Dashboard() {
       <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: STATUS_COLORS[status], color: 'white' }}>
         <Title order={4} style={{ textAlign: 'center' }}>{STATUS_LABELS[status] || status}</Title>
         <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-          {interacoesStatus[status] || 0}
+        {parceirosContatadosStatusFiltrado[status] || 0}
         </Text>
       </Card>
     </Grid.Col>
