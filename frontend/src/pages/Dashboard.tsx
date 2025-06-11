@@ -79,6 +79,7 @@ export default function Dashboard() {
   const [tabelaParceiros, setTabelaParceiros] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [parceirosContatadosStatus, setParceirosContatadosStatus] = useState<Record<string, number>>({}); // ✅ ADICIONE AQUI
+  const [interacoesPorStatus, setInteracoesPorStatus] = useState<Record<string, number>>({});
 
   
 
@@ -108,6 +109,7 @@ export default function Dashboard() {
     
         setKpis(kpiRes.data.kpis);
         setParceirosContatadosStatus(kpiRes.data.parceiros_contatados_status || {});
+        setInteracoesPorStatus(kpiRes.data.interacoes_status || {});
         setTabelaParceiros(kpiRes.data.parceiros || []);
         setDadosFunil(funilRes.data);
         setDadosBarra(barraRes.data);
@@ -338,14 +340,19 @@ const statusData = statusFiltro.length > 0 ? statusDataFiltrado : statusDataComp
 {/* Interações por Status */}
 <Title order={3} mb="sm">Interações por Status</Title>
 <ResponsiveContainer width="100%" height={300}>
-  <BarChart data={statusData}>
-    <XAxis dataKey="status" />
-    <YAxis />
-    <RechartsTooltip />
-    <Bar dataKey="interacoes" fill="#40c057">
-  <LabelList dataKey="interacoes" position="insideTop" fill="#fff" />
-</Bar>
-  </BarChart>
+<BarChart
+  data={STATUS_ORDER.map(status => ({
+    status: STATUS_LABELS[status] || status,
+    interacoes: interacoesPorStatus[status] || 0,
+  }))}
+>
+  <XAxis dataKey="status" />
+  <YAxis />
+  <RechartsTooltip />
+  <Bar dataKey="interacoes" fill="#40c057">
+    <LabelList dataKey="interacoes" position="insideTop" fill="#fff" />
+  </Bar>
+</BarChart>
 </ResponsiveContainer>
 
 
@@ -356,12 +363,11 @@ const statusData = statusFiltro.length > 0 ? statusDataFiltrado : statusDataComp
 <Divider my="md" />
 <Title order={3} mb="sm">Parceiros Contatados por Status</Title>
 <ResponsiveContainer width="100%" height={300}>
-  <BarChart data={statusData}>
-    <XAxis dataKey="status" />
-    <YAxis />
-    <RechartsTooltip />
-    <Bar dataKey="contatados" fill="#fab005">
-  <LabelList dataKey="contatados" position="insideTop" fill="#000" />
+<BarChart data={STATUS_ORDER.map(status => ({
+  status: STATUS_LABELS[status] || status,
+  contatados: parceirosContatadosStatus[status] || 0,
+}))}>
+  <Bar dataKey="contatados" fill="#fab005">
 </Bar>
 
   </BarChart>
