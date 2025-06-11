@@ -151,13 +151,7 @@ export default function Dashboard() {
   const parceirosFiltrados = statusFiltro.length > 0
     ? tabelaParceiros.filter((p: any) => statusFiltro.includes(p.status))
     : tabelaParceiros;
-    // Cálculo de percentual por status na carteira filtrada
-    const percentualPorStatus: Record<string, number> = STATUS_ORDER.reduce((acc, status) => {
-  const count = parceirosFiltrados.filter(p => p.status === status).length;
-  acc[status] = totalCarteira > 0 ? (count / totalCarteira) * 100 : 0;
-  return acc;
-}, {} as Record<string, number>);
-
+    
     // Recalcular interações por status com base nos parceiros filtrados
 const interacoesStatusFiltrado: Record<string, number> = {};
 const parceirosContatadosStatusFiltrado: Record<string, number> = {};
@@ -336,27 +330,6 @@ for (const parceiro of parceirosFiltrados) {
       </Text>
     </Card>
   </Grid.Col>
-</Grid>
-
-
-<Title order={3} mb="sm">Distribuição de Status na Carteira Filtrada</Title>
-<Grid mb="xl">
-  {STATUS_ORDER.map(status => (
-    <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={`percentual-${status}`}>
-      <Card
-        shadow="md"
-        padding="lg"
-        radius="lg"
-        withBorder
-        style={{ backgroundColor: '#ffffff' }}
-      >
-        <Title order={5} style={{ textAlign: 'center' }}>{STATUS_LABELS[status] || status}</Title>
-        <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-        {(percentualPorStatus[status] ?? 0).toFixed(1)}%
-        </Text>
-      </Card>
-    </Grid.Col>
-  ))}
 </Grid>
 
 
