@@ -264,10 +264,11 @@ STATUS_ORDER.forEach(status => {
     <YAxis />
     <RechartsTooltip />
     <Bar dataKey="parceiros" fill="#228be6">
-      <LabelList dataKey="parceiros" position="top" />
-    </Bar>
+  <LabelList dataKey="parceiros" position="insideTop" fill="#fff" />
+</Bar>
   </BarChart>
 </ResponsiveContainer>
+
 
 
 
@@ -282,8 +283,8 @@ STATUS_ORDER.forEach(status => {
     <YAxis />
     <RechartsTooltip />
     <Bar dataKey="interacoes" fill="#40c057">
-      <LabelList dataKey="interacoes" position="top" />
-    </Bar>
+  <LabelList dataKey="interacoes" position="insideTop" fill="#fff" />
+</Bar>
   </BarChart>
 </ResponsiveContainer>
 
@@ -300,8 +301,9 @@ STATUS_ORDER.forEach(status => {
     <YAxis />
     <RechartsTooltip />
     <Bar dataKey="contatados" fill="#fab005">
-      <LabelList dataKey="contatados" position="top" />
-    </Bar>
+  <LabelList dataKey="contatados" position="insideTop" fill="#000" />
+</Bar>
+
   </BarChart>
 </ResponsiveContainer>
 
