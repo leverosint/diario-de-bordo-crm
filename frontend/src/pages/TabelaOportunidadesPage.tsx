@@ -174,13 +174,13 @@ export default function OportunidadesPage() {
                 <Box key={etapa} mt="xl">
                   <Card
                     withBorder
-                    shadow="lg"
                     radius="xl"
                     p="xl"
                     mb="xl"
                     style={{
-                      backgroundColor: '#fff',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                      borderLeft: `6px solid ${getStatusColor(etapa)}`,
+                      backgroundColor: `${getStatusColor(etapa)}10`,
+                      boxShadow: '0 8px 18px rgba(0,0,0,0.06)',
                     }}
                   >
                     <Group justify="space-between" mb="sm">
@@ -207,15 +207,16 @@ export default function OportunidadesPage() {
                       highlightOnHover
                       withTableBorder
                       verticalSpacing="md"
-                      style={{ fontSize: '0.875rem' }}
+                      horizontalSpacing="lg"
+                      style={{ width: '100%', minWidth: '850px', fontSize: '0.95rem' }}
                     >
                       <thead>
                         <tr>
-                          <th style={{ fontWeight: 600 }}>Parceiro</th>
-                          <th style={{ fontWeight: 600 }}>Valor</th>
-                          <th style={{ fontWeight: 600 }}>Data Criação</th>
-                          <th style={{ fontWeight: 600 }}>Data Status</th>
-                          <th style={{ fontWeight: 600 }}>Status</th>
+                          <th style={{ fontWeight: 600, padding: '0.75rem 1rem' }}>Parceiro</th>
+                          <th style={{ fontWeight: 600, padding: '0.75rem 1rem' }}>Valor</th>
+                          <th style={{ fontWeight: 600, padding: '0.75rem 1rem' }}>Data Criação</th>
+                          <th style={{ fontWeight: 600, padding: '0.75rem 1rem' }}>Data Status</th>
+                          <th style={{ fontWeight: 600, padding: '0.75rem 1rem' }}>Status</th>
                         </tr>
                       </thead>
                       <tbody>
