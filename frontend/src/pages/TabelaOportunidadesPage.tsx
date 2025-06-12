@@ -8,6 +8,14 @@ import { DatePickerInput } from '@mantine/dates';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
 
+import {
+  IconShoppingCart,
+  IconXCircle,
+  IconTarget,
+  IconBriefcase,
+  IconClock
+} from 'lucide-react';
+
 interface Oportunidade {
   id: number;
   parceiro: number;
@@ -164,10 +172,25 @@ export default function OportunidadesPage() {
               const tempoMedio = calcularTempoMedio(lista);
               return (
                 <Box key={etapa} mt="xl">
-                  <Card withBorder shadow="md" radius="lg" p="lg" mb="lg">
+                  <Card
+                    withBorder
+                    shadow="lg"
+                    radius="xl"
+                    p="xl"
+                    mb="xl"
+                    style={{
+                      backgroundColor: '#fff',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    }}
+                  >
                     <Group justify="space-between" mb="sm">
-                      <Group>
-                        <Title order={4} style={{ textTransform: 'capitalize' }}>{etapa.toLowerCase()}</Title>
+                      <Group align="center">
+                        {etapa === 'Pedido Realizado' && <IconShoppingCart size={18} color="#40c057" />}
+                        {etapa === 'Venda Perdida' && <IconXCircle size={18} color="#fa5252" />}
+                        {etapa === 'Oportunidade' && <IconTarget size={18} color="#228be6" />}
+                        {etapa === 'Orçamento' && <IconBriefcase size={18} color="#fab005" />}
+                        {etapa === 'Pedido Aguardando Aprovação' && <IconClock size={18} color="#ffa94d" />}
+                        <Title order={4} tt="capitalize" ml={8}>{etapa.toLowerCase()}</Title>
                         <Tooltip label={`Tempo médio na etapa: ${tempoMedio}`} withArrow>
                           <Indicator color="gray" size={12} processing>
                             <Text size="xs" c="dimmed">{tempoMedio}</Text>
@@ -179,14 +202,20 @@ export default function OportunidadesPage() {
                       </Badge>
                     </Group>
                     <Divider my="sm" />
-                    <Table striped highlightOnHover withTableBorder>
+                    <Table
+                      striped
+                      highlightOnHover
+                      withTableBorder
+                      verticalSpacing="md"
+                      fontSize="sm"
+                    >
                       <thead>
                         <tr>
-                          <th>Parceiro</th>
-                          <th>Valor</th>
-                          <th>Data Criação</th>
-                          <th>Data Status</th>
-                          <th>Status</th>
+                          <th style={{ fontWeight: 600, fontSize: '0.9rem' }}>Parceiro</th>
+                          <th style={{ fontWeight: 600, fontSize: '0.9rem' }}>Valor</th>
+                          <th style={{ fontWeight: 600, fontSize: '0.9rem' }}>Data Criação</th>
+                          <th style={{ fontWeight: 600, fontSize: '0.9rem' }}>Data Status</th>
+                          <th style={{ fontWeight: 600, fontSize: '0.9rem' }}>Status</th>
                         </tr>
                       </thead>
                       <tbody>
