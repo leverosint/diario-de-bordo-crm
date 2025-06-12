@@ -157,6 +157,8 @@ class Oportunidade(models.Model):
     observacao = models.TextField(blank=True, null=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
     data_etapa = models.DateTimeField(null=True, blank=True)  # NOVO CAMPO
+    data_status = models.DateTimeField(null=True, blank=True)
+
 
     def save(self, *args, **kwargs):
         # se for uma nova ou a etapa foi alterada, atualiza a data_etapa

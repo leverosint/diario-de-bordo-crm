@@ -46,7 +46,8 @@ class ParceiroSerializer(serializers.ModelSerializer):
 class InteracaoSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
-    parceiro = serializers.PrimaryKeyRelatedField(queryset=Parceiro.objects.all())
+    parceiro = serializers.CharField(source='parceiro.parceiro', read_only=True)
+
 
     class Meta:
         model = Interacao
