@@ -1,9 +1,11 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
-  Title, Table, Container, Loader, ScrollArea, Badge, Group, Text, Divider, Card, Box, Select
+  Title, Table, Container, Loader, ScrollArea, Badge, Group, Text, Divider,
+  Card, Box, Select, TextInput, Button
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
+import * as XLSX from 'xlsx';
 
 interface Oportunidade {
   id: number;
@@ -18,6 +20,8 @@ interface Oportunidade {
 export default function OportunidadesPage() {
   const [dados, setDados] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [filtroParceiro, setFiltroParceiro] = useState('');
+
   const token = localStorage.getItem('token');
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 
@@ -54,21 +58,34 @@ export default function OportunidadesPage() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchDados(); // atualiza os dados após edição
+      fetchDados();
     } catch (err) {
       console.error('Erro ao atualizar status:', err);
     }
   };
 
+  const exportarParaExcel = () => {
+    const ws = XLSX.utils.json_to_sheet(dadosFiltrados.map(o => ({
+      Parceiro: o.parceiro_nome,
+      Valor: o.valor,
+      'Data Criação': formatDate(o.data_criacao),
+      'Data Status': formatDate(o.data_status),
+      Status: o.etapa,
+    })));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Oportunidades');
+    XLSX.writeFile(wb, 'Oportunidades.xlsx');
+  };
+
   const getStatusColor = (etapa: string) => {
     const cores: Record<string, string> = {
-      'Oportunidade': 'blue',
-      'Orçamento': 'yellow',
-      'Pedido Aguardando Aprovação': 'orange',
-      'Pedido Realizado': 'green',
-      'Venda Perdida': 'red',
+      'Oportunidade': '#228be6',
+      'Orçamento': '#f59f00',
+      'Pedido Aguardando Aprovação': '#fab005',
+      'Pedido Realizado': '#40c057',
+      'Venda Perdida': '#fa5252',
     };
-    return cores[etapa] || 'gray';
+    return cores[etapa] || '#ced4da';
   };
 
   const getEtapaTitulo = (etapa: string, qtd: number) => {
@@ -83,40 +100,52 @@ export default function OportunidadesPage() {
     return `${qtd} ${tipo}${qtd > 1 ? 's' : ''}`;
   };
 
+  const formatDate = (date?: string) =>
+    date ? new Date(date).toLocaleDateString('pt-BR') : '-';
+
+  const dadosFiltrados = useMemo(() => {
+    return dados.filter((o) =>
+      o.parceiro_nome.toLowerCase().includes(filtroParceiro.toLowerCase())
+    );
+  }, [dados, filtroParceiro]);
+
   const agrupadoPorEtapa = useMemo(() => {
     const map: Record<string, Oportunidade[]> = {};
-    dados.forEach(o => {
+    dadosFiltrados.forEach(o => {
       const key = o.etapa || 'Sem etapa';
       if (!map[key]) map[key] = [];
       map[key].push(o);
     });
     return map;
-  }, [dados]);
-
-  const formatDate = (date?: string) =>
-    date ? new Date(date).toLocaleDateString('pt-BR') : '-';
+  }, [dadosFiltrados]);
 
   return (
     <SidebarGestor tipoUser={usuario.tipo_user}>
       <Container fluid>
         <Title order={2} mb="md">Oportunidades por Status</Title>
+        <Group justify="space-between" mb="md" wrap="wrap">
+          <TextInput
+            placeholder="Filtrar por parceiro"
+            value={filtroParceiro}
+            onChange={(e) => setFiltroParceiro(e.currentTarget.value)}
+            w={300}
+          />
+          <Button onClick={exportarParaExcel} color="green">Exportar Excel</Button>
+        </Group>
+
         {carregando ? <Loader /> : (
           <ScrollArea>
             {Object.entries(agrupadoPorEtapa).map(([etapa, lista]) => (
               <Box key={etapa} mt="xl">
-                <Card withBorder shadow="sm" radius="md" p="md" mb="md">
+                <Card withBorder shadow="lg" radius="lg" p="lg" mb="xl" style={{ background: '#f9f9f9' }}>
                   <Group justify="space-between" mb="sm">
                     <Title order={4} style={{ textTransform: 'capitalize' }}>{etapa.toLowerCase()}</Title>
-                    <Badge
-                      color={getStatusColor(etapa)}
-                      variant="light"
-                      radius="xl"
-                    >
+                    <Badge color={getStatusColor(etapa)} variant="light" radius="xl">
                       {getEtapaTitulo(etapa, lista.length)}
                     </Badge>
                   </Group>
                   <Divider my="sm" />
-                  <Table striped highlightOnHover withTableBorder>
+                  <Table striped highlightOnHover withColumnBorders>
                     <thead>
                       <tr>
                         <th>Parceiro</th>
@@ -146,8 +175,10 @@ export default function OportunidadesPage() {
                                   borderRadius: 8,
                                   textAlign: 'center',
                                 },
+                                dropdown: { zIndex: 9999 }
                               }}
                               size="xs"
+                              withinPortal
                             />
                           </td>
                         </tr>
