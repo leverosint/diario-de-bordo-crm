@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Parceiro, CanalVenda, Interacao, CustomUser, Oportunidade, GatilhoExtra
+from django.utils import timezone
 
 # ===== Canal de Venda =====
 class CanalVendaSerializer(serializers.ModelSerializer):
@@ -80,10 +81,9 @@ class InteracaoPendentesSerializer(serializers.ModelSerializer):
     def get_parceiro(self, obj):
         return obj.parceiro
 
-# ===== Oportunidade (Kanban) =====
 class OportunidadeSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
-    usuario_nome = serializers.CharField(source='usuario.username', read_only=True)  # <--- ADICIONADO
+    usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
     dias_sem_interacao = serializers.SerializerMethodField()
 
     class Meta:
@@ -93,14 +93,15 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             'parceiro',
             'parceiro_nome',
             'usuario',
-            'usuario_nome',  # <--- ADICIONADO
+            'usuario_nome',
             'valor',
             'observacao',
             'etapa',
             'data_criacao',
+            'data_etapa',  # 👈 ADICIONE AQUI
             'dias_sem_interacao',
         ]
-        read_only_fields = ['data_criacao', 'usuario']
+        read_only_fields = ['data_criacao', 'data_etapa', 'usuario']
 
     def get_dias_sem_interacao(self, obj):
         from django.utils.timezone import now
@@ -109,6 +110,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             delta = now().date() - ultima_interacao.data_interacao.date()
             return delta.days
         return None
+
 
 class GatilhoExtraSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)

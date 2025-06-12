@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from datetime import datetime, timedelta
 from django.conf import settings  # para pegar o AUTH_USER_MODEL
+from django.utils import timezone
 
 # Canal de venda associado a usuários e parceiros
 class CanalVenda(models.Model):
@@ -141,6 +142,7 @@ class Interacao(models.Model):
         return f"{self.parceiro.parceiro} - {self.usuario.username} ({self.tipo})"
 
 # Modelo de Oportunidade
+
 class Oportunidade(models.Model):
     ETAPA_CHOICES = [
         ('oportunidade', 'Oportunidade'),
@@ -154,6 +156,19 @@ class Oportunidade(models.Model):
     etapa = models.CharField(max_length=20, choices=ETAPA_CHOICES, default='oportunidade')
     observacao = models.TextField(blank=True, null=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
+    data_etapa = models.DateTimeField(null=True, blank=True)  # NOVO CAMPO
+
+    def save(self, *args, **kwargs):
+        # se for uma nova ou a etapa foi alterada, atualiza a data_etapa
+        if not self.pk:
+            self.data_etapa = timezone.now()
+        else:
+            original = Oportunidade.objects.get(pk=self.pk)
+            if self.etapa != original.etapa:
+                self.data_etapa = timezone.now()
+
+        super().save(*args, **kwargs)
+
 
     def __str__(self):
         return f"{self.parceiro.parceiro} - R$ {self.valor} - {self.get_etapa_display()}"
