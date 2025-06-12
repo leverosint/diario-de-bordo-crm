@@ -67,7 +67,7 @@ export default function OportunidadesPage() {
             {Object.entries(agrupadoPorStatus).map(([status, lista]) => (
               <Box key={status} mt="xl">
                 <Card withBorder shadow="sm" radius="md" p="md" mb="md">
-                  <Group position="apart">
+                  <Group justify="space-between">
                     <Title order={4}>{status}</Title>
                     <Badge color={getStatusColor(status)} variant="light">
                       {lista.length} oportunidades
@@ -87,7 +87,7 @@ export default function OportunidadesPage() {
                     <tbody>
                       {lista.map((o) => (
                         <tr key={o.id}>
-                          <td><Text weight={500}>{o.parceiro}</Text></td>
+                          <td><Text fw={500}>{o.parceiro}</Text></td>
                           <td>R$ {o.valor.toLocaleString('pt-BR')}</td>
                           <td>{new Date(o.data_criacao).toLocaleDateString()}</td>
                           <td>{o.ultima_interacao || '-'}</td>
