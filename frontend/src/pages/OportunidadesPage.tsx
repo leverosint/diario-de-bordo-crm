@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
-  Title, Table, Container, Loader, ScrollArea, Divider
+  Title, Table, Container, Loader, ScrollArea, Badge, Group, Text, Divider, Card, Box
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
-import { useMemo } from 'react';
 
 interface Oportunidade {
   id: number;
@@ -38,25 +37,26 @@ export default function OportunidadesPage() {
     fetchDados();
   }, [token]);
 
- 
-  
-  
-  
-  
+  const getStatusColor = (status: string) => {
+    const mapa: Record<string, string> = {
+      'Oportunidade': 'blue',
+      'Orçamento': 'yellow',
+      'Pedido Aguardando Aprovação': 'orange',
+      'Pedido Realizado': 'green',
+      'Venda Perdida': 'red',
+    };
+    return mapa[status] || 'gray';
+  };
+
   const agrupadoPorStatus = useMemo((): Record<string, Oportunidade[]> => {
     const agrupado: Record<string, Oportunidade[]> = {};
-  
     (dados || []).forEach((item: Oportunidade) => {
       const status = item.status || 'Sem status';
       if (!agrupado[status]) agrupado[status] = [];
       agrupado[status].push(item);
     });
-  
     return agrupado;
   }, [dados]);
-  
-  
-
 
   return (
     <SidebarGestor tipoUser={usuario.tipo_user}>
@@ -65,30 +65,43 @@ export default function OportunidadesPage() {
         {carregando ? <Loader /> : (
           <ScrollArea>
             {Object.entries(agrupadoPorStatus).map(([status, lista]) => (
-              <div key={status}>
-               <Title order={4} mt="xl">{status}</Title>
-                <Divider my="sm" />
-                <Table striped highlightOnHover withTableBorder>
-                  <thead>
-                    <tr>
-                      <th>Parceiro</th>
-                      <th>Valor</th>
-                      <th>Data Criação</th>
-                      <th>Última Interação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lista.map((o) => (
-                      <tr key={o.id}>
-                        <td>{o.parceiro}</td>
-                        <td>R$ {o.valor.toLocaleString('pt-BR')}</td>
-                        <td>{new Date(o.data_criacao).toLocaleDateString()}</td>
-                        <td>{o.ultima_interacao || '-'}</td>
+              <Box key={status} mt="xl">
+                <Card withBorder shadow="sm" radius="md" p="md" mb="md">
+                  <Group position="apart">
+                    <Title order={4}>{status}</Title>
+                    <Badge color={getStatusColor(status)} variant="light">
+                      {lista.length} oportunidades
+                    </Badge>
+                  </Group>
+                  <Divider my="sm" />
+                  <Table striped highlightOnHover withTableBorder>
+                    <thead>
+                      <tr>
+                        <th>Parceiro</th>
+                        <th>Valor</th>
+                        <th>Data Criação</th>
+                        <th>Última Interação</th>
+                        <th>Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {lista.map((o) => (
+                        <tr key={o.id}>
+                          <td><Text weight={500}>{o.parceiro}</Text></td>
+                          <td>R$ {o.valor.toLocaleString('pt-BR')}</td>
+                          <td>{new Date(o.data_criacao).toLocaleDateString()}</td>
+                          <td>{o.ultima_interacao || '-'}</td>
+                          <td>
+                            <Badge color={getStatusColor(o.status)} variant="filled">
+                              {o.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </Card>
+              </Box>
             ))}
           </ScrollArea>
         )}
