@@ -16,7 +16,6 @@ import {
   FileButton,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
-import OportunidadesKanban from './OportunidadesPage';
 import styles from './InteracoesPage.module.css';
 
 interface Interacao {
@@ -379,8 +378,7 @@ export default function InteracoesPage() {
               </Table>
             </div>
 
-            <Divider label="Oportunidades (Kanban)" mt="xl" mb="md" />
-            <OportunidadesKanban />
+            
           </>
         )}
       </div>

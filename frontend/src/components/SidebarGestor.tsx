@@ -15,7 +15,6 @@ import {
 import {
   LayoutDashboard,
   UserPlus,
-  Upload,
   BarChart2,
   LogOut,
   ChevronLeft,
@@ -103,16 +102,11 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
           {(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
             <>
               <NavLink
-                label="Cadastro Usuários"
+                label="Cadastro Parceiros"
                 leftSection={<UserPlus size={18} />}
                 onClick={() => navigate('/cadastro-usuarios')}
               />
-              <NavLink
-                label="Importar CSV"
-                leftSection={<Upload size={18} />}
-                onClick={() => navigate('/importar')}
-              />
-            </>
+                         </>
           )}
 
           <NavLink
