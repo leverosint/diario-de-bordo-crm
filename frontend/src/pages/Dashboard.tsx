@@ -75,6 +75,8 @@ export default function Dashboard() {
   const [dadosFunil, setDadosFunil] = useState<any[]>([]);
   const [dadosBarra, setDadosBarra] = useState<any[]>([]);
   const [tabelaParceiros, setTabelaParceiros] = useState<any[]>([]);
+  const [dadosFiltrados, setDadosFiltrados] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [parceirosContatadosStatus, setParceirosContatadosStatus] = useState<Record<string, number>>({}); // ✅ ADICIONE AQUI
   const [interacoesPorStatus, setInteracoesPorStatus] = useState<Record<string, number>>({});
@@ -109,6 +111,7 @@ export default function Dashboard() {
         setParceirosContatadosStatus(kpiRes.data.parceiros_contatados_status || {});
         setInteracoesPorStatus(kpiRes.data.interacoes_status || {});
         setTabelaParceiros(kpiRes.data.parceiros || []);
+        setDadosFiltrados(kpiRes.data.parceiros || []);
         setDadosFunil(funilRes.data);
         setDadosBarra(barraRes.data);
       } catch (error) {
@@ -182,13 +185,10 @@ if (usuario.tipo_user === 'GESTOR' || usuario.tipo_user === 'ADMIN') {
     );
   }
 
-  const parceirosFiltrados = tabelaParceiros.filter((p: any) => {
-    const consultorOk = !consultorSelecionado || (
-      p.tem_interacao && String(p.consultor_id) === String(consultorSelecionado)
-    );
-    return consultorOk;
-  });
-  
+  const parceirosFiltrados = consultorSelecionado
+  ? dadosFiltrados.filter(p => String(p.consultor_id) === String(consultorSelecionado))
+  : dadosFiltrados;
+
   
 
     
@@ -263,23 +263,21 @@ STATUS_ORDER.forEach(status => {
     XLSX.writeFile(wb, `${fileName}.xlsx`);
   };
 
- // Dados com filtro ativo
-const statusDataFiltrado = STATUS_ORDER.map(status => {
-  const parceirosDoStatus = parceirosFiltrados.filter(p => p.status === status);
-  const parceirosComInteracao = parceirosDoStatus.filter(p => p.tem_interacao);
-  const parceirosContatadosUnicos = new Set(parceirosComInteracao.map(p => p.id));
-  return {
-    status: STATUS_LABELS[status] || status,
-    parceiros: parceirosDoStatus.length,
-    interacoes: parceirosComInteracao.reduce((sum, p) => sum + (p.qtd_interacoes || 1), 0),
-    contatados: parceirosContatadosUnicos.size,
-  };
-});
+
+  const statusDataCompleto = STATUS_ORDER.map(status => {
+    const parceirosDoStatus = tabelaParceiros.filter(p => p.status === status);
+    return {
+      status: STATUS_LABELS[status] || status,
+      parceiros: parceirosDoStatus.length,
+    };
+  });
+
+
 
 
 
 // Usa dados com ou sem filtro
-const statusData = statusDataFiltrado;
+
 
 
   
@@ -334,7 +332,7 @@ const statusData = statusDataFiltrado;
  {/* KPIs - Status */}
  <Title order={3} mb="sm">Parceiros Sem Faturamento por Status</Title>
 <ResponsiveContainer width="100%" height={300}>
-  <BarChart data={statusData}>
+<BarChart data={statusDataCompleto}>
     <XAxis dataKey="status" />
     <YAxis />
     <RechartsTooltip />
