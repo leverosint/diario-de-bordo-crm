@@ -1,4 +1,3 @@
-// IMPORTAÇÕES =============================================================
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
@@ -6,11 +5,9 @@ import {
   Divider, Card, Box, Select, TextInput, Button, Tooltip, Indicator
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
-import type { DatesRangeValue } from '@mantine/dates';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
 
-// TIPAGEM =============================================================
 interface Oportunidade {
   id: number;
   parceiro: number;
@@ -21,13 +18,12 @@ interface Oportunidade {
   data_status?: string;
 }
 
-// COMPONENTE ==========================================================
 export default function OportunidadesPage() {
   const [dados, setDados] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [filtroParceiro, setFiltroParceiro] = useState('');
   const [filtroStatus, setFiltroStatus] = useState<string | null>(null);
-  const [intervaloDatas, setIntervaloDatas] = useState<[Date | null, Date | null]>([null, null]);
+  const [intervaloDatas, setIntervaloDatas] = useState<[string | null, string | null]>([null, null]);
   const token = localStorage.getItem('token');
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 
@@ -98,7 +94,9 @@ export default function OportunidadesPage() {
       const nomeInclui = o.parceiro_nome?.toLowerCase().includes(filtroParceiro.toLowerCase());
       const dataCriacao = new Date(o.data_criacao);
       const [inicio, fim] = intervaloDatas;
-      const dentroIntervalo = (!inicio || dataCriacao >= inicio) && (!fim || dataCriacao <= fim);
+      const dentroIntervalo =
+        (!inicio || dataCriacao >= new Date(inicio)) &&
+        (!fim || dataCriacao <= new Date(fim));
       const statusCondiz = !filtroStatus || o.etapa === filtroStatus;
       return nomeInclui && dentroIntervalo && statusCondiz;
     });
@@ -128,7 +126,6 @@ export default function OportunidadesPage() {
     XLSX.writeFile(wb, 'oportunidades.xlsx');
   };
 
-  // RENDER ============================================================
   return (
     <SidebarGestor tipoUser={usuario.tipo_user}>
       <Container size="xl" p="md">
@@ -163,7 +160,7 @@ export default function OportunidadesPage() {
         {carregando ? <Loader /> : (
           <ScrollArea>
             {Object.entries(agrupadoPorEtapa).map(([etapa, lista]) => {
-              const totalValor = lista.reduce((acc, cur) => acc + cur.valor, 0);
+              const totalValor = lista.reduce((acc, cur) => acc + (cur.valor ?? 0), 0);
               const tempoMedio = calcularTempoMedio(lista);
               return (
                 <Box key={etapa} mt="xl">
@@ -196,7 +193,7 @@ export default function OportunidadesPage() {
                         {lista.map((o) => (
                           <tr key={o.id}>
                             <td><Text fw={500}>{o.parceiro_nome}</Text></td>
-                            <td>R$ {(o?.valor ?? 0).toLocaleString('pt-BR')}</td>
+                            <td>R$ {Number(o?.valor ?? 0).toLocaleString('pt-BR')}</td>
                             <td>{formatDate(o.data_criacao)}</td>
                             <td>{formatDate(o.data_status)}</td>
                             <td>
