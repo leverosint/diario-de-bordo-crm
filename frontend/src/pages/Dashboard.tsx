@@ -363,13 +363,16 @@ const statusData = statusFiltro.length > 0 ? statusDataFiltrado : statusDataComp
 <Divider my="md" />
 <Title order={3} mb="sm">Parceiros Contatados por Status</Title>
 <ResponsiveContainer width="100%" height={300}>
-<BarChart data={STATUS_ORDER.map(status => ({
-  status: STATUS_LABELS[status] || status,
-  contatados: parceirosContatadosStatus[status] || 0,
-}))}>
-  <Bar dataKey="contatados" fill="#fab005">
-</Bar>
-
+  <BarChart data={STATUS_ORDER.map(status => ({
+    status: STATUS_LABELS[status] || status,
+    contatados: parceirosContatadosStatus[status] || 0,
+  }))}>
+    <XAxis dataKey="status" />
+    <YAxis />
+    <RechartsTooltip />
+    <Bar dataKey="contatados" fill="#fab005">
+      <LabelList dataKey="contatados" position="insideTop" fill="#fff" />
+    </Bar>
   </BarChart>
 </ResponsiveContainer>
 

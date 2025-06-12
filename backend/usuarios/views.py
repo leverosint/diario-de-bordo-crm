@@ -15,6 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from collections import defaultdict
 from django.utils.timezone import make_aware
 from datetime import datetime
+from .serializers import ParceiroSerializer
 
 
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra, CustomUser
@@ -25,6 +26,7 @@ from .serializers import (
     OportunidadeSerializer,
     GatilhoExtraSerializer,
 )
+
 
 
 User = get_user_model()
@@ -474,13 +476,17 @@ class DashboardKPIView(APIView):
             for item in sem_interacao_por_status
         }
 
-        # ========= ✅ RETORNO FINAL ========= #
+        # Serialize os parceiros_vivos
+        parceiros_serializados = ParceiroSerializer(parceiros_vivos, many=True).data
+
         return Response({
-            "kpis": kpis,
-            "interacoes_status": interacoes_status_dict,
-            "parceiros_contatados_status": parceiros_contatados_status,
-            "parceiros_sem_fat_status": parceiros_sem_fat_status
-        })
+    "kpis": kpis,
+    "interacoes_status": interacoes_status_dict,
+    "parceiros_contatados_status": parceiros_contatados_status,
+    "parceiros_sem_fat_status": parceiros_sem_fat_status,
+    "parceiros": parceiros_serializados  # ✅ ESSENCIAL para o dashboard funcionar corretamente
+})
+
 
 
 
