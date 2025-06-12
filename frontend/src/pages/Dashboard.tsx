@@ -183,9 +183,12 @@ if (usuario.tipo_user === 'GESTOR' || usuario.tipo_user === 'ADMIN') {
   }
 
   const parceirosFiltrados = tabelaParceiros.filter((p: any) => {
-    const consultorOk = !consultorSelecionado || p.consultor_id === consultorSelecionado;
+    const consultorOk = !consultorSelecionado || (
+      p.tem_interacao && String(p.consultor_id) === String(consultorSelecionado)
+    );
     return consultorOk;
   });
+  
   
 
     
