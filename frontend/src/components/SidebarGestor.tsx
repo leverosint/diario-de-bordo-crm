@@ -22,6 +22,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 interface SidebarProps {
   children: React.ReactNode;
@@ -90,6 +91,14 @@ export default function SidebarGestor({ children, tipoUser }: SidebarProps) {
             leftSection={<MessageCircle size={18} />}
             onClick={() => navigate('/interacoes')}
           />
+
+        <NavLink
+          label="Tabela Oportunidades"
+          leftSection={<BarChart2 size={18} />}
+          onClick={() => navigate('/tabela-oportunidades')}
+          />
+
+          
 
           {(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
             <>

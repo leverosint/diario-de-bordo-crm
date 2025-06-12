@@ -5,6 +5,7 @@ import { MantineProvider } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals'; // ✅ IMPORTANTE
 import '@mantine/core/styles.css';
 import Relatorios from './pages/Relatorios';
+import TabelaOportunidadesPage from './pages/TabelaOportunidadesPage';
 
 
 import './index.css';
@@ -28,6 +29,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/cadastro-usuarios" element={<CadastroUsuariosPage />} />
             <Route path="/interacoes" element={<InteracoesPage />} />
             <Route path="/relatorios" element={<Relatorios />} />
+            <Route path="/tabela-oportunidades" element={<TabelaOportunidadesPage />} />
           </Routes>
         </BrowserRouter>
         
