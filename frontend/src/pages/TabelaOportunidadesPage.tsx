@@ -9,11 +9,11 @@ import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
 
 import {
-  IconShoppingCart,
-  IconXCircle,
-  IconTarget,
-  IconBriefcase,
-  IconClock
+  ShoppingCart,
+  XCircle,
+  Target,
+  Briefcase,
+  Clock
 } from 'lucide-react';
 
 interface Oportunidade {
@@ -185,11 +185,11 @@ export default function OportunidadesPage() {
                   >
                     <Group justify="space-between" mb="sm">
                       <Group align="center">
-                        {etapa === 'Pedido Realizado' && <IconShoppingCart size={18} color="#40c057" />}
-                        {etapa === 'Venda Perdida' && <IconXCircle size={18} color="#fa5252" />}
-                        {etapa === 'Oportunidade' && <IconTarget size={18} color="#228be6" />}
-                        {etapa === 'Orçamento' && <IconBriefcase size={18} color="#fab005" />}
-                        {etapa === 'Pedido Aguardando Aprovação' && <IconClock size={18} color="#ffa94d" />}
+                        {etapa === 'Pedido Realizado' && <ShoppingCart size={18} color="#40c057" />}
+                        {etapa === 'Venda Perdida' && <XCircle size={18} color="#fa5252" />}
+                        {etapa === 'Oportunidade' && <Target size={18} color="#228be6" />}
+                        {etapa === 'Orçamento' && <Briefcase size={18} color="#fab005" />}
+                        {etapa === 'Pedido Aguardando Aprovação' && <Clock size={18} color="#ffa94d" />}
                         <Title order={4} tt="capitalize" ml={8}>{etapa.toLowerCase()}</Title>
                         <Tooltip label={`Tempo médio na etapa: ${tempoMedio}`} withArrow>
                           <Indicator color="gray" size={12} processing>
@@ -207,15 +207,15 @@ export default function OportunidadesPage() {
                       highlightOnHover
                       withTableBorder
                       verticalSpacing="md"
-                      fontSize="sm"
+                      style={{ fontSize: '0.875rem' }}
                     >
                       <thead>
                         <tr>
-                          <th style={{ fontWeight: 600, fontSize: '0.9rem' }}>Parceiro</th>
-                          <th style={{ fontWeight: 600, fontSize: '0.9rem' }}>Valor</th>
-                          <th style={{ fontWeight: 600, fontSize: '0.9rem' }}>Data Criação</th>
-                          <th style={{ fontWeight: 600, fontSize: '0.9rem' }}>Data Status</th>
-                          <th style={{ fontWeight: 600, fontSize: '0.9rem' }}>Status</th>
+                          <th style={{ fontWeight: 600 }}>Parceiro</th>
+                          <th style={{ fontWeight: 600 }}>Valor</th>
+                          <th style={{ fontWeight: 600 }}>Data Criação</th>
+                          <th style={{ fontWeight: 600 }}>Data Status</th>
+                          <th style={{ fontWeight: 600 }}>Status</th>
                         </tr>
                       </thead>
                       <tbody>
