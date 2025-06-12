@@ -7,7 +7,6 @@ import {
   Title,
   Text,
   Loader,
-  MultiSelect,
   Divider,
   Table,
   ScrollArea,
@@ -51,10 +50,7 @@ const STATUS_LABELS: { [key: string]: string } = {
   '120 dias s/ Fat': '120 dias',
 };
 
-const STATUS_OPTIONS = STATUS_ORDER.map((status) => ({
-  value: status,
-  label: STATUS_LABELS[status] || status
-}));
+
 
 
 const COLORS = Object.values(STATUS_COLORS); // ✅ Adicione ESSA LINHA aqui
@@ -72,6 +68,8 @@ const ANOS = ['2024', '2025', '2026'].map(ano => ({ value: ano, label: ano }));
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [consultores, setConsultores] = useState<{ value: string, label: string }[]>([]);
+  const [consultorSelecionado, setConsultorSelecionado] = useState<string | null>(null);
   const [tipoUser, setTipoUser] = useState<string | null>(null);
   const [kpis, setKpis] = useState<any[]>([]);
   const [dadosFunil, setDadosFunil] = useState<any[]>([]);
@@ -87,7 +85,7 @@ export default function Dashboard() {
 
   const [mesSelecionado, setMesSelecionado] = useState<string | null>('6');
   const [anoSelecionado, setAnoSelecionado] = useState<string | null>('2025');
-  const [statusFiltro, setStatusFiltro] = useState<string[]>([]);
+  
   const [pageMap, setPageMap] = useState<{ [key: string]: number }>({});
   const recordsPerPage = 5;
 
@@ -145,6 +143,26 @@ export default function Dashboard() {
         return;
       }
       setTipoUser(usuario.tipo_user);
+// 🟢 BUSCA CONSULTOR SOMENTE SE GESTOR OU ADMIN
+if (usuario.tipo_user === 'GESTOR' || usuario.tipo_user === 'ADMIN') {
+  const canalId = usuario.canais_venda?.[0]?.id;  // você pode expandir isso para multicanais se quiser
+
+  if (canalId) {
+    axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${canalId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => {
+      const lista = res.data.map((u: any) => ({
+        value: u.id_vendedor,
+        label: `${u.username} (${u.id_vendedor})`
+      }));
+      setConsultores(lista);
+    }).catch(console.error);
+  }
+}
+
+
+
+
       fetchDashboardData();
     } catch (error) {
       console.error('Erro ao carregar usuário:', error);
@@ -164,9 +182,14 @@ export default function Dashboard() {
     );
   }
 
-  const parceirosFiltrados = statusFiltro.length > 0
-    ? tabelaParceiros.filter((p: any) => statusFiltro.includes(p.status))
-    : tabelaParceiros;
+  let parceirosFiltrados = tabelaParceiros;
+
+  if (consultorSelecionado) {
+    parceirosFiltrados = parceirosFiltrados.filter((p: any) => p.consultor_id === consultorSelecionado);
+  }
+  
+
+    
     
     // Recalcular interações por status com base nos parceiros filtrados
 const interacoesStatusFiltrado: Record<string, number> = {};
@@ -251,21 +274,11 @@ const statusDataFiltrado = STATUS_ORDER.map(status => {
   };
 });
 
-// Dados completos (sem filtro)
-const statusDataCompleto = STATUS_ORDER.map(status => {
-  const parceirosDoStatus = tabelaParceiros.filter(p => p.status === status);
-  const parceirosComInteracao = parceirosDoStatus.filter(p => p.tem_interacao);
-  const parceirosContatadosUnicos = new Set(parceirosComInteracao.map(p => p.id));
-  return {
-    status: STATUS_LABELS[status] || status,
-    parceiros: parceirosDoStatus.length,
-    interacoes: parceirosComInteracao.reduce((sum, p) => sum + (p.qtd_interacoes || 1), 0),
-    contatados: parceirosContatadosUnicos.size,
-  };
-});
+
 
 // Usa dados com ou sem filtro
-const statusData = statusFiltro.length > 0 ? statusDataFiltrado : statusDataCompleto;
+const statusData = statusDataFiltrado;
+
 
   
   
@@ -280,22 +293,9 @@ const statusData = statusFiltro.length > 0 ? statusDataFiltrado : statusDataComp
             {tipoUser === 'ADMIN' && 'Dashboard do Administrador'}
           </Title>
 
-          {/* Filtros */}
-          <Group mb="xl" justify="space-between" style={{ width: '100%' }}>
-            <MultiSelect
-              data={STATUS_OPTIONS}
-              label="Filtrar por Status"
-              placeholder="Selecione status"
-              value={statusFiltro}
-              onChange={setStatusFiltro}
-              style={{ flex: 1, marginRight: 10 }}
-              searchable
-            />
-            <Button variant="light" color="red" onClick={() => setStatusFiltro([])}>
-              Resetar Filtros
-            </Button>
-          </Group>
+         
           <Group mb="xl" grow>
+         
   <Select
     data={MESES}
     label="Mês"
@@ -310,10 +310,21 @@ const statusData = statusFiltro.length > 0 ? statusDataFiltrado : statusDataComp
     value={anoSelecionado}
     onChange={setAnoSelecionado}
   />
+  {['GESTOR', 'ADMIN'].includes(tipoUser || '') && (
+    <Select
+      data={consultores}
+      label="Consultor"
+      placeholder="Selecione"
+      value={consultorSelecionado}
+      onChange={setConsultorSelecionado}
+      searchable
+    />
+  )}
   <Button color="teal" variant="filled" onClick={fetchDashboardData}>
     Aplicar Filtro
   </Button>
 </Group>
+
 
          
          
