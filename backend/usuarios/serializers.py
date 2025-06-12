@@ -85,6 +85,7 @@ class InteracaoPendentesSerializer(serializers.ModelSerializer):
 class OportunidadeSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
+    data_status = serializers.DateTimeField(read_only=True)
     dias_sem_interacao = serializers.SerializerMethodField()
 
     class Meta:
@@ -99,6 +100,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             'observacao',
             'etapa',
             'data_criacao',
+            'data_status',
             'data_etapa',  # 👈 ADICIONE AQUI
             'dias_sem_interacao',
         ]

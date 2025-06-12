@@ -1,17 +1,18 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
-  Title, Table, Container, Loader, ScrollArea, Badge, Group, Text, Divider, Card, Box
+  Title, Table, Container, Loader, ScrollArea, Badge, Group, Text, Divider, Card, Box, Select
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 
 interface Oportunidade {
   id: number;
-  parceiro: string;
-  status: string;
+  parceiro: number;
+  parceiro_nome: string;
   valor: number;
+  etapa: string;
   data_criacao: string;
-  ultima_interacao?: string;
+  data_status: string;
 }
 
 export default function OportunidadesPage() {
@@ -19,6 +20,26 @@ export default function OportunidadesPage() {
   const [carregando, setCarregando] = useState(true);
   const token = localStorage.getItem('token');
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+
+  // Lista de opções de status
+  const etapaOptions = [
+    { value: 'oportunidade', label: 'Oportunidade' },
+    { value: 'orcamento', label: 'Orçamento' },
+    { value: 'aguardando', label: 'Pedido Aguardando Aprovação' },
+    { value: 'pedido', label: 'Pedido Realizado' },
+    { value: 'perdida', label: 'Venda Perdida' },
+  ];
+
+  const getStatusColor = (etapa: string) => {
+    const mapa: Record<string, string> = {
+      oportunidade: 'blue',
+      orcamento: 'yellow',
+      aguardando: 'orange',
+      pedido: 'green',
+      perdida: 'red',
+    };
+    return mapa[etapa] || 'gray';
+  };
 
   useEffect(() => {
     const fetchDados = async () => {
@@ -33,25 +54,34 @@ export default function OportunidadesPage() {
         setCarregando(false);
       }
     };
-
     fetchDados();
   }, [token]);
 
-  const getStatusColor = (status: string) => {
-    const mapa: Record<string, string> = {
-      'Oportunidade': 'blue',
-      'Orçamento': 'yellow',
-      'Pedido Aguardando Aprovação': 'orange',
-      'Pedido Realizado': 'green',
-      'Venda Perdida': 'red',
-    };
-    return mapa[status] || 'gray';
+  // Atualiza status via PATCH
+  const handleStatusChange = async (id: number, novaEtapa: string | null) => {
+    if (!novaEtapa) return;
+    try {
+      await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
+        etapa: novaEtapa,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setDados(prev =>
+        prev.map(o => o.id === id
+          ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() }
+          : o
+        )
+      );
+    } catch (err) {
+      console.error('Erro ao atualizar etapa:', err);
+    }
   };
 
   const agrupadoPorStatus = useMemo((): Record<string, Oportunidade[]> => {
     const agrupado: Record<string, Oportunidade[]> = {};
-    (dados || []).forEach((item: Oportunidade) => {
-      const status = item.status || 'Sem status';
+    dados.forEach((item) => {
+      const status = item.etapa || 'Sem status';
       if (!agrupado[status]) agrupado[status] = [];
       agrupado[status].push(item);
     });
@@ -80,21 +110,31 @@ export default function OportunidadesPage() {
                         <th>Parceiro</th>
                         <th>Valor</th>
                         <th>Data Criação</th>
-                        <th>Última Interação</th>
+                        <th>Data Status</th>
                         <th>Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {lista.map((o) => (
                         <tr key={o.id}>
-                          <td><Text fw={500}>{o.parceiro}</Text></td>
+                          <td><Text fw={500}>{o.parceiro_nome}</Text></td>
                           <td>R$ {o.valor.toLocaleString('pt-BR')}</td>
                           <td>{new Date(o.data_criacao).toLocaleDateString()}</td>
-                          <td>{o.ultima_interacao || '-'}</td>
+                          <td>{o.data_status ? new Date(o.data_status).toLocaleDateString() : '-'}</td>
                           <td>
-                            <Badge color={getStatusColor(o.status)} variant="filled">
-                              {o.status}
-                            </Badge>
+                            <Select
+                              value={o.etapa}
+                              onChange={(value) => handleStatusChange(o.id, value)}
+                              data={etapaOptions}
+                              styles={{
+                                input: {
+                                  backgroundColor: getStatusColor(o.etapa),
+                                  color: 'white',
+                                  fontWeight: 500,
+                                  textAlign: 'center'
+                                }
+                              }}
+                            />
                           </td>
                         </tr>
                       ))}

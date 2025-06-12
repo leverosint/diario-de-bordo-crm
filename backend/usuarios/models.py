@@ -161,14 +161,12 @@ class Oportunidade(models.Model):
 
 
     def save(self, *args, **kwargs):
-        # se for uma nova ou a etapa foi alterada, atualiza a data_etapa
         if not self.pk:
-            self.data_etapa = timezone.now()
+            self.data_status = self.data_criacao or timezone.now()
         else:
             original = Oportunidade.objects.get(pk=self.pk)
-            if self.etapa != original.etapa:
-                self.data_etapa = timezone.now()
-
+            if original.etapa != self.etapa:
+                self.data_status = timezone.now()
         super().save(*args, **kwargs)
 
 
