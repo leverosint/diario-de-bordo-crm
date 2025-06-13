@@ -34,18 +34,20 @@ export default function TabelaOportunidadesPage() {
   const etapaOptions = [
     { value: 'oportunidade', label: 'Oportunidade' },
     { value: 'orcamento', label: 'Orçamento' },
-    { value: 'aguardando', label: 'Pedido Aguardando Aprovação' },
+    { value: 'aguardando', label: 'Aguardando Pagamento' },  // ✅ aqui
     { value: 'pedido', label: 'Pedido Realizado' },
     { value: 'perdida', label: 'Venda Perdida' },
   ];
+  
 
   const getStatusColor = (etapa: string) => ({
     oportunidade: 'blue',
     orcamento: 'teal',
-    aguardando: 'orange',
+    aguardando: 'yellow', // ✅ adicionado
     pedido: 'green',
     perdida: 'red',
   }[etapa] || 'gray');
+  
 
   useEffect(() => {
     const fetchDados = async () => {

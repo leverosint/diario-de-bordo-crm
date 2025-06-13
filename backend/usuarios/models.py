@@ -145,11 +145,13 @@ class Interacao(models.Model):
 
 class Oportunidade(models.Model):
     ETAPA_CHOICES = [
-        ('oportunidade', 'Oportunidade'),
-        ('orcamento', 'Orçamento'),
-        ('pedido', 'Pedido'),
-        ('perdida', 'Venda Perdida'),
-    ]
+    ('oportunidade', 'Oportunidade'),
+    ('orcamento', 'Orçamento'),
+    ('aguardando', 'Aguardando Pagamento'),  # 👈 adicionado aqui
+    ('pedido', 'Pedido'),
+    ('perdida', 'Venda Perdida'),
+]
+
     parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='oportunidades')
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='oportunidades')
     valor = models.DecimalField(max_digits=12, decimal_places=2)
