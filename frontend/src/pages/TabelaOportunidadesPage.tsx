@@ -195,29 +195,7 @@ export default function TabelaOportunidadesPage() {
           </Box>
         </Group>
 
-        {/* Cards Resumo */}
-        <Group mt="xs" mb="md" wrap="wrap" style={{ gap: 16 }}>
-          {Object.entries(agrupadoPorStatus).map(([status, lista]) => (
-            <Box
-              key={status}
-              style={{
-                backgroundColor: getStatusColor(status),
-                color: 'white',
-                borderRadius: 12,
-                padding: '1rem 1.5rem',
-                minWidth: 180,
-                flex: '1 1 200px',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-              }}
-            >
-              <Title order={5} style={{ marginBottom: 4 }}>{status.toUpperCase()}</Title>
-              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                {lista.length} {lista.length === 1 ? 'registro' : 'registros'}
-              </div>
-            </Box>
-          ))}
-        </Group>
-
+        {/* Tabelas */}
         {carregando ? <Loader /> : (
           <ScrollArea>
             {Object.entries(agrupadoPorStatus).map(([status, lista]) => {
