@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import type { FormEvent } from 'react';
 import {
   TextInput,
   Button,
@@ -7,14 +6,14 @@ import {
   Container,
   Title,
   Select,
-  Modal,
-  Table,
-  ScrollArea,
-  Collapse,
+  FileInput,
   Text,
-  ActionIcon,
-  } from '@mantine/core';
-import { IconChevronDown, IconChevronUp, IconEdit, IconTrash } from '@tabler/icons-react';
+  Modal,
+  Notification,
+  Accordion,
+  SimpleGrid,
+  Table,
+} from '@mantine/core';
 import axios from 'axios';
 
 interface CanalVenda {
@@ -33,6 +32,7 @@ interface Parceiro {
   parceiro: string;
   classificacao: string;
   consultor: string;
+  canal_venda: string;
   cidade: string;
   uf: string;
 }
@@ -46,94 +46,118 @@ export default function CadastroParceiro() {
     canal_venda: '',
     cidade: '',
     uf: '',
-    janeiro: 0,
-    fevereiro: 0,
-    marco: 0,
-    abril: 0,
-    maio: 0,
-    junho: 0,
-    julho: 0,
-    agosto: 0,
-    setembro: 0,
-    outubro: 0,
-    novembro: 0,
-    dezembro: 0,
-    janeiro_2: 0,
-    fevereiro_2: 0,
-    marco_2: 0,
+    unidade: '',
+    janeiro: 0, fevereiro: 0, marco: 0, abril: 0, maio: 0, junho: 0,
+    julho: 0, agosto: 0, setembro: 0, outubro: 0, novembro: 0, dezembro: 0,
+    janeiro_2: 0, fevereiro_2: 0, marco_2: 0,
   });
 
+  const [file, setFile] = useState<File | null>(null);
   const [canais, setCanais] = useState<CanalVenda[]>([]);
   const [consultores, setConsultores] = useState<Consultor[]>([]);
-  const [parceiros, setParceiros] = useState<Parceiro[]>([]);
+  const [mensagem, setMensagem] = useState<string | null>(null);
   const [popupAberto, setPopupAberto] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<{ id: number; open: boolean }>({ id: 0, open: false });
-  const [expandirInfos, setExpandirInfos] = useState(false);
-  const [expandirFaturamento, setExpandirFaturamento] = useState(false);
+  const [parceiros, setParceiros] = useState<Parceiro[]>([]);
+  const [excluirId, setExcluirId] = useState<number | null>(null);
 
   const handleChange = (field: keyof typeof form, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const camposObrigatoriosPreenchidos =
-    form.codigo && form.parceiro && form.classificacao && form.consultor && form.canal_venda;
+  const isFormValido = () =>
+    form.codigo && form.parceiro && form.canal_venda;
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-    if (!camposObrigatoriosPreenchidos) return;
     try {
       const { canal_venda, ...rest } = form;
-      const payload = {
-        ...rest,
-        canal_venda_id: Number(canal_venda),
-      };
+      const payload = { ...rest, canal_venda_id: Number(canal_venda) };
       await axios.post(`${import.meta.env.VITE_API_URL}/parceiros/`, payload, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       setPopupAberto(true);
+      setMensagem(null);
+      buscarParceiros();
     } catch (error) {
       console.error('Erro ao cadastrar parceiro:', error);
+      setMensagem('Erro ao cadastrar parceiro');
     }
   };
 
-  const handleExcluir = async (id: number) => {
+  const handleUpload = async () => {
+    if (!file) return setMensagem('Selecione um arquivo antes de enviar.');
+    const formData = new FormData();
+    formData.append('file', file);
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/parceiros/${id}/`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      setParceiros(parceiros.filter((p) => p.id !== id));
-      setConfirmDelete({ id: 0, open: false });
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/upload-parceiros/`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      setMensagem(
+        `Upload concluído! ${response.data.criadas} criados, ${response.data.atualizadas} atualizados.`
+      );
+      buscarParceiros();
     } catch (error) {
-      console.error('Erro ao excluir:', error);
+      console.error('Erro no upload:', error);
+      setMensagem('Erro ao enviar o arquivo.');
+    }
+  };
+
+  const buscarParceiros = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/parceiros/`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      setParceiros(response.data);
+    } catch (error) {
+      console.error('Erro ao buscar parceiros:', error);
+    }
+  };
+
+  const excluirParceiro = async () => {
+    if (excluirId === null) return;
+    try {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/parceiros/${excluirId}/`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+      });
+      setExcluirId(null);
+      buscarParceiros();
+    } catch (error) {
+      console.error('Erro ao excluir parceiro:', error);
     }
   };
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchCanais = async () => {
       try {
-        const [canaisRes, consultoresRes, parceirosRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          }),
-          axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=1`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          }),
-          axios.get(`${import.meta.env.VITE_API_URL}/parceiros/`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-          }),
-        ]);
-        setCanais(canaisRes.data);
-        setConsultores(consultoresRes.data);
-        setParceiros(parceirosRes.data);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+        setCanais(response.data);
       } catch (error) {
-        console.error('Erro ao carregar dados:', error);
+        console.error('Erro ao buscar canais de venda:', error);
       }
     };
-    fetchData();
+    const fetchConsultores = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=1`,
+          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+        );
+        setConsultores(response.data);
+      } catch (error) {
+        console.error('Erro ao buscar consultores:', error);
+      }
+    };
+    fetchCanais();
+    fetchConsultores();
+    buscarParceiros();
   }, []);
 
   const meses = [
@@ -142,138 +166,112 @@ export default function CadastroParceiro() {
     'janeiro_2', 'fevereiro_2', 'marco_2',
   ];
 
+  const labelMes = (mes: string) => {
+    if (mes.endsWith('_2')) return `${mes.charAt(0).toUpperCase() + mes.slice(1, -2)} (2º ano)`;
+    return mes.charAt(0).toUpperCase() + mes.slice(1);
+  };
+
   return (
-    <Container size="md" mt="xl">
-      <Title order={2}>Cadastro de Parceiros</Title>
+    <Container size="xl" mt="xl">
+      <Title order={2} mb="md">Cadastro de Parceiros</Title>
+
       <form onSubmit={handleSubmit}>
-        <Group mt="md">
-          <Button onClick={() => setExpandirInfos((prev) => !prev)}>
-            {expandirInfos ? <IconChevronUp /> : <IconChevronDown />} Informações do Parceiro
-          </Button>
-          <Button onClick={() => setExpandirFaturamento((prev) => !prev)}>
-            {expandirFaturamento ? <IconChevronUp /> : <IconChevronDown />} Faturamento Mensal
-          </Button>
+        <Accordion variant="default" defaultValue="dados-parceiro">
+          <Accordion.Item value="dados-parceiro">
+            <Accordion.Control>Informações do Parceiro</Accordion.Control>
+            <Accordion.Panel>
+              <SimpleGrid cols={2} spacing="md">
+                <TextInput label="Código" required value={form.codigo} onChange={(e) => handleChange('codigo', e.target.value)} />
+                <TextInput label="Parceiro" required value={form.parceiro} onChange={(e) => handleChange('parceiro', e.target.value)} />
+                <Select label="Classificação" placeholder="Selecione" data={['Diamante', 'Esmeralda', 'Ouro', 'Prata', 'Bronze']} value={form.classificacao} onChange={(value) => handleChange('classificacao', value || '')} />
+                <Select label="Consultor" placeholder="Selecione" data={consultores.map(c => ({ value: c.id_vendedor, label: c.username }))} value={form.consultor} onChange={(value) => handleChange('consultor', value || '')} />
+                <Select label="Canal de Venda" placeholder="Selecione" required data={canais.map(c => ({ value: String(c.id), label: c.nome }))} value={form.canal_venda} onChange={(value) => handleChange('canal_venda', value || '')} />
+                <TextInput label="Unidade" value={form.unidade} onChange={(e) => handleChange('unidade', e.target.value)} />
+                <TextInput label="Cidade" value={form.cidade} onChange={(e) => handleChange('cidade', e.target.value)} />
+                <TextInput label="UF" maxLength={2} value={form.uf} onChange={(e) => handleChange('uf', e.target.value)} />
+              </SimpleGrid>
+            </Accordion.Panel>
+          </Accordion.Item>
+
+          <Accordion.Item value="faturamento-mensal">
+            <Accordion.Control>Faturamento Mensal</Accordion.Control>
+            <Accordion.Panel>
+              <SimpleGrid cols={3} spacing="md">
+                {meses.map((mes) => (
+                  <TextInput
+                    key={mes}
+                    label={labelMes(mes)}
+                    value={form[mes as keyof typeof form].toLocaleString('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL',
+                    })}
+                    onChange={(e) => {
+                      const raw = e.currentTarget.value.replace(/[^\d]/g, '');
+                      const parsed = parseFloat(raw) / 100;
+                      handleChange(mes as keyof typeof form, isNaN(parsed) ? 0 : parsed);
+                    }}
+                  />
+                ))}
+              </SimpleGrid>
+            </Accordion.Panel>
+          </Accordion.Item>
+        </Accordion>
+
+        <Group mt="lg" justify="flex-end">
+          <Button type="submit" color="green" disabled={!isFormValido()}>Cadastrar</Button>
         </Group>
-
-        <Collapse in={expandirInfos} mt="md">
-          <TextInput label="Código" value={form.codigo} onChange={(e) => handleChange('codigo', e.target.value)} required />
-          <TextInput label="Parceiro" value={form.parceiro} onChange={(e) => handleChange('parceiro', e.target.value)} required />
-          <Select
-            label="Classificação"
-            placeholder="Selecione"
-            data={[
-              'Diamante', 'Esmeralda', 'Ouro', 'Prata', 'Bronze',
-            ].map((v) => ({ value: v, label: v }))}
-            value={form.classificacao}
-            onChange={(value) => handleChange('classificacao', value || '')}
-            required
-          />
-          <Select
-            label="Consultor"
-            data={consultores.map((c) => ({ value: c.id_vendedor, label: c.username }))}
-            value={form.consultor}
-            onChange={(value) => handleChange('consultor', value || '')}
-            required
-          />
-          <Select
-            label="Canal de Venda"
-            data={canais.map((c) => ({ value: String(c.id), label: c.nome }))}
-            value={form.canal_venda}
-            onChange={(value) => handleChange('canal_venda', value || '')}
-            required
-          />
-          <TextInput label="Cidade" value={form.cidade} onChange={(e) => handleChange('cidade', e.target.value)} />
-          <TextInput label="UF" value={form.uf} onChange={(e) => handleChange('uf', e.target.value)} maxLength={2} />
-        </Collapse>
-
-        <Collapse in={expandirFaturamento} mt="md">
-          <Title order={4} mt="lg">Faturamento Mensal</Title>
-          {meses.map((mes) => (
-            <TextInput
-              key={mes}
-              label={mes.charAt(0).toUpperCase() + mes.slice(1).replace('_2', ' (2º ano)')}
-              value={
-                typeof form[mes as keyof typeof form] === 'number'
-                  ? (form[mes as keyof typeof form] as number).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                  : 'R$ 0,00'
-              }
-              onChange={(e) => {
-                const raw = e.currentTarget.value.replace(/[^\d]/g, '');
-                const parsed = Number(raw) / 100;
-                handleChange(mes as keyof typeof form, isNaN(parsed) ? 0 : parsed);
-              }}
-            />
-          ))}
-
-          <Group mt="md">
-            <Button type="submit" color="teal" disabled={!camposObrigatoriosPreenchidos}>
-              Cadastrar
-            </Button>
-          </Group>
-        </Collapse>
       </form>
 
-      <Title order={3} mt="xl">Parceiros Cadastrados</Title>
-      <ScrollArea mt="md">
-        <Table highlightOnHover>
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Parceiro</th>
-              <th>Classificação</th>
-              <th>Consultor</th>
-              <th>Cidade</th>
-              <th>UF</th>
-              <th>Ações</th>
+      <Title order={3} mt="xl" mb="xs">Upload em massa (Excel/CSV)</Title>
+      <FileInput label="Selecionar arquivo" placeholder="Escolha um arquivo Excel ou CSV" onChange={setFile} />
+      <Group mt="sm">
+        <Button onClick={handleUpload} color="blue">Enviar Arquivo</Button>
+      </Group>
+
+      {mensagem && <Notification mt="md" color="red">{mensagem}</Notification>}
+
+      <Title order={3} mt="xl" mb="xs">Parceiros Cadastrados</Title>
+      <Table striped withColumnBorders>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Parceiro</th>
+            <th>Consultor</th>
+            <th>Canal</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {parceiros.map(p => (
+            <tr key={p.id}>
+              <td>{p.codigo}</td>
+              <td>{p.parceiro}</td>
+              <td>{p.consultor}</td>
+              <td>{p.canal_venda}</td>
+              <td>
+                <Button size="xs" variant="outline" onClick={() => setForm({ ...form, ...p })}>Editar</Button>{' '}
+                <Button size="xs" color="red" onClick={() => setExcluirId(p.id)}>Excluir</Button>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {parceiros.map((p) => (
-              <tr key={p.id}>
-                <td>{p.codigo}</td>
-                <td>{p.parceiro}</td>
-                <td>{p.classificacao}</td>
-                <td>{p.consultor}</td>
-                <td>{p.cidade}</td>
-                <td>{p.uf}</td>
-                <td>
-                  <Group>
-                    <ActionIcon color="blue"><IconEdit size={16} /></ActionIcon>
-                    <ActionIcon color="red" onClick={() => setConfirmDelete({ id: p.id, open: true })}>
-                      <IconTrash size={16} />
-                    </ActionIcon>
-                  </Group>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </ScrollArea>
+          ))}
+        </tbody>
+      </Table>
 
       <Modal
-        opened={popupAberto}
-        onClose={() => setPopupAberto(false)}
-        title="Sucesso!"
-        centered
-      >
-        <Text>Parceiro cadastrado com sucesso!</Text>
-      </Modal>
-
-      <Modal
-        opened={confirmDelete.open}
-        onClose={() => setConfirmDelete({ id: 0, open: false })}
+        opened={excluirId !== null}
+        onClose={() => setExcluirId(null)}
         title="Confirmar exclusão"
         centered
       >
         <Text>Tem certeza que deseja excluir este parceiro?</Text>
         <Group mt="md" justify="flex-end">
-          <Button color="red" onClick={() => handleExcluir(confirmDelete.id)}>
-            Confirmar
-          </Button>
-          <Button variant="outline" onClick={() => setConfirmDelete({ id: 0, open: false })}>
-            Cancelar
-          </Button>
+          <Button variant="default" onClick={() => setExcluirId(null)}>Cancelar</Button>
+          <Button color="red" onClick={excluirParceiro}>Confirmar</Button>
         </Group>
+      </Modal>
+
+      <Modal opened={popupAberto} onClose={() => setPopupAberto(false)} title="Sucesso!" centered>
+        <Text>Parceiro cadastrado com sucesso!</Text>
       </Modal>
     </Container>
   );
