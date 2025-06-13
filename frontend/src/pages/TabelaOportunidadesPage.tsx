@@ -75,7 +75,7 @@ export default function TabelaOportunidadesPage() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchDados();
+      await fetchDados();
     } catch (err) {
       console.error('Erro ao atualizar status:', err);
     }
@@ -83,13 +83,13 @@ export default function TabelaOportunidadesPage() {
 
   const getStatusColor = (etapa: string) => {
     const cores: Record<string, string> = {
-      'Oportunidade': '#228be6',
-      'Orçamento': '#fab005',
-      'Pedido Aguardando Aprovação': '#ffa94d',
-      'Pedido Realizado': '#40c057',
-      'Venda Perdida': '#fa5252',
+      'oportunidade': '#228be6',
+      'orçamento': '#fab005',
+      'pedido aguardando aprovação': '#ffa94d',
+      'pedido realizado': '#40c057',
+      'venda perdida': '#fa5252',
     };
-    return cores[etapa] || '#ced4da';
+    return cores[etapa.toLowerCase()] || '#ced4da';
   };
 
   const formatDate = (date?: string) =>
@@ -192,11 +192,11 @@ export default function TabelaOportunidadesPage() {
                   >
                     <Group justify="space-between" mb="sm">
                       <Group align="center">
-                        {etapa === 'Pedido Realizado' && <ShoppingCart size={18} color="#40c057" />}
-                        {etapa === 'Venda Perdida' && <XCircle size={18} color="#fa5252" />}
-                        {etapa === 'Oportunidade' && <Target size={18} color="#228be6" />}
-                        {etapa === 'Orçamento' && <Briefcase size={18} color="#fab005" />}
-                        {etapa === 'Pedido Aguardando Aprovação' && <Clock size={18} color="#ffa94d" />}
+                        {etapa.toLowerCase() === 'pedido realizado' && <ShoppingCart size={18} color="#40c057" />}
+                        {etapa.toLowerCase() === 'venda perdida' && <XCircle size={18} color="#fa5252" />}
+                        {etapa.toLowerCase() === 'oportunidade' && <Target size={18} color="#228be6" />}
+                        {etapa.toLowerCase() === 'orçamento' && <Briefcase size={18} color="#fab005" />}
+                        {etapa.toLowerCase() === 'pedido aguardando aprovação' && <Clock size={18} color="#ffa94d" />}
                         <Title order={4} tt="capitalize" ml={8}>{etapa.toLowerCase()}</Title>
                         <Tooltip label={`Tempo médio na etapa: ${tempoMedio}`} withArrow>
                           <Indicator color="gray" size={12} processing>
