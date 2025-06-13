@@ -133,6 +133,7 @@ export default function TabelaOportunidadesPage() {
           <Button onClick={exportarExcel} variant="light">Exportar Excel</Button>
         </Group>
 
+        {/* Filtros com datas corrigidas */}
         <Group mt="xs" mb="md" grow align="end">
           <TextInput
             label="Nome do parceiro"
@@ -155,8 +156,19 @@ export default function TabelaOportunidadesPage() {
               locale="pt-br"
               dropdownType="modal"
               label="Data início"
-              popoverProps={{ withinPortal: true, position: 'bottom-start', offset: 4 }}
-              styles={{ input: { fontSize: '0.875rem' } }}
+              clearable
+              rightSection={null}
+              popoverProps={{
+                withinPortal: false,
+                position: 'bottom-start',
+                shadow: 'md',
+              }}
+              styles={{
+                input: {
+                  fontSize: '0.875rem',
+                  borderRadius: 8,
+                },
+              }}
             />
           </Box>
           <Box style={{ minWidth: 160 }}>
@@ -166,15 +178,25 @@ export default function TabelaOportunidadesPage() {
               locale="pt-br"
               dropdownType="modal"
               label="Data fim"
-              popoverProps={{ withinPortal: true, position: 'bottom-start', offset: 4 }}
-              styles={{ input: { fontSize: '0.875rem' } }}
+              clearable
+              rightSection={null}
+              popoverProps={{
+                withinPortal: false,
+                position: 'bottom-start',
+                shadow: 'md',
+              }}
+              styles={{
+                input: {
+                  fontSize: '0.875rem',
+                  borderRadius: 8,
+                },
+              }}
             />
           </Box>
         </Group>
 
         {/* Cards Resumo */}
         <Group mt="xs" mb="md" wrap="wrap" style={{ gap: 16 }}>
-
           {Object.entries(agrupadoPorStatus).map(([status, lista]) => (
             <Box
               key={status}
