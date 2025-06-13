@@ -12,7 +12,8 @@ import {
   Box,
   Select,
   TextInput,
-  Button
+  Button,
+  Tooltip,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
@@ -177,6 +178,7 @@ export default function TabelaOportunidadesPage() {
             {Object.entries(agrupadoPorStatus).map(([status, lista]) => {
               const valorTotal = lista.reduce((acc, o) => acc + Number(o.valor), 0).toFixed(2);
               const tempoMedio = calcularTempoMedio(lista);
+              const listaLimitada = lista.slice(0, 5);
 
               return (
                 <Box key={status} mt="xl">
@@ -191,56 +193,65 @@ export default function TabelaOportunidadesPage() {
                     <Group justify="space-between" align="center" mb="sm">
                       <div>
                         <Title order={3} style={{ marginBottom: 4 }}>{status.toUpperCase()}</Title>
-                        <p style={{ fontSize: '0.9rem', color: '#555' }}>Valor total: R$ {valorTotal.replace('.', ',')}</p>
+                        <p style={{ fontSize: '0.9rem', color: '#555' }}>
+                          Valor total: R$ {valorTotal.replace('.', ',')}
+                        </p>
                       </div>
                       <Group>
                         <Badge color={getStatusColor(status)} variant="light">
                           {lista.length} oportunidades
                         </Badge>
-                        <Badge color="gray" variant="outline">
-                          ⏱ {tempoMedio} dias
-                        </Badge>
+                        <Tooltip label="Tempo médio entre a criação e a última atualização nesta categoria" withArrow>
+                          <Badge color="gray" variant="outline" style={{ cursor: 'help' }}>
+                            ⏱ {tempoMedio} dias
+                          </Badge>
+                        </Tooltip>
                       </Group>
                     </Group>
 
-                    <Table striped highlightOnHover withColumnBorders>
-                      <thead>
-                        <tr>
-                          <th>Parceiro</th>
-                          <th>Valor</th>
-                          <th>Data Criação</th>
-                          <th>Data Status</th>
-                          <th>Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {lista.map((o) => (
-                          <tr key={o.id}>
-                            <td>{o.parceiro_nome}</td>
-                            <td>R$ {Number(o.valor).toFixed(2).replace('.', ',')}</td>
-                            <td>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
-                            <td>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
-                            <td>
-                              <Select
-                                value={o.etapa}
-                                onChange={(value) => handleStatusChange(o.id, value)}
-                                data={etapaOptions}
-                                size="xs"
-                                styles={{
-                                  input: {
-                                    backgroundColor: getStatusColor(o.etapa),
-                                    color: 'white',
-                                    fontWeight: 800,
-                                    textAlign: 'center',
-                                    borderRadius: 6,
-                                  }
-                                }}
-                              />
-                            </td>
+                    <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                      <Table striped highlightOnHover withColumnBorders>
+                        <thead>
+                          <tr>
+                            <th>Parceiro</th>
+                            <th>Valor</th>
+                            <th>Data Criação</th>
+                            <th>Data Status</th>
+                            <th>Status</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </Table>
+                        </thead>
+                        <tbody>
+                          {listaLimitada.map((o) => (
+                            <tr key={o.id}>
+                              <td>{o.parceiro_nome}</td>
+                              <td>R$ {Number(o.valor).toFixed(2).replace('.', ',')}</td>
+                              <td>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
+                              <td>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
+                              <td>
+                                <Select
+                                  value={o.etapa}
+                                  onChange={(value) => {
+                                    if (value !== null) handleStatusChange(o.id, value);
+                                  }}
+                                  data={etapaOptions}
+                                  size="xs"
+                                  styles={{
+                                    input: {
+                                      backgroundColor: getStatusColor(o.etapa),
+                                      color: 'white',
+                                      fontWeight: 600,
+                                      textAlign: 'center',
+                                      borderRadius: 6,
+                                      minWidth: 200,
+                                    }
+                                  }}
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </div>
                   </Card>
                 </Box>
               );
