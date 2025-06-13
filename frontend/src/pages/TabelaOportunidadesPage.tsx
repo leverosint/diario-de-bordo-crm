@@ -7,7 +7,6 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
-
 import {
   ShoppingCart,
   XCircle,
@@ -34,7 +33,7 @@ interface Oportunidade {
   data_status?: string;
 }
 
-export default function OportunidadesPage() {
+export default function TabelaOportunidadesPage() {
   const [dados, setDados] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [filtroParceiro, setFiltroParceiro] = useState('');
@@ -77,7 +76,7 @@ export default function OportunidadesPage() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchDados(); // atualiza após mudança
+      fetchDados();
     } catch (err) {
       console.error('Erro ao atualizar status:', err);
     }
@@ -89,18 +88,17 @@ export default function OportunidadesPage() {
       'Orçamento': '#fab005',
       'Pedido Aguardando Aprovação': '#ffa94d',
       'Pedido Realizado': '#40c057',
-      'Venda Perdida': '#fa5252',
+      'Venda Perdida': '#fa5252'
     };
-    return cores[etapa] || '#ced4da';
+    return cores[etapa] || '#adb5bd';
   };
 
-  const formatDate = (date?: string) =>
-    date ? new Date(date).toLocaleDateString('pt-BR') : '-';
+  const formatDate = (date?: string) => date ? new Date(date).toLocaleDateString('pt-BR') : '-';
 
   const calcularTempoMedio = (lista: Oportunidade[]) => {
-    const dias = lista
-      .filter(o => o.data_status)
-      .map(o => (new Date(o.data_status!).getTime() - new Date(o.data_criacao).getTime()) / (1000 * 60 * 60 * 24));
+    const dias = lista.filter(o => o.data_status).map(o => (
+      (new Date(o.data_status!).getTime() - new Date(o.data_criacao).getTime()) / (1000 * 60 * 60 * 24)
+    ));
     if (dias.length === 0) return '-';
     const media = dias.reduce((a, b) => a + b, 0) / dias.length;
     return `${Math.round(media)} dia${media > 1 ? 's' : ''}`;
@@ -111,9 +109,7 @@ export default function OportunidadesPage() {
       const nomeInclui = o.parceiro_nome?.toLowerCase().includes(filtroParceiro.toLowerCase());
       const dataCriacao = new Date(o.data_criacao);
       const [inicio, fim] = intervaloDatas;
-      const dentroIntervalo =
-        (!inicio || dataCriacao >= new Date(inicio)) &&
-        (!fim || dataCriacao <= new Date(fim));
+      const dentroIntervalo = (!inicio || dataCriacao >= new Date(inicio)) && (!fim || dataCriacao <= new Date(fim));
       const statusCondiz = !filtroStatus || o.etapa === filtroStatus;
       return nomeInclui && dentroIntervalo && statusCondiz;
     });
@@ -135,7 +131,7 @@ export default function OportunidadesPage() {
       Valor: o.valor,
       Etapa: o.etapa,
       'Data Criação': formatDate(o.data_criacao),
-      'Data Status': formatDate(o.data_status),
+      'Data Status': formatDate(o.data_status)
     }));
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.json_to_sheet(planilha);
@@ -158,10 +154,10 @@ export default function OportunidadesPage() {
             onChange={(e) => setFiltroParceiro(e.currentTarget.value)}
           />
           <Select
-            data={['Todas', ...etapaOptions]}
+            data={["Todas", ...etapaOptions]}
             placeholder="Filtrar por etapa"
-            value={filtroStatus || 'Todas'}
-            onChange={(value) => setFiltroStatus(value === 'Todas' ? null : value)}
+            value={filtroStatus || "Todas"}
+            onChange={(value) => setFiltroStatus(value === "Todas" ? null : value)}
             clearable
           />
           <DatePickerInput
@@ -188,8 +184,8 @@ export default function OportunidadesPage() {
                     mb="xl"
                     style={{
                       borderLeft: `6px solid ${getStatusColor(etapa)}`,
-                      backgroundColor: hexToRGBA(getStatusColor(etapa), 0.06),
-                      boxShadow: '0 8px 18px rgba(0,0,0,0.06)',
+                      backgroundColor: hexToRGBA(getStatusColor(etapa), 0.1),
+                      boxShadow: '0 8px 18px rgba(0,0,0,0.06)'
                     }}
                   >
                     <Group justify="space-between" mb="sm">
@@ -211,14 +207,7 @@ export default function OportunidadesPage() {
                       </Badge>
                     </Group>
                     <Divider my="sm" />
-                    <Table
-                      striped
-                      highlightOnHover
-                      withTableBorder
-                      verticalSpacing="md"
-                      horizontalSpacing="lg"
-                      style={{ width: '100%', minWidth: '850px', fontSize: '0.95rem' }}
-                    >
+                    <Table striped highlightOnHover withTableBorder verticalSpacing="md" horizontalSpacing="lg">
                       <thead>
                         <tr>
                           <th>Parceiro</th>
@@ -231,8 +220,8 @@ export default function OportunidadesPage() {
                       <tbody>
                         {lista.map((o) => (
                           <tr key={o.id}>
-                            <td><Text fw={500}>{o.parceiro_nome || 'Sem nome'}</Text></td>
-                            <td>R$ {Number(o?.valor ?? 0).toLocaleString('pt-BR')}</td>
+                            <td><Text fw={500}>{o.parceiro_nome}</Text></td>
+                            <td>R$ {Number(o.valor ?? 0).toLocaleString('pt-BR')}</td>
                             <td>{formatDate(o.data_criacao)}</td>
                             <td>{formatDate(o.data_status)}</td>
                             <td>
@@ -241,14 +230,14 @@ export default function OportunidadesPage() {
                                 onChange={(value) => handleStatusChange(o.id, value)}
                                 data={etapaOptions.map(v => ({ value: v, label: v }))}
                                 size="xs"
-                                variant="filled"
                                 styles={{
                                   input: {
                                     backgroundColor: getStatusColor(o.etapa),
                                     color: 'white',
                                     fontWeight: 600,
+                                    borderRadius: 8,
                                     textAlign: 'center',
-                                    textTransform: 'capitalize',
+                                    textTransform: 'capitalize'
                                   }
                                 }}
                               />
