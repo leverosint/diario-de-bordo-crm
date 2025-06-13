@@ -193,7 +193,8 @@ export default function CadastroParceiro() {
 
       <Title order={3} mb="sm">Parceiros Cadastrados</Title>
       <Box>
-        <Table withBorder highlightOnHover striped>
+      <Table withTableBorder highlightOnHover striped withColumnBorders>
+
           <thead>
             <tr>
               <th>Parceiro</th>
