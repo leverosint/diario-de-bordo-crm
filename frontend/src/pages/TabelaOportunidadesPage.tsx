@@ -40,7 +40,6 @@ export default function TabelaOportunidadesPage() {
   const [filtroParceiro, setFiltroParceiro] = useState('');
   const [filtroStatus, setFiltroStatus] = useState<string | null>(null);
   const [intervaloDatas, setIntervaloDatas] = useState<[string | null, string | null]>([null, null]);
-
   const token = localStorage.getItem('token');
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 
@@ -77,17 +76,7 @@ export default function TabelaOportunidadesPage() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-
-      // Atualização local para refletir imediatamente
-      setDados(prev =>
-        prev.map(o =>
-          o.id === id ? { ...o, etapa: value } : o
-        )
-      );
-
-      // Opcional: fetchDados() novamente para garantir consistência
-      // await fetchDados();
-
+      fetchDados(); // Atualiza visualmente os cards
     } catch (err) {
       console.error('Erro ao atualizar status:', err);
     }
@@ -95,13 +84,13 @@ export default function TabelaOportunidadesPage() {
 
   const getStatusColor = (etapa: string) => {
     const cores: Record<string, string> = {
-      'oportunidade': '#228be6',
-      'orçamento': '#fab005',
-      'pedido aguardando aprovação': '#ffa94d',
-      'pedido realizado': '#40c057',
-      'venda perdida': '#fa5252',
+      'Oportunidade': '#228be6',
+      'Orçamento': '#fab005',
+      'Pedido Aguardando Aprovação': '#ffa94d',
+      'Pedido Realizado': '#40c057',
+      'Venda Perdida': '#fa5252',
     };
-    return cores[etapa?.toLowerCase().trim()] || '#ced4da';
+    return cores[etapa] || '#adb5bd';
   };
 
   const formatDate = (date?: string) =>
@@ -189,7 +178,6 @@ export default function TabelaOportunidadesPage() {
             {Object.entries(agrupadoPorEtapa).map(([etapa, lista]) => {
               const totalValor = lista.reduce((acc, cur) => acc + (cur.valor ?? 0), 0);
               const tempoMedio = calcularTempoMedio(lista);
-              const cor = getStatusColor(etapa);
               return (
                 <Box key={etapa} mt="xl">
                   <Card
@@ -198,8 +186,8 @@ export default function TabelaOportunidadesPage() {
                     p="xl"
                     mb="xl"
                     style={{
-                      borderLeft: `6px solid ${cor}`,
-                      backgroundColor: hexToRGBA(cor, 0.1),
+                      borderLeft: `6px solid ${getStatusColor(etapa)}`,
+                      backgroundColor: hexToRGBA(getStatusColor(etapa), 0.08),
                       boxShadow: '0 8px 18px rgba(0,0,0,0.06)',
                     }}
                   >
@@ -217,7 +205,7 @@ export default function TabelaOportunidadesPage() {
                           </Indicator>
                         </Tooltip>
                       </Group>
-                      <Badge color={cor} variant="light" radius="xl">
+                      <Badge color={getStatusColor(etapa)} variant="light" radius="xl">
                         {lista.length} oportunidades | Total: R$ {totalValor.toLocaleString('pt-BR')}
                       </Badge>
                     </Group>
@@ -243,7 +231,7 @@ export default function TabelaOportunidadesPage() {
                         {lista.map((o) => (
                           <tr key={o.id}>
                             <td><Text fw={500}>{o.parceiro_nome}</Text></td>
-                            <td>R$ {Number(o?.valor ?? 0).toLocaleString('pt-BR')}</td>
+                            <td>R$ {Number(o.valor ?? 0).toLocaleString('pt-BR')}</td>
                             <td>{formatDate(o.data_criacao)}</td>
                             <td>{formatDate(o.data_status)}</td>
                             <td>
@@ -254,7 +242,7 @@ export default function TabelaOportunidadesPage() {
                                 styles={{
                                   input: {
                                     backgroundColor: getStatusColor(o.etapa),
-                                    color: 'white',
+                                    color: '#fff',
                                     fontWeight: 600,
                                     borderRadius: 8,
                                     textAlign: 'center',
