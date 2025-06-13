@@ -148,56 +148,55 @@ export default function TabelaOportunidadesPage() {
             data={etapaOptions}
             clearable
           />
-          <Box style={{ minWidth: 160 }}>
-            <DatePickerInput
-              value={dataInicio}
-              onChange={setDataInicio}
-              locale="pt-br"
-              label="Data início"
-              dropdownType="popover"
-              clearable
-              rightSection={null}
-              popoverProps={{
-                withinPortal: false,
-                position: 'bottom-start',
-                shadow: 'md',
-                withArrow: true,
-              }}
-              styles={{
-                input: { fontSize: '0.875rem', borderRadius: 8 },
-                day: { fontSize: '0.9rem', height: 36, width: 36, margin: 2, borderRadius: 6 },
-                calendarHeader: { justifyContent: 'space-between', padding: '0 1rem', fontWeight: 600, fontSize: '1rem' },
-                calendarHeaderControl: { fontSize: '1.2rem', width: 26, height: 26, color: '#333' },
-              }}
-              previousIcon={<span style={{ fontSize: '1rem' }}>‹</span>}
-              nextIcon={<span style={{ fontSize: '1rem' }}>›</span>}
-            />
-          </Box>
-          <Box style={{ minWidth: 160 }}>
-            <DatePickerInput
-              value={dataFim}
-              onChange={setDataFim}
-              locale="pt-br"
-              label="Data fim"
-              dropdownType="popover"
-              clearable
-              rightSection={null}
-              popoverProps={{
-                withinPortal: false,
-                position: 'bottom-start',
-                shadow: 'md',
-                withArrow: true,
-              }}
-              styles={{
-                input: { fontSize: '0.875rem', borderRadius: 8 },
-                day: { fontSize: '0.9rem', height: 36, width: 36, margin: 2, borderRadius: 6 },
-                calendarHeader: { justifyContent: 'space-between', padding: '0 1rem', fontWeight: 600, fontSize: '1rem' },
-                calendarHeaderControl: { fontSize: '1.2rem', width: 26, height: 26, color: '#333' },
-              }}
-              previousIcon={<span style={{ fontSize: '1rem' }}>‹</span>}
-              nextIcon={<span style={{ fontSize: '1rem' }}>›</span>}
-            />
-          </Box>
+          {[
+            { label: 'Data início', value: dataInicio, onChange: setDataInicio },
+            { label: 'Data fim', value: dataFim, onChange: setDataFim }
+          ].map((item, idx) => (
+            <Box key={idx} style={{ minWidth: 160 }}>
+              <DatePickerInput
+                value={item.value}
+                onChange={item.onChange}
+                locale="pt-br"
+                label={item.label}
+                dropdownType="popover"
+                clearable
+                rightSection={null}
+                popoverProps={{
+                  withinPortal: false,
+                  position: 'bottom-start',
+                  shadow: 'md',
+                  withArrow: true,
+                }}
+                styles={{
+                  input: { fontSize: '0.875rem', borderRadius: 8 },
+                  day: { fontSize: '0.9rem', height: 36, width: 36, margin: 2, borderRadius: 6 },
+                  calendarHeader: {
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    gap: 12,
+                    paddingBottom: 6,
+                  },
+                  calendarHeaderControl: {
+                    width: 28,
+                    height: 28,
+                    fontSize: '1rem',
+                    color: '#333',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    boxShadow: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  },
+                }}
+                previousIcon={<span style={{ fontSize: '1rem' }}>‹</span>}
+                nextIcon={<span style={{ fontSize: '1rem' }}>›</span>}
+              />
+            </Box>
+          ))}
         </Group>
 
         {carregando ? <Loader /> : (
