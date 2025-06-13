@@ -165,11 +165,12 @@ export default function TabelaOportunidadesPage() {
               }}
               styles={{
                 input: { fontSize: '0.875rem', borderRadius: 8 },
-                day: { fontSize: '0.85rem' },
-                calendarHeaderControl: { fontSize: '1rem', width: 28, height: 28 },
+                day: { fontSize: '0.9rem', height: 36, width: 36, margin: 2, borderRadius: 6 },
+                calendarHeader: { justifyContent: 'space-between', padding: '0 1rem', fontWeight: 600, fontSize: '1rem' },
+                calendarHeaderControl: { fontSize: '1.2rem', width: 26, height: 26, color: '#333' },
               }}
-              previousIcon={<span style={{ fontSize: 14 }}>‹</span>}
-              nextIcon={<span style={{ fontSize: 14 }}>›</span>}
+              previousIcon={<span style={{ fontSize: '1rem' }}>‹</span>}
+              nextIcon={<span style={{ fontSize: '1rem' }}>›</span>}
             />
           </Box>
           <Box style={{ minWidth: 160 }}>
@@ -189,11 +190,12 @@ export default function TabelaOportunidadesPage() {
               }}
               styles={{
                 input: { fontSize: '0.875rem', borderRadius: 8 },
-                day: { fontSize: '0.85rem' },
-                calendarHeaderControl: { fontSize: '1rem', width: 28, height: 28 },
+                day: { fontSize: '0.9rem', height: 36, width: 36, margin: 2, borderRadius: 6 },
+                calendarHeader: { justifyContent: 'space-between', padding: '0 1rem', fontWeight: 600, fontSize: '1rem' },
+                calendarHeaderControl: { fontSize: '1.2rem', width: 26, height: 26, color: '#333' },
               }}
-              previousIcon={<span style={{ fontSize: 14 }}>‹</span>}
-              nextIcon={<span style={{ fontSize: 14 }}>›</span>}
+              previousIcon={<span style={{ fontSize: '1rem' }}>‹</span>}
+              nextIcon={<span style={{ fontSize: '1rem' }}>›</span>}
             />
           </Box>
         </Group>
