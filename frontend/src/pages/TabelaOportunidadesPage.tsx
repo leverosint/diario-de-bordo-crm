@@ -230,7 +230,7 @@ export default function TabelaOportunidadesPage() {
                                   input: {
                                     backgroundColor: getStatusColor(o.etapa),
                                     color: 'white',
-                                    fontWeight: 500,
+                                    fontWeight: 800,
                                     textAlign: 'center',
                                     borderRadius: 6,
                                   }
