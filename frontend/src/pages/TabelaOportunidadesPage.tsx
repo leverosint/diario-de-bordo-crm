@@ -12,14 +12,13 @@ import {
   Box,
   Select,
   TextInput,
-  Button,
- } from '@mantine/core';
+  Button
+} from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
 import type { DateValue } from '@mantine/dates';
-
 
 interface Oportunidade {
   id: number;
@@ -38,7 +37,6 @@ export default function TabelaOportunidadesPage() {
   const [etapaFiltro, setEtapaFiltro] = useState<string | null>(null);
   const [dataRange, setDataRange] = useState<[DateValue, DateValue]>([null, null]);
   const token = localStorage.getItem('token') ?? '';
-
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 
   const etapaOptions = [
@@ -52,7 +50,7 @@ export default function TabelaOportunidadesPage() {
   const getStatusColor = (etapa: string) => {
     const mapa: Record<string, string> = {
       oportunidade: 'blue',
-      orcamento: 'yellow',
+      orcamento: 'teal',
       aguardando: 'orange',
       pedido: 'green',
       perdida: 'red',
@@ -148,10 +146,16 @@ export default function TabelaOportunidadesPage() {
           <Button onClick={exportarExcel} variant="light">Exportar Excel</Button>
         </Group>
 
-        <Group mt="md" mb="md" grow>
-          <TextInput placeholder="Filtrar por nome do parceiro" value={nomeFiltro} onChange={(e) => setNomeFiltro(e.currentTarget.value)} />
+        <Group mt="md" mb="md" grow align="end">
+          <TextInput
+            placeholder="Filtrar por nome do parceiro"
+            value={nomeFiltro}
+            onChange={(e) => setNomeFiltro(e.currentTarget.value)}
+            label="Nome do parceiro"
+          />
           <Select
-            placeholder="Todas"
+            label="Status"
+            placeholder="Todos"
             value={etapaFiltro}
             onChange={(v) => setEtapaFiltro(v)}
             data={etapaOptions}
@@ -159,79 +163,88 @@ export default function TabelaOportunidadesPage() {
           />
           <DatePickerInput
             type="range"
-            placeholder="Intervalo de datas"
+            label="Data de criação"
+            placeholder="Selecionar intervalo"
             value={dataRange}
             onChange={setDataRange}
             locale="pt-br"
-            style={{ width: '100%' }}
+            style={{ flexGrow: 1 }}
           />
         </Group>
 
         {carregando ? <Loader /> : (
           <ScrollArea>
-            {Object.entries(agrupadoPorStatus).map(([status, lista]) => (
-              <Box key={status} mt="xl">
-                <Card
-                  withBorder
-                  shadow="md"
-                  radius="lg"
-                  p="lg"
-                  mb="md"
-                  style={{ borderLeft: `8px solid ${getStatusColor(status)}` }}
-                >
-                  <Group justify="space-between" mb="xs">
-                    <Title order={4}>{status.charAt(0).toUpperCase() + status.slice(1)}</Title>
-                    <Group>
-                      <Badge color={getStatusColor(status)} variant="light">
-                        {lista.length} oportunidades
-                      </Badge>
-                      <Badge color="gray" variant="outline">
-                        Valor total: R$ {lista.reduce((acc, o) => acc + o.valor, 0).toLocaleString('pt-BR')}
-                      </Badge>
-                      <Badge color="gray" variant="light">
-                        Tempo médio: {calcularTempoMedio(lista)} dias
-                      </Badge>
+            {Object.entries(agrupadoPorStatus).map(([status, lista]) => {
+              const valorTotal = lista.reduce((acc, o) => acc + Number(o.valor), 0).toFixed(2);
+              const tempoMedio = calcularTempoMedio(lista);
+
+              return (
+                <Box key={status} mt="xl">
+                  <Card
+                    withBorder
+                    shadow="sm"
+                    radius="lg"
+                    p="xl"
+                    mb="lg"
+                    style={{ borderLeft: `8px solid ${getStatusColor(status)}`, backgroundColor: '#f9f9f9' }}
+                  >
+                    <Group justify="space-between" align="center" mb="sm">
+                      <div>
+                        <Title order={3} style={{ marginBottom: 4 }}>{status.toUpperCase()}</Title>
+                        <p style={{ fontSize: '0.9rem', color: '#555' }}>Valor total: R$ {valorTotal.replace('.', ',')}</p>
+                      </div>
+                      <Group>
+                        <Badge color={getStatusColor(status)} variant="light">
+                          {lista.length} oportunidades
+                        </Badge>
+                        <Badge color="gray" variant="outline">
+                          ⏱ {tempoMedio} dias
+                        </Badge>
+                      </Group>
                     </Group>
-                  </Group>
-                  <Table striped highlightOnHover withTableBorder>
-                    <thead>
-                      <tr>
-                        <th>Parceiro</th>
-                        <th>Valor</th>
-                        <th>Data Criação</th>
-                        <th>Data Status</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lista.map((o) => (
-                        <tr key={o.id}>
-                          <td>{o.parceiro_nome}</td>
-                          <td>R$ {o.valor.toLocaleString('pt-BR')}</td>
-                          <td>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
-                          <td>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
-                          <td>
-                            <Select
-                              value={o.etapa}
-                              onChange={(value) => handleStatusChange(o.id, value)}
-                              data={etapaOptions}
-                              styles={{
-                                input: {
-                                  backgroundColor: getStatusColor(o.etapa),
-                                  color: 'white',
-                                  fontWeight: 500,
-                                  textAlign: 'center'
-                                }
-                              }}
-                            />
-                          </td>
+
+                    <Table striped highlightOnHover withColumnBorders>
+                      <thead>
+                        <tr>
+                          <th>Parceiro</th>
+                          <th>Valor</th>
+                          <th>Data Criação</th>
+                          <th>Data Status</th>
+                          <th>Status</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </Card>
-              </Box>
-            ))}
+                      </thead>
+                      <tbody>
+                        {lista.map((o) => (
+                          <tr key={o.id}>
+                            <td>{o.parceiro_nome}</td>
+                            <td>R$ {Number(o.valor).toFixed(2).replace('.', ',')}</td>
+                            <td>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
+                            <td>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
+                            <td>
+                              <Select
+                                value={o.etapa}
+                                onChange={(value) => handleStatusChange(o.id, value)}
+                                data={etapaOptions}
+                                size="xs"
+                                styles={{
+                                  input: {
+                                    backgroundColor: getStatusColor(o.etapa),
+                                    color: 'white',
+                                    fontWeight: 500,
+                                    textAlign: 'center',
+                                    borderRadius: 6,
+                                  }
+                                }}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </Card>
+                </Box>
+              );
+            })}
           </ScrollArea>
         )}
       </Container>
