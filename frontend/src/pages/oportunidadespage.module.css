@@ -1,12 +1,10 @@
-.pageContainer {
-    padding: 16px;
-    width: 100%;
-    box-sizing: border-box;
-    background-color: #ffffff; /* fundo claro forçado */
+.container {
+    padding: 1rem;
+    max-width: 1400px;
+    margin: 0 auto;
   }
   
-  
-  .title {
-    margin-bottom: 1rem;
+  .tabelaWrapper {
+    overflow-x: auto;
   }
   
