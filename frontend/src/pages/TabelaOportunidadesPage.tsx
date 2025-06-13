@@ -43,7 +43,7 @@ export default function TabelaOportunidadesPage() {
   const getStatusColor = (etapa: string) => ({
     oportunidade: 'blue',
     orcamento: 'teal',
-    aguardando: 'yellow', // ✅ adicionado
+    aguardando: '#f59f00'', // ✅ adicionado
     pedido: 'green',
     perdida: 'red',
   }[etapa] || 'gray');
