@@ -1,7 +1,8 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import {
-  Title, Table, Container, Loader, ScrollArea, Badge, Group, Text, Divider, Card, Box, Select
+  Title, Table, Container, Loader, ScrollArea,
+  Badge, Group, Card, Box, Select
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 
@@ -15,36 +16,37 @@ interface Oportunidade {
   data_status: string;
 }
 
-export default function OportunidadesPage() {
+const etapaOptions = [
+  { value: 'oportunidade', label: 'Oportunidade' },
+  { value: 'orcamento', label: 'Orçamento' },
+  { value: 'aguardando', label: 'Pedido Aguardando Aprovação' },
+  { value: 'pedido', label: 'Pedido Realizado' },
+  { value: 'perdida', label: 'Venda Perdida' },
+];
+
+const getStatusColor = (etapa: string) => {
+  const cores: Record<string, string> = {
+    oportunidade: 'blue',
+    orcamento: 'yellow',
+    aguardando: 'orange',
+    pedido: 'green',
+    perdida: 'red',
+  };
+  return cores[etapa] || 'gray';
+};
+
+export default function TabelaOportunidadesPage() {
   const [dados, setDados] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
   const token = localStorage.getItem('token');
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-
-  const etapaOptions = [
-    { value: 'oportunidade', label: 'Oportunidade' },
-    { value: 'orcamento', label: 'Orçamento' },
-    { value: 'aguardando', label: 'Pedido Aguardando Aprovação' },
-    { value: 'pedido', label: 'Pedido Realizado' },
-    { value: 'perdida', label: 'Venda Perdida' },
-  ];
-
-  const getStatusColor = (etapa: string) => {
-    const mapa: Record<string, string> = {
-      oportunidade: 'blue',
-      orcamento: 'yellow',
-      aguardando: 'orange',
-      pedido: 'green',
-      perdida: 'red',
-    };
-    return mapa[etapa] || 'gray';
-  };
+  const tipoUser: string = usuario?.tipo_user ?? 'VENDEDOR';
 
   useEffect(() => {
     const fetchDados = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         setDados(res.data);
       } catch (err) {
@@ -62,13 +64,14 @@ export default function OportunidadesPage() {
       await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
         etapa: novaEtapa,
       }, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       setDados(prev =>
-        prev.map(o => o.id === id
-          ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() }
-          : o
+        prev.map(o =>
+          o.id === id
+            ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() }
+            : o
         )
       );
     } catch (err) {
@@ -87,7 +90,7 @@ export default function OportunidadesPage() {
   }, [dados]);
 
   return (
-    <SidebarGestor tipoUser={usuario.tipo_user}>
+    <SidebarGestor tipoUser={tipoUser}>
       <Container fluid>
         <Title order={2} mb="md">Oportunidades por Status</Title>
         {carregando ? <Loader /> : (
@@ -98,11 +101,11 @@ export default function OportunidadesPage() {
                   <Group justify="space-between">
                     <Title order={4} style={{ textTransform: 'capitalize' }}>{status}</Title>
                     <Badge color={getStatusColor(status)} variant="light">
-                      {lista.length} oportunidades
+                      {lista.length} oportunidade{lista.length > 1 ? 's' : ''}
                     </Badge>
                   </Group>
-                  <Divider my="sm" />
-                  <Table striped highlightOnHover withTableBorder>
+
+                  <Table striped highlightOnHover withTableBorder mt="md">
                     <thead>
                       <tr>
                         <th>Parceiro</th>
@@ -115,10 +118,10 @@ export default function OportunidadesPage() {
                     <tbody>
                       {lista.map((o) => (
                         <tr key={o.id}>
-                          <td><Text fw={500}>{o.parceiro_nome}</Text></td>
-                          <td>R$ {o.valor.toLocaleString('pt-BR')}</td>
-                          <td>{new Date(o.data_criacao).toLocaleDateString()}</td>
-                          <td>{o.data_status ? new Date(o.data_status).toLocaleDateString() : '-'}</td>
+                          <td>{o.parceiro_nome}</td>
+                          <td>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                          <td>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
+                          <td>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
                           <td>
                             <Select
                               value={o.etapa}
@@ -128,9 +131,9 @@ export default function OportunidadesPage() {
                                 input: {
                                   backgroundColor: getStatusColor(o.etapa),
                                   color: 'white',
-                                  fontWeight: 500,
+                                  fontWeight: 600,
                                   textAlign: 'center',
-                                }
+                                },
                               }}
                             />
                           </td>
