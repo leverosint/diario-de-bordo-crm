@@ -7,7 +7,6 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
-
 import {
   ShoppingCart,
   XCircle,
@@ -23,6 +22,16 @@ function hexToRGBA(hex: string, alpha: number) {
   const b = bigint & 255;
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
+
+const statusColors: Record<string, string> = {
+  'Oportunidade': '#228be6',
+  'Orçamento': '#fab005',
+  'Pedido Aguardando Aprovação': '#ffa94d',
+  'Pedido Realizado': '#40c057',
+  'Venda Perdida': '#fa5252',
+};
+
+const getStatusColor = (etapa: string): string => statusColors[etapa] || '#adb5bd';
 
 interface Oportunidade {
   id: number;
@@ -76,21 +85,10 @@ export default function TabelaOportunidadesPage() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchDados(); // Atualiza visualmente os cards
+      await fetchDados();
     } catch (err) {
       console.error('Erro ao atualizar status:', err);
     }
-  };
-
-  const getStatusColor = (etapa: string) => {
-    const cores: Record<string, string> = {
-      'Oportunidade': '#228be6',
-      'Orçamento': '#fab005',
-      'Pedido Aguardando Aprovação': '#ffa94d',
-      'Pedido Realizado': '#40c057',
-      'Venda Perdida': '#fa5252',
-    };
-    return cores[etapa] || '#adb5bd';
   };
 
   const formatDate = (date?: string) =>
@@ -187,17 +185,17 @@ export default function TabelaOportunidadesPage() {
                     mb="xl"
                     style={{
                       borderLeft: `6px solid ${getStatusColor(etapa)}`,
-                      backgroundColor: hexToRGBA(getStatusColor(etapa), 0.08),
-                      boxShadow: '0 8px 18px rgba(0,0,0,0.06)',
+                      backgroundColor: hexToRGBA(getStatusColor(etapa), 0.06),
+                      boxShadow: '0 8px 18px rgba(0,0,0,0.04)',
                     }}
                   >
                     <Group justify="space-between" mb="sm">
                       <Group align="center">
-                        {etapa === 'Pedido Realizado' && <ShoppingCart size={18} color="#40c057" />}
-                        {etapa === 'Venda Perdida' && <XCircle size={18} color="#fa5252" />}
-                        {etapa === 'Oportunidade' && <Target size={18} color="#228be6" />}
-                        {etapa === 'Orçamento' && <Briefcase size={18} color="#fab005" />}
-                        {etapa === 'Pedido Aguardando Aprovação' && <Clock size={18} color="#ffa94d" />}
+                        {etapa === 'Pedido Realizado' && <ShoppingCart size={18} color={getStatusColor(etapa)} />}
+                        {etapa === 'Venda Perdida' && <XCircle size={18} color={getStatusColor(etapa)} />}
+                        {etapa === 'Oportunidade' && <Target size={18} color={getStatusColor(etapa)} />}
+                        {etapa === 'Orçamento' && <Briefcase size={18} color={getStatusColor(etapa)} />}
+                        {etapa === 'Pedido Aguardando Aprovação' && <Clock size={18} color={getStatusColor(etapa)} />}
                         <Title order={4} tt="capitalize" ml={8}>{etapa.toLowerCase()}</Title>
                         <Tooltip label={`Tempo médio na etapa: ${tempoMedio}`} withArrow>
                           <Indicator color="gray" size={12} processing>
@@ -230,8 +228,8 @@ export default function TabelaOportunidadesPage() {
                       <tbody>
                         {lista.map((o) => (
                           <tr key={o.id}>
-                            <td><Text fw={500}>{o.parceiro_nome}</Text></td>
-                            <td>R$ {Number(o.valor ?? 0).toLocaleString('pt-BR')}</td>
+                            <td><Text fw={500}>{o.parceiro_nome || 'Sem nome'}</Text></td>
+                            <td>R$ {Number(o?.valor ?? 0).toLocaleString('pt-BR')}</td>
                             <td>{formatDate(o.data_criacao)}</td>
                             <td>{formatDate(o.data_status)}</td>
                             <td>
@@ -239,16 +237,18 @@ export default function TabelaOportunidadesPage() {
                                 value={o.etapa}
                                 onChange={(value) => handleStatusChange(o.id, value)}
                                 data={etapaOptions.map(v => ({ value: v, label: v }))}
-                                styles={{
-                                  input: {
-                                    backgroundColor: getStatusColor(o.etapa),
-                                    color: '#fff',
-                                    fontWeight: 600,
-                                    borderRadius: 8,
-                                    textAlign: 'center',
-                                  },
-                                }}
                                 size="xs"
+                                variant="filled"
+                                styles={{
+                                    input: {
+                                      backgroundColor: getStatusColor(o.etapa),
+                                      color: 'white',
+                                      fontWeight: 600,
+                                      textAlign: 'center',
+                                      textTransform: 'capitalize', // ✅ Pode aplicar diretamente
+                                    }
+                                  }}
+                                  
                               />
                             </td>
                           </tr>
