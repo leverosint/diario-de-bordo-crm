@@ -148,22 +148,34 @@ export default function TabelaOportunidadesPage() {
             data={etapaOptions}
             clearable
           />
-          <DatePickerInput
-            value={dataInicio}
-            onChange={setDataInicio}
-            locale="pt-br"
-            dropdownType="modal"
-            label="Data início"
-            style={{ minWidth: 150 }}
-          />
-          <DatePickerInput
-            value={dataFim}
-            onChange={setDataFim}
-            locale="pt-br"
-            dropdownType="modal"
-            label="Data fim"
-            style={{ minWidth: 150 }}
-          />
+          <Box style={{ minWidth: 160 }}>
+            <DatePickerInput
+              value={dataInicio}
+              onChange={setDataInicio}
+              locale="pt-br"
+              dropdownType="modal"
+              label="Data início"
+              popoverProps={{ position: 'bottom-start', offset: 4 }}
+              styles={{
+                input: { fontSize: '0.875rem' },
+                dropdown: { zIndex: 9999, borderRadius: 8 },
+              }}
+            />
+          </Box>
+          <Box style={{ minWidth: 160 }}>
+            <DatePickerInput
+              value={dataFim}
+              onChange={setDataFim}
+              locale="pt-br"
+              dropdownType="modal"
+              label="Data fim"
+              popoverProps={{ position: 'bottom-start', offset: 4 }}
+              styles={{
+                input: { fontSize: '0.875rem' },
+                dropdown: { zIndex: 9999, borderRadius: 8 },
+              }}
+            />
+          </Box>
         </Group>
 
         {carregando ? <Loader /> : (
