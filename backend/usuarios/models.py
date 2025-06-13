@@ -1,183 +1,256 @@
-from django.db import models
-from django.contrib.auth.models import AbstractUser
-from datetime import datetime, timedelta
-from django.conf import settings  # para pegar o AUTH_USER_MODEL
-from django.utils import timezone
+import { useEffect, useState, useMemo } from 'react';
+import axios from 'axios';
+import {
+  Title, Table, Container, Loader, ScrollArea, Badge, Group, Text,
+  Divider, Card, Box, Select, TextInput, Button, Tooltip, Indicator
+} from '@mantine/core';
+import { DatePickerInput } from '@mantine/dates';
+import * as XLSX from 'xlsx';
+import SidebarGestor from '../components/SidebarGestor';
 
-# Canal de venda associado a usuários e parceiros
-class CanalVenda(models.Model):
-    nome = models.CharField(max_length=100, unique=True)
+function hexToRGBA(hex: string, alpha: number) {
+  const bigint = parseInt(hex.replace('#', ''), 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
-    def __str__(self):
-        return self.nome
+interface Oportunidade {
+  id: number;
+  parceiro: number;
+  parceiro_nome: string;
+  valor: number;
+  etapa: string;
+  data_criacao: string;
+  data_status?: string;
+}
 
-# Tipos de usuário
-TIPOS_USUARIO = [
-    ('VENDEDOR', 'Vendedor'),
-    ('GESTOR', 'Gestor'),
-    ('ADMIN', 'Administrador'),
-]
+export default function TabelaOportunidadesPage() {
+  const [dados, setDados] = useState<Oportunidade[]>([]);
+  const [carregando, setCarregando] = useState(true);
+  const [filtroParceiro, setFiltroParceiro] = useState('');
+  const [filtroStatus, setFiltroStatus] = useState<string | null>(null);
+  const [intervaloDatas, setIntervaloDatas] = useState<[string | null, string | null]>([null, null]);
+  const token = localStorage.getItem('token');
+  const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 
-# Usuário customizado
-class CustomUser(AbstractUser):
-    tipo_user = models.CharField(max_length=20, choices=TIPOS_USUARIO)
-    canais_venda = models.ManyToManyField(CanalVenda, blank=True, related_name='usuarios')
-    id_vendedor = models.CharField(max_length=50, blank=True, null=True)
-    primeiro_acesso = models.BooleanField(default=True)
+  const etapaOptions = [
+    'oportunidade',
+    'orcamento',
+    'pedido',
+    'perdida'
+  ];
 
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email']
+  const labelEtapas: Record<string, string> = {
+    oportunidade: 'Oportunidade',
+    orcamento: 'Orçamento',
+    pedido: 'Pedido',
+    perdida: 'Venda Perdida'
+  };
 
-    def __str__(self):
-        return self.username
+  const getStatusColor = (etapa: string) => {
+    const cores: Record<string, string> = {
+      oportunidade: '#228be6',
+      orcamento: '#fab005',
+      pedido: '#40c057',
+      perdida: '#fa5252'
+    };
+    return cores[etapa] || '#ced4da';
+  };
 
-# Modelo de Parceiro
-class Parceiro(models.Model):
-    codigo = models.CharField(max_length=52, unique=True)
-    parceiro = models.CharField(max_length=255)
-    classificacao = models.CharField(max_length=100, blank=True, null=True)
-    consultor = models.CharField(max_length=100, blank=True, null=True)
-    unidade = models.CharField(max_length=100, blank=True, null=True)
-    cidade = models.CharField(max_length=100, blank=True, null=True)
-    uf = models.CharField(max_length=2, blank=True, null=True)
-    primeiro_fat = models.DateField(blank=True, null=True)
-    ultimo_fat = models.DateField(blank=True, null=True)
-    janeiro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    fevereiro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    marco = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    abril = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    maio = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    junho = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    julho = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    agosto = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    setembro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    outubro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    novembro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    dezembro = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    janeiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    fevereiro_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    marco_2 = models.DecimalField(max_digits=12, decimal_places=2, default=0, null=True, blank=True)
-    total_geral = models.DecimalField(max_digits=14, decimal_places=2, default=0)
-    recorrencia = models.IntegerField(blank=True, null=True)
-    tm = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    status = models.CharField(max_length=30, blank=True, null=True)
-    canal_venda = models.ForeignKey(CanalVenda, on_delete=models.SET_NULL, blank=True, null=True, related_name="parceiros")
-    atualizado_em = models.DateTimeField(auto_now=True)
+  const formatDate = (date?: string) => date ? new Date(date).toLocaleDateString('pt-BR') : '-';
 
-    def __str__(self):
-        return f"{self.codigo or ''} - {self.parceiro or ''}"
+  const fetchDados = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDados(res.data);
+    } catch (err) {
+      console.error('Erro ao buscar oportunidades:', err);
+    } finally {
+      setCarregando(false);
+    }
+  };
 
-##SAVE##
+  const handleStatusChange = async (id: number, value: string | null) => {
+    if (!value) return;
+    try {
+      await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
+        etapa: value
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await fetchDados();
+    } catch (err) {
+      console.error('Erro ao atualizar status:', err);
+    }
+  };
 
-    def save(self, *args, **kwargs):
-        # Soma e métricas mensais
-        meses = [
-            ('janeiro', self.janeiro), ('fevereiro', self.fevereiro), ('marco', self.marco), ('abril', self.abril),
-            ('maio', self.maio), ('junho', self.junho), ('julho', self.julho), ('agosto', self.agosto),
-            ('setembro', self.setembro), ('outubro', self.outubro), ('novembro', self.novembro), ('dezembro', self.dezembro),
-            ('janeiro_2', self.janeiro_2), ('fevereiro_2', self.fevereiro_2), ('marco_2', self.marco_2)
-        ]
-        self.total_geral = sum([m[1] or 0 for m in meses])
-        meses_com_valor = [m[1] for m in meses if m[1] and m[1] > 0]
-        self.tm = self.total_geral / len(meses_com_valor) if meses_com_valor else 0
-        self.recorrencia = len(meses_com_valor)
+  const calcularTempoMedio = (lista: Oportunidade[]) => {
+    const dias = lista
+      .filter(o => o.data_status)
+      .map(o => (new Date(o.data_status!).getTime() - new Date(o.data_criacao).getTime()) / (1000 * 60 * 60 * 24));
+    if (dias.length === 0) return '-';
+    const media = dias.reduce((a, b) => a + b, 0) / dias.length;
+    return `${Math.round(media)} dia${media > 1 ? 's' : ''}`;
+  };
 
-        # Referência de datas dos meses
-        mes_ref = {
-            'janeiro': (1, 2025), 'fevereiro': (2, 2025), 'marco': (3, 2025), 'abril': (4, 2025),
-            'maio': (5, 2025), 'junho': (6, 2025), 'julho': (7, 2025), 'agosto': (8, 2025),
-            'setembro': (9, 2025), 'outubro': (10, 2025), 'novembro': (11, 2025), 'dezembro': (12, 2025),
-            'janeiro_2': (1, 2026), 'fevereiro_2': (2, 2026), 'marco_2': (3, 2026)
-        }
+  const oportunidadesFiltradas = useMemo(() => {
+    return dados.filter((o) => {
+      const nomeInclui = o.parceiro_nome?.toLowerCase().includes(filtroParceiro.toLowerCase());
+      const dataCriacao = new Date(o.data_criacao);
+      const [inicio, fim] = intervaloDatas;
+      const dentroIntervalo =
+        (!inicio || dataCriacao >= new Date(inicio)) &&
+        (!fim || dataCriacao <= new Date(fim));
+      const statusCondiz = !filtroStatus || o.etapa === filtroStatus;
+      return nomeInclui && dentroIntervalo && statusCondiz;
+    });
+  }, [dados, filtroParceiro, intervaloDatas, filtroStatus]);
 
-        # Determina o último mês com valor > 0
-        ultimo_fat_data = None
-        for nome, valor in reversed(meses):
-            if valor and valor > 0:
-                mes_num, ano = mes_ref[nome]
-                ultimo_fat_data = datetime(ano, mes_num, 1)
-                break
+  const agrupadoPorEtapa = useMemo(() => {
+    const map: Record<string, Oportunidade[]> = {};
+    oportunidadesFiltradas.forEach(o => {
+      const key = o.etapa || 'sem_etapa';
+      if (!map[key]) map[key] = [];
+      map[key].push(o);
+    });
+    return map;
+  }, [oportunidadesFiltradas]);
 
-        # Classificação de status
-        if self.total_geral == 0:
-            self.status = "Sem Faturamento"
-        elif ultimo_fat_data:
-            hoje = datetime.today()
-            dias_diferenca = (hoje - ultimo_fat_data).days
+  const exportarParaExcel = () => {
+    const planilha = oportunidadesFiltradas.map(o => ({
+      Parceiro: o.parceiro_nome,
+      Valor: o.valor,
+      Etapa: o.etapa,
+      'Data Criação': formatDate(o.data_criacao),
+      'Data Status': formatDate(o.data_status),
+    }));
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(planilha);
+    XLSX.utils.book_append_sheet(wb, ws, 'Oportunidades');
+    XLSX.writeFile(wb, 'oportunidades.xlsx');
+  };
 
-            if dias_diferenca < 30:
-                self.status = "Base Ativa"
-            elif dias_diferenca < 60:
-                self.status = "30 dias s/ Fat"
-            elif dias_diferenca < 90:
-                self.status = "60 dias s/ Fat"
-            elif dias_diferenca < 120:
-                self.status = "90 dias s/ Fat"
-            else:
-                self.status = "120 dias s/ Fat"
-        else:
-            self.status = "Sem Faturamento"
+  useEffect(() => {
+    fetchDados();
+  }, []);
 
-        super(Parceiro, self).save(*args, **kwargs)
+  return (
+    <SidebarGestor tipoUser={usuario.tipo_user}>
+      <Container size="xl" p="md">
+        <Group justify="space-between" mb="md">
+          <Title order={2}>Oportunidades por Status</Title>
+          <Button onClick={exportarParaExcel} variant="light">Exportar Excel</Button>
+        </Group>
 
+        <Group mb="md" grow>
+          <TextInput
+            placeholder="Filtrar por nome do parceiro"
+            value={filtroParceiro}
+            onChange={(e) => setFiltroParceiro(e.currentTarget.value)}
+          />
+          <Select
+            data={['Todas', ...etapaOptions.map(e => labelEtapas[e])]}
+            placeholder="Filtrar por etapa"
+            value={filtroStatus ? labelEtapas[filtroStatus] : 'Todas'}
+            onChange={(value) => {
+              const etapaKey = Object.keys(labelEtapas).find(k => labelEtapas[k] === value);
+              setFiltroStatus(etapaKey || null);
+            }}
+            clearable
+          />
+          <DatePickerInput
+            type="range"
+            placeholder="Intervalo de datas"
+            value={intervaloDatas}
+            onChange={setIntervaloDatas}
+            locale="pt-BR"
+            clearable
+          />
+        </Group>
 
+        {carregando ? <Loader /> : (
+          <ScrollArea>
+            {Object.entries(agrupadoPorEtapa).map(([etapa, lista]) => {
+              const totalValor = lista.reduce((acc, cur) => acc + (cur.valor ?? 0), 0);
+              const tempoMedio = calcularTempoMedio(lista);
+              const cor = getStatusColor(etapa);
 
-# Modelo de Interação
-class Interacao(models.Model):
-    TIPO_CHOICES = [
-        ('whatsapp', 'WhatsApp'),
-        ('email', 'E-mail'),
-        ('ligacao', 'Ligação'),
-    ]
-    parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='interacoes')
-    usuario = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='interacoes')
-    tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
-    data_interacao = models.DateTimeField(auto_now_add=True)
-    entrou_em_contato = models.BooleanField(default=False)
-    
-    # ✅ novo campo:
-    status = models.CharField(max_length=50, null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.parceiro.parceiro} - {self.usuario.username} ({self.tipo})"
-
-# Modelo de Oportunidade
-
-class Oportunidade(models.Model):
-    ETAPA_CHOICES = [
-        ('oportunidade', 'Oportunidade'),
-        ('orcamento', 'Orçamento'),
-        ('pedido', 'Pedido'),
-        ('perdida', 'Venda Perdida'),
-    ]
-    parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='oportunidades')
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='oportunidades')
-    valor = models.DecimalField(max_digits=12, decimal_places=2)
-    etapa = models.CharField(max_length=20, choices=ETAPA_CHOICES, default='oportunidade')
-    observacao = models.TextField(blank=True, null=True)
-    data_criacao = models.DateTimeField(auto_now_add=True)
-    data_etapa = models.DateTimeField(null=True, blank=True)  # NOVO CAMPO
-    data_status = models.DateTimeField(null=True, blank=True)
-
-
-    def save(self, *args, **kwargs):
-        if not self.pk:
-            self.data_status = self.data_criacao or timezone.now()
-        else:
-            original = Oportunidade.objects.get(pk=self.pk)
-            if original.etapa != self.etapa:
-                self.data_status = timezone.now()
-        super().save(*args, **kwargs)
-
-
-    def __str__(self):
-        return f"{self.parceiro.parceiro} - R$ {self.valor} - {self.get_etapa_display()}"
-
-# Gatilhos extras (eventos manuais)
-class GatilhoExtra(models.Model):
-    parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='gatilhos_extras')
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='gatilhos_extras')
-    descricao = models.CharField(max_length=255)
-
-    def __str__(self):
-        return f'{self.parceiro.parceiro} - {self.usuario.username} ({self.descricao})'
+              return (
+                <Box key={etapa} mt="xl">
+                  <Card
+                    withBorder
+                    radius="xl"
+                    p="xl"
+                    mb="xl"
+                    style={{
+                      borderLeft: `6px solid ${cor}`,
+                      backgroundColor: hexToRGBA(cor, 0.08),
+                      boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
+                    }}
+                  >
+                    <Group justify="space-between" mb="sm">
+                      <Group>
+                        <Title order={4} style={{ textTransform: 'capitalize' }}>{labelEtapas[etapa]}</Title>
+                        <Tooltip label={`Tempo médio na etapa: ${tempoMedio}`} withArrow>
+                          <Indicator color="gray" size={10} processing>
+                            <Text size="xs" c="dimmed">{tempoMedio}</Text>
+                          </Indicator>
+                        </Tooltip>
+                      </Group>
+                      <Badge color={cor} variant="light" radius="xl">
+                        {lista.length} oportunidades | Total: R$ {totalValor.toLocaleString('pt-BR')}
+                      </Badge>
+                    </Group>
+                    <Divider my="sm" />
+                    <Table striped highlightOnHover withTableBorder>
+                      <thead>
+                        <tr>
+                          <th>Parceiro</th>
+                          <th>Valor</th>
+                          <th>Data Criação</th>
+                          <th>Data Status</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {lista.map((o) => (
+                          <tr key={o.id}>
+                            <td><Text fw={500}>{o.parceiro_nome}</Text></td>
+                            <td>R$ {Number(o.valor ?? 0).toLocaleString('pt-BR')}</td>
+                            <td>{formatDate(o.data_criacao)}</td>
+                            <td>{formatDate(o.data_status)}</td>
+                            <td>
+                              <Select
+                                value={o.etapa}
+                                onChange={(value) => handleStatusChange(o.id, value)}
+                                data={etapaOptions.map(e => ({ value: e, label: labelEtapas[e] }))}
+                                styles={{
+                                  input: {
+                                    backgroundColor: getStatusColor(o.etapa),
+                                    color: 'white',
+                                    fontWeight: 600,
+                                    borderRadius: 8,
+                                    textAlign: 'center'
+                                  }
+                                }}
+                                size="xs"
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </Table>
+                  </Card>
+                </Box>
+              );
+            })}
+          </ScrollArea>
+        )}
+      </Container>
+    </SidebarGestor>
+  );
+}
