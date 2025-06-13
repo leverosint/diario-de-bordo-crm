@@ -17,12 +17,12 @@ import {
 } from 'lucide-react';
 
 function hexToRGBA(hex: string, alpha: number) {
-    const bigint = parseInt(hex.replace('#', ''), 16);
-    const r = (bigint >> 16) & 255;
-    const g = (bigint >> 8) & 255;
-    const b = bigint & 255;
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  }
+  const bigint = parseInt(hex.replace('#', ''), 16);
+  const r = (bigint >> 16) & 255;
+  const g = (bigint >> 8) & 255;
+  const b = bigint & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 interface Oportunidade {
   id: number;
@@ -187,8 +187,8 @@ export default function OportunidadesPage() {
                     mb="xl"
                     style={{
                       borderLeft: `6px solid ${getStatusColor(etapa)}`,
-                      backgroundColor: hexToRGBA(getStatusColor(etapa), 0.1),
-                      boxShadow: '0 8px 18px rgba(0,0,0,0.06)',
+                      backgroundColor: hexToRGBA(getStatusColor(etapa), 0.25),
+                      boxShadow: `0 8px 18px ${hexToRGBA(getStatusColor(etapa), 0.25)}`,
                     }}
                   >
                     <Group justify="space-between" mb="sm">
