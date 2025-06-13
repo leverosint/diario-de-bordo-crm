@@ -72,7 +72,7 @@ export default function CadastroParceiro() {
     try {
       const { canal_venda, ...rest } = form;
       const payload = { ...rest, canal_venda_id: Number(canal_venda) };
-      await axios.post(`${import.meta.env.VITE_API_URL}/parceiros/`, payload, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/parceiros-list/`, payload, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       setPopupAberto(true);
@@ -111,7 +111,7 @@ export default function CadastroParceiro() {
 
   const buscarParceiros = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/parceiros/`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       setParceiros(response.data);
@@ -123,7 +123,7 @@ export default function CadastroParceiro() {
   const excluirParceiro = async () => {
     if (excluirId === null) return;
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/parceiros/${excluirId}/`, {
+      await axios.delete(`${import.meta.env.VITE_API_URL}/parceiros-list/${excluirId}/`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       setExcluirId(null);
