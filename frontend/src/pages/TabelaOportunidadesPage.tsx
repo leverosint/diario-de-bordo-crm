@@ -7,108 +7,122 @@ import {
   Group,
   Select,
   Badge,
-  Loader,
   Paper,
+  Loader,
 } from '@mantine/core';
-import SidebarGestor from '../components/SidebarGestor';
-import styles from './OportunidadesPage.module.css';
+import { IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 
-interface Oportunidade {
+
+type Oportunidade = {
   id: number;
   parceiro: string;
+  unidade: string;
   classificacao: string;
   status: string;
-  data: string;
-}
+  flag_entrou_contato: boolean;
+  tipo_oportunidade: string;
+};
 
 export default function TabelaOportunidadesPage() {
-  const [dados, setDados] = useState<Oportunidade[]>([]);
-  const [filtroStatus, setFiltroStatus] = useState<string | null>(null);
+  const [oportunidades, setOportunidades] = useState<Oportunidade[]>([]);
+  const [filtro, setFiltro] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const tipoUser = JSON.parse(localStorage.getItem('usuario') || '{}')?.tipo_user || 'VENDEDOR';
-  const token = localStorage.getItem('token');
-
   useEffect(() => {
-    async function fetchData() {
+    const buscarOportunidades = async () => {
       try {
-        const headers = { Authorization: `Bearer ${token}` };
-        const response = await axios.get('/api/oportunidades/', { headers });
-        setDados(response.data || []);
+        const response = await axios.get('/api/oportunidades/');
+        setOportunidades(response.data);
       } catch (error) {
         console.error('Erro ao buscar oportunidades:', error);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    fetchData();
-  }, [token]);
+    buscarOportunidades();
+  }, []);
 
-  const oportunidadesFiltradas = filtroStatus
-    ? dados.filter(o => o.status === filtroStatus)
-    : dados;
+  const oportunidadesFiltradas = filtro
+    ? oportunidades.filter((o) => o.tipo_oportunidade === filtro)
+    : oportunidades;
 
   const renderStatus = (status: string) => {
-    const cor =
-      status === 'Recorrente' ? 'green' :
-      status.includes('30') ? 'yellow' :
-      status.includes('60') ? 'orange' :
-      'red';
-    return <Badge color={cor}>{status}</Badge>;
+    switch (status) {
+      case 'Recorrente':
+        return <Badge color="green" leftSection={<IconCircleCheck size={14} />} variant="light">{status}</Badge>;
+      case '30d s/ Fat':
+        return <Badge color="yellow" variant="light">{status}</Badge>;
+      case '60d s/ Fat':
+        return <Badge color="orange" variant="light">{status}</Badge>;
+      case '90d s/ Fat':
+        return <Badge color="red" variant="light">{status}</Badge>;
+      case '120d s/ Fat':
+        return <Badge color="dark" variant="light">{status}</Badge>;
+      default:
+        return <Badge color="gray" variant="light">{status}</Badge>;
+    }
   };
 
   return (
-    <SidebarGestor tipoUser={tipoUser}>
-      <div className={styles.container}>
-        <Title order={2} mb="md">Oportunidades</Title>
+    <div style={{ padding: '1rem', maxWidth: '1400px', margin: '0 auto' }}>
+      <Title order={2} mb="md">Tabela de Oportunidades</Title>
 
-        <Group justify="flex-start" mb="md">
-          <Select
-            label="Filtrar por status"
-            placeholder="Selecione"
-            data={['Aberto', 'Fechado']}
-            value={filtroStatus}
-            onChange={setFiltroStatus}
-            clearable
-          />
-        </Group>
+      <Group mb="md" justify="flex-start">
+        <Select
+          label="Filtrar por tipo de oportunidade"
+          placeholder="Selecione o tipo"
+          value={filtro}
+          onChange={setFiltro}
+          data={[...new Set(oportunidades.map((o) => o.tipo_oportunidade))].map((tipo) => ({
+            value: tipo,
+            label: tipo,
+          }))}
+          clearable
+        />
+      </Group>
 
-        {loading ? (
+      {loading ? (
+        <Group justify="center" mt="xl">
           <Loader />
-        ) : (
-          <Paper shadow="xs" p="md" withBorder className={styles.tabelaWrapper}>
+          <Text>Carregando oportunidades...</Text>
+        </Group>
+      ) : (
+        <Paper shadow="xs" p="md" radius="md">
+          <div style={{ overflowX: 'auto' }}>
             <Table striped highlightOnHover withTableBorder>
               <thead>
                 <tr>
                   <th>Parceiro</th>
+                  <th>Unidade</th>
                   <th>Classificação</th>
                   <th>Status</th>
-                  <th>Data</th>
+                  <th>Entrou em contato</th>
+                  <th>Tipo</th>
                 </tr>
               </thead>
               <tbody>
-                {oportunidadesFiltradas.length === 0 ? (
-                  <tr>
-                    <td colSpan={4}>
-                      <Text>Nenhuma oportunidade encontrada.</Text>
+                {oportunidadesFiltradas.map((o) => (
+                  <tr key={o.id}>
+                    <td>{o.parceiro}</td>
+                    <td>{o.unidade}</td>
+                    <td>{o.classificacao}</td>
+                    <td>{renderStatus(o.status)}</td>
+                    <td>
+                      {o.flag_entrou_contato ? (
+                        <IconCircleCheck size={20} color="green" />
+                      ) : (
+                        <IconCircleX size={20} color="gray" />
+                      )}
                     </td>
+                    <td>{o.tipo_oportunidade}</td>
                   </tr>
-                ) : (
-                  oportunidadesFiltradas.map((oportunidade) => (
-                    <tr key={oportunidade.id}>
-                      <td>{oportunidade.parceiro}</td>
-                      <td>{oportunidade.classificacao}</td>
-                      <td>{renderStatus(oportunidade.status)}</td>
-                      <td>{new Date(oportunidade.data).toLocaleDateString()}</td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </Table>
-          </Paper>
-        )}
-      </div>
-    </SidebarGestor>
+          </div>
+        </Paper>
+      )}
+    </div>
   );
 }
