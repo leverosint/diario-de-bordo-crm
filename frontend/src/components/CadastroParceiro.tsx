@@ -10,7 +10,8 @@ import {
   FileInput,
   Text,
   Modal,
-   Notification,
+  Notification,
+  Grid,
 } from '@mantine/core';
 import axios from 'axios';
 
@@ -33,6 +34,7 @@ export default function CadastroParceiro() {
     canal_venda: '',
     cidade: '',
     uf: '',
+    unidade: '',
     janeiro: 0,
     fevereiro: 0,
     marco: 0,
@@ -69,15 +71,11 @@ export default function CadastroParceiro() {
         canal_venda_id: Number(canal_venda),
       };
 
-      await axios.post(
-        `${import.meta.env.VITE_API_URL}/parceiros/`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
+      await axios.post(`${import.meta.env.VITE_API_URL}/parceiros/`, payload, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
 
       setPopupAberto(true);
       setMensagem(null);
@@ -161,75 +159,133 @@ export default function CadastroParceiro() {
 
   return (
     <Container size="md" mt="xl">
-      <Title order={2} mb="md">Cadastro de Parceiros</Title>
+      <Title order={2} mb="md">
+        Cadastro de Parceiros
+      </Title>
 
       <form onSubmit={handleSubmit}>
-        <TextInput label="Código" value={form.codigo} onChange={(e) => handleChange('codigo', e.target.value)} required />
-        <TextInput label="Parceiro" value={form.parceiro} onChange={(e) => handleChange('parceiro', e.target.value)} required />
+        <Grid gutter="md">
+          <Grid.Col span={6}>
+            <TextInput
+              label="Código"
+              value={form.codigo}
+              onChange={(e) => handleChange('codigo', e.target.value)}
+              required
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Parceiro"
+              value={form.parceiro}
+              onChange={(e) => handleChange('parceiro', e.target.value)}
+              required
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <Select
+              label="Classificação"
+              placeholder="Selecione"
+              data={[
+                { value: 'Diamante', label: 'Diamante' },
+                { value: 'Esmeralda', label: 'Esmeralda' },
+                { value: 'Ouro', label: 'Ouro' },
+                { value: 'Prata', label: 'Prata' },
+                { value: 'Bronze', label: 'Bronze' },
+              ]}
+              value={form.classificacao}
+              onChange={(value) => handleChange('classificacao', value || '')}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <Select
+              label="Consultor"
+              placeholder="Selecione um consultor"
+              data={consultores.map((c) => ({ value: c.id_vendedor, label: c.username }))}
+              value={form.consultor}
+              onChange={(value) => handleChange('consultor', value || '')}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <Select
+              label="Canal de Venda"
+              placeholder="Selecione um canal"
+              data={canais.map((c) => ({ value: String(c.id), label: c.nome }))}
+              value={form.canal_venda}
+              onChange={(value) => handleChange('canal_venda', value || '')}
+              required
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Unidade"
+              value={form.unidade}
+              onChange={(e) => handleChange('unidade', e.target.value)}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="Cidade"
+              value={form.cidade}
+              onChange={(e) => handleChange('cidade', e.target.value)}
+            />
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <TextInput
+              label="UF"
+              value={form.uf}
+              onChange={(e) => handleChange('uf', e.target.value)}
+              maxLength={2}
+            />
+          </Grid.Col>
+        </Grid>
 
-        <Select
-          label="Classificação"
-          placeholder="Selecione"
-          data={[
-            { value: 'Diamante', label: 'Diamante' },
-            { value: 'Esmeralda', label: 'Esmeralda' },
-            { value: 'Ouro', label: 'Ouro' },
-            { value: 'Prata', label: 'Prata' },
-            { value: 'Bronze', label: 'Bronze' },
-          ]}
-          value={form.classificacao}
-          onChange={(value) => handleChange('classificacao', value || '')}
-        />
-
-        <Select
-          label="Consultor"
-          placeholder="Selecione um consultor"
-          data={consultores.map((c) => ({ value: c.id_vendedor, label: c.username }))}
-          value={form.consultor}
-          onChange={(value) => handleChange('consultor', value || '')}
-        />
-
-        <Select
-          label="Canal de Venda"
-          placeholder="Selecione um canal"
-          data={canais.map((c) => ({ value: String(c.id), label: c.nome }))}
-          value={form.canal_venda}
-          onChange={(value) => handleChange('canal_venda', value || '')}
-          required
-        />
-
-        <TextInput label="Cidade" value={form.cidade} onChange={(e) => handleChange('cidade', e.target.value)} />
-        <TextInput label="UF" value={form.uf} onChange={(e) => handleChange('uf', e.target.value)} maxLength={2} />
-
-        <Title order={4} mt="lg" mb="xs">Faturamento Mensal</Title>
-
-        {meses.map((mes) => (
-          <TextInput
-            key={mes}
-            label={mes.charAt(0).toUpperCase() + mes.slice(1).replace('_2', ' (2º ano)')}
-            value={form[mes as keyof typeof form] === 0 ? '' : form[mes as keyof typeof form].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            onChange={(e) => {
-              const raw = e.currentTarget.value.replace(/[^\d]/g, '');
-              const parsed = parseInt(raw, 10);
-              handleChange(mes as keyof typeof form, isNaN(parsed) ? 0 : parsed / 100);
-            }}
-          />
-        ))}
+        <Title order={4} mt="lg" mb="xs">
+          Faturamento Mensal
+        </Title>
+        <Grid gutter="xs">
+          {meses.map((mes) => (
+            <Grid.Col span={4} key={mes}>
+              <TextInput
+                label={mes.charAt(0).toUpperCase() + mes.slice(1).replace('_2', ' (2º ano)')}
+                value={form[mes as keyof typeof form].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                onChange={(e) => {
+                  const raw = e.currentTarget.value.replace(/[^\d]/g, '');
+                  const parsed = Number(raw) / 100;
+                  handleChange(mes as keyof typeof form, isNaN(parsed) ? 0 : parsed);
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.select();
+                }}
+              />
+            </Grid.Col>
+          ))}
+        </Grid>
 
         <Group mt="md" justify="flex-end">
-          <Button type="submit" color="teal">Cadastrar</Button>
+          <Button type="submit" color="teal">
+            Cadastrar
+          </Button>
         </Group>
       </form>
 
-      <Title order={3} mt="xl" mb="xs">Upload em massa (Excel/CSV)</Title>
-      <FileInput label="Selecionar arquivo" placeholder="Escolha um arquivo Excel ou CSV" onChange={setFile} />
-
+      <Title order={3} mt="xl" mb="xs">
+        Upload em massa (Excel/CSV)
+      </Title>
+      <FileInput
+        label="Selecionar arquivo"
+        placeholder="Escolha um arquivo Excel ou CSV"
+        onChange={setFile}
+      />
       <Group mt="sm">
-        <Button onClick={handleUpload} color="blue">Enviar Arquivo</Button>
+        <Button onClick={handleUpload} color="blue">
+          Enviar Arquivo
+        </Button>
       </Group>
 
       {mensagem && (
-        <Notification mt="md" color="red">{mensagem}</Notification>
+        <Notification mt="md" color="red">
+          {mensagem}
+        </Notification>
       )}
 
       <Modal opened={popupAberto} onClose={() => setPopupAberto(false)} title="Sucesso!" centered>
