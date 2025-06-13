@@ -7,6 +7,7 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
+
 import {
   ShoppingCart,
   XCircle,
@@ -39,6 +40,7 @@ export default function TabelaOportunidadesPage() {
   const [filtroParceiro, setFiltroParceiro] = useState('');
   const [filtroStatus, setFiltroStatus] = useState<string | null>(null);
   const [intervaloDatas, setIntervaloDatas] = useState<[string | null, string | null]>([null, null]);
+
   const token = localStorage.getItem('token');
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 
@@ -75,7 +77,17 @@ export default function TabelaOportunidadesPage() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      await fetchDados();
+
+      // Atualização local para refletir imediatamente
+      setDados(prev =>
+        prev.map(o =>
+          o.id === id ? { ...o, etapa: value } : o
+        )
+      );
+
+      // Opcional: fetchDados() novamente para garantir consistência
+      // await fetchDados();
+
     } catch (err) {
       console.error('Erro ao atualizar status:', err);
     }
@@ -89,7 +101,7 @@ export default function TabelaOportunidadesPage() {
       'pedido realizado': '#40c057',
       'venda perdida': '#fa5252',
     };
-    return cores[etapa.toLowerCase()] || '#ced4da';
+    return cores[etapa?.toLowerCase().trim()] || '#ced4da';
   };
 
   const formatDate = (date?: string) =>
@@ -177,6 +189,7 @@ export default function TabelaOportunidadesPage() {
             {Object.entries(agrupadoPorEtapa).map(([etapa, lista]) => {
               const totalValor = lista.reduce((acc, cur) => acc + (cur.valor ?? 0), 0);
               const tempoMedio = calcularTempoMedio(lista);
+              const cor = getStatusColor(etapa);
               return (
                 <Box key={etapa} mt="xl">
                   <Card
@@ -185,18 +198,18 @@ export default function TabelaOportunidadesPage() {
                     p="xl"
                     mb="xl"
                     style={{
-                      borderLeft: `6px solid ${getStatusColor(etapa)}`,
-                      backgroundColor: hexToRGBA(getStatusColor(etapa), 0.1),
+                      borderLeft: `6px solid ${cor}`,
+                      backgroundColor: hexToRGBA(cor, 0.1),
                       boxShadow: '0 8px 18px rgba(0,0,0,0.06)',
                     }}
                   >
                     <Group justify="space-between" mb="sm">
                       <Group align="center">
-                        {etapa.toLowerCase() === 'pedido realizado' && <ShoppingCart size={18} color="#40c057" />}
-                        {etapa.toLowerCase() === 'venda perdida' && <XCircle size={18} color="#fa5252" />}
-                        {etapa.toLowerCase() === 'oportunidade' && <Target size={18} color="#228be6" />}
-                        {etapa.toLowerCase() === 'orçamento' && <Briefcase size={18} color="#fab005" />}
-                        {etapa.toLowerCase() === 'pedido aguardando aprovação' && <Clock size={18} color="#ffa94d" />}
+                        {etapa === 'Pedido Realizado' && <ShoppingCart size={18} color="#40c057" />}
+                        {etapa === 'Venda Perdida' && <XCircle size={18} color="#fa5252" />}
+                        {etapa === 'Oportunidade' && <Target size={18} color="#228be6" />}
+                        {etapa === 'Orçamento' && <Briefcase size={18} color="#fab005" />}
+                        {etapa === 'Pedido Aguardando Aprovação' && <Clock size={18} color="#ffa94d" />}
                         <Title order={4} tt="capitalize" ml={8}>{etapa.toLowerCase()}</Title>
                         <Tooltip label={`Tempo médio na etapa: ${tempoMedio}`} withArrow>
                           <Indicator color="gray" size={12} processing>
@@ -204,7 +217,7 @@ export default function TabelaOportunidadesPage() {
                           </Indicator>
                         </Tooltip>
                       </Group>
-                      <Badge color={getStatusColor(etapa)} variant="light" radius="xl">
+                      <Badge color={cor} variant="light" radius="xl">
                         {lista.length} oportunidades | Total: R$ {totalValor.toLocaleString('pt-BR')}
                       </Badge>
                     </Group>
