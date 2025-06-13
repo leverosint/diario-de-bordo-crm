@@ -43,7 +43,7 @@ export default function TabelaOportunidadesPage() {
   const getStatusColor = (etapa: string) => ({
     oportunidade: 'blue',
     orcamento: 'teal',
-    aguardando: '#f59f00'', // ✅ adicionado
+    aguardando: '#f59f00', // ✅ adicionado
     pedido: 'green',
     perdida: 'red',
   }[etapa] || 'gray');
@@ -129,7 +129,7 @@ export default function TabelaOportunidadesPage() {
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <Container fluid style={{ maxWidth: '100%', padding: '0 40px' }}>
+      <Container fluid style={{ maxWidth: '90vw', padding: '0 40px' }}>
         <Group justify="space-between" align="center" mt="md" mb="sm">
           <Title order={2}>Oportunidades por Status</Title>
           <Button onClick={exportarExcel} variant="light">Exportar Excel</Button>
