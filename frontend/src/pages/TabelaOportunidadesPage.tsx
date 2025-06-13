@@ -15,7 +15,7 @@ import {
   Button,
   Tooltip,
 } from '@mantine/core';
-import { DatePickerInput } from '@mantine/dates';
+import { DatePicker } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
@@ -36,7 +36,8 @@ export default function TabelaOportunidadesPage() {
   const [carregando, setCarregando] = useState(true);
   const [nomeFiltro, setNomeFiltro] = useState('');
   const [etapaFiltro, setEtapaFiltro] = useState<string | null>(null);
-  const [dataRange, setDataRange] = useState<[DateValue, DateValue]>([null, null]);
+  const [dataInicio, setDataInicio] = useState<DateValue>(null);
+  const [dataFim, setDataFim] = useState<DateValue>(null);
   const token = localStorage.getItem('token') ?? '';
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
 
@@ -84,7 +85,7 @@ export default function TabelaOportunidadesPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setDados(prev => (prev ?? []).map(o =>
+      setDados(prev => prev.map(o =>
         o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() } : o
       ));
     } catch (err) {
@@ -96,13 +97,12 @@ export default function TabelaOportunidadesPage() {
     return dados.filter((o) => {
       const nomeMatch = nomeFiltro === '' || o.parceiro_nome.toLowerCase().includes(nomeFiltro.toLowerCase());
       const etapaMatch = !etapaFiltro || o.etapa === etapaFiltro;
-      const dataInicio = dataRange[0] ? new Date(dataRange[0]) : null;
-      const dataFim = dataRange[1] ? new Date(dataRange[1]) : null;
       const dataCriacao = new Date(o.data_criacao);
-      const dataMatch = (!dataInicio || dataCriacao >= dataInicio) && (!dataFim || dataCriacao <= dataFim);
+      const dataMatch = (!dataInicio || dataCriacao >= new Date(dataInicio)) &&
+                        (!dataFim || dataCriacao <= new Date(dataFim));
       return nomeMatch && etapaMatch && dataMatch;
     });
-  }, [dados, nomeFiltro, etapaFiltro, dataRange]);
+  }, [dados, nomeFiltro, etapaFiltro, dataInicio, dataFim]);
 
   const agrupadoPorStatus = useMemo((): Record<string, Oportunidade[]> => {
     const agrupado: Record<string, Oportunidade[]> = {};
@@ -138,13 +138,13 @@ export default function TabelaOportunidadesPage() {
 
   return (
     <SidebarGestor tipoUser={usuario?.tipo_user || ''}>
-      <Container fluid style={{ maxWidth: '100%' }}>
-        <Group justify="space-between" align="center" mt="md">
+      <Container fluid style={{ maxWidth: '100%', padding: '0 40px' }}>
+        <Group justify="space-between" align="center" mt="md" mb="sm">
           <Title order={2}>Oportunidades por Status</Title>
           <Button onClick={exportarExcel} variant="light">Exportar Excel</Button>
         </Group>
 
-        <Group mt="md" mb="md" grow align="end">
+        <Group mt="xs" mb="md" grow align="end">
           <TextInput
             placeholder="Filtrar por nome do parceiro"
             value={nomeFiltro}
@@ -155,27 +155,30 @@ export default function TabelaOportunidadesPage() {
             label="Status"
             placeholder="Todos"
             value={etapaFiltro}
-            onChange={(v) => setEtapaFiltro(v)}
+            onChange={setEtapaFiltro}
             data={etapaOptions}
             clearable
+            searchable={false}
+            allowDeselect
           />
-          <Box style={{ flex: 1 }}>
-            <DatePickerInput
-              type="range"
-              label="Data de criação"
-              placeholder="Selecionar intervalo"
-              value={dataRange}
-              onChange={setDataRange}
+          <Box style={{ display: 'flex', gap: 8 }}>
+            <DatePicker
+              placeholder="Início"
+              value={dataInicio}
+              onChange={setDataInicio}
               locale="pt-br"
-              dropdownType="modal"
               clearable
-              styles={{
-                input: {
-                  padding: '10px',
-                  fontSize: '14px',
-                  minWidth: '100%',
-                }
-              }}
+              dropdownType="modal"
+              style={{ minWidth: 120 }}
+            />
+            <DatePicker
+              placeholder="Fim"
+              value={dataFim}
+              onChange={setDataFim}
+              locale="pt-br"
+              clearable
+              dropdownType="modal"
+              style={{ minWidth: 120 }}
             />
           </Box>
         </Group>
@@ -208,7 +211,7 @@ export default function TabelaOportunidadesPage() {
                         <Badge color={getStatusColor(status)} variant="light">
                           {lista.length} oportunidades
                         </Badge>
-                        <Tooltip label="Tempo médio entre a criação e a última atualização nesta categoria" withArrow>
+                        <Tooltip label="Tempo médio entre criação e status nesta categoria" withArrow>
                           <Badge color="gray" variant="outline" style={{ cursor: 'help' }}>
                             ⏱ {tempoMedio} dias
                           </Badge>
@@ -237,12 +240,11 @@ export default function TabelaOportunidadesPage() {
                               <td>
                                 <Select
                                   value={o.etapa}
-                                  onChange={(value) => {
-                                    if (value) handleStatusChange(o.id, value);
-                                  }}
+                                  onChange={(value) => value && handleStatusChange(o.id, value)}
                                   data={etapaOptions}
                                   size="xs"
-                                  searchable
+                                  searchable={false}
+                                  allowDeselect={false}
                                   styles={{
                                     input: {
                                       backgroundColor: getStatusColor(o.etapa),
@@ -250,7 +252,7 @@ export default function TabelaOportunidadesPage() {
                                       fontWeight: 600,
                                       textAlign: 'center',
                                       borderRadius: 6,
-                                      minWidth: 200,
+                                      minWidth: 180,
                                     }
                                   }}
                                 />
