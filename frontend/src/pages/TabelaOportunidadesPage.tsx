@@ -7,6 +7,7 @@ import {
 import { DatePickerInput } from '@mantine/dates';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
+
 import {
   ShoppingCart,
   XCircle,
@@ -23,16 +24,6 @@ function hexToRGBA(hex: string, alpha: number) {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-const statusColors: Record<string, string> = {
-  'Oportunidade': '#228be6',
-  'Orçamento': '#fab005',
-  'Pedido Aguardando Aprovação': '#ffa94d',
-  'Pedido Realizado': '#40c057',
-  'Venda Perdida': '#fa5252',
-};
-
-const getStatusColor = (etapa: string): string => statusColors[etapa] || '#adb5bd';
-
 interface Oportunidade {
   id: number;
   parceiro: number;
@@ -43,7 +34,7 @@ interface Oportunidade {
   data_status?: string;
 }
 
-export default function TabelaOportunidadesPage() {
+export default function OportunidadesPage() {
   const [dados, setDados] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [filtroParceiro, setFiltroParceiro] = useState('');
@@ -81,14 +72,26 @@ export default function TabelaOportunidadesPage() {
     if (!value) return;
     try {
       await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
-        etapa: value
+        etapa: value,
+        data_status: new Date().toISOString().slice(0, 10)
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      await fetchDados();
+      fetchDados(); // atualiza após mudança
     } catch (err) {
       console.error('Erro ao atualizar status:', err);
     }
+  };
+
+  const getStatusColor = (etapa: string) => {
+    const cores: Record<string, string> = {
+      'Oportunidade': '#228be6',
+      'Orçamento': '#fab005',
+      'Pedido Aguardando Aprovação': '#ffa94d',
+      'Pedido Realizado': '#40c057',
+      'Venda Perdida': '#fa5252',
+    };
+    return cores[etapa] || '#ced4da';
   };
 
   const formatDate = (date?: string) =>
@@ -186,16 +189,16 @@ export default function TabelaOportunidadesPage() {
                     style={{
                       borderLeft: `6px solid ${getStatusColor(etapa)}`,
                       backgroundColor: hexToRGBA(getStatusColor(etapa), 0.06),
-                      boxShadow: '0 8px 18px rgba(0,0,0,0.04)',
+                      boxShadow: '0 8px 18px rgba(0,0,0,0.06)',
                     }}
                   >
                     <Group justify="space-between" mb="sm">
                       <Group align="center">
-                        {etapa === 'Pedido Realizado' && <ShoppingCart size={18} color={getStatusColor(etapa)} />}
-                        {etapa === 'Venda Perdida' && <XCircle size={18} color={getStatusColor(etapa)} />}
-                        {etapa === 'Oportunidade' && <Target size={18} color={getStatusColor(etapa)} />}
-                        {etapa === 'Orçamento' && <Briefcase size={18} color={getStatusColor(etapa)} />}
-                        {etapa === 'Pedido Aguardando Aprovação' && <Clock size={18} color={getStatusColor(etapa)} />}
+                        {etapa === 'Pedido Realizado' && <ShoppingCart size={18} color="#40c057" />}
+                        {etapa === 'Venda Perdida' && <XCircle size={18} color="#fa5252" />}
+                        {etapa === 'Oportunidade' && <Target size={18} color="#228be6" />}
+                        {etapa === 'Orçamento' && <Briefcase size={18} color="#fab005" />}
+                        {etapa === 'Pedido Aguardando Aprovação' && <Clock size={18} color="#ffa94d" />}
                         <Title order={4} tt="capitalize" ml={8}>{etapa.toLowerCase()}</Title>
                         <Tooltip label={`Tempo médio na etapa: ${tempoMedio}`} withArrow>
                           <Indicator color="gray" size={12} processing>
@@ -240,15 +243,14 @@ export default function TabelaOportunidadesPage() {
                                 size="xs"
                                 variant="filled"
                                 styles={{
-                                    input: {
-                                      backgroundColor: getStatusColor(o.etapa),
-                                      color: 'white',
-                                      fontWeight: 600,
-                                      textAlign: 'center',
-                                      textTransform: 'capitalize', // ✅ Pode aplicar diretamente
-                                    }
-                                  }}
-                                  
+                                  input: {
+                                    backgroundColor: getStatusColor(o.etapa),
+                                    color: 'white',
+                                    fontWeight: 600,
+                                    textAlign: 'center',
+                                    textTransform: 'capitalize',
+                                  }
+                                }}
                               />
                             </td>
                           </tr>
