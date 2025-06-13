@@ -29,7 +29,10 @@ export default function TabelaOportunidadesPage() {
 
   const token = localStorage.getItem('token') ?? '';
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-  const tipoUser = usuario?.tipo_user ?? '';
+  const tipoUser =
+    typeof usuario === 'object' && usuario !== null && 'tipo_user' in usuario
+      ? (usuario.tipo_user as string)
+      : '';
 
   const etapaOptions = [
     { value: 'oportunidade', label: 'Oportunidade' },
@@ -155,10 +158,9 @@ export default function TabelaOportunidadesPage() {
               locale="pt-br"
               dropdownType="modal"
               label="Data início"
-              popoverProps={{ position: 'bottom-start', offset: 4 }}
+              popoverProps={{ withinPortal: true, position: 'bottom-start', offset: 4 }}
               styles={{
-                input: { fontSize: '0.875rem' },
-                dropdown: { zIndex: 9999, borderRadius: 8 },
+                input: { fontSize: '0.875rem' }
               }}
             />
           </Box>
@@ -169,10 +171,9 @@ export default function TabelaOportunidadesPage() {
               locale="pt-br"
               dropdownType="modal"
               label="Data fim"
-              popoverProps={{ position: 'bottom-start', offset: 4 }}
+              popoverProps={{ withinPortal: true, position: 'bottom-start', offset: 4 }}
               styles={{
-                input: { fontSize: '0.875rem' },
-                dropdown: { zIndex: 9999, borderRadius: 8 },
+                input: { fontSize: '0.875rem' }
               }}
             />
           </Box>
