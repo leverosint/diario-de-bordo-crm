@@ -133,7 +133,6 @@ export default function TabelaOportunidadesPage() {
           <Button onClick={exportarExcel} variant="light">Exportar Excel</Button>
         </Group>
 
-        {/* Filtros com datas corrigidas */}
         <Group mt="xs" mb="md" grow align="end">
           <TextInput
             label="Nome do parceiro"
@@ -154,7 +153,7 @@ export default function TabelaOportunidadesPage() {
               value={dataInicio}
               onChange={setDataInicio}
               locale="pt-br"
-              dropdownType="modal"
+              dropdownType="popover"
               label="Data início"
               clearable
               rightSection={null}
@@ -176,7 +175,7 @@ export default function TabelaOportunidadesPage() {
               value={dataFim}
               onChange={setDataFim}
               locale="pt-br"
-              dropdownType="modal"
+              dropdownType="popover"
               label="Data fim"
               clearable
               rightSection={null}
@@ -195,7 +194,6 @@ export default function TabelaOportunidadesPage() {
           </Box>
         </Group>
 
-        {/* Tabelas */}
         {carregando ? <Loader /> : (
           <ScrollArea>
             {Object.entries(agrupadoPorStatus).map(([status, lista]) => {
