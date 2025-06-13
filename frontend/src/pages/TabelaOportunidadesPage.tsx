@@ -29,10 +29,7 @@ export default function TabelaOportunidadesPage() {
 
   const token = localStorage.getItem('token') ?? '';
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-  const tipoUser =
-    typeof usuario === 'object' && usuario !== null && 'tipo_user' in usuario
-      ? (usuario.tipo_user as string)
-      : '';
+  const tipoUser = (usuario as { tipo_user?: string })?.tipo_user ?? '';
 
   const etapaOptions = [
     { value: 'oportunidade', label: 'Oportunidade' },
@@ -159,9 +156,7 @@ export default function TabelaOportunidadesPage() {
               dropdownType="modal"
               label="Data início"
               popoverProps={{ withinPortal: true, position: 'bottom-start', offset: 4 }}
-              styles={{
-                input: { fontSize: '0.875rem' }
-              }}
+              styles={{ input: { fontSize: '0.875rem' } }}
             />
           </Box>
           <Box style={{ minWidth: 160 }}>
@@ -172,11 +167,33 @@ export default function TabelaOportunidadesPage() {
               dropdownType="modal"
               label="Data fim"
               popoverProps={{ withinPortal: true, position: 'bottom-start', offset: 4 }}
-              styles={{
-                input: { fontSize: '0.875rem' }
-              }}
+              styles={{ input: { fontSize: '0.875rem' } }}
             />
           </Box>
+        </Group>
+
+        {/* Cards Resumo */}
+        <Group mt="xs" mb="md" wrap="wrap" style={{ gap: 16 }}>
+
+          {Object.entries(agrupadoPorStatus).map(([status, lista]) => (
+            <Box
+              key={status}
+              style={{
+                backgroundColor: getStatusColor(status),
+                color: 'white',
+                borderRadius: 12,
+                padding: '1rem 1.5rem',
+                minWidth: 180,
+                flex: '1 1 200px',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
+              }}
+            >
+              <Title order={5} style={{ marginBottom: 4 }}>{status.toUpperCase()}</Title>
+              <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>
+                {lista.length} {lista.length === 1 ? 'registro' : 'registros'}
+              </div>
+            </Box>
+          ))}
         </Group>
 
         {carregando ? <Loader /> : (
