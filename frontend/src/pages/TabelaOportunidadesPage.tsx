@@ -1,21 +1,9 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
-  Title,
-  Table,
-  Container,
-  Loader,
-  ScrollArea,
-  Badge,
-  Group,
-  Card,
-  Box,
-  Select,
-  TextInput,
-  Button,
-  Tooltip,
+  Title, Table, Container, Loader, ScrollArea, Badge, Group, TextInput, Button, Tooltip, Card, Box, Select
 } from '@mantine/core';
-import { DatePicker } from '@mantine/dates';
+import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
@@ -38,8 +26,10 @@ export default function TabelaOportunidadesPage() {
   const [etapaFiltro, setEtapaFiltro] = useState<string | null>(null);
   const [dataInicio, setDataInicio] = useState<DateValue>(null);
   const [dataFim, setDataFim] = useState<DateValue>(null);
+
   const token = localStorage.getItem('token') ?? '';
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+  const tipoUser = usuario?.tipo_user ?? '';
 
   const etapaOptions = [
     { value: 'oportunidade', label: 'Oportunidade' },
@@ -49,22 +39,19 @@ export default function TabelaOportunidadesPage() {
     { value: 'perdida', label: 'Venda Perdida' },
   ];
 
-  const getStatusColor = (etapa: string) => {
-    const mapa: Record<string, string> = {
-      oportunidade: 'blue',
-      orcamento: 'teal',
-      aguardando: 'orange',
-      pedido: 'green',
-      perdida: 'red',
-    };
-    return mapa[etapa] || 'gray';
-  };
+  const getStatusColor = (etapa: string) => ({
+    oportunidade: 'blue',
+    orcamento: 'teal',
+    aguardando: 'orange',
+    pedido: 'green',
+    perdida: 'red',
+  }[etapa] || 'gray');
 
   useEffect(() => {
     const fetchDados = async () => {
       try {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         setDados(res.data);
       } catch (err) {
@@ -82,12 +69,13 @@ export default function TabelaOportunidadesPage() {
       await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
         etapa: novaEtapa,
       }, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
-
-      setDados(prev => prev.map(o =>
-        o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() } : o
-      ));
+      setDados(prev =>
+        prev.map(o =>
+          o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() } : o
+        )
+      );
     } catch (err) {
       console.error('Erro ao atualizar etapa:', err);
     }
@@ -98,8 +86,9 @@ export default function TabelaOportunidadesPage() {
       const nomeMatch = nomeFiltro === '' || o.parceiro_nome.toLowerCase().includes(nomeFiltro.toLowerCase());
       const etapaMatch = !etapaFiltro || o.etapa === etapaFiltro;
       const dataCriacao = new Date(o.data_criacao);
-      const dataMatch = (!dataInicio || dataCriacao >= new Date(dataInicio)) &&
-                        (!dataFim || dataCriacao <= new Date(dataFim));
+      const dataMatch =
+        (!dataInicio || dataCriacao >= new Date(dataInicio)) &&
+        (!dataFim || dataCriacao <= new Date(dataFim));
       return nomeMatch && etapaMatch && dataMatch;
     });
   }, [dados, nomeFiltro, etapaFiltro, dataInicio, dataFim]);
@@ -120,7 +109,7 @@ export default function TabelaOportunidadesPage() {
       Valor: o.valor,
       Etapa: o.etapa,
       'Data Criação': new Date(o.data_criacao).toLocaleDateString('pt-BR'),
-      'Data Status': o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'
+      'Data Status': o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-',
     }));
     const worksheet = XLSX.utils.json_to_sheet(linhas);
     const workbook = XLSX.utils.book_new();
@@ -137,7 +126,7 @@ export default function TabelaOportunidadesPage() {
   };
 
   return (
-    <SidebarGestor tipoUser={usuario?.tipo_user || ''}>
+    <SidebarGestor tipoUser={tipoUser}>
       <Container fluid style={{ maxWidth: '100%', padding: '0 40px' }}>
         <Group justify="space-between" align="center" mt="md" mb="sm">
           <Title order={2}>Oportunidades por Status</Title>
@@ -146,10 +135,10 @@ export default function TabelaOportunidadesPage() {
 
         <Group mt="xs" mb="md" grow align="end">
           <TextInput
-            placeholder="Filtrar por nome do parceiro"
+            label="Nome do parceiro"
+            placeholder="Filtrar por nome"
             value={nomeFiltro}
             onChange={(e) => setNomeFiltro(e.currentTarget.value)}
-            label="Nome do parceiro"
           />
           <Select
             label="Status"
@@ -158,29 +147,23 @@ export default function TabelaOportunidadesPage() {
             onChange={setEtapaFiltro}
             data={etapaOptions}
             clearable
-            searchable={false}
-            allowDeselect
           />
-          <Box style={{ display: 'flex', gap: 8 }}>
-            <DatePicker
-              placeholder="Início"
-              value={dataInicio}
-              onChange={setDataInicio}
-              locale="pt-br"
-              clearable
-              dropdownType="modal"
-              style={{ minWidth: 120 }}
-            />
-            <DatePicker
-              placeholder="Fim"
-              value={dataFim}
-              onChange={setDataFim}
-              locale="pt-br"
-              clearable
-              dropdownType="modal"
-              style={{ minWidth: 120 }}
-            />
-          </Box>
+          <DatePickerInput
+            value={dataInicio}
+            onChange={setDataInicio}
+            locale="pt-br"
+            dropdownType="modal"
+            label="Data início"
+            style={{ minWidth: 150 }}
+          />
+          <DatePickerInput
+            value={dataFim}
+            onChange={setDataFim}
+            locale="pt-br"
+            dropdownType="modal"
+            label="Data fim"
+            style={{ minWidth: 150 }}
+          />
         </Group>
 
         {carregando ? <Loader /> : (
@@ -198,11 +181,15 @@ export default function TabelaOportunidadesPage() {
                     radius="lg"
                     p="xl"
                     mb="lg"
-                    style={{ borderLeft: `8px solid ${getStatusColor(status)}`, backgroundColor: '#f9f9f9' }}
+                    style={{
+                      borderLeft: `8px solid ${getStatusColor(status)}`,
+                      backgroundColor: '#f9f9f9',
+                      width: '100%',
+                    }}
                   >
                     <Group justify="space-between" align="center" mb="sm">
                       <div>
-                        <Title order={3} style={{ marginBottom: 4 }}>{status.toUpperCase()}</Title>
+                        <Title order={3}>{status.toUpperCase()}</Title>
                         <p style={{ fontSize: '0.9rem', color: '#555' }}>
                           Valor total: R$ {valorTotal.replace('.', ',')}
                         </p>
@@ -211,8 +198,8 @@ export default function TabelaOportunidadesPage() {
                         <Badge color={getStatusColor(status)} variant="light">
                           {lista.length} oportunidades
                         </Badge>
-                        <Tooltip label="Tempo médio entre criação e status nesta categoria" withArrow>
-                          <Badge color="gray" variant="outline" style={{ cursor: 'help' }}>
+                        <Tooltip label="Tempo médio até status" withArrow>
+                          <Badge color="gray" variant="outline">
                             ⏱ {tempoMedio} dias
                           </Badge>
                         </Tooltip>
@@ -243,8 +230,6 @@ export default function TabelaOportunidadesPage() {
                                   onChange={(value) => value && handleStatusChange(o.id, value)}
                                   data={etapaOptions}
                                   size="xs"
-                                  searchable={false}
-                                  allowDeselect={false}
                                   styles={{
                                     input: {
                                       backgroundColor: getStatusColor(o.etapa),
