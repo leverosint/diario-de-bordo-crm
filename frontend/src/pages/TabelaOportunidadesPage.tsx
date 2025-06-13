@@ -153,21 +153,23 @@ export default function TabelaOportunidadesPage() {
               value={dataInicio}
               onChange={setDataInicio}
               locale="pt-br"
-              dropdownType="popover"
               label="Data início"
+              dropdownType="popover"
               clearable
               rightSection={null}
               popoverProps={{
                 withinPortal: false,
                 position: 'bottom-start',
                 shadow: 'md',
+                withArrow: true,
               }}
               styles={{
-                input: {
-                  fontSize: '0.875rem',
-                  borderRadius: 8,
-                },
+                input: { fontSize: '0.875rem', borderRadius: 8 },
+                day: { fontSize: '0.85rem' },
+                calendarHeaderControl: { fontSize: '1rem', width: 28, height: 28 },
               }}
+              previousIcon={<span style={{ fontSize: 14 }}>‹</span>}
+              nextIcon={<span style={{ fontSize: 14 }}>›</span>}
             />
           </Box>
           <Box style={{ minWidth: 160 }}>
@@ -175,21 +177,23 @@ export default function TabelaOportunidadesPage() {
               value={dataFim}
               onChange={setDataFim}
               locale="pt-br"
-              dropdownType="popover"
               label="Data fim"
+              dropdownType="popover"
               clearable
               rightSection={null}
               popoverProps={{
                 withinPortal: false,
                 position: 'bottom-start',
                 shadow: 'md',
+                withArrow: true,
               }}
               styles={{
-                input: {
-                  fontSize: '0.875rem',
-                  borderRadius: 8,
-                },
+                input: { fontSize: '0.875rem', borderRadius: 8 },
+                day: { fontSize: '0.85rem' },
+                calendarHeaderControl: { fontSize: '1rem', width: 28, height: 28 },
               }}
+              previousIcon={<span style={{ fontSize: 14 }}>‹</span>}
+              nextIcon={<span style={{ fontSize: 14 }}>›</span>}
             />
           </Box>
         </Group>
