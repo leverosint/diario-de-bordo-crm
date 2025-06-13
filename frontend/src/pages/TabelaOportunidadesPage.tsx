@@ -84,12 +84,9 @@ export default function TabelaOportunidadesPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setDados(prev =>
-        prev.map(o => o.id === id
-          ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() }
-          : o
-        )
-      );
+      setDados(prev => (prev ?? []).map(o =>
+        o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() } : o
+      ));
     } catch (err) {
       console.error('Erro ao atualizar etapa:', err);
     }
@@ -141,7 +138,7 @@ export default function TabelaOportunidadesPage() {
 
   return (
     <SidebarGestor tipoUser={usuario?.tipo_user || ''}>
-      <Container fluid>
+      <Container fluid style={{ maxWidth: '100%' }}>
         <Group justify="space-between" align="center" mt="md">
           <Title order={2}>Oportunidades por Status</Title>
           <Button onClick={exportarExcel} variant="light">Exportar Excel</Button>
@@ -162,15 +159,25 @@ export default function TabelaOportunidadesPage() {
             data={etapaOptions}
             clearable
           />
-          <DatePickerInput
-            type="range"
-            label="Data de criação"
-            placeholder="Selecionar intervalo"
-            value={dataRange}
-            onChange={setDataRange}
-            locale="pt-br"
-            style={{ flexGrow: 1 }}
-          />
+          <Box style={{ flex: 1 }}>
+            <DatePickerInput
+              type="range"
+              label="Data de criação"
+              placeholder="Selecionar intervalo"
+              value={dataRange}
+              onChange={setDataRange}
+              locale="pt-br"
+              dropdownType="modal"
+              clearable
+              styles={{
+                input: {
+                  padding: '10px',
+                  fontSize: '14px',
+                  minWidth: '100%',
+                }
+              }}
+            />
+          </Box>
         </Group>
 
         {carregando ? <Loader /> : (
@@ -231,10 +238,11 @@ export default function TabelaOportunidadesPage() {
                                 <Select
                                   value={o.etapa}
                                   onChange={(value) => {
-                                    if (value !== null) handleStatusChange(o.id, value);
+                                    if (value) handleStatusChange(o.id, value);
                                   }}
                                   data={etapaOptions}
                                   size="xs"
+                                  searchable
                                   styles={{
                                     input: {
                                       backgroundColor: getStatusColor(o.etapa),
