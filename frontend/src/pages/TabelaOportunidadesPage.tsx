@@ -6,17 +6,20 @@ import {
   Container,
   Loader,
   ScrollArea,
+  Badge,
   Group,
+  Card,
+  Box,
   Select,
   TextInput,
-  Card,
-  Text,
   Button,
-} from '@mantine/core';
+ } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
-import type { DateValue } from '@mantine/dates';
+import 'dayjs/locale/pt-br';
+import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
-import dayjs from 'dayjs';
+import type { DateValue } from '@mantine/dates';
+
 
 interface Oportunidade {
   id: number;
@@ -31,13 +34,12 @@ interface Oportunidade {
 export default function TabelaOportunidadesPage() {
   const [dados, setDados] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const [filtroNome, setFiltroNome] = useState('');
-  const [filtroEtapa, setFiltroEtapa] = useState<string | null>('Todas');
-  const [intervaloDatas, setIntervaloDatas] = useState<[DateValue, DateValue]>([null, null]);
+  const [nomeFiltro, setNomeFiltro] = useState('');
+  const [etapaFiltro, setEtapaFiltro] = useState<string | null>(null);
+  const [dataRange, setDataRange] = useState<[DateValue, DateValue]>([null, null]);
+  const token = localStorage.getItem('token') ?? '';
 
-  const token = localStorage.getItem('token');
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-  const tipoUser = usuario?.tipo_user ?? '';
 
   const etapaOptions = [
     { value: 'oportunidade', label: 'Oportunidade' },
@@ -48,14 +50,14 @@ export default function TabelaOportunidadesPage() {
   ];
 
   const getStatusColor = (etapa: string) => {
-    const cores: Record<string, string> = {
-      oportunidade: '#007bff',
-      orcamento: '#ffeb3b',
-      aguardando: '#ff9800',
-      pedido: '#4caf50',
-      perdida: '#f44336',
+    const mapa: Record<string, string> = {
+      oportunidade: 'blue',
+      orcamento: 'yellow',
+      aguardando: 'orange',
+      pedido: 'green',
+      perdida: 'red',
     };
-    return cores[etapa] || '#ccc';
+    return mapa[etapa] || 'gray';
   };
 
   useEffect(() => {
@@ -84,8 +86,9 @@ export default function TabelaOportunidadesPage() {
       });
 
       setDados(prev =>
-        prev.map(o =>
-          o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() } : o
+        prev.map(o => o.id === id
+          ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() }
+          : o
         )
       );
     } catch (err) {
@@ -94,23 +97,20 @@ export default function TabelaOportunidadesPage() {
   };
 
   const dadosFiltrados = useMemo(() => {
-    return dados.filter((item) => {
-      const dentroData =
-        !intervaloDatas[0] ||
-        !intervaloDatas[1] ||
-        (dayjs(item.data_criacao).isAfter(dayjs(intervaloDatas[0])) &&
-          dayjs(item.data_criacao).isBefore(dayjs(intervaloDatas[1]).add(1, 'day')));
-
-      const dentroEtapa = filtroEtapa === 'Todas' || item.etapa === filtroEtapa;
-      const nomeInclui = item.parceiro_nome.toLowerCase().includes(filtroNome.toLowerCase());
-
-      return dentroData && dentroEtapa && nomeInclui;
+    return dados.filter((o) => {
+      const nomeMatch = nomeFiltro === '' || o.parceiro_nome.toLowerCase().includes(nomeFiltro.toLowerCase());
+      const etapaMatch = !etapaFiltro || o.etapa === etapaFiltro;
+      const dataInicio = dataRange[0] ? new Date(dataRange[0]) : null;
+      const dataFim = dataRange[1] ? new Date(dataRange[1]) : null;
+      const dataCriacao = new Date(o.data_criacao);
+      const dataMatch = (!dataInicio || dataCriacao >= dataInicio) && (!dataFim || dataCriacao <= dataFim);
+      return nomeMatch && etapaMatch && dataMatch;
     });
-  }, [dados, filtroNome, filtroEtapa, intervaloDatas]);
+  }, [dados, nomeFiltro, etapaFiltro, dataRange]);
 
-  const agrupado = useMemo(() => {
+  const agrupadoPorStatus = useMemo((): Record<string, Oportunidade[]> => {
     const agrupado: Record<string, Oportunidade[]> = {};
-    dadosFiltrados.forEach(item => {
+    dadosFiltrados.forEach((item) => {
       const status = item.etapa || 'Sem status';
       if (!agrupado[status]) agrupado[status] = [];
       agrupado[status].push(item);
@@ -118,95 +118,119 @@ export default function TabelaOportunidadesPage() {
     return agrupado;
   }, [dadosFiltrados]);
 
+  const exportarExcel = () => {
+    const linhas = dadosFiltrados.map(o => ({
+      Parceiro: o.parceiro_nome,
+      Valor: o.valor,
+      Etapa: o.etapa,
+      'Data Criação': new Date(o.data_criacao).toLocaleDateString('pt-BR'),
+      'Data Status': o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(linhas);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Oportunidades");
+    XLSX.writeFile(workbook, "oportunidades.xlsx");
+  };
+
+  const calcularTempoMedio = (lista: Oportunidade[]) => {
+    const dias = lista
+      .filter(o => o.data_status)
+      .map(o => (new Date(o.data_status).getTime() - new Date(o.data_criacao).getTime()) / (1000 * 60 * 60 * 24));
+    if (dias.length === 0) return 0;
+    return Math.round(dias.reduce((a, b) => a + b, 0) / dias.length);
+  };
+
   return (
-    <SidebarGestor tipoUser={tipoUser}>
+    <SidebarGestor tipoUser={usuario?.tipo_user || ''}>
       <Container fluid>
-        <Group justify="space-between" mb="md">
+        <Group justify="space-between" align="center" mt="md">
           <Title order={2}>Oportunidades por Status</Title>
-          <Button variant="light" color="blue">Exportar Excel</Button>
+          <Button onClick={exportarExcel} variant="light">Exportar Excel</Button>
         </Group>
 
-        <Group mb="md" grow>
-          <TextInput
-            placeholder="Filtrar por nome do parceiro"
-            value={filtroNome}
-            onChange={(e) => setFiltroNome(e.currentTarget.value)}
-          />
+        <Group mt="md" mb="md" grow>
+          <TextInput placeholder="Filtrar por nome do parceiro" value={nomeFiltro} onChange={(e) => setNomeFiltro(e.currentTarget.value)} />
           <Select
             placeholder="Todas"
-            value={filtroEtapa}
-            onChange={(value) => setFiltroEtapa(value)}
-            data={['Todas', ...etapaOptions.map(opt => opt.value)]}
+            value={etapaFiltro}
+            onChange={(v) => setEtapaFiltro(v)}
+            data={etapaOptions}
+            clearable
           />
           <DatePickerInput
             type="range"
             placeholder="Intervalo de datas"
-            value={intervaloDatas}
-            onChange={setIntervaloDatas}
+            value={dataRange}
+            onChange={setDataRange}
+            locale="pt-br"
+            style={{ width: '100%' }}
           />
         </Group>
 
-        {carregando ? (
-          <Loader />
-        ) : (
+        {carregando ? <Loader /> : (
           <ScrollArea>
-            {Object.entries(agrupado).map(([status, lista]) => (
-              <Card
-                key={status}
-                withBorder
-                shadow="sm"
-                radius="md"
-                mb="xl"
-                style={{
-                  borderLeft: `8px solid ${getStatusColor(status)}`,
-                  backgroundColor: '#f9f9f9'
-                }}
-              >
-                <Group justify="space-between" mb="xs">
-                  <Title order={4} style={{ textTransform: 'capitalize' }}>{status}</Title>
-                  <Text size="sm" color="gray">
-                    {lista.length} oportunidade{lista.length > 1 ? 's' : ''}
-                  </Text>
-                </Group>
-
-                <Table striped highlightOnHover withTableBorder>
-                  <thead>
-                    <tr>
-                      <th>Parceiro</th>
-                      <th>Valor</th>
-                      <th>Data Criação</th>
-                      <th>Data Status</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lista.map((o) => (
-                      <tr key={o.id}>
-                        <td>{o.parceiro_nome}</td>
-                        <td>R$ {o.valor.toLocaleString('pt-BR')}</td>
-                        <td>{new Date(o.data_criacao).toLocaleDateString()}</td>
-                        <td>{o.data_status ? new Date(o.data_status).toLocaleDateString() : '-'}</td>
-                        <td>
-                          <Select
-                            value={o.etapa}
-                            onChange={(value) => handleStatusChange(o.id, value)}
-                            data={etapaOptions}
-                            styles={{
-                              input: {
-                                backgroundColor: getStatusColor(o.etapa),
-                                color: o.etapa === 'orcamento' ? '#000' : '#fff',
-                                fontWeight: 600,
-                                textAlign: 'center',
-                                borderRadius: '6px'
-                              }
-                            }}
-                          />
-                        </td>
+            {Object.entries(agrupadoPorStatus).map(([status, lista]) => (
+              <Box key={status} mt="xl">
+                <Card
+                  withBorder
+                  shadow="md"
+                  radius="lg"
+                  p="lg"
+                  mb="md"
+                  style={{ borderLeft: `8px solid ${getStatusColor(status)}` }}
+                >
+                  <Group justify="space-between" mb="xs">
+                    <Title order={4}>{status.charAt(0).toUpperCase() + status.slice(1)}</Title>
+                    <Group>
+                      <Badge color={getStatusColor(status)} variant="light">
+                        {lista.length} oportunidades
+                      </Badge>
+                      <Badge color="gray" variant="outline">
+                        Valor total: R$ {lista.reduce((acc, o) => acc + o.valor, 0).toLocaleString('pt-BR')}
+                      </Badge>
+                      <Badge color="gray" variant="light">
+                        Tempo médio: {calcularTempoMedio(lista)} dias
+                      </Badge>
+                    </Group>
+                  </Group>
+                  <Table striped highlightOnHover withTableBorder>
+                    <thead>
+                      <tr>
+                        <th>Parceiro</th>
+                        <th>Valor</th>
+                        <th>Data Criação</th>
+                        <th>Data Status</th>
+                        <th>Status</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </Card>
+                    </thead>
+                    <tbody>
+                      {lista.map((o) => (
+                        <tr key={o.id}>
+                          <td>{o.parceiro_nome}</td>
+                          <td>R$ {o.valor.toLocaleString('pt-BR')}</td>
+                          <td>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
+                          <td>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
+                          <td>
+                            <Select
+                              value={o.etapa}
+                              onChange={(value) => handleStatusChange(o.id, value)}
+                              data={etapaOptions}
+                              styles={{
+                                input: {
+                                  backgroundColor: getStatusColor(o.etapa),
+                                  color: 'white',
+                                  fontWeight: 500,
+                                  textAlign: 'center'
+                                }
+                              }}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                </Card>
+              </Box>
             ))}
           </ScrollArea>
         )}
