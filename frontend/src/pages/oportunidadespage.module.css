@@ -1,0 +1,11 @@
+.pageContainer {
+    padding: 16px;
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #ffffff; /* fundo claro forçado */
+  }
+  
+  .title {
+    margin-bottom: 1rem;
+  }
+  
