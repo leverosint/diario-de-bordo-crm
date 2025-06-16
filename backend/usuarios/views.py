@@ -611,3 +611,32 @@ def usuarios_por_canal(request):
     ).values('id', 'username', 'id_vendedor')
 
     return Response(usuarios)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def criar_gatilho_manual(request):
+    parceiro_id = request.data.get('parceiro')
+    descricao = request.data.get('descricao')
+    usuario = request.user
+
+    if not parceiro_id or not descricao:
+        return Response(
+            {'erro': 'Parâmetros "parceiro" e "descricao" são obrigatórios.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        parceiro = Parceiro.objects.get(id=int(parceiro_id))
+    except Parceiro.DoesNotExist:
+        return Response(
+            {'erro': 'Parceiro não encontrado.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    GatilhoExtra.objects.update_or_create(
+        parceiro=parceiro,
+        usuario=usuario,
+        defaults={'descricao': descricao}
+    )
+
+    return Response({'mensagem': 'Gatilho criado com sucesso.'}, status=status.HTTP_201_CREATED)
