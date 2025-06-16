@@ -44,6 +44,11 @@ interface Vendedor {
   id_vendedor: string;
 }
 
+interface Parceiro {
+  id: number;
+  parceiro: string;
+}
+
 export default function InteracoesPage() {
   const [pendentes, setPendentes] = useState<Interacao[]>([]);
   const [interagidos, setInteragidos] = useState<Interacao[]>([]);
@@ -57,10 +62,9 @@ export default function InteracoesPage() {
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
 
-  const [showGatilhoManual, setShowGatilhoManual] = useState(false);
-  const [parceiroGatilho, setParceiroGatilho] = useState<string | null>(null);
+  const [parceiros, setParceiros] = useState<Parceiro[]>([]);
+  const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
   const [descricaoGatilho, setDescricaoGatilho] = useState('');
-  const [parceiros, setParceiros] = useState<{ id: number; parceiro: string }[]>([]);
 
   const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
@@ -76,14 +80,16 @@ export default function InteracoesPage() {
     setErro(null);
     try {
       const headers = { Authorization: `Bearer ${token}` };
+
       const params = new URLSearchParams();
       if (canalSelecionado) params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
 
-      const [resPendentes, resInteragidos, resMeta] = await Promise.all([
+      const [resPendentes, resInteragidos, resMeta, resParceiros] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes&${params.toString()}`, { headers }),
         axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=interagidos&${params.toString()}`, { headers }),
         axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers }),
+        axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers }),
       ]);
 
       const canalNome = (id: number) => {
@@ -102,6 +108,7 @@ export default function InteracoesPage() {
 
       setMetaAtual(resMeta.data.interacoes_realizadas);
       setMetaTotal(resMeta.data.meta_diaria);
+      setParceiros(resParceiros.data);
 
       if (tipoUser === 'GESTOR') {
         const canais = usuario.canais_venda || [];
@@ -109,7 +116,7 @@ export default function InteracoesPage() {
       }
     } catch (err) {
       console.error('Erro ao carregar interações:', err);
-      setErro('Erro ao carregar interações.');
+      setErro('Erro ao carregar interações. Verifique sua conexão ou login.');
     } finally {
       setCarregando(false);
     }
@@ -133,40 +140,6 @@ export default function InteracoesPage() {
 
   const handleVendedorChange = (value: string | null) => {
     setVendedorSelecionado(value || '');
-  };
-
-  const abrirCardGatilho = async () => {
-    try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers });
-      setParceiros(res.data);
-      setShowGatilhoManual(true);
-    } catch (err) {
-      alert('Erro ao carregar parceiros');
-    }
-  };
-
-  const enviarGatilhoManual = async () => {
-    if (!parceiroGatilho || !descricaoGatilho) {
-      alert('Selecione o parceiro e preencha a descrição');
-      return;
-    }
-
-    try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const formData = new FormData();
-      formData.append('parceiro', parceiroGatilho);
-      formData.append('descricao', descricaoGatilho);
-      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, { headers });
-
-      alert('Gatilho criado com sucesso!');
-      setShowGatilhoManual(false);
-      setDescricaoGatilho('');
-      setParceiroGatilho(null);
-      carregarDados();
-    } catch (err) {
-      alert('Erro ao criar gatilho');
-    }
   };
 
   const registrarInteracao = async (
@@ -199,23 +172,48 @@ export default function InteracoesPage() {
       setObservacaoOportunidade('');
       await carregarDados();
     } catch (err) {
-      alert('Erro ao registrar interação ou oportunidade');
+      console.error('Erro ao registrar interação ou oportunidade:', err);
+      alert('Erro ao registrar interação ou oportunidade. Tente novamente.');
     }
   };
 
   const handleUploadGatilho = async () => {
-    if (!arquivoGatilho) return alert('Selecione um arquivo antes de enviar.');
-    const formData = new FormData();
-    formData.append('file', arquivoGatilho);
+    if (arquivoGatilho) {
+      const formData = new FormData();
+      formData.append('file', arquivoGatilho);
+
+      try {
+        const headers = { Authorization: `Bearer ${token}` };
+        await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, { headers });
+        alert('Gatilhos extras enviados com sucesso!');
+        setArquivoGatilho(null);
+        carregarDados();
+      } catch (err) {
+        console.error('Erro ao enviar arquivo de gatilhos extras:', err);
+        alert('Erro ao enviar arquivo de gatilhos extras. Verifique o formato.');
+      }
+      return;
+    }
+
+    if (!parceiroSelecionado || !descricaoGatilho) {
+      alert('Selecione o parceiro e preencha a descrição');
+      return;
+    }
 
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, { headers });
-      alert('Gatilhos extras enviados!');
-      setArquivoGatilho(null);
+      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, {
+        parceiro: parceiroSelecionado,
+        descricao: descricaoGatilho,
+      }, { headers });
+
+      alert('Gatilho criado com sucesso!');
+      setDescricaoGatilho('');
+      setParceiroSelecionado(null);
       carregarDados();
     } catch (err) {
-      alert('Erro ao enviar arquivo de gatilhos.');
+      console.error('Erro ao criar gatilho:', err);
+      alert('Erro ao criar gatilho');
     }
   };
 
@@ -230,14 +228,33 @@ export default function InteracoesPage() {
           <Title order={2}>Interações de Parceiros Pendentes</Title>
         </Center>
 
+        <Card shadow="sm" padding="lg" mb="md">
+          <Group grow>
+            <Select
+              label="Parceiro"
+              placeholder="Selecione um parceiro"
+              data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
+              value={parceiroSelecionado}
+              onChange={setParceiroSelecionado}
+              searchable
+            />
+            <TextInput
+              label="Descrição do Gatilho"
+              placeholder="Ex: Urgente, Precisa Retorno..."
+              value={descricaoGatilho}
+              onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
+            />
+            <Button color="blue" onClick={handleUploadGatilho}>
+              Salvar Gatilho Manual
+            </Button>
+          </Group>
+        </Card>
+
         <Group justify="space-between" mb="md" style={{ flexWrap: 'wrap' }}>
           <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
             Meta do dia: {metaAtual}/{metaTotal}
           </Badge>
           <Group>
-            <Button color="teal" onClick={abrirCardGatilho}>
-              Adicionar Gatilho Manual
-            </Button>
             <FileButton onChange={setArquivoGatilho} accept=".xlsx">
               {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
             </FileButton>
@@ -254,7 +271,7 @@ export default function InteracoesPage() {
         {tipoUser === 'GESTOR' && (
           <Group mb="xl" style={{ flexWrap: 'wrap' }}>
             <Select
-              label="Filtrar por Canal"
+              label="Filtrar por Canal de Venda"
               placeholder="Selecione um canal"
               value={canalSelecionado}
               onChange={handleCanalChange}
@@ -280,7 +297,6 @@ export default function InteracoesPage() {
         ) : (
           <>
             <Divider label="A Interagir" mb="xs" />
-            {/* 🔥 TABELA DE PENDENTES */}
             <div className={styles.tableWrapper}>
               <Table striped highlightOnHover withTableBorder className={styles.table}>
                 <thead>
@@ -304,8 +320,10 @@ export default function InteracoesPage() {
                         <td>{item.status}</td>
                         <td>
                           {item.gatilho_extra ? (
-                            <Badge color="red">{item.gatilho_extra}</Badge>
-                          ) : '-'}
+                            <Badge color="red" size="sm">
+                              {item.gatilho_extra}
+                            </Badge>
+                          ) : "-"}
                         </td>
                         <td>
                           <Select
@@ -325,7 +343,7 @@ export default function InteracoesPage() {
                           />
                         </td>
                         <td>
-                          <Button size="xs" onClick={() => setExpandirId(item.id)}>
+                          <Button size="xs" className={styles.button} onClick={() => setExpandirId(item.id)}>
                             Marcar como interagido
                           </Button>
                         </td>
@@ -333,7 +351,7 @@ export default function InteracoesPage() {
                       {expandirId === item.id && (
                         <tr>
                           <td colSpan={7}>
-                            <Group grow>
+                            <Group grow style={{ marginTop: 10 }}>
                               <TextInput
                                 label="Valor da Oportunidade (R$)"
                                 placeholder="5000"
@@ -342,7 +360,7 @@ export default function InteracoesPage() {
                               />
                               <Textarea
                                 label="Observação"
-                                placeholder="Detalhes..."
+                                placeholder="Detalhes adicionais..."
                                 value={observacaoOportunidade}
                                 onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
                               />
@@ -387,7 +405,6 @@ export default function InteracoesPage() {
               </Table>
             </div>
 
-            {/* 🔥 TABELA DE INTERAGIDOS */}
             <Divider label="Interagidos Hoje" mt="xl" mb="md" />
             <div className={styles.tableWrapper}>
               <Table striped highlightOnHover withTableBorder className={styles.table}>
@@ -416,36 +433,6 @@ export default function InteracoesPage() {
               </Table>
             </div>
           </>
-        )}
-
-        {/* 🔥 FORM GATILHO MANUAL */}
-        {showGatilhoManual && (
-          <Card shadow="sm" padding="lg" radius="md" withBorder mt="lg">
-            <Title order={4} mb="sm">Adicionar Gatilho Manual</Title>
-            <Select
-              label="Parceiro"
-              placeholder="Selecione um parceiro"
-              data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
-              value={parceiroGatilho}
-              onChange={setParceiroGatilho}
-              searchable
-            />
-            <TextInput
-              label="Descrição"
-              placeholder="Ex: Urgente, Precisa Retorno..."
-              value={descricaoGatilho}
-              onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
-              mt="sm"
-            />
-            <Group mt="lg" justify="flex-end">
-              <Button variant="default" onClick={() => setShowGatilhoManual(false)}>
-                Cancelar
-              </Button>
-              <Button color="blue" onClick={enviarGatilhoManual}>
-                Salvar
-              </Button>
-            </Group>
-          </Card>
         )}
       </div>
     </SidebarGestor>
