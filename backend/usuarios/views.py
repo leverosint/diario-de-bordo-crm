@@ -161,24 +161,14 @@ class LoginView(APIView):
         identificador = request.data.get('identificador')
         senha = request.data.get('senha')
 
-        if not identificador or not senha:
-            return Response({"erro": "Informe identificador e senha."}, status=status.HTTP_400_BAD_REQUEST)
+        user = (
+            User.objects.filter(username=identificador).first()
+            or User.objects.filter(email=identificador).first()
+            or User.objects.filter(id_vendedor=identificador).first()
+        )
 
-        try:
-            user = (
-                User.objects.filter(username=identificador).first()
-                or User.objects.filter(email=identificador).first()
-                or User.objects.filter(id_vendedor=identificador).first()
-            )
-
-            if user is None:
-                return Response({"erro": "Usuário não encontrado."}, status=status.HTTP_404_NOT_FOUND)
-
-            if not user.check_password(senha):
-                return Response({"erro": "Senha incorreta."}, status=status.HTTP_401_UNAUTHORIZED)
-
+        if user and user.check_password(senha):
             refresh = RefreshToken.for_user(user)
-
             return Response({
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
@@ -191,14 +181,11 @@ class LoginView(APIView):
                     "canais_venda": [
                         {"id": canal.id, "nome": canal.nome}
                         for canal in user.canais_venda.all()
-                    ],
+                    ],  # 👈 Agora vem id e nome certinho!
                 }
             })
-
-        except Exception as e:
-            print('Erro no login:', str(e))
-            return Response({"erro": "Erro no servidor."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        else:
+            return Response({"erro": "Credenciais inválidas"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 
