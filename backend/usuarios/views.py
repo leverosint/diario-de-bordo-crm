@@ -258,6 +258,7 @@ class InteracoesPendentesView(APIView):
         for parceiro in parceiros:
             ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
             interagido_hoje = ultima_interacao and ultima_interacao.data_interacao.date() == hoje
+
             em_periodo_bloqueio = (
                 ultima_interacao and 
                 ultima_interacao.entrou_em_contato and 
@@ -268,30 +269,79 @@ class InteracoesPendentesView(APIView):
             responsavel_id = parceiro.consultor
             gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario__id_vendedor=responsavel_id).first()
 
-            dados_parceiro = {
-                'id': parceiro.id,
-                'parceiro': parceiro.parceiro,
-                'unidade': parceiro.unidade,
-                'classificacao': parceiro.classificacao,
-                'status': parceiro.status,
-                'tipo': ultima_interacao.tipo if ultima_interacao else '',
-                'data_interacao': ultima_interacao.data_interacao if ultima_interacao else '',
-                'entrou_em_contato': ultima_interacao.entrou_em_contato if ultima_interacao else False,
-                'gatilho_extra': gatilho.descricao if gatilho else None,
-            }
+            # ✅ Se tem gatilho → Sempre entra em pendentes
+            if gatilho:
+                parceiros_pendentes.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': '',
+                    'data_interacao': ultima_interacao.data_interacao if ultima_interacao else '',
+                    'entrou_em_contato': ultima_interacao.entrou_em_contato if ultima_interacao else False,
+                    'gatilho_extra': gatilho.descricao,
+                })
+                # E se interagiu hoje, também aparece em interagidos
+                if interagido_hoje:
+                    parceiros_interagidos.append({
+                        'id': parceiro.id,
+                        'parceiro': parceiro.parceiro,
+                        'unidade': parceiro.unidade,
+                        'classificacao': parceiro.classificacao,
+                        'status': parceiro.status,
+                        'tipo': ultima_interacao.tipo,
+                        'data_interacao': ultima_interacao.data_interacao,
+                        'entrou_em_contato': ultima_interacao.entrou_em_contato,
+                        'gatilho_extra': gatilho.descricao,
+                    })
 
-            # 🔥 -> Se interagiu hoje, vai para "Interagidos Hoje"
-            if interagido_hoje:
-                parceiros_interagidos.append(dados_parceiro)
+            # 🔍 Se NÃO tem gatilho, verifica bloqueio
+            elif not em_periodo_bloqueio:
+                if interagido_hoje:
+                    parceiros_interagidos.append({
+                        'id': parceiro.id,
+                        'parceiro': parceiro.parceiro,
+                        'unidade': parceiro.unidade,
+                        'classificacao': parceiro.classificacao,
+                        'status': parceiro.status,
+                        'tipo': ultima_interacao.tipo,
+                        'data_interacao': ultima_interacao.data_interacao,
+                        'entrou_em_contato': ultima_interacao.entrou_em_contato,
+                        'gatilho_extra': None,
+                    })
+                else:
+                    parceiros_pendentes.append({
+                        'id': parceiro.id,
+                        'parceiro': parceiro.parceiro,
+                        'unidade': parceiro.unidade,
+                        'classificacao': parceiro.classificacao,
+                        'status': parceiro.status,
+                        'tipo': '',
+                        'data_interacao': '',
+                        'entrou_em_contato': False,
+                        'gatilho_extra': None,
+                    })
 
-            # 🔥 -> Se não está bloqueado OU tem gatilho, vai para "A Interagir"
-            if not em_periodo_bloqueio or gatilho:
-                parceiros_pendentes.append(dados_parceiro)
+            # 🔥 Se apenas interagiu hoje (mas está bloqueado pelos 3 dias), vai para interagidos
+            elif interagido_hoje:
+                parceiros_interagidos.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': ultima_interacao.tipo,
+                    'data_interacao': ultima_interacao.data_interacao,
+                    'entrou_em_contato': ultima_interacao.entrou_em_contato,
+                    'gatilho_extra': None,
+                })
 
         tipo_lista = request.query_params.get('tipo', 'pendentes')
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
         return Response(parceiros_pendentes)
+
 
 
 
