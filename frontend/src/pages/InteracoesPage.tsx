@@ -62,8 +62,8 @@ export default function InteracoesPage() {
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
 
-  const [drawerAberto, setDrawerAberto] = useState(false);
   const [parceiros, setParceiros] = useState<Parceiro[]>([]);
+  const [drawerAberto, setDrawerAberto] = useState(false);
   const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
   const [descricaoGatilho, setDescricaoGatilho] = useState('');
 
@@ -93,19 +93,8 @@ export default function InteracoesPage() {
         axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers }),
       ]);
 
-      const canalNome = (id: number) => {
-        const canal = usuario.canais_venda?.find((c: any) => c.id === id);
-        return canal ? canal.nome : '';
-      };
-
-      setPendentes(resPendentes.data.map((p: any) => ({
-        ...p,
-        canal_venda_nome: canalNome(p.canal_venda_id),
-      })));
-      setInteragidos(resInteragidos.data.map((p: any) => ({
-        ...p,
-        canal_venda_nome: canalNome(p.canal_venda_id),
-      })));
+      setPendentes(resPendentes.data);
+      setInteragidos(resInteragidos.data);
       setParceiros(resParceiros.data);
 
       setMetaAtual(resMeta.data.interacoes_realizadas);
@@ -197,7 +186,7 @@ export default function InteracoesPage() {
 
   const enviarGatilhoManual = async () => {
     if (!parceiroSelecionado || !descricaoGatilho) {
-      alert('Selecione o parceiro e preencha a descrição');
+      alert('Preencha todos os campos');
       return;
     }
 
@@ -208,14 +197,14 @@ export default function InteracoesPage() {
         descricao: descricaoGatilho,
       }, { headers });
 
-      alert('Gatilho criado com sucesso!');
+      alert('Gatilho manual criado com sucesso!');
       setDrawerAberto(false);
       setDescricaoGatilho('');
       setParceiroSelecionado(null);
       carregarDados();
     } catch (err) {
-      console.error('Erro ao criar gatilho:', err);
-      alert('Erro ao criar gatilho');
+      console.error('Erro ao criar gatilho manual:', err);
+      alert('Erro ao criar gatilho manual.');
     }
   };
 
@@ -279,6 +268,7 @@ export default function InteracoesPage() {
           <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
         ) : (
           <>
+            {/* Tabela Pendentes */}
             <Divider label="A Interagir" mb="xs" />
             <div className={styles.tableWrapper}>
               <Table striped highlightOnHover withTableBorder className={styles.table}>
@@ -388,6 +378,7 @@ export default function InteracoesPage() {
               </Table>
             </div>
 
+            {/* Tabela Interagidos */}
             <Divider label="Interagidos Hoje" mt="xl" mb="md" />
             <div className={styles.tableWrapper}>
               <Table striped highlightOnHover withTableBorder className={styles.table}>
@@ -416,12 +407,13 @@ export default function InteracoesPage() {
               </Table>
             </div>
 
+            {/* Drawer Gatilho */}
             <Drawer
               opened={drawerAberto}
               onClose={() => setDrawerAberto(false)}
               title="Adicionar Gatilho Manual"
+              padding="lg"
               position="right"
-              padding="xl"
               size="md"
             >
               <Select
@@ -431,10 +423,11 @@ export default function InteracoesPage() {
                 value={parceiroSelecionado}
                 onChange={setParceiroSelecionado}
                 searchable
+                clearable
               />
               <TextInput
-                label="Descrição"
-                placeholder="Ex: Urgente, Precisa Retorno..."
+                label="Descrição do Gatilho"
+                placeholder="Ex: Urgente, Retornar, Prioridade..."
                 value={descricaoGatilho}
                 onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
                 mt="md"
