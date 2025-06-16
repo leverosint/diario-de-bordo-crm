@@ -51,14 +51,23 @@
   min-width: 120px;
 }
 
-/* Drawer customizado */
 .drawerContent {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-/* Tabela responsiva */
+/* 🔥 Drawer responsivo e centralizado */
+.drawerContent .mantine-Select-root,
+.drawerContent .mantine-TextInput-root {
+  width: 100%;
+}
+
+.drawerContent .mantine-Group-root {
+  justify-content: flex-end;
+}
+
+/* Responsividade */
 @media (max-width: 768px) {
   .select {
     width: 100%;

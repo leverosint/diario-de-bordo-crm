@@ -81,7 +81,6 @@ export default function InteracoesPage() {
     setErro(null);
     try {
       const headers = { Authorization: `Bearer ${token}` };
-
       const params = new URLSearchParams();
       if (canalSelecionado) params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
@@ -289,6 +288,7 @@ export default function InteracoesPage() {
           <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
         ) : (
           <>
+            {/* 🔥 Tabela pendentes */}
             <Divider label="A Interagir" mb="xs" />
             <div className={styles.tableWrapper}>
               <Table striped highlightOnHover withTableBorder className={styles.table}>
@@ -398,6 +398,7 @@ export default function InteracoesPage() {
               </Table>
             </div>
 
+            {/* 🔥 Tabela interagidos */}
             <Divider label="Interagidos Hoje" mt="xl" mb="md" />
             <div className={styles.tableWrapper}>
               <Table striped highlightOnHover withTableBorder className={styles.table}>
@@ -428,42 +429,42 @@ export default function InteracoesPage() {
           </>
         )}
 
-<Drawer opened={drawerAberto} onClose={() => setDrawerAberto(false)} position="right">
-  <Drawer.Overlay />
-  <Drawer.Content>
-    <Drawer.Header>
-      <Drawer.Title>Adicionar Gatilho Manual</Drawer.Title>
-      <Drawer.CloseButton />
-    </Drawer.Header>
-    <Drawer.Body>
-      <div className={styles.drawerContent}>
-        <Select
-          label="Parceiro"
-          placeholder="Selecione um parceiro"
-          data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
-          value={parceiroSelecionado}
-          onChange={setParceiroSelecionado}
-          searchable
-        />
-        <TextInput
-          label="Descrição"
-          placeholder="Ex: Urgente, Precisa Retorno..."
-          value={descricaoGatilho}
-          onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
-        />
-        <Group mt="lg" justify="flex-end">
-          <Button variant="default" onClick={() => setDrawerAberto(false)}>
-            Cancelar
-          </Button>
-          <Button color="blue" onClick={enviarGatilhoManual}>
-            Salvar
-          </Button>
-        </Group>
-      </div>
-    </Drawer.Body>
-  </Drawer.Content>
-</Drawer>
-
+        {/* 🔥 Drawer Mantine 7 */}
+        <Drawer.Root opened={drawerAberto} onClose={() => setDrawerAberto(false)} position="right" size="md">
+          <Drawer.Overlay />
+          <Drawer.Content>
+            <Drawer.Header>
+              <Drawer.Title>Adicionar Gatilho Manual</Drawer.Title>
+              <Drawer.CloseButton />
+            </Drawer.Header>
+            <Drawer.Body>
+              <div className={styles.drawerContent}>
+                <Select
+                  label="Parceiro"
+                  placeholder="Selecione um parceiro"
+                  data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
+                  value={parceiroSelecionado}
+                  onChange={setParceiroSelecionado}
+                  searchable
+                />
+                <TextInput
+                  label="Descrição"
+                  placeholder="Ex: Urgente, Precisa Retorno..."
+                  value={descricaoGatilho}
+                  onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
+                />
+                <Group mt="lg" justify="flex-end">
+                  <Button variant="default" onClick={() => setDrawerAberto(false)}>
+                    Cancelar
+                  </Button>
+                  <Button color="blue" onClick={enviarGatilhoManual}>
+                    Salvar
+                  </Button>
+                </Group>
+              </div>
+            </Drawer.Body>
+          </Drawer.Content>
+        </Drawer.Root>
       </div>
     </SidebarGestor>
   );
