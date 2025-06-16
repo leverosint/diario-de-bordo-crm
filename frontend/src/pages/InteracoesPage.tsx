@@ -428,40 +428,38 @@ export default function InteracoesPage() {
           </>
         )}
 
-        <Drawer opened={drawerAberto} onClose={() => setDrawerAberto(false)} position="right">
-          <Drawer.Overlay />
-          <Drawer.Content>
-            <Drawer.Header>
-              <Drawer.Title>Adicionar Gatilho Manual</Drawer.Title>
-              <Drawer.CloseButton />
-            </Drawer.Header>
-            <Drawer.Body>
-              <div className={styles.drawerContent}>
-                <Select
-                  label="Parceiro"
-                  placeholder="Selecione um parceiro"
-                  data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
-                  value={parceiroSelecionado}
-                  onChange={setParceiroSelecionado}
-                  searchable
-                />
-                <TextInput
-                  label="Descrição"
-                  placeholder="Ex: Urgente, Precisa Retorno..."
-                  value={descricaoGatilho}
-                  onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
-                />
-                <Group mt="lg" justify="flex-end">
-                  <Button variant="default" onClick={() => setDrawerAberto(false)}>
-                    Cancelar
-                  </Button>
-                  <Button color="blue" onClick={enviarGatilhoManual}>
-                    Salvar
-                  </Button>
-                </Group>
-              </div>
-            </Drawer.Body>
-          </Drawer.Content>
+        <Drawer
+          opened={drawerAberto}
+          onClose={() => setDrawerAberto(false)}
+          title="Adicionar Gatilho Manual"
+          padding="xl"
+          position="right"
+          size="md"
+        >
+          <div className={styles.drawerContent}>
+            <Select
+              label="Parceiro"
+              placeholder="Selecione um parceiro"
+              data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
+              value={parceiroSelecionado}
+              onChange={setParceiroSelecionado}
+              searchable
+            />
+            <TextInput
+              label="Descrição"
+              placeholder="Ex: Urgente, Precisa Retorno..."
+              value={descricaoGatilho}
+              onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
+            />
+            <Group mt="lg" justify="flex-end">
+              <Button variant="default" onClick={() => setDrawerAberto(false)}>
+                Cancelar
+              </Button>
+              <Button color="blue" onClick={enviarGatilhoManual}>
+                Salvar
+              </Button>
+            </Group>
+          </div>
         </Drawer>
       </div>
     </SidebarGestor>
