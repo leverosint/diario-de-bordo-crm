@@ -61,3 +61,9 @@ from .views import usuarios_por_canal
 urlpatterns += [
     path('usuarios-por-canal/', usuarios_por_canal, name='usuarios-por-canal'),
 ]
+
+from .views import criar_gatilho_manual
+
+urlpatterns += [
+    path('criar-gatilho-manual/', criar_gatilho_manual, name='criar-gatilho-manual'),
+]
