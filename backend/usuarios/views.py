@@ -16,6 +16,7 @@ from collections import defaultdict
 from django.utils.timezone import make_aware
 from datetime import datetime
 from .serializers import ParceiroSerializer
+from django.db.models import Q
 
 
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra, CustomUser
@@ -237,14 +238,15 @@ class InteracoesPendentesView(APIView):
         hoje = now().date()
         limite_data = hoje - timedelta(days=3)
 
+        # 🔥 Filtragem por tipo de usuário
         if usuario.tipo_user == 'VENDEDOR':
             parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
         elif usuario.tipo_user == 'GESTOR':
             parceiros = Parceiro.objects.filter(canal_venda__in=usuario.canais_venda.all())
-        else:
+        else:  # ADMIN
             parceiros = Parceiro.objects.all()
 
- # 🎯 Filtros por canal_id ou consultor
+        # 🔥 Filtros opcionais
         canal_id = request.query_params.get('canal_id')
         consultor = request.query_params.get('consultor')
 
@@ -260,44 +262,43 @@ class InteracoesPendentesView(APIView):
             ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
             interagido_hoje = ultima_interacao and ultima_interacao.data_interacao.date() == hoje
             em_periodo_bloqueio = (
-                ultima_interacao and 
-                ultima_interacao.entrou_em_contato and 
+                ultima_interacao and
+                ultima_interacao.entrou_em_contato and
                 ultima_interacao.data_interacao.date() > limite_data and
                 ultima_interacao.data_interacao.date() < hoje
             )
 
+            # 🔥 Correção da busca de gatilho
             responsavel_id = parceiro.consultor
-            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario__id_vendedor=responsavel_id).first()
+
+            gatilho = GatilhoExtra.objects.filter(
+                parceiro=parceiro
+            ).filter(
+                Q(usuario__id_vendedor=responsavel_id) | Q(usuario__id=responsavel_id)
+            ).first()
+
+            registro = {
+                'id': parceiro.id,
+                'parceiro': parceiro.parceiro,
+                'unidade': parceiro.unidade,
+                'classificacao': parceiro.classificacao,
+                'status': parceiro.status,
+                'tipo': ultima_interacao.tipo if ultima_interacao else '',
+                'data_interacao': ultima_interacao.data_interacao if ultima_interacao else '',
+                'entrou_em_contato': ultima_interacao.entrou_em_contato if ultima_interacao else False,
+                'gatilho_extra': gatilho.descricao if gatilho else None,
+            }
 
             if interagido_hoje:
-                parceiros_interagidos.append({
-                    'id': parceiro.id,
-                    'parceiro': parceiro.parceiro,
-                    'unidade': parceiro.unidade,
-                    'classificacao': parceiro.classificacao,
-                    'status': parceiro.status,
-                    'tipo': ultima_interacao.tipo,
-                    'data_interacao': ultima_interacao.data_interacao,
-                    'entrou_em_contato': ultima_interacao.entrou_em_contato,
-                    'gatilho_extra': gatilho.descricao if gatilho else None,
-                })
+                parceiros_interagidos.append(registro)
             elif not em_periodo_bloqueio or gatilho:
-                parceiros_pendentes.append({
-                    'id': parceiro.id,
-                    'parceiro': parceiro.parceiro,
-                    'unidade': parceiro.unidade,
-                    'classificacao': parceiro.classificacao,
-                    'status': parceiro.status,
-                    'tipo': '',
-                    'data_interacao': '',
-                    'entrou_em_contato': False,
-                    'gatilho_extra': gatilho.descricao if gatilho else None,
-                })
+                parceiros_pendentes.append(registro)
 
         tipo_lista = request.query_params.get('tipo', 'pendentes')
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
         return Response(parceiros_pendentes)
+
 
 class InteracoesMetasView(APIView):
     permission_classes = [IsAuthenticated]
