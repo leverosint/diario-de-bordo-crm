@@ -16,6 +16,7 @@ from collections import defaultdict
 from django.utils.timezone import make_aware
 from datetime import datetime
 from .serializers import ParceiroSerializer
+from django.db.models import Q
 
 
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra, CustomUser
@@ -267,7 +268,11 @@ class InteracoesPendentesView(APIView):
             )
 
             responsavel_id = parceiro.consultor
-            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario__id_vendedor=responsavel_id).first()
+            gatilho = GatilhoExtra.objects.filter(
+    parceiro=parceiro
+).filter(
+    Q(usuario__id_vendedor=responsavel_id) | Q(usuario__id=responsavel_id)
+).first()
 
             if interagido_hoje:
                 parceiros_interagidos.append({
