@@ -244,7 +244,6 @@ class InteracoesPendentesView(APIView):
         else:
             parceiros = Parceiro.objects.all()
 
-        # Filtros opcionais
         canal_id = request.query_params.get('canal_id')
         consultor = request.query_params.get('consultor')
 
@@ -269,7 +268,7 @@ class InteracoesPendentesView(APIView):
             responsavel_id = parceiro.consultor
             gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario__id_vendedor=responsavel_id).first()
 
-            parceiro_data = {
+            dados_parceiro = {
                 'id': parceiro.id,
                 'parceiro': parceiro.parceiro,
                 'unidade': parceiro.unidade,
@@ -281,13 +280,13 @@ class InteracoesPendentesView(APIView):
                 'gatilho_extra': gatilho.descricao if gatilho else None,
             }
 
-            # ✅ Regra correta:
+            # 🔥 Regra atualizada:
             if gatilho:
-                parceiros_pendentes.append(parceiro_data)  # Sempre vai para "A Interagir" se tem gatilho
+                parceiros_pendentes.append(dados_parceiro)
             elif interagido_hoje:
-                parceiros_interagidos.append(parceiro_data)
+                parceiros_interagidos.append(dados_parceiro)
             elif not em_periodo_bloqueio:
-                parceiros_pendentes.append(parceiro_data)
+                parceiros_pendentes.append(dados_parceiro)
 
         tipo_lista = request.query_params.get('tipo', 'pendentes')
         if tipo_lista == 'interagidos':
