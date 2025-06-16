@@ -280,12 +280,12 @@ class InteracoesPendentesView(APIView):
                 'gatilho_extra': gatilho.descricao if gatilho else None,
             }
 
-            # 🔥 Regra atualizada:
-            if gatilho:
-                parceiros_pendentes.append(dados_parceiro)
-            elif interagido_hoje:
+            # 🔥 -> Se interagiu hoje, vai para "Interagidos Hoje"
+            if interagido_hoje:
                 parceiros_interagidos.append(dados_parceiro)
-            elif not em_periodo_bloqueio:
+
+            # 🔥 -> Se não está bloqueado OU tem gatilho, vai para "A Interagir"
+            if not em_periodo_bloqueio or gatilho:
                 parceiros_pendentes.append(dados_parceiro)
 
         tipo_lista = request.query_params.get('tipo', 'pendentes')
