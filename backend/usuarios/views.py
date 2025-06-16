@@ -244,7 +244,6 @@ class InteracoesPendentesView(APIView):
         else:
             parceiros = Parceiro.objects.all()
 
- # 🎯 Filtros por canal_id ou consultor
         canal_id = request.query_params.get('canal_id')
         consultor = request.query_params.get('consultor')
 
@@ -269,7 +268,21 @@ class InteracoesPendentesView(APIView):
             responsavel_id = parceiro.consultor
             gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario__id_vendedor=responsavel_id).first()
 
-            if interagido_hoje:
+            # 🔥 Se tem gatilho extra → sempre em "A Interagir"
+            if gatilho:
+                parceiros_pendentes.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': ultima_interacao.tipo if ultima_interacao else '',
+                    'data_interacao': ultima_interacao.data_interacao if ultima_interacao else '',
+                    'entrou_em_contato': ultima_interacao.entrou_em_contato if ultima_interacao else False,
+                    'gatilho_extra': gatilho.descricao,
+                })
+            # 🔵 Se não tem gatilho e interagiu hoje → Interagidos
+            elif interagido_hoje:
                 parceiros_interagidos.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -279,9 +292,10 @@ class InteracoesPendentesView(APIView):
                     'tipo': ultima_interacao.tipo,
                     'data_interacao': ultima_interacao.data_interacao,
                     'entrou_em_contato': ultima_interacao.entrou_em_contato,
-                    'gatilho_extra': gatilho.descricao if gatilho else None,
+                    'gatilho_extra': None,
                 })
-            elif not em_periodo_bloqueio or gatilho:
+            # 🟢 Se não tem gatilho e está fora do período de bloqueio → A Interagir
+            elif not em_periodo_bloqueio:
                 parceiros_pendentes.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -291,13 +305,15 @@ class InteracoesPendentesView(APIView):
                     'tipo': '',
                     'data_interacao': '',
                     'entrou_em_contato': False,
-                    'gatilho_extra': gatilho.descricao if gatilho else None,
+                    'gatilho_extra': None,
                 })
+            # 🚫 Se está em bloqueio e sem gatilho → não aparece em lugar nenhum
 
         tipo_lista = request.query_params.get('tipo', 'pendentes')
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
         return Response(parceiros_pendentes)
+
 
 class InteracoesMetasView(APIView):
     permission_classes = [IsAuthenticated]
