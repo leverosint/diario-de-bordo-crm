@@ -244,6 +244,7 @@ class InteracoesPendentesView(APIView):
         else:
             parceiros = Parceiro.objects.all()
 
+        # 🔥 Filtros opcionais por canal ou consultor
         canal_id = request.query_params.get('canal_id')
         consultor = request.query_params.get('consultor')
 
@@ -258,7 +259,6 @@ class InteracoesPendentesView(APIView):
         for parceiro in parceiros:
             ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
             interagido_hoje = ultima_interacao and ultima_interacao.data_interacao.date() == hoje
-
             em_periodo_bloqueio = (
                 ultima_interacao and 
                 ultima_interacao.entrou_em_contato and 
@@ -266,11 +266,11 @@ class InteracoesPendentesView(APIView):
                 ultima_interacao.data_interacao.date() < hoje
             )
 
-            responsavel_id = parceiro.consultor
-            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario__id_vendedor=responsavel_id).first()
+            # 🔥 Verifica se tem gatilho extra
+            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
 
-            # ✅ Se tem gatilho → Sempre entra em pendentes
             if gatilho:
+                # 👉 Sempre aparece em "A Interagir" se tem gatilho
                 parceiros_pendentes.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -278,53 +278,13 @@ class InteracoesPendentesView(APIView):
                     'classificacao': parceiro.classificacao,
                     'status': parceiro.status,
                     'tipo': '',
-                    'data_interacao': ultima_interacao.data_interacao if ultima_interacao else '',
-                    'entrou_em_contato': ultima_interacao.entrou_em_contato if ultima_interacao else False,
+                    'data_interacao': '',
+                    'entrou_em_contato': False,
                     'gatilho_extra': gatilho.descricao,
                 })
-                # E se interagiu hoje, também aparece em interagidos
-                if interagido_hoje:
-                    parceiros_interagidos.append({
-                        'id': parceiro.id,
-                        'parceiro': parceiro.parceiro,
-                        'unidade': parceiro.unidade,
-                        'classificacao': parceiro.classificacao,
-                        'status': parceiro.status,
-                        'tipo': ultima_interacao.tipo,
-                        'data_interacao': ultima_interacao.data_interacao,
-                        'entrou_em_contato': ultima_interacao.entrou_em_contato,
-                        'gatilho_extra': gatilho.descricao,
-                    })
+                continue  # 👉 Pula para o próximo parceiro, nem verifica o restante
 
-            # 🔍 Se NÃO tem gatilho, verifica bloqueio
-            elif not em_periodo_bloqueio:
-                if interagido_hoje:
-                    parceiros_interagidos.append({
-                        'id': parceiro.id,
-                        'parceiro': parceiro.parceiro,
-                        'unidade': parceiro.unidade,
-                        'classificacao': parceiro.classificacao,
-                        'status': parceiro.status,
-                        'tipo': ultima_interacao.tipo,
-                        'data_interacao': ultima_interacao.data_interacao,
-                        'entrou_em_contato': ultima_interacao.entrou_em_contato,
-                        'gatilho_extra': None,
-                    })
-                else:
-                    parceiros_pendentes.append({
-                        'id': parceiro.id,
-                        'parceiro': parceiro.parceiro,
-                        'unidade': parceiro.unidade,
-                        'classificacao': parceiro.classificacao,
-                        'status': parceiro.status,
-                        'tipo': '',
-                        'data_interacao': '',
-                        'entrou_em_contato': False,
-                        'gatilho_extra': None,
-                    })
-
-            # 🔥 Se apenas interagiu hoje (mas está bloqueado pelos 3 dias), vai para interagidos
-            elif interagido_hoje:
+            if interagido_hoje:
                 parceiros_interagidos.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -334,6 +294,18 @@ class InteracoesPendentesView(APIView):
                     'tipo': ultima_interacao.tipo,
                     'data_interacao': ultima_interacao.data_interacao,
                     'entrou_em_contato': ultima_interacao.entrou_em_contato,
+                    'gatilho_extra': None,
+                })
+            elif not em_periodo_bloqueio:
+                parceiros_pendentes.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': '',
+                    'data_interacao': '',
+                    'entrou_em_contato': False,
                     'gatilho_extra': None,
                 })
 
@@ -658,6 +630,8 @@ def usuarios_por_canal(request):
 
     return Response(usuarios)
 
+########GATILHO MANUAL#########
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def criar_gatilho_manual(request):
@@ -679,10 +653,24 @@ def criar_gatilho_manual(request):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    GatilhoExtra.objects.update_or_create(
+    # 🔥 Cria ou atualiza o gatilho extra
+    gatilho, _ = GatilhoExtra.objects.update_or_create(
         parceiro=parceiro,
         usuario=usuario,
         defaults={'descricao': descricao}
     )
 
-    return Response({'mensagem': 'Gatilho criado com sucesso.'}, status=status.HTTP_201_CREATED)
+    # 🔥 Cria uma interação pendente associada ao gatilho
+    Interacao.objects.create(
+        parceiro=parceiro,
+        usuario=usuario,
+        tipo=f"Gatilho: {descricao}",
+        status=parceiro.status,
+        entrou_em_contato=False,
+        data_interacao=now()
+    )
+
+    return Response(
+        {'mensagem': 'Gatilho criado e interação pendente registrada com sucesso.'},
+        status=status.HTTP_201_CREATED
+    )
