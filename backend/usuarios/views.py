@@ -221,6 +221,14 @@ class InteracaoViewSet(viewsets.ModelViewSet):
         serializer.save(usuario=self.request.user, status=status_no_momento)
 
 
+class InteracoesHojeView(generics.ListAPIView):
+    serializer_class = InteracaoSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        hoje = now().date()
+        return Interacao.objects.filter(data_interacao__date=hoje, usuario=self.request.user)
+
 class InteracoesPendentesView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -236,7 +244,6 @@ class InteracoesPendentesView(APIView):
         else:
             parceiros = Parceiro.objects.all()
 
-        # Filtros opcionais
         canal_id = request.query_params.get('canal_id')
         consultor = request.query_params.get('consultor')
 
@@ -261,31 +268,51 @@ class InteracoesPendentesView(APIView):
             responsavel_id = parceiro.consultor
             gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario__id_vendedor=responsavel_id).first()
 
-            parceiro_data = {
-                'id': parceiro.id,
-                'parceiro': parceiro.parceiro,
-                'unidade': parceiro.unidade,
-                'classificacao': parceiro.classificacao,
-                'status': parceiro.status,
-                'tipo': ultima_interacao.tipo if ultima_interacao else '',
-                'data_interacao': ultima_interacao.data_interacao if ultima_interacao else '',
-                'entrou_em_contato': ultima_interacao.entrou_em_contato if ultima_interacao else False,
-                'gatilho_extra': gatilho.descricao if gatilho else None,
-            }
-
-            # ✅ Regra correta:
+            # 🔥 Se tem gatilho extra → sempre em "A Interagir"
             if gatilho:
-                parceiros_pendentes.append(parceiro_data)  # Sempre vai para "A Interagir" se tem gatilho
+                parceiros_pendentes.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': ultima_interacao.tipo if ultima_interacao else '',
+                    'data_interacao': ultima_interacao.data_interacao if ultima_interacao else '',
+                    'entrou_em_contato': ultima_interacao.entrou_em_contato if ultima_interacao else False,
+                    'gatilho_extra': gatilho.descricao,
+                })
+            # 🔵 Se não tem gatilho e interagiu hoje → Interagidos
             elif interagido_hoje:
-                parceiros_interagidos.append(parceiro_data)
+                parceiros_interagidos.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': ultima_interacao.tipo,
+                    'data_interacao': ultima_interacao.data_interacao,
+                    'entrou_em_contato': ultima_interacao.entrou_em_contato,
+                    'gatilho_extra': None,
+                })
+            # 🟢 Se não tem gatilho e está fora do período de bloqueio → A Interagir
             elif not em_periodo_bloqueio:
-                parceiros_pendentes.append(parceiro_data)
+                parceiros_pendentes.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': '',
+                    'data_interacao': '',
+                    'entrou_em_contato': False,
+                    'gatilho_extra': None,
+                })
+            # 🚫 Se está em bloqueio e sem gatilho → não aparece em lugar nenhum
 
         tipo_lista = request.query_params.get('tipo', 'pendentes')
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
         return Response(parceiros_pendentes)
-
 
 
 class InteracoesMetasView(APIView):
