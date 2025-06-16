@@ -514,7 +514,7 @@ class DashboardFunilView(APIView):
             {"name": "Interações", "value": interacoes.count()},
             {"name": "Oportunidades", "value": oportunidades.filter(etapa='oportunidade').count()},
             {"name": "Orçamentos", "value": oportunidades.filter(etapa='orcamento').count()},
-            {"name": "Perdidas", "value": oportunidades.filter(etapa='perdida').count()},
+            {"name": "Perdidas", "value": oportunidades.filter(etapa='aguardando').count()},
             {"name": "Pedidos", "value": oportunidades.filter(etapa='pedido').count()},
             {"name": "Perdidas", "value": oportunidades.filter(etapa='perdida').count()},
             
