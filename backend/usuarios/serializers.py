@@ -46,8 +46,7 @@ class ParceiroSerializer(serializers.ModelSerializer):
 class InteracaoSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
-    parceiro = serializers.CharField(source='parceiro.parceiro', read_only=True)
-
+    parceiro = serializers.PrimaryKeyRelatedField(queryset=Parceiro.objects.all())
 
     class Meta:
         model = Interacao
@@ -60,9 +59,10 @@ class InteracaoSerializer(serializers.ModelSerializer):
             'tipo',
             'data_interacao',
             'entrou_em_contato',
-            'status',  # ✅ novo campo
+            'status',
         ]
-        read_only_fields = ['data_interacao', 'usuario', 'status']  # status é só leitura
+        read_only_fields = ['data_interacao', 'usuario', 'status']
+
 
 
 # ===== Interações Pendentes (Simples) =====
