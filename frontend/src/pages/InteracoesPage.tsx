@@ -19,7 +19,6 @@ import {
 import SidebarGestor from '../components/SidebarGestor';
 import styles from './InteracoesPage.module.css';
 
-// Tipagem
 interface Interacao {
   id: number;
   parceiro: string;
@@ -45,31 +44,23 @@ interface Vendedor {
   id_vendedor: string;
 }
 
-interface Parceiro {
-  id: number;
-  parceiro: string;
-}
-
 export default function InteracoesPage() {
   const [pendentes, setPendentes] = useState<Interacao[]>([]);
   const [interagidos, setInteragidos] = useState<Interacao[]>([]);
-  const [carregando, setCarregando] = useState<boolean>(true);
+  const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [metaAtual, setMetaAtual] = useState<number>(0);
-  const [metaTotal, setMetaTotal] = useState<number>(10);
-
+  const [metaAtual, setMetaAtual] = useState(0);
+  const [metaTotal, setMetaTotal] = useState(10);
   const [tipoSelecionado, setTipoSelecionado] = useState<{ [key: number]: string }>({});
   const [expandirId, setExpandirId] = useState<number | null>(null);
-
-  const [valorOportunidade, setValorOportunidade] = useState<string>('');
-  const [observacaoOportunidade, setObservacaoOportunidade] = useState<string>('');
-
+  const [valorOportunidade, setValorOportunidade] = useState('');
+  const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
 
-  const [mostrarFormularioGatilho, setMostrarFormularioGatilho] = useState<boolean>(false);
-  const [parceiros, setParceiros] = useState<Parceiro[]>([]);
-  const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
-  const [descricaoGatilho, setDescricaoGatilho] = useState<string>('');
+  const [showGatilhoManual, setShowGatilhoManual] = useState(false);
+  const [parceiroGatilho, setParceiroGatilho] = useState<string | null>(null);
+  const [descricaoGatilho, setDescricaoGatilho] = useState('');
+  const [parceiros, setParceiros] = useState<{ id: number; parceiro: string }[]>([]);
 
   const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
@@ -85,7 +76,6 @@ export default function InteracoesPage() {
     setErro(null);
     try {
       const headers = { Authorization: `Bearer ${token}` };
-
       const params = new URLSearchParams();
       if (canalSelecionado) params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
@@ -119,7 +109,7 @@ export default function InteracoesPage() {
       }
     } catch (err) {
       console.error('Erro ao carregar interações:', err);
-      setErro('Erro ao carregar interações. Verifique sua conexão ou login.');
+      setErro('Erro ao carregar interações.');
     } finally {
       setCarregando(false);
     }
@@ -143,6 +133,40 @@ export default function InteracoesPage() {
 
   const handleVendedorChange = (value: string | null) => {
     setVendedorSelecionado(value || '');
+  };
+
+  const abrirCardGatilho = async () => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers });
+      setParceiros(res.data);
+      setShowGatilhoManual(true);
+    } catch (err) {
+      alert('Erro ao carregar parceiros');
+    }
+  };
+
+  const enviarGatilhoManual = async () => {
+    if (!parceiroGatilho || !descricaoGatilho) {
+      alert('Selecione o parceiro e preencha a descrição');
+      return;
+    }
+
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const formData = new FormData();
+      formData.append('parceiro', parceiroGatilho);
+      formData.append('descricao', descricaoGatilho);
+      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, { headers });
+
+      alert('Gatilho criado com sucesso!');
+      setShowGatilhoManual(false);
+      setDescricaoGatilho('');
+      setParceiroGatilho(null);
+      carregarDados();
+    } catch (err) {
+      alert('Erro ao criar gatilho');
+    }
   };
 
   const registrarInteracao = async (
@@ -175,8 +199,7 @@ export default function InteracoesPage() {
       setObservacaoOportunidade('');
       await carregarDados();
     } catch (err) {
-      console.error('Erro ao registrar interação ou oportunidade:', err);
-      alert('Erro ao registrar interação ou oportunidade. Tente novamente.');
+      alert('Erro ao registrar interação ou oportunidade');
     }
   };
 
@@ -188,48 +211,11 @@ export default function InteracoesPage() {
     try {
       const headers = { Authorization: `Bearer ${token}` };
       await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, { headers });
-      alert('Gatilhos extras enviados com sucesso!');
+      alert('Gatilhos extras enviados!');
       setArquivoGatilho(null);
       carregarDados();
     } catch (err) {
-      console.error('Erro ao enviar arquivo de gatilhos extras:', err);
-      alert('Erro ao enviar arquivo de gatilhos extras. Verifique o formato.');
-    }
-  };
-
-  const abrirFormularioGatilho = async () => {
-    try {
-      const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers });
-      setParceiros(res.data);
-      setMostrarFormularioGatilho(true);
-    } catch (err) {
-      console.error('Erro ao carregar parceiros:', err);
-      alert('Erro ao carregar parceiros');
-    }
-  };
-
-  const enviarGatilhoManual = async () => {
-    if (!parceiroSelecionado || !descricaoGatilho) {
-      alert('Selecione o parceiro e preencha a descrição');
-      return;
-    }
-
-    try {
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, {
-        parceiro: parceiroSelecionado,
-        descricao: descricaoGatilho,
-      }, { headers });
-
-      alert('Gatilho criado com sucesso!');
-      setMostrarFormularioGatilho(false);
-      setDescricaoGatilho('');
-      setParceiroSelecionado(null);
-      carregarDados();
-    } catch (err) {
-      console.error('Erro ao criar gatilho:', err);
-      alert('Erro ao criar gatilho');
+      alert('Erro ao enviar arquivo de gatilhos.');
     }
   };
 
@@ -249,7 +235,7 @@ export default function InteracoesPage() {
             Meta do dia: {metaAtual}/{metaTotal}
           </Badge>
           <Group>
-            <Button color="teal" onClick={abrirFormularioGatilho}>
+            <Button color="teal" onClick={abrirCardGatilho}>
               Adicionar Gatilho Manual
             </Button>
             <FileButton onChange={setArquivoGatilho} accept=".xlsx">
@@ -268,7 +254,7 @@ export default function InteracoesPage() {
         {tipoUser === 'GESTOR' && (
           <Group mb="xl" style={{ flexWrap: 'wrap' }}>
             <Select
-              label="Filtrar por Canal de Venda"
+              label="Filtrar por Canal"
               placeholder="Selecione um canal"
               value={canalSelecionado}
               onChange={handleCanalChange}
@@ -287,36 +273,6 @@ export default function InteracoesPage() {
           </Group>
         )}
 
-        {mostrarFormularioGatilho && (
-          <Card shadow="sm" padding="lg" radius="md" withBorder mb="lg">
-            <Title order={4} mb="sm">Adicionar Gatilho Manual</Title>
-            <Group grow>
-              <Select
-                label="Parceiro"
-                placeholder="Selecione um parceiro"
-                data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
-                value={parceiroSelecionado}
-                onChange={setParceiroSelecionado}
-                searchable
-              />
-              <TextInput
-                label="Descrição"
-                placeholder="Ex: Urgente, Precisa Retorno..."
-                value={descricaoGatilho}
-                onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
-              />
-            </Group>
-            <Group mt="md" justify="flex-end">
-              <Button variant="default" onClick={() => setMostrarFormularioGatilho(false)}>
-                Cancelar
-              </Button>
-              <Button color="blue" onClick={enviarGatilhoManual}>
-                Salvar
-              </Button>
-            </Group>
-          </Card>
-        )}
-
         {carregando ? (
           <Center><Loader /></Center>
         ) : erro ? (
@@ -324,8 +280,8 @@ export default function InteracoesPage() {
         ) : (
           <>
             <Divider label="A Interagir" mb="xs" />
+            {/* 🔥 TABELA DE PENDENTES */}
             <div className={styles.tableWrapper}>
-              {/* 🟢 Tabela de pendentes */}
               <Table striped highlightOnHover withTableBorder className={styles.table}>
                 <thead>
                   <tr>
@@ -348,10 +304,8 @@ export default function InteracoesPage() {
                         <td>{item.status}</td>
                         <td>
                           {item.gatilho_extra ? (
-                            <Badge color="red" size="sm" variant="filled" radius="xs">
-                              {item.gatilho_extra}
-                            </Badge>
-                          ) : "-"}
+                            <Badge color="red">{item.gatilho_extra}</Badge>
+                          ) : '-'}
                         </td>
                         <td>
                           <Select
@@ -371,7 +325,7 @@ export default function InteracoesPage() {
                           />
                         </td>
                         <td>
-                          <Button size="xs" className={styles.button} onClick={() => setExpandirId(item.id)}>
+                          <Button size="xs" onClick={() => setExpandirId(item.id)}>
                             Marcar como interagido
                           </Button>
                         </td>
@@ -379,7 +333,7 @@ export default function InteracoesPage() {
                       {expandirId === item.id && (
                         <tr>
                           <td colSpan={7}>
-                            <Group grow style={{ marginTop: 10 }}>
+                            <Group grow>
                               <TextInput
                                 label="Valor da Oportunidade (R$)"
                                 placeholder="5000"
@@ -388,7 +342,7 @@ export default function InteracoesPage() {
                               />
                               <Textarea
                                 label="Observação"
-                                placeholder="Detalhes adicionais..."
+                                placeholder="Detalhes..."
                                 value={observacaoOportunidade}
                                 onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
                               />
@@ -433,9 +387,9 @@ export default function InteracoesPage() {
               </Table>
             </div>
 
+            {/* 🔥 TABELA DE INTERAGIDOS */}
             <Divider label="Interagidos Hoje" mt="xl" mb="md" />
             <div className={styles.tableWrapper}>
-              {/* 🟢 Tabela de interagidos */}
               <Table striped highlightOnHover withTableBorder className={styles.table}>
                 <thead>
                   <tr>
@@ -462,6 +416,36 @@ export default function InteracoesPage() {
               </Table>
             </div>
           </>
+        )}
+
+        {/* 🔥 FORM GATILHO MANUAL */}
+        {showGatilhoManual && (
+          <Card shadow="sm" padding="lg" radius="md" withBorder mt="lg">
+            <Title order={4} mb="sm">Adicionar Gatilho Manual</Title>
+            <Select
+              label="Parceiro"
+              placeholder="Selecione um parceiro"
+              data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
+              value={parceiroGatilho}
+              onChange={setParceiroGatilho}
+              searchable
+            />
+            <TextInput
+              label="Descrição"
+              placeholder="Ex: Urgente, Precisa Retorno..."
+              value={descricaoGatilho}
+              onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
+              mt="sm"
+            />
+            <Group mt="lg" justify="flex-end">
+              <Button variant="default" onClick={() => setShowGatilhoManual(false)}>
+                Cancelar
+              </Button>
+              <Button color="blue" onClick={enviarGatilhoManual}>
+                Salvar
+              </Button>
+            </Group>
+          </Card>
         )}
       </div>
     </SidebarGestor>
