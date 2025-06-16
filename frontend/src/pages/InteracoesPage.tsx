@@ -81,6 +81,7 @@ export default function InteracoesPage() {
     setErro(null);
     try {
       const headers = { Authorization: `Bearer ${token}` };
+
       const params = new URLSearchParams();
       if (canalSelecionado) params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
@@ -288,7 +289,6 @@ export default function InteracoesPage() {
           <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
         ) : (
           <>
-            {/* 🔥 Tabela pendentes */}
             <Divider label="A Interagir" mb="xs" />
             <div className={styles.tableWrapper}>
               <Table striped highlightOnHover withTableBorder className={styles.table}>
@@ -398,7 +398,6 @@ export default function InteracoesPage() {
               </Table>
             </div>
 
-            {/* 🔥 Tabela interagidos */}
             <Divider label="Interagidos Hoje" mt="xl" mb="md" />
             <div className={styles.tableWrapper}>
               <Table striped highlightOnHover withTableBorder className={styles.table}>
@@ -429,8 +428,7 @@ export default function InteracoesPage() {
           </>
         )}
 
-        {/* 🔥 Drawer Mantine 7 */}
-        <Drawer.Root opened={drawerAberto} onClose={() => setDrawerAberto(false)} position="right" size="md">
+        <Drawer opened={drawerAberto} onClose={() => setDrawerAberto(false)} position="right">
           <Drawer.Overlay />
           <Drawer.Content>
             <Drawer.Header>
@@ -464,7 +462,7 @@ export default function InteracoesPage() {
               </div>
             </Drawer.Body>
           </Drawer.Content>
-        </Drawer.Root>
+        </Drawer>
       </div>
     </SidebarGestor>
   );
