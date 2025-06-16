@@ -16,7 +16,6 @@ from collections import defaultdict
 from django.utils.timezone import make_aware
 from datetime import datetime
 from .serializers import ParceiroSerializer
-from django.db.models import Q
 
 
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra, CustomUser
@@ -238,15 +237,14 @@ class InteracoesPendentesView(APIView):
         hoje = now().date()
         limite_data = hoje - timedelta(days=3)
 
-        # 🔥 Filtragem por tipo de usuário
         if usuario.tipo_user == 'VENDEDOR':
             parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
         elif usuario.tipo_user == 'GESTOR':
             parceiros = Parceiro.objects.filter(canal_venda__in=usuario.canais_venda.all())
-        else:  # ADMIN
+        else:
             parceiros = Parceiro.objects.all()
 
-        # 🔥 Filtros opcionais
+ # 🎯 Filtros por canal_id ou consultor
         canal_id = request.query_params.get('canal_id')
         consultor = request.query_params.get('consultor')
 
@@ -262,43 +260,44 @@ class InteracoesPendentesView(APIView):
             ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
             interagido_hoje = ultima_interacao and ultima_interacao.data_interacao.date() == hoje
             em_periodo_bloqueio = (
-                ultima_interacao and
-                ultima_interacao.entrou_em_contato and
+                ultima_interacao and 
+                ultima_interacao.entrou_em_contato and 
                 ultima_interacao.data_interacao.date() > limite_data and
                 ultima_interacao.data_interacao.date() < hoje
             )
 
-            # 🔥 Correção da busca de gatilho
             responsavel_id = parceiro.consultor
-
-            gatilho = GatilhoExtra.objects.filter(
-                parceiro=parceiro
-            ).filter(
-                Q(usuario__id_vendedor=responsavel_id) | Q(usuario__id=responsavel_id)
-            ).first()
-
-            registro = {
-                'id': parceiro.id,
-                'parceiro': parceiro.parceiro,
-                'unidade': parceiro.unidade,
-                'classificacao': parceiro.classificacao,
-                'status': parceiro.status,
-                'tipo': ultima_interacao.tipo if ultima_interacao else '',
-                'data_interacao': ultima_interacao.data_interacao if ultima_interacao else '',
-                'entrou_em_contato': ultima_interacao.entrou_em_contato if ultima_interacao else False,
-                'gatilho_extra': gatilho.descricao if gatilho else None,
-            }
+            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario__id_vendedor=responsavel_id).first()
 
             if interagido_hoje:
-                parceiros_interagidos.append(registro)
+                parceiros_interagidos.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': ultima_interacao.tipo,
+                    'data_interacao': ultima_interacao.data_interacao,
+                    'entrou_em_contato': ultima_interacao.entrou_em_contato,
+                    'gatilho_extra': gatilho.descricao if gatilho else None,
+                })
             elif not em_periodo_bloqueio or gatilho:
-                parceiros_pendentes.append(registro)
+                parceiros_pendentes.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': '',
+                    'data_interacao': '',
+                    'entrou_em_contato': False,
+                    'gatilho_extra': gatilho.descricao if gatilho else None,
+                })
 
         tipo_lista = request.query_params.get('tipo', 'pendentes')
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
         return Response(parceiros_pendentes)
-
 
 class InteracoesMetasView(APIView):
     permission_classes = [IsAuthenticated]
@@ -515,7 +514,7 @@ class DashboardFunilView(APIView):
             {"name": "Interações", "value": interacoes.count()},
             {"name": "Oportunidades", "value": oportunidades.filter(etapa='oportunidade').count()},
             {"name": "Orçamentos", "value": oportunidades.filter(etapa='orcamento').count()},
-            {"name": "Perdidas", "value": oportunidades.filter(etapa='aguardando').count()},
+            {"name": "Perdidas", "value": oportunidades.filter(etapa='perdida').count()},
             {"name": "Pedidos", "value": oportunidades.filter(etapa='pedido').count()},
             {"name": "Perdidas", "value": oportunidades.filter(etapa='perdida').count()},
             
@@ -612,40 +611,3 @@ def usuarios_por_canal(request):
     ).values('id', 'username', 'id_vendedor')
 
     return Response(usuarios)
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def criar_gatilho_manual(request):
-    parceiro_id = request.data.get('parceiro')
-    usuario_id = request.data.get('usuario')
-    descricao = request.data.get('descricao')
-
-    if not parceiro_id or not usuario_id or not descricao:
-        return Response(
-            {'erro': 'Parâmetros "parceiro", "usuario" e "descricao" são obrigatórios.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    try:
-        parceiro = Parceiro.objects.get(id=int(parceiro_id))
-    except Parceiro.DoesNotExist:
-        return Response(
-            {'erro': 'Parceiro não encontrado.'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-    try:
-        usuario = User.objects.get(id=int(usuario_id))
-    except User.DoesNotExist:
-        return Response(
-            {'erro': 'Usuário não encontrado.'},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-    GatilhoExtra.objects.update_or_create(
-        parceiro=parceiro,
-        usuario=usuario,
-        defaults={'descricao': descricao}
-    )
-
-    return Response({'mensagem': 'Gatilho criado com sucesso.'}, status=status.HTTP_201_CREATED)
