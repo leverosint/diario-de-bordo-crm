@@ -14,6 +14,7 @@ import {
   TextInput,
   Textarea,
   FileButton,
+  Modal,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import styles from './InteracoesPage.module.css';
@@ -43,6 +44,11 @@ interface Vendedor {
   id_vendedor: string;
 }
 
+interface Parceiro {
+  id: number;
+  parceiro: string;
+}
+
 export default function InteracoesPage() {
   const [pendentes, setPendentes] = useState<Interacao[]>([]);
   const [interagidos, setInteragidos] = useState<Interacao[]>([]);
@@ -55,6 +61,11 @@ export default function InteracoesPage() {
   const [valorOportunidade, setValorOportunidade] = useState('');
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
+
+  const [modalGatilho, setModalGatilho] = useState(false);
+  const [parceiros, setParceiros] = useState<Parceiro[]>([]);
+  const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
+  const [descricaoGatilho, setDescricaoGatilho] = useState('');
 
   const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
@@ -81,19 +92,8 @@ export default function InteracoesPage() {
         axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers }),
       ]);
 
-      const canalNome = (id: number) => {
-        const canal = usuario.canais_venda?.find((c: any) => c.id === id);
-        return canal ? canal.nome : '';
-      };
-
-      setPendentes(resPendentes.data.map((p: any) => ({
-        ...p,
-        canal_venda_nome: canalNome(p.canal_venda_id),
-      })));
-      setInteragidos(resInteragidos.data.map((p: any) => ({
-        ...p,
-        canal_venda_nome: canalNome(p.canal_venda_id),
-      })));
+      setPendentes(resPendentes.data);
+      setInteragidos(resInteragidos.data);
 
       setMetaAtual(resMeta.data.interacoes_realizadas);
       setMetaTotal(resMeta.data.meta_diaria);
@@ -182,6 +182,42 @@ export default function InteracoesPage() {
     }
   };
 
+  const abrirModalGatilho = async () => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers });
+      setParceiros(res.data);
+      setModalGatilho(true);
+    } catch (err) {
+      console.error('Erro ao carregar parceiros:', err);
+      alert('Erro ao carregar parceiros');
+    }
+  };
+
+  const enviarGatilho = async () => {
+    if (!parceiroSelecionado || !descricaoGatilho) {
+      alert('Selecione o parceiro e preencha a descrição');
+      return;
+    }
+
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, {
+        parceiro: parceiroSelecionado,
+        descricao: descricaoGatilho,
+      }, { headers });
+
+      alert('Gatilho criado com sucesso!');
+      setModalGatilho(false);
+      setDescricaoGatilho('');
+      setParceiroSelecionado(null);
+      carregarDados();
+    } catch (err) {
+      console.error('Erro ao criar gatilho:', err);
+      alert('Erro ao criar gatilho');
+    }
+  };
+
   useEffect(() => {
     carregarDados();
   }, [canalSelecionado, vendedorSelecionado]);
@@ -197,20 +233,21 @@ export default function InteracoesPage() {
           <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
             Meta do dia: {metaAtual}/{metaTotal}
           </Badge>
-          {tipoUser === 'GESTOR' && (
-            <Group>
-              <FileButton onChange={setArquivoGatilho} accept=".xlsx">
-                {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
-              </FileButton>
-              <Button
-                color="blue"
-                onClick={handleUploadGatilho}
-                disabled={!arquivoGatilho}
-              >
-                Enviar Gatilhos Extras
-              </Button>
-            </Group>
-          )}
+          <Group>
+            <Button color="teal" onClick={abrirModalGatilho}>
+              Adicionar Gatilho Manual
+            </Button>
+            <FileButton onChange={setArquivoGatilho} accept=".xlsx">
+              {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
+            </FileButton>
+            <Button
+              color="blue"
+              onClick={handleUploadGatilho}
+              disabled={!arquivoGatilho}
+            >
+              Enviar Gatilhos Extras
+            </Button>
+          </Group>
         </Group>
 
         {tipoUser === 'GESTOR' && (
@@ -378,7 +415,36 @@ export default function InteracoesPage() {
               </Table>
             </div>
 
-            
+            <Modal
+              opened={modalGatilho}
+              onClose={() => setModalGatilho(false)}
+              title="Adicionar Gatilho Manual"
+              centered
+            >
+              <Select
+                label="Parceiro"
+                placeholder="Selecione um parceiro"
+                data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
+                value={parceiroSelecionado}
+                onChange={setParceiroSelecionado}
+                searchable
+              />
+              <TextInput
+                label="Descrição"
+                placeholder="Ex: Urgente, Retornar, etc."
+                value={descricaoGatilho}
+                onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
+                mt="md"
+              />
+              <Group mt="lg" justify="flex-end">
+                <Button variant="default" onClick={() => setModalGatilho(false)}>
+                  Cancelar
+                </Button>
+                <Button color="blue" onClick={enviarGatilho}>
+                  Salvar
+                </Button>
+              </Group>
+            </Modal>
           </>
         )}
       </div>
