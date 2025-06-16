@@ -62,8 +62,8 @@ export default function InteracoesPage() {
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
 
-  const [parceiros, setParceiros] = useState<Parceiro[]>([]);
   const [drawerAberto, setDrawerAberto] = useState(false);
+  const [parceiros, setParceiros] = useState<Parceiro[]>([]);
   const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
   const [descricaoGatilho, setDescricaoGatilho] = useState('');
 
@@ -86,16 +86,25 @@ export default function InteracoesPage() {
       if (canalSelecionado) params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
 
-      const [resPendentes, resInteragidos, resMeta, resParceiros] = await Promise.all([
+      const [resPendentes, resInteragidos, resMeta] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes&${params.toString()}`, { headers }),
         axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=interagidos&${params.toString()}`, { headers }),
         axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers }),
-        axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers }),
       ]);
 
-      setPendentes(resPendentes.data);
-      setInteragidos(resInteragidos.data);
-      setParceiros(resParceiros.data);
+      const canalNome = (id: number) => {
+        const canal = usuario.canais_venda?.find((c: any) => c.id === id);
+        return canal ? canal.nome : '';
+      };
+
+      setPendentes(resPendentes.data.map((p: any) => ({
+        ...p,
+        canal_venda_nome: canalNome(p.canal_venda_id),
+      })));
+      setInteragidos(resInteragidos.data.map((p: any) => ({
+        ...p,
+        canal_venda_nome: canalNome(p.canal_venda_id),
+      })));
 
       setMetaAtual(resMeta.data.interacoes_realizadas);
       setMetaTotal(resMeta.data.meta_diaria);
@@ -184,9 +193,21 @@ export default function InteracoesPage() {
     }
   };
 
+  const abrirDrawer = async () => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers });
+      setParceiros(res.data);
+      setDrawerAberto(true);
+    } catch (err) {
+      console.error('Erro ao carregar parceiros:', err);
+      alert('Erro ao carregar parceiros');
+    }
+  };
+
   const enviarGatilhoManual = async () => {
     if (!parceiroSelecionado || !descricaoGatilho) {
-      alert('Preencha todos os campos');
+      alert('Selecione o parceiro e preencha a descrição');
       return;
     }
 
@@ -197,14 +218,14 @@ export default function InteracoesPage() {
         descricao: descricaoGatilho,
       }, { headers });
 
-      alert('Gatilho manual criado com sucesso!');
+      alert('Gatilho criado com sucesso!');
       setDrawerAberto(false);
       setDescricaoGatilho('');
       setParceiroSelecionado(null);
       carregarDados();
     } catch (err) {
-      console.error('Erro ao criar gatilho manual:', err);
-      alert('Erro ao criar gatilho manual.');
+      console.error('Erro ao criar gatilho:', err);
+      alert('Erro ao criar gatilho');
     }
   };
 
@@ -224,7 +245,7 @@ export default function InteracoesPage() {
             Meta do dia: {metaAtual}/{metaTotal}
           </Badge>
           <Group>
-            <Button color="teal" onClick={() => setDrawerAberto(true)}>
+            <Button color="teal" onClick={abrirDrawer}>
               Adicionar Gatilho Manual
             </Button>
             <FileButton onChange={setArquivoGatilho} accept=".xlsx">
@@ -268,7 +289,6 @@ export default function InteracoesPage() {
           <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
         ) : (
           <>
-            {/* Tabela Pendentes */}
             <Divider label="A Interagir" mb="xs" />
             <div className={styles.tableWrapper}>
               <Table striped highlightOnHover withTableBorder className={styles.table}>
@@ -378,7 +398,6 @@ export default function InteracoesPage() {
               </Table>
             </div>
 
-            {/* Tabela Interagidos */}
             <Divider label="Interagidos Hoje" mt="xl" mb="md" />
             <div className={styles.tableWrapper}>
               <Table striped highlightOnHover withTableBorder className={styles.table}>
@@ -406,43 +425,44 @@ export default function InteracoesPage() {
                 </tbody>
               </Table>
             </div>
-
-            {/* Drawer Gatilho */}
-            <Drawer
-              opened={drawerAberto}
-              onClose={() => setDrawerAberto(false)}
-              title="Adicionar Gatilho Manual"
-              padding="lg"
-              position="right"
-              size="md"
-            >
-              <Select
-                label="Parceiro"
-                placeholder="Selecione um parceiro"
-                data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
-                value={parceiroSelecionado}
-                onChange={setParceiroSelecionado}
-                searchable
-                clearable
-              />
-              <TextInput
-                label="Descrição do Gatilho"
-                placeholder="Ex: Urgente, Retornar, Prioridade..."
-                value={descricaoGatilho}
-                onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
-                mt="md"
-              />
-              <Group mt="lg" justify="flex-end">
-                <Button variant="default" onClick={() => setDrawerAberto(false)}>
-                  Cancelar
-                </Button>
-                <Button color="blue" onClick={enviarGatilhoManual}>
-                  Salvar
-                </Button>
-              </Group>
-            </Drawer>
           </>
         )}
+
+        <Drawer
+          opened={drawerAberto}
+          onClose={() => setDrawerAberto(false)}
+          title="Adicionar Gatilho Manual"
+          padding="xl"
+          size="md"
+          position="right"
+        >
+          <div className={styles.drawerContent}>
+          <Select
+   label="Parceiro"
+  placeholder="Selecione um parceiro"
+  data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
+  value={parceiroSelecionado}
+  onChange={setParceiroSelecionado}
+  searchable
+  withCheckIcon={false}
+/>
+
+            <TextInput
+              label="Descrição"
+              placeholder="Ex: Urgente, Precisa Retorno..."
+              value={descricaoGatilho}
+              onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
+            />
+            <Group mt="lg" justify="flex-end">
+              <Button variant="default" onClick={() => setDrawerAberto(false)}>
+                Cancelar
+              </Button>
+              <Button color="blue" onClick={enviarGatilhoManual}>
+                Salvar
+              </Button>
+            </Group>
+          </div>
+        </Drawer>
       </div>
     </SidebarGestor>
   );
