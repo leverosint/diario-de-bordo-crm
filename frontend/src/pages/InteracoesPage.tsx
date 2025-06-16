@@ -148,14 +148,15 @@ export default function InteracoesPage() {
       alert('Selecione o parceiro e preencha a descrição');
       return;
     }
-
+  
     try {
       const headers = { Authorization: `Bearer ${token}` };
       await axios.post(`${import.meta.env.VITE_API_URL}/criar-gatilho-manual/`, {
-        parceiro_id: parceiroSelecionado,
+        parceiro: parceiroSelecionado,  // 👈 Nome correto
+        usuario: usuario.id,             // 👈 Usuário logado
         descricao: descricaoGatilho,
       }, { headers });
-
+  
       alert('Gatilho manual criado com sucesso!');
       setDescricaoGatilho('');
       setParceiroSelecionado(null);
@@ -166,6 +167,7 @@ export default function InteracoesPage() {
       alert('Erro ao criar gatilho manual');
     }
   };
+  
 
   const registrarInteracao = async (
     parceiroId: number,
