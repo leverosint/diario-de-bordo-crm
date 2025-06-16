@@ -65,6 +65,7 @@ export default function InteracoesPage() {
   const [parceiros, setParceiros] = useState<Parceiro[]>([]);
   const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
   const [descricaoGatilho, setDescricaoGatilho] = useState('');
+  const [mostrarGatilhoManual, setMostrarGatilhoManual] = useState(false);
 
   const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
@@ -142,6 +143,30 @@ export default function InteracoesPage() {
     setVendedorSelecionado(value || '');
   };
 
+  const salvarGatilhoManual = async () => {
+    if (!parceiroSelecionado || !descricaoGatilho) {
+      alert('Selecione o parceiro e preencha a descrição');
+      return;
+    }
+
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      await axios.post(`${import.meta.env.VITE_API_URL}/criar-gatilho-manual/`, {
+        parceiro_id: parceiroSelecionado,
+        descricao: descricaoGatilho,
+      }, { headers });
+
+      alert('Gatilho manual criado com sucesso!');
+      setDescricaoGatilho('');
+      setParceiroSelecionado(null);
+      setMostrarGatilhoManual(false);
+      carregarDados();
+    } catch (err) {
+      console.error('Erro ao criar gatilho manual:', err);
+      alert('Erro ao criar gatilho manual');
+    }
+  };
+
   const registrarInteracao = async (
     parceiroId: number,
     tipo: string,
@@ -178,42 +203,19 @@ export default function InteracoesPage() {
   };
 
   const handleUploadGatilho = async () => {
-    if (arquivoGatilho) {
-      const formData = new FormData();
-      formData.append('file', arquivoGatilho);
-
-      try {
-        const headers = { Authorization: `Bearer ${token}` };
-        await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, { headers });
-        alert('Gatilhos extras enviados com sucesso!');
-        setArquivoGatilho(null);
-        carregarDados();
-      } catch (err) {
-        console.error('Erro ao enviar arquivo de gatilhos extras:', err);
-        alert('Erro ao enviar arquivo de gatilhos extras. Verifique o formato.');
-      }
-      return;
-    }
-
-    if (!parceiroSelecionado || !descricaoGatilho) {
-      alert('Selecione o parceiro e preencha a descrição');
-      return;
-    }
+    if (!arquivoGatilho) return alert('Selecione um arquivo antes de enviar.');
+    const formData = new FormData();
+    formData.append('file', arquivoGatilho);
 
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, {
-        parceiro: parceiroSelecionado,
-        descricao: descricaoGatilho,
-      }, { headers });
-
-      alert('Gatilho criado com sucesso!');
-      setDescricaoGatilho('');
-      setParceiroSelecionado(null);
+      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, { headers });
+      alert('Gatilhos extras enviados com sucesso!');
+      setArquivoGatilho(null);
       carregarDados();
     } catch (err) {
-      console.error('Erro ao criar gatilho:', err);
-      alert('Erro ao criar gatilho');
+      console.error('Erro ao enviar arquivo de gatilhos extras:', err);
+      alert('Erro ao enviar arquivo de gatilhos extras. Verifique o formato.');
     }
   };
 
@@ -228,27 +230,35 @@ export default function InteracoesPage() {
           <Title order={2}>Interações de Parceiros Pendentes</Title>
         </Center>
 
-        <Card shadow="sm" padding="lg" mb="md">
-          <Group grow>
-            <Select
-              label="Parceiro"
-              placeholder="Selecione um parceiro"
-              data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
-              value={parceiroSelecionado}
-              onChange={setParceiroSelecionado}
-              searchable
-            />
-            <TextInput
-              label="Descrição do Gatilho"
-              placeholder="Ex: Urgente, Precisa Retorno..."
-              value={descricaoGatilho}
-              onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
-            />
-            <Button color="blue" onClick={handleUploadGatilho}>
-              Salvar Gatilho Manual
-            </Button>
-          </Group>
-        </Card>
+        <Group mb="md">
+          <Button onClick={() => setMostrarGatilhoManual(!mostrarGatilhoManual)} color="teal">
+            {mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
+          </Button>
+        </Group>
+
+        {mostrarGatilhoManual && (
+          <Card shadow="sm" padding="lg" mb="md">
+            <Group grow>
+              <Select
+                label="Parceiro"
+                placeholder="Selecione um parceiro"
+                data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
+                value={parceiroSelecionado}
+                onChange={setParceiroSelecionado}
+                searchable
+              />
+              <TextInput
+                label="Descrição do Gatilho"
+                placeholder="Ex: Urgente, Precisa Retorno..."
+                value={descricaoGatilho}
+                onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
+              />
+              <Button color="blue" onClick={salvarGatilhoManual}>
+                Salvar Gatilho Manual
+              </Button>
+            </Group>
+          </Card>
+        )}
 
         <Group justify="space-between" mb="md" style={{ flexWrap: 'wrap' }}>
           <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
