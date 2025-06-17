@@ -16,21 +16,13 @@ import {
   Pagination,
 } from '@mantine/core';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer,
-  FunnelChart, Funnel, LabelList, PieChart, Pie, Cell, Legend
+  BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, LabelList,
+
 } from 'recharts';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
 import { Select } from '@mantine/core'; // ✅ Mantém aqui no topo
 
-const STATUS_COLORS: { [key: string]: string } = {
-  'Sem Faturamento': '#228be6',
-  'Base Ativa': '#15aabf',
-  '30 dias s/ Fat': '#40c057',
-  '60 dias s/ Fat': '#fab005',
-  '90 dias s/ Fat': '#fd7e14',
-  '120 dias s/ Fat': '#fa5252',
-};
 
 const STATUS_ORDER = [
   'Sem Faturamento',
@@ -53,7 +45,7 @@ const STATUS_LABELS: { [key: string]: string } = {
 
 
 
-const COLORS = Object.values(STATUS_COLORS); // ✅ Adicione ESSA LINHA aqui
+
 
 
 const MESES = [
@@ -72,8 +64,7 @@ export default function Dashboard() {
   const [consultorSelecionado, setConsultorSelecionado] = useState<string | null>(null);
   const [tipoUser, setTipoUser] = useState<string | null>(null);
   const [kpis, setKpis] = useState<any[]>([]);
-  const [dadosFunil, setDadosFunil] = useState<any[]>([]);
-  const [dadosBarra, setDadosBarra] = useState<any[]>([]);
+
   const [tabelaParceiros, setTabelaParceiros] = useState<any[]>([]);
   const [dadosFiltrados, setDadosFiltrados] = useState<any[]>([]);
 
@@ -101,19 +92,15 @@ export default function Dashboard() {
         const mes = mesSelecionado || String(new Date().getMonth() + 1);
         const ano = anoSelecionado || String(new Date().getFullYear());
     
-        const [kpiRes, funilRes, barraRes] = await Promise.all([
+        const [kpiRes] = await Promise.all([
           axios.get(`${import.meta.env.VITE_API_URL}/dashboard/kpis/?mes=${mes}&ano=${ano}`, { headers }),
-          axios.get(`${import.meta.env.VITE_API_URL}/dashboard/funil/`, { headers }),
-          axios.get(`${import.meta.env.VITE_API_URL}/dashboard/oportunidades-mensais/`, { headers }),
         ]);
-    
+        
         setKpis(kpiRes.data.kpis);
         setParceirosContatadosStatus(kpiRes.data.parceiros_contatados_status || {});
         setInteracoesPorStatus(kpiRes.data.interacoes_status || {});
         setTabelaParceiros(kpiRes.data.parceiros || []);
         setDadosFiltrados(kpiRes.data.parceiros || []);
-        setDadosFunil(funilRes.data);
-        setDadosBarra(barraRes.data);
       } catch (error) {
         console.error('Erro ao buscar dados do dashboard:', error);
       } finally {
@@ -294,36 +281,7 @@ STATUS_ORDER.forEach(status => {
           </Title>
 
          
-          <Group mb="xl" grow>
          
-  <Select
-    data={MESES}
-    label="Mês"
-    placeholder="Selecione"
-    value={mesSelecionado}
-    onChange={setMesSelecionado}
-  />
-  <Select
-    data={ANOS}
-    label="Ano"
-    placeholder="Selecione"
-    value={anoSelecionado}
-    onChange={setAnoSelecionado}
-  />
-  {['GESTOR', 'ADMIN'].includes(tipoUser || '') && (
-    <Select
-      data={consultores}
-      label="Consultor"
-      placeholder="Selecione"
-      value={consultorSelecionado}
-      onChange={setConsultorSelecionado}
-      searchable
-    />
-  )}
-  <Button color="teal" variant="filled" onClick={fetchDashboardData}>
-    Aplicar Filtro
-  </Button>
-</Group>
 
 
          
@@ -366,7 +324,36 @@ STATUS_ORDER.forEach(status => {
 </BarChart>
 </ResponsiveContainer>
 
-
+<Group mb="xl" grow>
+         
+         <Select
+           data={MESES}
+           label="Mês"
+           placeholder="Selecione"
+           value={mesSelecionado}
+           onChange={setMesSelecionado}
+         />
+         <Select
+           data={ANOS}
+           label="Ano"
+           placeholder="Selecione"
+           value={anoSelecionado}
+           onChange={setAnoSelecionado}
+         />
+         {['GESTOR', 'ADMIN'].includes(tipoUser || '') && (
+           <Select
+             data={consultores}
+             label="Consultor"
+             placeholder="Selecione"
+             value={consultorSelecionado}
+             onChange={setConsultorSelecionado}
+             searchable
+           />
+         )}
+         <Button color="teal" variant="filled" onClick={fetchDashboardData}>
+           Aplicar Filtro
+         </Button>
+       </Group>
 
 
 
@@ -449,18 +436,19 @@ STATUS_ORDER.forEach(status => {
 
           {/* KPIs - Indicadores */}
           <Title order={3} mb="sm">Indicadores de Atividades e Resultados</Title>
-          <Grid mb="xl">
-            {['Interações', 'Oportunidades', 'Valor Gerado', 'Ticket Médio'].map(title => (
-              <Grid.Col span={{ base: 12, sm: 6, md: 3 }} key={title}>
-                <Card shadow="md" padding="lg" radius="lg" withBorder>
-                  <Title order={4} style={{ textAlign: 'center' }}>{title}</Title>
-                  <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-                    {kpis.find(k => k.title === title)?.value || 0}
-                  </Text>
-                </Card>
-              </Grid.Col>
-            ))}
-          </Grid>
+<Grid mb="xl">
+  {['Interações', 'Oportunidades', 'Valor Gerado'].map(title => (
+    <Grid.Col span={{ base: 12, sm: 6, md: 4 }} key={title}>
+      <Card shadow="md" padding="lg" radius="lg" withBorder>
+        <Title order={4} style={{ textAlign: 'center' }}>{title}</Title>
+        <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
+          {kpis.find(k => k.title === title)?.value || 0}
+        </Text>
+      </Card>
+    </Grid.Col>
+  ))}
+</Grid>
+
 
           <Divider my="lg" />
 
@@ -481,57 +469,7 @@ STATUS_ORDER.forEach(status => {
 
           <Divider my="lg" />
 
-          {/* Gráficos */}
-          <Grid>
-            <Grid.Col span={{ base: 12, md: 4 }}>
-              <Card shadow="sm" padding="lg" radius="lg" withBorder>
-                <Title order={5} mb="md" style={{ color: '#005A64' }}>Funil de Conversão</Title>
-                <ResponsiveContainer width="100%" height={300}>
-                  <FunnelChart>
-                    <Funnel dataKey="value" data={dadosFunil} isAnimationActive>
-                      <LabelList position="right" fill="#000" stroke="none" dataKey="name" />
-                    </Funnel>
-                  </FunnelChart>
-                </ResponsiveContainer>
-              </Card>
-            </Grid.Col>
-
-            <Grid.Col span={{ base: 12, md: 4 }}>
-              <Card shadow="sm" padding="lg" radius="lg" withBorder>
-                <Title order={5} mb="md" style={{ color: '#005A64' }}>Distribuição de Status</Title>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={kpis.filter(kpi => STATUS_ORDER.includes(kpi.title))}
-                      dataKey="value"
-                      nameKey="title"
-                      outerRadius={100}
-                      label
-                    >
-                      {STATUS_ORDER.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card>
-            </Grid.Col>
-
-            <Grid.Col span={{ base: 12, md: 4 }}>
-              <Card shadow="sm" padding="lg" radius="lg" withBorder>
-                <Title order={5} mb="md" style={{ color: '#005A64' }}>Evolução Mensal</Title>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={dadosBarra}>
-                    <XAxis dataKey="mes" />
-                    <YAxis />
-                    <RechartsTooltip />
-                    <Bar dataKey="oportunidades" fill="#4CDDDD" radius={[5, 5, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-            </Grid.Col>
-          </Grid>
+          
 
           {/* Tabelas */}
           <Divider my="xl" />
