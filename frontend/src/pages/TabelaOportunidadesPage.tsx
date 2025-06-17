@@ -10,7 +10,7 @@ import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
 import type { DateValue } from '@mantine/dates';
 import { Pencil, Save, X } from 'lucide-react';
-import styles from './TabelaOportunidadesPage.module.css'; // ✅ Importa CSS
+import styles from './TabelaOportunidadesPage.module.css'; // ✅ CSS
 
 interface Oportunidade {
   id: number;
@@ -105,9 +105,10 @@ export default function TabelaOportunidadesPage() {
   const agrupadoPorStatus = useMemo((): Record<string, Oportunidade[]> => {
     const agrupado: Record<string, Oportunidade[]> = {};
     dadosFiltrados.forEach((item) => {
-      const status = item.etapa || 'Sem status';
+      const status = (item.etapa || 'Sem status').toLowerCase();
       if (!agrupado[status]) agrupado[status] = [];
       (agrupado[status] ||= []).push(item);
+
     });
     return agrupado;
   }, [dadosFiltrados]);
@@ -237,7 +238,9 @@ export default function TabelaOportunidadesPage() {
                   >
                     <Group justify="space-between" align="center" mb="sm">
                       <div>
-                        <Title order={3}>{status.toUpperCase()}</Title>
+                        <Title order={3}>
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </Title>
                         <p style={{ fontSize: '0.9rem', color: '#555' }}>
                           Valor total: {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                         </p>
@@ -246,27 +249,13 @@ export default function TabelaOportunidadesPage() {
                         <Badge color={getStatusColor(status)} variant="light">
                           {lista.length} oportunidades
                         </Badge>
+                        <Tooltip label="Tempo médio até status" withArrow>
+                          <Badge color="gray" variant="outline">
+                            ⏱ {calcularTempoMedio(lista)} dias
+                          </Badge>
+                        </Tooltip>
                       </Group>
                     </Group>
-                    <Group justify="space-between" align="center" mb="sm">
-  <div>
-    <Title order={3}>{status.toUpperCase()}</Title>
-    <p style={{ fontSize: '0.9rem', color: '#555' }}>
-      Valor total: {Number(valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-    </p>
-  </div>
-  <Group>
-    <Badge color={getStatusColor(status)} variant="light">
-      {lista.length} oportunidades
-    </Badge>
-    <Tooltip label="Tempo médio até status" withArrow>
-      <Badge color="gray" variant="outline">
-        ⏱ {calcularTempoMedio(lista)} dias
-      </Badge>
-    </Tooltip>
-  </Group>
-</Group>
-
 
                     <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                       <Table striped highlightOnHover withColumnBorders>
@@ -339,10 +328,10 @@ export default function TabelaOportunidadesPage() {
                                     {emEdicao ? (
                                       <>
                                         <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
-                                          <Save size={14} /> Salvar
+                                          <Save size={16} />
                                         </Button>
                                         <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao}>
-                                          <X size={14} /> Cancelar
+                                          <X size={16} />
                                         </Button>
                                       </>
                                     ) : (
@@ -351,7 +340,7 @@ export default function TabelaOportunidadesPage() {
                                         variant="outline"
                                         onClick={() => iniciarEdicao(o)}
                                       >
-                                        <Pencil size={14} /> Editar
+                                        <Pencil size={16} />
                                       </Button>
                                     )}
                                   </Group>

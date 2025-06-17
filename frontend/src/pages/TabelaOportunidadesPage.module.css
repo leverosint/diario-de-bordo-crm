@@ -8,19 +8,17 @@
     vertical-align: middle;
   }
   
-  th, td {
-    padding: 10px 14px;
+  th {
+    text-align: center;
   }
   
-  thead {
-    background-color: #f3f4f6;
+  th:nth-child(2),
+  td:nth-child(2) {
+    text-align: left;
   }
   
-  tbody tr:hover {
-    background-color: #f9fafb;
-  }
-  
-  tr {
-    height: 44px;
+  th:nth-child(7),
+  td:nth-child(7) {
+    text-align: left;
   }
   
