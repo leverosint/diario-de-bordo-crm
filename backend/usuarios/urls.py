@@ -10,65 +10,48 @@ from .views import (
     InteracoesPendentesView,
     HistoricoInteracoesView,
     RegistrarInteracaoView,
-    RegistrarOportunidadeView,  # 🔥 ADICIONA AQUI
+    RegistrarOportunidadeView,
     InteracoesMetasView,
     OportunidadeViewSet,
     DashboardKPIView,
     DashboardFunilView,
     DashboardOportunidadesMensaisView,
+    UploadGatilhosExtrasView,
+    usuarios_por_canal,
+    criar_gatilho_manual,
 )
 
-# ROTAS DO ROUTER
+# 🔗 ROTAS DO ROUTER
 router = DefaultRouter()
 router.register(r'parceiros-list', ParceiroViewSet, basename='parceiros')
 router.register(r'canais-venda', CanalVendaViewSet, basename='canais-venda')
 router.register(r'oportunidades', OportunidadeViewSet, basename='oportunidades')
 
-# URLPATTERNS PRINCIPAIS
+# 🔥 URLPATTERNS PRINCIPAL
 urlpatterns = [
     path('login/', LoginView.as_view()),
     path('upload-parceiros/', UploadParceirosView.as_view({'post': 'create'})),
-    path('', include(router.urls)),
-]
+    path('upload-gatilhos/', UploadGatilhosExtrasView.as_view({'post': 'create'})),
+    path('criar-gatilho-manual/', criar_gatilho_manual, name='criar-gatilho-manual'),
+    path('usuarios-por-canal/', usuarios_por_canal, name='usuarios-por-canal'),
 
-# VIEWS ADICIONAIS
-urlpatterns += [
+    # Dashboard
+    path('dashboard/kpis/', DashboardKPIView.as_view(), name='dashboard-kpis'),
+    path('dashboard/funil/', DashboardFunilView.as_view(), name='dashboard-funil'),
+    path('dashboard/oportunidades-mensais/', DashboardOportunidadesMensaisView.as_view(), name='dashboard-oportunidades-mensais'),
+
+    # Interações
     path('interacoes/', InteracaoViewSet.as_view({'get': 'list', 'post': 'create'}), name='interacoes-list'),
     path('interacoes/<int:pk>/', InteracaoViewSet.as_view({'get': 'retrieve', 'put': 'update', 'patch': 'partial_update', 'delete': 'destroy'}), name='interacoes-detail'),
-
     path('interacoes/pendentes/', InteracoesPendentesView.as_view(), name='interacoes-pendentes'),
     path('interacoes/pendentes/metas/', InteracoesMetasView.as_view(), name='interacoes-metas'),
     path('interacoes/hoje/', InteracoesHojeView.as_view(), name='interacoes-hoje'),
     path('interacoes/historico/', HistoricoInteracoesView.as_view(), name='interacoes-historico'),
     path('interacoes/registrar/', RegistrarInteracaoView.as_view(), name='registrar-interacao'),
-    path('oportunidades/registrar/', RegistrarOportunidadeView.as_view(), name='registrar-oportunidade'),  # 🔥 ADICIONA ESSA LINHA AQUI
 
-    path('dashboard/kpis/', DashboardKPIView.as_view(), name='dashboard-kpis'),
-    path('dashboard/funil/', DashboardFunilView.as_view(), name='dashboard-funil'),
-    path('dashboard/oportunidades-mensais/', DashboardOportunidadesMensaisView.as_view(), name='dashboard-oportunidades-mensais'),
-]
-
-from .views import UploadGatilhosExtrasView
-
-urlpatterns += [
-    path('upload-gatilhos/', UploadGatilhosExtrasView.as_view({'post': 'create'}), name='upload-gatilhos'),
-]
-
-from .views import usuarios_por_canal
-
-urlpatterns += [
-    path('usuarios-por-canal/', usuarios_por_canal, name='usuarios-por-canal'),
-]
-
-from .views import criar_gatilho_manual
-
-urlpatterns += [
-    path('criar-gatilho-manual/', criar_gatilho_manual, name='criar-gatilho-manual'),
-]
-
-from .views import RegistrarOportunidadeView
-
-urlpatterns += [
+    # Oportunidades
     path('oportunidades/registrar/', RegistrarOportunidadeView.as_view(), name='registrar-oportunidade'),
-]
 
+    # Inclui os routers
+    path('', include(router.urls)),
+]
