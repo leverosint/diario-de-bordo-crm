@@ -354,6 +354,7 @@ class InteracoesPendentesView(APIView):
         })
 
 ######REGISTRARINTERACAOVIEWS)############
+# ====== Interação Simples ======
 class RegistrarInteracaoView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -361,9 +362,7 @@ class RegistrarInteracaoView(APIView):
         try:
             parceiro_id = request.data.get('parceiro')
             tipo = request.data.get('tipo')
-            criar_oportunidade = request.data.get('criar_oportunidade', False)
-            valor = request.data.get('valor')
-            observacao = request.data.get('observacao')
+            observacao = request.data.get('observacao', '')
 
             if not parceiro_id:
                 return Response({'error': 'Parceiro não informado.'}, status=400)
@@ -372,11 +371,9 @@ class RegistrarInteracaoView(APIView):
 
             parceiro = Parceiro.objects.get(id=parceiro_id)
 
-            # 🔥 Captura gatilho
             gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user).first()
             gatilho_desc = gatilho.descricao if gatilho else None
 
-            # ✅ Cria Interação
             interacao = Interacao.objects.create(
                 parceiro=parceiro,
                 usuario=request.user,
@@ -386,29 +383,11 @@ class RegistrarInteracaoView(APIView):
                 status=parceiro.status
             )
 
-            oportunidade_data = None
-
-            if criar_oportunidade:
-                if not valor:
-                    return Response({'error': 'Valor obrigatório para criar oportunidade.'}, status=400)
-
-                oportunidade = Oportunidade.objects.create(
-                    parceiro=parceiro,
-                    usuario=request.user,
-                    valor=float(valor),
-                    etapa='oportunidade',
-                    observacao=observacao,
-                    gatilho_extra=gatilho_desc,
-                )
-                oportunidade_data = OportunidadeSerializer(oportunidade).data
-
-            # 🔥 Remove o gatilho após registrar
             if gatilho:
                 gatilho.delete()
 
             return Response({
                 'interacao': InteracaoSerializer(interacao).data,
-                'oportunidade': oportunidade_data,
                 'mensagem': 'Interação registrada com sucesso.'
             }, status=201)
 
@@ -418,6 +397,65 @@ class RegistrarInteracaoView(APIView):
             return Response({'error': str(e)}, status=500)
 
 
+# ====== Interação + Oportunidade ======
+class RegistrarOportunidadeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            parceiro_id = request.data.get('parceiro')
+            tipo = request.data.get('tipo')
+            valor = request.data.get('valor')
+            observacao = request.data.get('observacao', '')
+
+            if not parceiro_id:
+                return Response({'error': 'Parceiro não informado.'}, status=400)
+            if not tipo:
+                return Response({'error': 'Tipo de interação não informado.'}, status=400)
+            if not valor:
+                return Response({'error': 'Valor obrigatório para criar oportunidade.'}, status=400)
+
+            parceiro = Parceiro.objects.get(id=parceiro_id)
+
+            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user).first()
+            gatilho_desc = gatilho.descricao if gatilho else None
+
+            interacao = Interacao.objects.create(
+                parceiro=parceiro,
+                usuario=request.user,
+                tipo=tipo,
+                entrou_em_contato=True,
+                gatilho_extra=gatilho_desc,
+                status=parceiro.status
+            )
+
+            oportunidade = Oportunidade.objects.create(
+                parceiro=parceiro,
+                usuario=request.user,
+                valor=float(valor),
+                etapa='oportunidade',
+                observacao=observacao,
+                gatilho_extra=gatilho_desc,
+            )
+
+            if gatilho:
+                gatilho.delete()
+
+            return Response({
+                'interacao': InteracaoSerializer(interacao).data,
+                'oportunidade': OportunidadeSerializer(oportunidade).data,
+                'mensagem': 'Interação e oportunidade registradas com sucesso.'
+            }, status=201)
+
+        except Parceiro.DoesNotExist:
+            return Response({'error': 'Parceiro não encontrado.'}, status=404)
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
+
+
+        
+        
+        
         
         
         

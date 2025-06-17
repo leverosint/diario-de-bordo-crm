@@ -192,28 +192,24 @@ export default function InteracoesPage() {
   ) => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-
-      await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, {
-        parceiro: parceiroId,
-        tipo,
-        criar_oportunidade: oportunidade,
-        valor: valor || 0,
-        observacao: observacao,
-    }, { headers });
-    
-
-      if (oportunidade && valor) {
-        await axios.post(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
+  
+      if (oportunidade) {
+        // 🔥 Se for gerar oportunidade, usa a rota /oportunidades/registrar/
+        await axios.post(`${import.meta.env.VITE_API_URL}/oportunidades/registrar/`, {
           parceiro: parceiroId,
-          valor: parseFloat(String(valor || '0').replace(',', '.')),
-
-
-          observacao: observacao,
-          etapa: 'oportunidade',
+          tipo,
+          valor,
+          observacao,
         }, { headers });
-        
+      } else {
+        // ✅ Só interação, usa a rota /interacoes/registrar/
+        await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, {
+          parceiro: parceiroId,
+          tipo,
+          observacao,
+        }, { headers });
       }
-
+  
       setExpandirId(null);
       setValorOportunidade('');
       setObservacaoOportunidade('');
@@ -222,7 +218,14 @@ export default function InteracoesPage() {
       console.error('Erro ao registrar interação ou oportunidade:', err);
       alert('Erro ao registrar interação ou oportunidade. Tente novamente.');
     }
+    if (!tipo) {
+      alert('Selecione o tipo de interação');
+      return;
+    }
+    
   };
+  
+  
 
   const handleUploadGatilho = async () => {
     if (!arquivoGatilho) return alert('Selecione um arquivo antes de enviar.');
