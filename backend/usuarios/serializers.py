@@ -2,11 +2,13 @@ from rest_framework import serializers
 from .models import Parceiro, CanalVenda, Interacao, CustomUser, Oportunidade, GatilhoExtra
 from django.utils import timezone
 
+
 # ===== Canal de Venda =====
 class CanalVendaSerializer(serializers.ModelSerializer):
     class Meta:
         model = CanalVenda
         fields = ['id', 'nome']
+
 
 # ===== Parceiro =====
 class ParceiroSerializer(serializers.ModelSerializer):
@@ -42,12 +44,13 @@ class ParceiroSerializer(serializers.ModelSerializer):
             'atualizado_em',
         ]
 
+
 # ===== Interação (Completa) =====
 class InteracaoSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
     parceiro = serializers.PrimaryKeyRelatedField(queryset=Parceiro.objects.all())
-    gatilho_extra = serializers.CharField(read_only=True)  # ✅
+    gatilho_extra = serializers.CharField(required=False, allow_null=True, default=None)
 
     class Meta:
         model = Interacao
@@ -61,9 +64,9 @@ class InteracaoSerializer(serializers.ModelSerializer):
             'data_interacao',
             'entrou_em_contato',
             'status',
+            'gatilho_extra',  # ✅ 🔥 Importante: estava faltando aqui nos fields
         ]
         read_only_fields = ['data_interacao', 'usuario', 'status']
-
 
 
 # ===== Interações Pendentes (Simples) =====
@@ -83,12 +86,15 @@ class InteracaoPendentesSerializer(serializers.ModelSerializer):
     def get_parceiro(self, obj):
         return obj.parceiro
 
+
+# ===== Oportunidade =====
 class OportunidadeSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
     data_status = serializers.DateTimeField(read_only=True)
     dias_sem_movimentacao = serializers.SerializerMethodField()
     valor = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, default=0)
+    gatilho_extra = serializers.CharField(required=False, allow_null=True, default=None)  # ✅ 🔥 Adicionado corretamente
 
     class Meta:
         model = Oportunidade
@@ -105,7 +111,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             'data_status',
             'data_etapa',
             'dias_sem_movimentacao',
-            'gatilho_extra',  # ✅ Adicionado
+            'gatilho_extra',
         ]
         read_only_fields = ['data_criacao', 'data_etapa', 'usuario']
 
@@ -118,9 +124,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
         return None
 
 
-
-
-
+# ===== Gatilho Extra =====
 class GatilhoExtraSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
