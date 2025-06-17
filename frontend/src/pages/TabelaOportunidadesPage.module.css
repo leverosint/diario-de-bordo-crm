@@ -1,0 +1,26 @@
+.center {
+    text-align: center;
+    vertical-align: middle;
+  }
+  
+  .left {
+    text-align: left;
+    vertical-align: middle;
+  }
+  
+  th, td {
+    padding: 10px 14px;
+  }
+  
+  thead {
+    background-color: #f3f4f6;
+  }
+  
+  tbody tr:hover {
+    background-color: #f9fafb;
+  }
+  
+  tr {
+    height: 44px;
+  }
+  

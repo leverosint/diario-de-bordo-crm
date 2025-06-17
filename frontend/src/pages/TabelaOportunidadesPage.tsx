@@ -9,7 +9,8 @@ import 'dayjs/locale/pt-br';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
 import type { DateValue } from '@mantine/dates';
-import { Pencil, Save, X } from 'lucide-react'; // 🔥 Adiciona no topo
+import { Pencil, Save, X } from 'lucide-react';
+import styles from './TabelaOportunidadesPage.module.css'; // ✅ Importa CSS
 
 interface Oportunidade {
   id: number;
@@ -35,10 +36,9 @@ export default function TabelaOportunidadesPage() {
   const [valorEdit, setValorEdit] = useState<string>('');
   const [observacaoEdit, setObservacaoEdit] = useState<string>('');
 
-
   const token = localStorage.getItem('token') ?? '';
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-  const tipoUser = (usuario as { tipo_user?: string })?.tipo_user ?? '';
+  const tipoUser = usuario?.tipo_user ?? '';
 
   const etapaOptions = [
     { value: 'oportunidade', label: 'Oportunidade' },
@@ -108,7 +108,6 @@ export default function TabelaOportunidadesPage() {
       const status = item.etapa || 'Sem status';
       if (!agrupado[status]) agrupado[status] = [];
       (agrupado[status] ||= []).push(item);
-
     });
     return agrupado;
   }, [dadosFiltrados]);
@@ -147,7 +146,7 @@ export default function TabelaOportunidadesPage() {
     setValorEdit(String(o.valor));
     setObservacaoEdit(o.observacao || '');
   };
-  
+
   const salvarEdicao = async (id: number) => {
     try {
       await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
@@ -156,13 +155,13 @@ export default function TabelaOportunidadesPage() {
       }, {
         headers: { Authorization: `Bearer ${token}` },
       });
-  
+
       setDados(prev =>
         prev.map(o =>
           o.id === id ? { ...o, valor: parseFloat(valorEdit.replace(',', '.')) || 0, observacao: observacaoEdit } : o
         )
       );
-  
+
       setEditandoId(null);
       setValorEdit('');
       setObservacaoEdit('');
@@ -171,14 +170,13 @@ export default function TabelaOportunidadesPage() {
       alert('Erro ao salvar edição');
     }
   };
-  
+
   const cancelarEdicao = () => {
     setEditandoId(null);
     setValorEdit('');
     setObservacaoEdit('');
   };
-  
-  
+
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <Container fluid style={{ maxWidth: '90vw', padding: '0 40px' }}>
@@ -221,8 +219,7 @@ export default function TabelaOportunidadesPage() {
         {carregando ? <Loader /> : (
           <ScrollArea>
             {Object.entries(agrupadoPorStatus).map(([status, lista]) => {
-              const valorTotal = lista.reduce((acc, o) => acc + Number(o.valor), 0).toFixed(2);
-              const tempoMedio = calcularTempoMedio(lista);
+              const valorTotal = lista.reduce((acc, o) => acc + Number(o.valor), 0);
 
               return (
                 <Box key={status} mt="xl">
@@ -242,137 +239,127 @@ export default function TabelaOportunidadesPage() {
                       <div>
                         <Title order={3}>{status.toUpperCase()}</Title>
                         <p style={{ fontSize: '0.9rem', color: '#555' }}>
-  Valor total: {Number(valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-</p>
-
+                          Valor total: {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </p>
                       </div>
                       <Group>
                         <Badge color={getStatusColor(status)} variant="light">
                           {lista.length} oportunidades
                         </Badge>
-                        <Tooltip label="Tempo médio até status" withArrow>
-                          <Badge color="gray" variant="outline">
-                            ⏱ {tempoMedio} dias
-                          </Badge>
-                        </Tooltip>
                       </Group>
                     </Group>
+                    <Group justify="space-between" align="center" mb="sm">
+  <div>
+    <Title order={3}>{status.toUpperCase()}</Title>
+    <p style={{ fontSize: '0.9rem', color: '#555' }}>
+      Valor total: {Number(valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+    </p>
+  </div>
+  <Group>
+    <Badge color={getStatusColor(status)} variant="light">
+      {lista.length} oportunidades
+    </Badge>
+    <Tooltip label="Tempo médio até status" withArrow>
+      <Badge color="gray" variant="outline">
+        ⏱ {calcularTempoMedio(lista)} dias
+      </Badge>
+    </Tooltip>
+  </Group>
+</Group>
+
 
                     <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                       <Table striped highlightOnHover withColumnBorders>
                         <thead>
                           <tr>
-                            <th>ID</th>
-                            <th>Parceiro</th>
-                            <th>Valor</th>
-                            <th>Data Criação</th>
-                            <th>Data Status</th>
-                            <th>Gatilho</th>
-                            <th>Observação</th>
-                            <th>Sem Movimentação</th>
-                            <th>Status</th>
+                            <th className={styles.center}>ID</th>
+                            <th className={styles.left}>Parceiro</th>
+                            <th className={styles.center}>Valor</th>
+                            <th className={styles.center}>Data Criação</th>
+                            <th className={styles.center}>Data Status</th>
+                            <th className={styles.center}>Gatilho</th>
+                            <th className={styles.left}>Observação</th>
+                            <th className={styles.center}>Sem Movimentação</th>
+                            <th className={styles.center}>Status</th>
                           </tr>
                         </thead>
                         <tbody>
-  {lista.map((o) => {
-    const emEdicao = editandoId === o.id;
-    return (
-      <tr
-        key={o.id}
-        style={{
-          backgroundColor: (o.dias_sem_movimentacao ?? 0) >= 7 ? '#ffe5e5' : 'white',
-          border: (o.dias_sem_movimentacao ?? 0) >= 7 ? '1px solid red' : '',
-        }}
-      >
-        <td className="centeredCell">{o.id}</td>
-
-        <td>{o.parceiro_nome}</td>
-
-        {/* VALOR */}
-        <td>
-          {emEdicao ? (
-            <TextInput
-              value={valorEdit}
-              onChange={(e) => setValorEdit(e.currentTarget.value)}
-              size="xs"
-            />
-          ) : (
-            <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
-          )}
-        </td>
-
-        {/* DATAS */}
-        <td>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
-        <td>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
-
-        {/* GATILHO */}
-        <td> {o.gatilho_extra || '-'}</td>
-
-        {/* OBSERVAÇÃO */}
-        <td>
-          {emEdicao ? (
-            <TextInput
-              value={observacaoEdit}
-              onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
-              size="xs"
-            />
-          ) : (
-            o.observacao || '-'
-          )}
-        </td>
-
-        {/* SEM MOVIMENTAÇÃO */}
-        <td>
-          {o.dias_sem_movimentacao !== undefined ? `${o.dias_sem_movimentacao} dias` : '-'}
-          {(o.dias_sem_movimentacao ?? 0) >= 7 ? ' ⚠️' : ''}
-        </td>
-
-        {/* STATUS E AÇÕES */}
-        <td>
-          <Group gap="xs">
-            <Select
-              value={o.etapa}
-              onChange={(value) => value && handleStatusChange(o.id, value)}
-              data={etapaOptions}
-              size="xs"
-              styles={{
-                input: {
-                  backgroundColor: getStatusColor(o.etapa),
-                  color: 'white',
-                  fontWeight: 600,
-                  textAlign: 'center',
-                  borderRadius: 6,
-                  minWidth: 120,
-                }
-              }}
-            />
-            {emEdicao ? (
-              <>
-                <Button size="xs" color="green" leftSection={<Save size={14} />} onClick={() => salvarEdicao(o.id)}>
-  Salvar
-</Button>
-<Button size="xs" variant="outline" color="red" leftSection={<X size={14} />} onClick={cancelarEdicao}>
-  Cancelar
-</Button>
-
-              </>
-            ) : (
-<Button
-  size="xs"
-  variant="outline"
-  leftSection={<Pencil size={14} />}
-  onClick={() => iniciarEdicao(o)}
->
-
-</Button>
-            )}
-          </Group>
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
-
+                          {lista.map((o) => {
+                            const emEdicao = editandoId === o.id;
+                            return (
+                              <tr key={o.id}>
+                                <td className={styles.center}>{o.id}</td>
+                                <td className={styles.left}>{o.parceiro_nome}</td>
+                                <td className={styles.center}>
+                                  {emEdicao ? (
+                                    <TextInput
+                                      value={valorEdit}
+                                      onChange={(e) => setValorEdit(e.currentTarget.value)}
+                                      size="xs"
+                                    />
+                                  ) : (
+                                    <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
+                                  )}
+                                </td>
+                                <td className={styles.center}>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
+                                <td className={styles.center}>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
+                                <td className={styles.center}>{o.gatilho_extra || '-'}</td>
+                                <td className={styles.left}>
+                                  {emEdicao ? (
+                                    <TextInput
+                                      value={observacaoEdit}
+                                      onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
+                                      size="xs"
+                                    />
+                                  ) : (
+                                    o.observacao || '-'
+                                  )}
+                                </td>
+                                <td className={styles.center}>
+                                  {o.dias_sem_movimentacao !== undefined ? `${o.dias_sem_movimentacao} dias` : '-'}
+                                </td>
+                                <td className={styles.center}>
+                                  <Group gap="xs" justify="center">
+                                    <Select
+                                      value={o.etapa}
+                                      onChange={(value) => value && handleStatusChange(o.id, value)}
+                                      data={etapaOptions}
+                                      size="xs"
+                                      styles={{
+                                        input: {
+                                          backgroundColor: getStatusColor(o.etapa),
+                                          color: 'white',
+                                          fontWeight: 600,
+                                          textAlign: 'center',
+                                          borderRadius: 6,
+                                          minWidth: 120,
+                                        }
+                                      }}
+                                    />
+                                    {emEdicao ? (
+                                      <>
+                                        <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
+                                          <Save size={14} /> Salvar
+                                        </Button>
+                                        <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao}>
+                                          <X size={14} /> Cancelar
+                                        </Button>
+                                      </>
+                                    ) : (
+                                      <Button
+                                        size="xs"
+                                        variant="outline"
+                                        onClick={() => iniciarEdicao(o)}
+                                      >
+                                        <Pencil size={14} /> Editar
+                                      </Button>
+                                    )}
+                                  </Group>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
                       </Table>
                     </div>
                   </Card>
