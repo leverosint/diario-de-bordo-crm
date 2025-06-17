@@ -30,6 +30,10 @@ export default function TabelaOportunidadesPage() {
   const [etapaFiltro, setEtapaFiltro] = useState<string | null>(null);
   const [dataInicio, setDataInicio] = useState<DateValue>(null);
   const [dataFim, setDataFim] = useState<DateValue>(null);
+  const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [valorEdit, setValorEdit] = useState<string>('');
+  const [observacaoEdit, setObservacaoEdit] = useState<string>('');
+
 
   const token = localStorage.getItem('token') ?? '';
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
@@ -136,6 +140,43 @@ export default function TabelaOportunidadesPage() {
     if (dias.length === 0) return 0;
     return Math.round(dias.reduce((a, b) => a + b, 0) / dias.length);
   };
+
+  const iniciarEdicao = (o: Oportunidade) => {
+    setEditandoId(o.id);
+    setValorEdit(String(o.valor));
+    setObservacaoEdit(o.observacao || '');
+  };
+  
+  const salvarEdicao = async (id: number) => {
+    try {
+      await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
+        valor: parseFloat(valorEdit.replace(',', '.')) || 0,
+        observacao: observacaoEdit,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      setDados(prev =>
+        prev.map(o =>
+          o.id === id ? { ...o, valor: parseFloat(valorEdit.replace(',', '.')) || 0, observacao: observacaoEdit } : o
+        )
+      );
+  
+      setEditandoId(null);
+      setValorEdit('');
+      setObservacaoEdit('');
+    } catch (err) {
+      console.error('Erro ao salvar edição:', err);
+      alert('Erro ao salvar edição');
+    }
+  };
+  
+  const cancelarEdicao = () => {
+    setEditandoId(null);
+    setValorEdit('');
+    setObservacaoEdit('');
+  };
+  
   
   return (
     <SidebarGestor tipoUser={tipoUser}>
@@ -231,46 +272,102 @@ export default function TabelaOportunidadesPage() {
                           </tr>
                         </thead>
                         <tbody>
-                          {lista.map((o) => (
-                            <tr
-                              key={o.id}
-                              style={{
-                                backgroundColor: (o.dias_sem_movimentacao ?? 0) >= 7 ? '#ffe5e5' : 'white',
-                                border: (o.dias_sem_movimentacao ?? 0) >= 7 ? '1px solid red' : '',
-                              }}
-                            >
-                              <td>{o.id}</td>
-                              <td>{o.parceiro_nome}</td>
-                              <td>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                              <td>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
-                              <td>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
-                              <td>{o.gatilho_extra || '-'}</td>
-                              <td>{o.observacao || '-'}</td>
-                              <td>
-                                {o.dias_sem_movimentacao !== undefined ? `${o.dias_sem_movimentacao} dias` : '-'}
-                                {(o.dias_sem_movimentacao ?? 0) >= 7 ? ' ⚠️' : ''}
-                              </td>
-                              <td>
-                                <Select
-                                  value={o.etapa}
-                                  onChange={(value) => value && handleStatusChange(o.id, value)}
-                                  data={etapaOptions}
-                                  size="xs"
-                                  styles={{
-                                    input: {
-                                      backgroundColor: getStatusColor(o.etapa),
-                                      color: 'white',
-                                      fontWeight: 600,
-                                      textAlign: 'center',
-                                      borderRadius: 6,
-                                      minWidth: 180,
-                                    }
-                                  }}
-                                />
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
+  {lista.map((o) => {
+    const emEdicao = editandoId === o.id;
+    return (
+      <tr
+        key={o.id}
+        style={{
+          backgroundColor: (o.dias_sem_movimentacao ?? 0) >= 7 ? '#ffe5e5' : 'white',
+          border: (o.dias_sem_movimentacao ?? 0) >= 7 ? '1px solid red' : '',
+        }}
+      >
+        <td>{o.id}</td>
+        <td>{o.parceiro_nome}</td>
+
+        {/* VALOR */}
+        <td>
+          {emEdicao ? (
+            <TextInput
+              value={valorEdit}
+              onChange={(e) => setValorEdit(e.currentTarget.value)}
+              size="xs"
+            />
+          ) : (
+            <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
+          )}
+        </td>
+
+        {/* DATAS */}
+        <td>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
+        <td>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
+
+        {/* GATILHO */}
+        <td>{o.gatilho_extra || '-'}</td>
+
+        {/* OBSERVAÇÃO */}
+        <td>
+          {emEdicao ? (
+            <TextInput
+              value={observacaoEdit}
+              onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
+              size="xs"
+            />
+          ) : (
+            o.observacao || '-'
+          )}
+        </td>
+
+        {/* SEM MOVIMENTAÇÃO */}
+        <td>
+          {o.dias_sem_movimentacao !== undefined ? `${o.dias_sem_movimentacao} dias` : '-'}
+          {(o.dias_sem_movimentacao ?? 0) >= 7 ? ' ⚠️' : ''}
+        </td>
+
+        {/* STATUS E AÇÕES */}
+        <td>
+          <Group gap="xs">
+            <Select
+              value={o.etapa}
+              onChange={(value) => value && handleStatusChange(o.id, value)}
+              data={etapaOptions}
+              size="xs"
+              styles={{
+                input: {
+                  backgroundColor: getStatusColor(o.etapa),
+                  color: 'white',
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  borderRadius: 6,
+                  minWidth: 120,
+                }
+              }}
+            />
+            {emEdicao ? (
+              <>
+                <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
+                  Salvar
+                </Button>
+                <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao}>
+                  Cancelar
+                </Button>
+              </>
+            ) : (
+              <Button
+                size="xs"
+                variant="outline"
+                onClick={() => iniciarEdicao(o)}
+              >
+                ✏️
+              </Button>
+            )}
+          </Group>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
+
                       </Table>
                     </div>
                   </Card>
