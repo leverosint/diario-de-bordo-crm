@@ -237,7 +237,8 @@ export default function InteracoesPage() {
 
   useEffect(() => {
     carregarDados();
-  }, [canalSelecionado, vendedorSelecionado]);
+  }, [canalSelecionado, vendedorSelecionado, statusSelecionado, temGatilho]);
+  
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
