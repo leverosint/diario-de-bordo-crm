@@ -65,3 +65,10 @@ from .views import criar_gatilho_manual
 urlpatterns += [
     path('criar-gatilho-manual/', criar_gatilho_manual, name='criar-gatilho-manual'),
 ]
+
+from .views import RegistrarOportunidadeView
+
+urlpatterns += [
+    path('oportunidades/registrar/', RegistrarOportunidadeView.as_view(), name='registrar-oportunidade'),
+]
+
