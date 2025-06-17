@@ -363,7 +363,7 @@ export default function TabelaOportunidadesPage() {
   leftSection={<Pencil size={14} />}
   onClick={() => iniciarEdicao(o)}
 >
-  Editar
+
 </Button>
             )}
           </Group>
