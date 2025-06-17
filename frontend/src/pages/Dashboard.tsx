@@ -300,29 +300,7 @@ STATUS_ORDER.forEach(status => {
   </BarChart>
 </ResponsiveContainer>
 
-
-
-
 <Divider my="md" />
-
-
-{/* Interações por Status */}
-<Title order={3} mb="sm">Interações por Status</Title>
-<ResponsiveContainer width="100%" height={300}>
-<BarChart
-  data={STATUS_ORDER.map(status => ({
-    status: STATUS_LABELS[status] || status,
-    interacoes: interacoesPorStatus[status] || 0,
-  }))}
->
-  <XAxis dataKey="status" />
-  <YAxis />
-  <RechartsTooltip />
-  <Bar dataKey="interacoes" fill="#40c057">
-    <LabelList dataKey="interacoes" position="insideTop" fill="#fff" />
-  </Bar>
-</BarChart>
-</ResponsiveContainer>
 
 <Group mb="xl" grow>
          
@@ -354,6 +332,29 @@ STATUS_ORDER.forEach(status => {
            Aplicar Filtro
          </Button>
        </Group>
+
+
+<Divider my="md" />
+
+
+{/* Interações por Status */}
+<Title order={3} mb="sm">Interações por Status</Title>
+<ResponsiveContainer width="100%" height={300}>
+<BarChart
+  data={STATUS_ORDER.map(status => ({
+    status: STATUS_LABELS[status] || status,
+    interacoes: interacoesPorStatus[status] || 0,
+  }))}
+>
+  <XAxis dataKey="status" />
+  <YAxis />
+  <RechartsTooltip />
+  <Bar dataKey="interacoes" fill="#40c057">
+    <LabelList dataKey="interacoes" position="insideTop" fill="#fff" />
+  </Bar>
+</BarChart>
+</ResponsiveContainer>
+
 
 
 
