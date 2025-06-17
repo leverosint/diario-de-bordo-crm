@@ -288,73 +288,56 @@ export default function InteracoesPage() {
           </Card>
         )}
 
-        <Group justify="space-between" mb="md" style={{ flexWrap: 'wrap' }}>
-          <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
-            Meta do dia: {metaAtual}/{metaTotal}
-          </Badge>
-          <Group>
-            <FileButton onChange={setArquivoGatilho} accept=".xlsx">
-              {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
-            </FileButton>
-            <Button
-              color="blue"
-              onClick={handleUploadGatilho}
-              disabled={!arquivoGatilho}
-            >
-              Enviar Gatilhos Extras
-            </Button>
-          </Group>
-        </Group>
-
-        {tipoUser === 'GESTOR' && (
-          <Group mb="xl" style={{ flexWrap: 'wrap' }}>
-            <Select
-              label="Filtrar por Canal de Venda"
-              placeholder="Selecione um canal"
-              value={canalSelecionado}
-              onChange={handleCanalChange}
-              data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
-              clearable
-            />
-            <Select
-              label="Filtrar por Vendedor"
-              placeholder="Selecione um vendedor"
-              value={vendedorSelecionado}
-              onChange={handleVendedorChange}
-              data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
-              disabled={!canalSelecionado}
-              clearable
-            />
-          </Group>
-        )}
-        <Group mb="xl" style={{ flexWrap: 'wrap' }}>
-  <Select
-    label="Filtrar por Status"
-    placeholder="Selecione um status"
-    value={statusSelecionado}
-    onChange={(value) => setStatusSelecionado(value || '')}
-    data={[
-      'Sem Faturamento',
-      'Base Ativa',
-      '30 dias s/ Fat',
-      '60 dias s/ Fat',
-      '90 dias s/ Fat',
-      '120 dias s/ Fat',
-    ]}
-    clearable
-  />
-  <Select
-    label="Filtrar por Gatilho"
-    placeholder="Selecione"
-    value={temGatilho}
-    onChange={(value) => setTemGatilho(value || '')}
-    data={[
-      { value: 'true', label: 'Com Gatilho' },
-      { value: 'false', label: 'Sem Gatilho' },
-    ]}
-    clearable
-  />
-</Group>
+        
+ 
+      
+{tipoUser === 'GESTOR' && (
+  <Group mb="xl" style={{ flexWrap: 'wrap' }}>
+    <Select
+      label="Filtrar por Canal de Venda"
+      placeholder="Selecione um canal"
+      value={canalSelecionado}
+      onChange={handleCanalChange}
+      data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
+      clearable
+    />
+    <Select
+      label="Filtrar por Vendedor"
+      placeholder="Selecione um vendedor"
+      value={vendedorSelecionado}
+      onChange={handleVendedorChange}
+      data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
+      disabled={!canalSelecionado}
+      clearable
+    />
+    <Select
+      label="Filtrar por Status"
+      placeholder="Selecione um status"
+      value={statusSelecionado}
+      onChange={(value) => setStatusSelecionado(value || '')}
+      data={[
+        'Sem Faturamento',
+        'Base Ativa',
+        '30 dias s/ Fat',
+        '60 dias s/ Fat',
+        '90 dias s/ Fat',
+        '120 dias s/ Fat',
+      ]}
+      clearable
+    />
+    <Select
+      label="Filtrar por Gatilho"
+      placeholder="Selecione"
+      value={temGatilho}
+      onChange={(value) => setTemGatilho(value || '')}
+      data={[
+        { value: 'true', label: 'Com Gatilho' },
+        { value: 'false', label: 'Sem Gatilho' },
+      ]}
+      clearable
+    />
+  </Group>
+)}
 
 
         {carregando ? (
