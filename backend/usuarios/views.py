@@ -232,126 +232,129 @@ class InteracoesHojeView(generics.ListAPIView):
 
 class InteracoesPendentesView(APIView):
     permission_classes = [IsAuthenticated]
+def get(self, request):
+    usuario = request.user
+    hoje = now().date()
+    limite_data = hoje - timedelta(days=3)
 
-    def get(self, request):
-        usuario = request.user
-        hoje = now().date()
-        limite_data = hoje - timedelta(days=3)
+    # 🔥 Filtros baseados no usuário
+    if usuario.tipo_user == 'VENDEDOR':
+        parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
+    elif usuario.tipo_user == 'GESTOR':
+        parceiros = Parceiro.objects.filter(canal_venda__in=usuario.canais_venda.all())
+    else:
+        parceiros = Parceiro.objects.all()
 
-        # 🔥 Filtros baseados no usuário
-        if usuario.tipo_user == 'VENDEDOR':
-            parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
-        elif usuario.tipo_user == 'GESTOR':
-            parceiros = Parceiro.objects.filter(canal_venda__in=usuario.canais_venda.all())
-        else:
-            parceiros = Parceiro.objects.all()
+    # 🔥 Filtros opcionais
+    canal_id = request.query_params.get('canal_id')
+    consultor = request.query_params.get('consultor')
+    status_param = request.query_params.get('status')
+    gatilho_param = request.query_params.get('gatilho_extra')
 
-        # 🔥 Filtros opcionais
-        canal_id = request.query_params.get('canal_id')
-        consultor = request.query_params.get('consultor')
-        status_param = request.query_params.get('status')
-        gatilho_param = request.query_params.get('tem_gatilho')
+    if canal_id:
+        parceiros = parceiros.filter(canal_venda_id=canal_id)
+    if consultor:
+        parceiros = parceiros.filter(consultor=consultor)
+    if status_param:
+        parceiros = parceiros.filter(status=status_param)
 
+    if gatilho_param:
+        parceiros_ids_com_gatilho = GatilhoExtra.objects.filter(
+            usuario=usuario,
+            descricao__iexact=gatilho_param
+        ).values_list('parceiro_id', flat=True)
+        parceiros = parceiros.filter(id__in=parceiros_ids_com_gatilho)
 
-        if canal_id:
-            parceiros = parceiros.filter(canal_venda_id=canal_id)
-        if consultor:
-            parceiros = parceiros.filter(consultor=consultor)
-        if status_param:
-            parceiros = parceiros.filter(status=status_param)
+    parceiros_pendentes = []
+    parceiros_interagidos = []
 
-        parceiros_pendentes = []
-        parceiros_interagidos = []
-
-        for parceiro in parceiros:
-            ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
-            interagido_hoje = ultima_interacao and ultima_interacao.data_interacao.date() == hoje
-            em_periodo_bloqueio = (
-                ultima_interacao and
-                ultima_interacao.entrou_em_contato and
-                ultima_interacao.data_interacao.date() > limite_data and
-                ultima_interacao.data_interacao.date() < hoje
-            )
-
-            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
-
-            # 🔥 Filtro de Gatilho
-            if gatilho_param and gatilho_param.lower() != 'todos':
-                if not gatilho or gatilho.descricao.lower() != gatilho_param.lower():
-                    continue  # ❌ Pula se não bate com o filtro
-
-            # 🔥 Sempre aparece em 'A Interagir' se tem gatilho
-            if gatilho:
-                parceiros_pendentes.append({
-                    'id': parceiro.id,
-                    'parceiro': parceiro.parceiro,
-                    'unidade': parceiro.unidade,
-                    'classificacao': parceiro.classificacao,
-                    'status': parceiro.status,
-                    'tipo': '',
-                    'data_interacao': '',
-                    'entrou_em_contato': False,
-                    'gatilho_extra': gatilho.descricao,
-                })
-
-            # 🔥 Interagidos Hoje
-            if interagido_hoje:
-                parceiros_interagidos.append({
-                    'id': parceiro.id,
-                    'parceiro': parceiro.parceiro,
-                    'unidade': parceiro.unidade,
-                    'classificacao': parceiro.classificacao,
-                    'status': parceiro.status,
-                    'tipo': ultima_interacao.tipo,
-                    'data_interacao': ultima_interacao.data_interacao,
-                    'entrou_em_contato': ultima_interacao.entrou_em_contato,
-                    'gatilho_extra': gatilho.descricao if gatilho else None,
-                })
-
-            # 🔥 A Interagir se NÃO tem gatilho, NÃO interagiu hoje, NÃO bloqueado e NÃO é 'Base Ativa'
-            if (
-                not gatilho and
-                not interagido_hoje and
-                not em_periodo_bloqueio and
-                parceiro.status != 'Base Ativa'
-            ):
-                parceiros_pendentes.append({
-                    'id': parceiro.id,
-                    'parceiro': parceiro.parceiro,
-                    'unidade': parceiro.unidade,
-                    'classificacao': parceiro.classificacao,
-                    'status': parceiro.status,
-                    'tipo': '',
-                    'data_interacao': '',
-                    'entrou_em_contato': False,
-                    'gatilho_extra': None,
-                })
-
-        # 🔥 Geração dinâmica dos filtros disponíveis (Status e Gatilhos)
-        status_unicos = sorted(list(set(p['status'] for p in parceiros_pendentes)))
-        gatilhos_ativos = (
-            GatilhoExtra.objects.filter(usuario=usuario)
-            .values_list('descricao', flat=True)
-            .distinct()
+    for parceiro in parceiros:
+        ultima_interacao = parceiro.interacoes.order_by('-data_interacao').first()
+        interagido_hoje = ultima_interacao and ultima_interacao.data_interacao.date() == hoje
+        em_periodo_bloqueio = (
+            ultima_interacao and
+            ultima_interacao.entrou_em_contato and
+            ultima_interacao.data_interacao.date() > limite_data and
+            ultima_interacao.data_interacao.date() < hoje
         )
 
-        # 🔥 Verifica qual lista o usuário quer (pendentes ou interagidos)
-        tipo_lista = request.query_params.get('tipo', 'pendentes')
+        gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
 
-        if tipo_lista == 'interagidos':
-            return Response({
-                "dados": parceiros_interagidos,
-                "status_disponiveis": status_unicos,
-                "gatilhos_disponiveis": list(gatilhos_ativos),
+        if gatilho_param and gatilho_param.lower() != 'todos':
+            if not gatilho or gatilho.descricao.lower() != gatilho_param.lower():
+                continue
+
+        # 🔥 Sempre aparece em 'A Interagir' se tem gatilho
+        if gatilho:
+            parceiros_pendentes.append({
+                'id': parceiro.id,
+                'parceiro': parceiro.parceiro,
+                'unidade': parceiro.unidade,
+                'classificacao': parceiro.classificacao,
+                'status': parceiro.status,
+                'tipo': '',
+                'data_interacao': '',
+                'entrou_em_contato': False,
+                'gatilho_extra': gatilho.descricao,
             })
 
+        # 🔥 Interagidos Hoje
+        if interagido_hoje:
+            parceiros_interagidos.append({
+                'id': parceiro.id,
+                'parceiro': parceiro.parceiro,
+                'unidade': parceiro.unidade,
+                'classificacao': parceiro.classificacao,
+                'status': parceiro.status,
+                'tipo': ultima_interacao.tipo,
+                'data_interacao': ultima_interacao.data_interacao,
+                'entrou_em_contato': ultima_interacao.entrou_em_contato,
+                'gatilho_extra': gatilho.descricao if gatilho else None,
+            })
+
+        # 🔥 A Interagir se NÃO tem gatilho, NÃO interagiu hoje, NÃO bloqueado e NÃO é 'Base Ativa'
+        if (
+            not gatilho and
+            not interagido_hoje and
+            not em_periodo_bloqueio and
+            parceiro.status != 'Base Ativa'
+        ):
+            parceiros_pendentes.append({
+                'id': parceiro.id,
+                'parceiro': parceiro.parceiro,
+                'unidade': parceiro.unidade,
+                'classificacao': parceiro.classificacao,
+                'status': parceiro.status,
+                'tipo': '',
+                'data_interacao': '',
+                'entrou_em_contato': False,
+                'gatilho_extra': None,
+            })
+
+    # 🔥 Geração dos filtros dinâmicos
+    status_unicos = sorted(list(set(p['status'] for p in parceiros_pendentes)))
+    gatilhos_ativos = (
+        GatilhoExtra.objects.filter(usuario=usuario)
+        .values_list('descricao', flat=True)
+        .distinct()
+    )
+
+    tipo_lista = request.query_params.get('tipo', 'pendentes')
+
+    if tipo_lista == 'interagidos':
         return Response({
-            "dados": parceiros_pendentes,
+            "dados": parceiros_interagidos,
             "status_disponiveis": status_unicos,
             "gatilhos_disponiveis": list(gatilhos_ativos),
         })
 
+    return Response({
+        "dados": parceiros_pendentes,
+        "status_disponiveis": status_unicos,
+        "gatilhos_disponiveis": list(gatilhos_ativos),
+    })
 
+   
 
 
 class InteracoesMetasView(APIView):
