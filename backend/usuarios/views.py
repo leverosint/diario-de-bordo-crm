@@ -229,6 +229,7 @@ class InteracoesHojeView(generics.ListAPIView):
         hoje = now().date()
         return Interacao.objects.filter(data_interacao__date=hoje, usuario=self.request.user)
 
+
 class InteracoesPendentesView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -248,25 +249,16 @@ class InteracoesPendentesView(APIView):
         # 🔥 Filtros opcionais
         canal_id = request.query_params.get('canal_id')
         consultor = request.query_params.get('consultor')
-        status_filtro = request.query_params.get('status')
-        gatilho_filtro = request.query_params.get('gatilho')
+        status_param = request.query_params.get('status')
+        gatilho_param = request.query_params.get('tem_gatilho')
+
 
         if canal_id:
             parceiros = parceiros.filter(canal_venda_id=canal_id)
         if consultor:
             parceiros = parceiros.filter(consultor=consultor)
-
-        # 🔥 Filtro por GATILHO ESPECÍFICO
-        if gatilho_filtro:
-            parceiros_ids_com_gatilho = GatilhoExtra.objects.filter(
-                usuario=usuario,
-                descricao=gatilho_filtro
-            ).values_list('parceiro_id', flat=True)
-            parceiros = parceiros.filter(id__in=parceiros_ids_com_gatilho)
-
-        # 🔥 Filtro por STATUS
-        if status_filtro:
-            parceiros = parceiros.filter(status=status_filtro)
+        if status_param:
+            parceiros = parceiros.filter(status=status_param)
 
         parceiros_pendentes = []
         parceiros_interagidos = []
@@ -282,6 +274,11 @@ class InteracoesPendentesView(APIView):
             )
 
             gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
+
+            # 🔥 Filtro de Gatilho
+            if gatilho_param and gatilho_param.lower() != 'todos':
+                if not gatilho or gatilho.descricao.lower() != gatilho_param.lower():
+                    continue  # ❌ Pula se não bate com o filtro
 
             # 🔥 Sempre aparece em 'A Interagir' se tem gatilho
             if gatilho:
@@ -353,9 +350,6 @@ class InteracoesPendentesView(APIView):
             "status_disponiveis": status_unicos,
             "gatilhos_disponiveis": list(gatilhos_ativos),
         })
-
-
-
 
 
 
