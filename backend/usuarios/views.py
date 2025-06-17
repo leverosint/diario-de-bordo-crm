@@ -373,7 +373,7 @@ class RegistrarInteracaoView(APIView):
             parceiro = Parceiro.objects.get(id=parceiro_id)
 
             # 🔥 Captura gatilho
-            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro).first()
+            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user).first()
             gatilho_desc = gatilho.descricao if gatilho else None
 
             # ✅ Cria Interação
@@ -417,6 +417,7 @@ class RegistrarInteracaoView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=500)
 
+
         
         
         
@@ -451,21 +452,6 @@ class HistoricoInteracoesView(generics.ListAPIView):
     def get_queryset(self):
         parceiro_id = self.request.query_params.get('parceiro_id')
         return Interacao.objects.filter(parceiro_id=parceiro_id).order_by('-data_interacao')
-
-class RegistrarInteracaoView(generics.CreateAPIView):
-    serializer_class = InteracaoSerializer
-    permission_classes = [IsAuthenticated]
-
-    def perform_create(self, serializer):
-        parceiro = serializer.validated_data['parceiro']
-        usuario = self.request.user
-        status_no_momento = parceiro.status
-
-        # 🔥 Salva a interação normalmente
-        serializer.save(usuario=usuario, status=status_no_momento)
-
-        # 🔥 Remove o gatilho extra após interagir
-        GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).delete()
 
 
 

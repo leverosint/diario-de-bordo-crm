@@ -18,6 +18,7 @@ from .views import (
     DashboardOportunidadesMensaisView,
 )
 
+
 # ROTAS DO ROUTER
 router = DefaultRouter()
 router.register(r'parceiros-list', ParceiroViewSet, basename='parceiros')
