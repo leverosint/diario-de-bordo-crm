@@ -244,7 +244,6 @@ class InteracoesPendentesView(APIView):
         else:
             parceiros = Parceiro.objects.all()
 
-        # 🔥 Filtros opcionais por canal ou consultor
         canal_id = request.query_params.get('canal_id')
         consultor = request.query_params.get('consultor')
 
@@ -266,11 +265,10 @@ class InteracoesPendentesView(APIView):
                 ultima_interacao.data_interacao.date() < hoje
             )
 
-            # 🔥 Verifica se tem gatilho extra
             gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
 
+            # 🔥 Se tiver gatilho, SEMPRE aparece no A Interagir
             if gatilho:
-                # 👉 Sempre aparece em "A Interagir" se tem gatilho
                 parceiros_pendentes.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -282,8 +280,8 @@ class InteracoesPendentesView(APIView):
                     'entrou_em_contato': False,
                     'gatilho_extra': gatilho.descricao,
                 })
-                continue  # 👉 Pula para o próximo parceiro, nem verifica o restante
 
+            # 🔥 Se interagiu hoje, aparece no Interagidos Hoje também
             if interagido_hoje:
                 parceiros_interagidos.append({
                     'id': parceiro.id,
@@ -294,9 +292,11 @@ class InteracoesPendentesView(APIView):
                     'tipo': ultima_interacao.tipo,
                     'data_interacao': ultima_interacao.data_interacao,
                     'entrou_em_contato': ultima_interacao.entrou_em_contato,
-                    'gatilho_extra': None,
+                    'gatilho_extra': gatilho.descricao if gatilho else None,
                 })
-            elif not em_periodo_bloqueio:
+
+            # 🔥 Se não tem gatilho, nem interagiu hoje, nem está no bloqueio → vai para pendentes
+            if not gatilho and not interagido_hoje and not em_periodo_bloqueio:
                 parceiros_pendentes.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -313,6 +313,7 @@ class InteracoesPendentesView(APIView):
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
         return Response(parceiros_pendentes)
+
 
 
 
@@ -354,8 +355,15 @@ class RegistrarInteracaoView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         parceiro = serializer.validated_data['parceiro']
+        usuario = self.request.user
         status_no_momento = parceiro.status
-        serializer.save(usuario=self.request.user, status=status_no_momento)
+
+        # 🔥 Salva a interação normalmente
+        serializer.save(usuario=usuario, status=status_no_momento)
+
+        # 🔥 Remove o gatilho extra após interagir
+        GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).delete()
+
 
 
 # ===== Oportunidades =====
