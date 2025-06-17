@@ -27,6 +27,20 @@ a {
   color: inherit;
 }
 
+/* Centraliza todo conteúdo da tabela */
+table th,
+table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+
+.centeredCell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+
 img {
   max-width: 100%;
   height: auto;

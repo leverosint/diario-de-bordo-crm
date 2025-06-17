@@ -9,6 +9,7 @@ import 'dayjs/locale/pt-br';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
 import type { DateValue } from '@mantine/dates';
+import { Pencil, Save, X } from 'lucide-react'; // 🔥 Adiciona no topo
 
 interface Oportunidade {
   id: number;
@@ -241,8 +242,9 @@ export default function TabelaOportunidadesPage() {
                       <div>
                         <Title order={3}>{status.toUpperCase()}</Title>
                         <p style={{ fontSize: '0.9rem', color: '#555' }}>
-                          Valor total: R$ {valorTotal.replace('.', ',')}
-                        </p>
+  Valor total: {Number(valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+</p>
+
                       </div>
                       <Group>
                         <Badge color={getStatusColor(status)} variant="light">
@@ -282,7 +284,8 @@ export default function TabelaOportunidadesPage() {
           border: (o.dias_sem_movimentacao ?? 0) >= 7 ? '1px solid red' : '',
         }}
       >
-        <td>{o.id}</td>
+        <td className="centeredCell">{o.id}</td>
+
         <td>{o.parceiro_nome}</td>
 
         {/* VALOR */}
@@ -303,7 +306,7 @@ export default function TabelaOportunidadesPage() {
         <td>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
 
         {/* GATILHO */}
-        <td>{o.gatilho_extra || '-'}</td>
+        <td> {o.gatilho_extra || '-'}</td>
 
         {/* OBSERVAÇÃO */}
         <td>
@@ -345,21 +348,23 @@ export default function TabelaOportunidadesPage() {
             />
             {emEdicao ? (
               <>
-                <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
-                  Salvar
-                </Button>
-                <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao}>
-                  Cancelar
-                </Button>
+                <Button size="xs" color="green" leftSection={<Save size={14} />} onClick={() => salvarEdicao(o.id)}>
+  Salvar
+</Button>
+<Button size="xs" variant="outline" color="red" leftSection={<X size={14} />} onClick={cancelarEdicao}>
+  Cancelar
+</Button>
+
               </>
             ) : (
-              <Button
-                size="xs"
-                variant="outline"
-                onClick={() => iniciarEdicao(o)}
-              >
-                ✏️
-              </Button>
+<Button
+  size="xs"
+  variant="outline"
+  leftSection={<Pencil size={14} />}
+  onClick={() => iniciarEdicao(o)}
+>
+  Editar
+</Button>
             )}
           </Group>
         </td>

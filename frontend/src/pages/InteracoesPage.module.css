@@ -24,6 +24,12 @@
   word-break: break-word;
 }
 
+.centered {
+  text-align: center;
+  vertical-align: middle;
+}
+
+
 .table th {
   background-color: #f3f4f6;
   font-weight: 600;
