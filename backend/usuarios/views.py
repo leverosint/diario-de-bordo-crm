@@ -267,7 +267,7 @@ class InteracoesPendentesView(APIView):
 
             gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
 
-            # 🔥 Se tiver gatilho, SEMPRE aparece no A Interagir
+            ## 🔥 Se tem gatilho, SEMPRE aparece no A Interagir, independente do status
             if gatilho:
                 parceiros_pendentes.append({
                     'id': parceiro.id,
@@ -281,7 +281,7 @@ class InteracoesPendentesView(APIView):
                     'gatilho_extra': gatilho.descricao,
                 })
 
-            # 🔥 Se interagiu hoje, aparece no Interagidos Hoje também
+            ## 🔥 Interagidos Hoje segue normal
             if interagido_hoje:
                 parceiros_interagidos.append({
                     'id': parceiro.id,
@@ -295,8 +295,13 @@ class InteracoesPendentesView(APIView):
                     'gatilho_extra': gatilho.descricao if gatilho else None,
                 })
 
-            # 🔥 Se não tem gatilho, nem interagiu hoje, nem está no bloqueio → vai para pendentes
-            if not gatilho and not interagido_hoje and not em_periodo_bloqueio:
+            ## 🔥 Se NÃO tem gatilho, NÃO interagiu hoje, NÃO está bloqueado e NÃO é 'Base Ativa' → então aparece em A Interagir
+            if (
+                not gatilho and
+                not interagido_hoje and
+                not em_periodo_bloqueio and
+                parceiro.status != 'Base Ativa'
+            ):
                 parceiros_pendentes.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -313,6 +318,7 @@ class InteracoesPendentesView(APIView):
         if tipo_lista == 'interagidos':
             return Response(parceiros_interagidos)
         return Response(parceiros_pendentes)
+
 
 
 
