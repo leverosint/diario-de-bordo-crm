@@ -64,6 +64,9 @@ export default function InteracoesPage() {
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
   const [statusSelecionado, setStatusSelecionado] = useState('');
   const [temGatilho, setTemGatilho] = useState('');
+  const [statusDisponiveis, setStatusDisponiveis] = useState<string[]>([]);
+  const [gatilhosDisponiveis, setGatilhosDisponiveis] = useState<string[]>([]);
+
 
   const [parceiros, setParceiros] = useState<Parceiro[]>([]);
   const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
@@ -103,14 +106,19 @@ export default function InteracoesPage() {
         return canal ? canal.nome : '';
       };
 
-      setPendentes(resPendentes.data.map((p: any) => ({
+      setPendentes(resPendentes.data.dados.map((p: any) => ({
         ...p,
         canal_venda_nome: canalNome(p.canal_venda_id),
       })));
-      setInteragidos(resInteragidos.data.map((p: any) => ({
+      setInteragidos(resInteragidos.data.dados.map((p: any) => ({
         ...p,
         canal_venda_nome: canalNome(p.canal_venda_id),
       })));
+      
+      // Pegando os filtros diretamente da API:
+      setStatusDisponiveis(resPendentes.data.status_disponiveis);
+      setGatilhosDisponiveis(resPendentes.data.gatilhos_disponiveis);
+      
 
       setMetaAtual(resMeta.data.interacoes_realizadas);
       setMetaTotal(resMeta.data.meta_diaria);
@@ -293,51 +301,41 @@ export default function InteracoesPage() {
       
 {tipoUser === 'GESTOR' && (
   <Group mb="xl" style={{ flexWrap: 'wrap' }}>
-    <Select
-      label="Filtrar por Canal de Venda"
-      placeholder="Selecione um canal"
-      value={canalSelecionado}
-      onChange={handleCanalChange}
-      data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
-      clearable
-    />
-    <Select
-      label="Filtrar por Vendedor"
-      placeholder="Selecione um vendedor"
-      value={vendedorSelecionado}
-      onChange={handleVendedorChange}
-      data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
-      disabled={!canalSelecionado}
-      clearable
-    />
-    <Select
-      label="Filtrar por Status"
-      placeholder="Selecione um status"
-      value={statusSelecionado}
-      onChange={(value) => setStatusSelecionado(value || '')}
-      data={[
-        'Sem Faturamento',
-        'Base Ativa',
-        '30 dias s/ Fat',
-        '60 dias s/ Fat',
-        '90 dias s/ Fat',
-        '120 dias s/ Fat',
-      ]}
-      clearable
-    />
-    <Select
-      label="Filtrar por Gatilho"
-      placeholder="Selecione"
-      value={temGatilho}
-      onChange={(value) => setTemGatilho(value || '')}
-      data={[
-        { value: 'true', label: 'Com Gatilho' },
-        { value: 'false', label: 'Sem Gatilho' },
-      ]}
-      clearable
-    />
-  </Group>
-)}
+  <Select
+    label="Filtrar por Canal de Venda"
+    placeholder="Selecione um canal"
+    value={canalSelecionado}
+    onChange={handleCanalChange}
+    data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
+    clearable
+  />
+  <Select
+    label="Filtrar por Vendedor"
+    placeholder="Selecione um vendedor"
+    value={vendedorSelecionado}
+    onChange={handleVendedorChange}
+    data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
+    disabled={!canalSelecionado}
+    clearable
+  />
+  <Select
+    label="Filtrar por Status"
+    placeholder="Selecione um status"
+    value={statusSelecionado}
+    onChange={(value) => setStatusSelecionado(value || '')}
+    data={statusDisponiveis.map((status) => ({ value: status, label: status }))}
+    clearable
+  />
+  <Select
+    label="Filtrar por Gatilho"
+    placeholder="Selecione"
+    value={temGatilho}
+    onChange={(value) => setTemGatilho(value || '')}
+    data={gatilhosDisponiveis.map((gatilho) => ({ value: gatilho, label: gatilho }))}
+    clearable
+  />
+</Group>
+
 
 
         {carregando ? (
