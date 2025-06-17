@@ -92,7 +92,8 @@ export default function InteracoesPage() {
       if (canalSelecionado) params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
       if (statusSelecionado) params.append('status', statusSelecionado);
-      if (temGatilho) params.append('tem_gatilho', temGatilho);
+      if (temGatilho) params.append('gatilho_extra', temGatilho);
+
 
       const [resPendentes, resInteragidos, resMeta, resParceiros] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes&${params.toString()}`, { headers }),
