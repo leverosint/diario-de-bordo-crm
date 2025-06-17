@@ -335,7 +335,7 @@ export default function InteracoesPage() {
     clearable
   />
 </Group>
-
+)}  {/* 👈 Fecha corretamente aqui */}
 
 
         {carregando ? (
