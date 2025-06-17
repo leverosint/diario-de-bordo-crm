@@ -196,8 +196,11 @@ export default function InteracoesPage() {
       await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, {
         parceiro: parceiroId,
         tipo,
-        entrou_em_contato: true,
-      }, { headers });
+        criar_oportunidade: oportunidade,
+        valor: valor || 0,
+        observacao: observacao,
+    }, { headers });
+    
 
       if (oportunidade && valor) {
         await axios.post(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
