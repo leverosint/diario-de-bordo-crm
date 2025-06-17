@@ -202,10 +202,13 @@ export default function InteracoesPage() {
       if (oportunidade && valor) {
         await axios.post(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
           parceiro: parceiroId,
-          valor: valor,
+          valor: parseFloat(String(valor || '0').replace(',', '.')),
+
+
           observacao: observacao,
           etapa: 'oportunidade',
         }, { headers });
+        
       }
 
       setExpandirId(null);

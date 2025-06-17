@@ -87,6 +87,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
     data_status = serializers.DateTimeField(read_only=True)
     dias_sem_interacao = serializers.SerializerMethodField()
+    valor = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, default=0)  # 🔥 Aqui garante valor 0 se vazio
 
     class Meta:
         model = Oportunidade
@@ -101,7 +102,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             'etapa',
             'data_criacao',
             'data_status',
-            'data_etapa',  # 👈 ADICIONE AQUI
+            'data_etapa',
             'dias_sem_interacao',
         ]
         read_only_fields = ['data_criacao', 'data_etapa', 'usuario']
@@ -113,6 +114,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             delta = now().date() - ultima_interacao.data_interacao.date()
             return delta.days
         return None
+
 
 
 class GatilhoExtraSerializer(serializers.ModelSerializer):
