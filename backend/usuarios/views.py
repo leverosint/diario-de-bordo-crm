@@ -710,17 +710,7 @@ def criar_gatilho_manual(request):
         defaults={'descricao': descricao}
     )
 
-    # 🔥 Cria uma interação pendente associada ao gatilho
-    Interacao.objects.create(
-        parceiro=parceiro,
-        usuario=usuario,
-        tipo=f"Gatilho: {descricao}",
-        status=parceiro.status,
-        entrou_em_contato=False,
-        data_interacao=now()
-    )
-
     return Response(
-        {'mensagem': 'Gatilho criado e interação pendente registrada com sucesso.'},
+        {'mensagem': 'Gatilho criado com sucesso.'},
         status=status.HTTP_201_CREATED
     )
