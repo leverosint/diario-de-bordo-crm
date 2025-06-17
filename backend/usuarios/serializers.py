@@ -47,6 +47,7 @@ class InteracaoSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
     parceiro = serializers.PrimaryKeyRelatedField(queryset=Parceiro.objects.all())
+    gatilho_extra = serializers.CharField(read_only=True)  # ✅
 
     class Meta:
         model = Interacao
@@ -87,7 +88,6 @@ class OportunidadeSerializer(serializers.ModelSerializer):
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
     data_status = serializers.DateTimeField(read_only=True)
     dias_sem_movimentacao = serializers.SerializerMethodField()
-    gatilho_extra = serializers.CharField(source='parceiro.gatilhoextra_set.first.descricao', read_only=True)
     valor = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, default=0)
 
     class Meta:

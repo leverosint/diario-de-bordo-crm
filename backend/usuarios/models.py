@@ -134,6 +134,9 @@ class Interacao(models.Model):
     tipo = models.CharField(max_length=20, choices=TIPO_CHOICES)
     data_interacao = models.DateTimeField(auto_now_add=True)
     entrou_em_contato = models.BooleanField(default=False)
+    # 🔥 Adicionar isso
+    gatilho_extra = models.CharField(max_length=255, null=True, blank=True)  # ✅
+
     
     # ✅ novo campo:
     status = models.CharField(max_length=50, null=True, blank=True)
@@ -161,6 +164,8 @@ class Oportunidade(models.Model):
     data_criacao = models.DateTimeField(auto_now_add=True)
     data_etapa = models.DateTimeField(null=True, blank=True)  # NOVO CAMPO
     data_status = models.DateTimeField(null=True, blank=True)
+        # 🔥 Adicionar isso
+    gatilho_extra = models.CharField(max_length=255, null=True, blank=True)  # ✅
 
 
     def save(self, *args, **kwargs):

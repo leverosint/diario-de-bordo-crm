@@ -16,6 +16,9 @@ from collections import defaultdict
 from django.utils.timezone import make_aware
 from datetime import datetime
 from .serializers import ParceiroSerializer
+from rest_framework import status
+from .models import Interacao, Oportunidade, GatilhoExtra, Parceiro
+from .serializers import InteracaoSerializer, OportunidadeSerializer
 
 
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra, CustomUser
@@ -350,8 +353,56 @@ class InteracoesPendentesView(APIView):
             "gatilhos_disponiveis": list(gatilhos_ativos),
         })
 
-   
+######REGISTRARINTERACAOVIEWS)############
+class RegistrarInteracaoView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request):
+        parceiro_id = request.data.get('parceiro')
+        tipo = request.data.get('tipo')
+        criar_oportunidade = request.data.get('criar_oportunidade', False)
+        valor = request.data.get('valor')
+        observacao = request.data.get('observacao')
+
+        try:
+            parceiro = Parceiro.objects.get(id=parceiro_id)
+        except Parceiro.DoesNotExist:
+            return Response({'error': 'Parceiro não encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # 🔍 Verifica se tem gatilho extra
+        gatilho = GatilhoExtra.objects.filter(parceiro=parceiro).first()
+        gatilho_desc = gatilho.descricao if gatilho else None
+
+        # 💬 Salva interação
+        interacao = Interacao.objects.create(
+            parceiro=parceiro,
+            usuario=request.user,
+            tipo=tipo,
+            entrou_em_contato=True,
+            gatilho_extra=gatilho_desc
+        )
+
+        # 💼 Se criar oportunidade no mesmo fluxo
+        oportunidade_data = None
+        if criar_oportunidade and valor:
+            oportunidade = Oportunidade.objects.create(
+                parceiro=parceiro,
+                usuario=request.user,
+                valor=valor,
+                etapa='oportunidade',
+                observacao=observacao,
+                gatilho_extra=gatilho_desc
+            )
+            oportunidade_data = OportunidadeSerializer(oportunidade).data
+
+        # 🗑️ Apaga o gatilho após interação
+        if gatilho:
+            gatilho.delete()
+
+        return Response({
+            'interacao': InteracaoSerializer(interacao).data,
+            'oportunidade': oportunidade_data
+        }, status=status.HTTP_201_CREATED)
 
 class InteracoesMetasView(APIView):
     permission_classes = [IsAuthenticated]
