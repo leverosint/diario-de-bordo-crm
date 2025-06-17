@@ -86,8 +86,9 @@ class OportunidadeSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
     data_status = serializers.DateTimeField(read_only=True)
-    dias_sem_interacao = serializers.SerializerMethodField()
-    valor = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, default=0)  # 🔥 Aqui garante valor 0 se vazio
+    dias_sem_movimentacao = serializers.SerializerMethodField()
+    gatilho_extra = serializers.CharField(source='parceiro.gatilhoextra_set.first.descricao', read_only=True)
+    valor = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, default=0)
 
     class Meta:
         model = Oportunidade
@@ -103,17 +104,20 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             'data_criacao',
             'data_status',
             'data_etapa',
-            'dias_sem_interacao',
+            'dias_sem_movimentacao',
+            'gatilho_extra',  # ✅ Adicionado
         ]
         read_only_fields = ['data_criacao', 'data_etapa', 'usuario']
 
-    def get_dias_sem_interacao(self, obj):
+    def get_dias_sem_movimentacao(self, obj):
         from django.utils.timezone import now
         ultima_interacao = obj.parceiro.interacoes.order_by('-data_interacao').first()
         if ultima_interacao:
             delta = now().date() - ultima_interacao.data_interacao.date()
             return delta.days
         return None
+
+
 
 
 

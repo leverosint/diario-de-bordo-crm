@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
-  Title, Table, Container, Loader, ScrollArea, Badge, Group, TextInput, Button, Tooltip, Card, Box, Select
+  Title, Table, Container, Loader, ScrollArea, Badge, Group,
+  TextInput, Button, Tooltip, Card, Box, Select
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
@@ -16,7 +17,10 @@ interface Oportunidade {
   valor: number;
   etapa: string;
   data_criacao: string;
-  data_status: string;
+  data_status: string | null;
+  gatilho_extra?: string;
+  observacao?: string;
+  dias_sem_movimentacao?: number;
 }
 
 export default function TabelaOportunidadesPage() {
@@ -34,20 +38,18 @@ export default function TabelaOportunidadesPage() {
   const etapaOptions = [
     { value: 'oportunidade', label: 'Oportunidade' },
     { value: 'orcamento', label: 'Orçamento' },
-    { value: 'aguardando', label: 'Aguardando Pagamento' },  // ✅ aqui
+    { value: 'aguardando', label: 'Aguardando Pagamento' },
     { value: 'pedido', label: 'Pedido Realizado' },
     { value: 'perdida', label: 'Venda Perdida' },
   ];
-  
 
   const getStatusColor = (etapa: string) => ({
     oportunidade: 'blue',
     orcamento: 'teal',
-    aguardando: '#f59f00', // ✅ adicionado
+    aguardando: '#f59f00',
     pedido: 'green',
     perdida: 'red',
   }[etapa] || 'gray');
-  
 
   useEffect(() => {
     const fetchDados = async () => {
@@ -89,8 +91,8 @@ export default function TabelaOportunidadesPage() {
       const etapaMatch = !etapaFiltro || o.etapa === etapaFiltro;
       const dataCriacao = new Date(o.data_criacao);
       const dataMatch =
-        (!dataInicio || dataCriacao >= new Date(dataInicio)) &&
-        (!dataFim || dataCriacao <= new Date(dataFim));
+        (!dataInicio || dataCriacao >= new Date(dataInicio as Date)) &&
+        (!dataFim || dataCriacao <= new Date(dataFim as Date));
       return nomeMatch && etapaMatch && dataMatch;
     });
   }, [dados, nomeFiltro, etapaFiltro, dataInicio, dataFim]);
@@ -100,7 +102,8 @@ export default function TabelaOportunidadesPage() {
     dadosFiltrados.forEach((item) => {
       const status = item.etapa || 'Sem status';
       if (!agrupado[status]) agrupado[status] = [];
-      agrupado[status].push(item);
+      (agrupado[status] ||= []).push(item);
+
     });
     return agrupado;
   }, [dadosFiltrados]);
@@ -112,6 +115,9 @@ export default function TabelaOportunidadesPage() {
       Etapa: o.etapa,
       'Data Criação': new Date(o.data_criacao).toLocaleDateString('pt-BR'),
       'Data Status': o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-',
+      Gatilho: o.gatilho_extra || '-',
+      Observação: o.observacao || '-',
+      'Sem Movimentação': o.dias_sem_movimentacao !== undefined ? `${o.dias_sem_movimentacao} dias` : '-',
     }));
     const worksheet = XLSX.utils.json_to_sheet(linhas);
     const workbook = XLSX.utils.book_new();
@@ -121,12 +127,16 @@ export default function TabelaOportunidadesPage() {
 
   const calcularTempoMedio = (lista: Oportunidade[]) => {
     const dias = lista
-      .filter(o => o.data_status)
-      .map(o => (new Date(o.data_status).getTime() - new Date(o.data_criacao).getTime()) / (1000 * 60 * 60 * 24));
+      .filter(o => o.data_status !== null)
+      .map(o => {
+        const dataStatus = new Date(o.data_status!);
+        const dataCriacao = new Date(o.data_criacao);
+        return (dataStatus.getTime() - dataCriacao.getTime()) / (1000 * 60 * 60 * 24);
+      });
     if (dias.length === 0) return 0;
     return Math.round(dias.reduce((a, b) => a + b, 0) / dias.length);
   };
-
+  
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <Container fluid style={{ maxWidth: '90vw', padding: '0 40px' }}>
@@ -150,10 +160,8 @@ export default function TabelaOportunidadesPage() {
             data={etapaOptions}
             clearable
           />
-          {[
-            { label: 'Data início', value: dataInicio, onChange: setDataInicio },
-            { label: 'Data fim', value: dataFim, onChange: setDataFim }
-          ].map((item, idx) => (
+          {[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
+            { label: 'Data fim', value: dataFim, onChange: setDataFim }].map((item, idx) => (
             <Box key={idx} style={{ minWidth: 160 }}>
               <DatePickerInput
                 value={item.value}
@@ -163,39 +171,6 @@ export default function TabelaOportunidadesPage() {
                 dropdownType="popover"
                 clearable
                 rightSection={null}
-                popoverProps={{
-                  withinPortal: false,
-                  position: 'bottom-start',
-                  shadow: 'md',
-                  withArrow: true,
-                }}
-                styles={{
-                  input: { fontSize: '0.875rem', borderRadius: 8 },
-                  day: { fontSize: '0.9rem', height: 36, width: 36, margin: 2, borderRadius: 6 },
-                  calendarHeader: {
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 600,
-                    fontSize: '1rem',
-                    gap: 12,
-                    paddingBottom: 6,
-                  },
-                  calendarHeaderControl: {
-                    width: 28,
-                    height: 28,
-                    fontSize: '1rem',
-                    color: '#333',
-                    backgroundColor: 'transparent',
-                    border: 'none',
-                    boxShadow: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  },
-                }}
-                previousIcon={<span style={{ fontSize: '1rem' }}>‹</span>}
-                nextIcon={<span style={{ fontSize: '1rem' }}>›</span>}
               />
             </Box>
           ))}
@@ -206,7 +181,6 @@ export default function TabelaOportunidadesPage() {
             {Object.entries(agrupadoPorStatus).map(([status, lista]) => {
               const valorTotal = lista.reduce((acc, o) => acc + Number(o.valor), 0).toFixed(2);
               const tempoMedio = calcularTempoMedio(lista);
-              const listaLimitada = lista.slice(0, 5);
 
               return (
                 <Box key={status} mt="xl">
@@ -245,20 +219,37 @@ export default function TabelaOportunidadesPage() {
                       <Table striped highlightOnHover withColumnBorders>
                         <thead>
                           <tr>
+                            <th>ID</th>
                             <th>Parceiro</th>
                             <th>Valor</th>
                             <th>Data Criação</th>
                             <th>Data Status</th>
+                            <th>Gatilho</th>
+                            <th>Observação</th>
+                            <th>Sem Movimentação</th>
                             <th>Status</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {listaLimitada.map((o) => (
-                            <tr key={o.id}>
+                          {lista.map((o) => (
+                            <tr
+                              key={o.id}
+                              style={{
+                                backgroundColor: (o.dias_sem_movimentacao ?? 0) >= 7 ? '#ffe5e5' : 'white',
+                                border: (o.dias_sem_movimentacao ?? 0) >= 7 ? '1px solid red' : '',
+                              }}
+                            >
+                              <td>{o.id}</td>
                               <td>{o.parceiro_nome}</td>
-                              <td>R$ {Number(o.valor).toFixed(2).replace('.', ',')}</td>
+                              <td>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                               <td>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
                               <td>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
+                              <td>{o.gatilho_extra || '-'}</td>
+                              <td>{o.observacao || '-'}</td>
+                              <td>
+                                {o.dias_sem_movimentacao !== undefined ? `${o.dias_sem_movimentacao} dias` : '-'}
+                                {(o.dias_sem_movimentacao ?? 0) >= 7 ? ' ⚠️' : ''}
+                              </td>
                               <td>
                                 <Select
                                   value={o.etapa}
