@@ -19,6 +19,7 @@ import {
 import SidebarGestor from '../components/SidebarGestor';
 import styles from './InteracoesPage.module.css';
 
+
 interface Interacao {
   id: number;
   parceiro: string;
@@ -55,12 +56,14 @@ export default function InteracoesPage() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [metaAtual, setMetaAtual] = useState(0);
-  const [metaTotal, setMetaTotal] = useState(10);
+  const [metaTotal, setMetaTotal] = useState(6);
   const [tipoSelecionado, setTipoSelecionado] = useState<{ [key: number]: string }>({});
   const [expandirId, setExpandirId] = useState<number | null>(null);
   const [valorOportunidade, setValorOportunidade] = useState('');
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
+  const [statusSelecionado, setStatusSelecionado] = useState('');
+  const [temGatilho, setTemGatilho] = useState('');
 
   const [parceiros, setParceiros] = useState<Parceiro[]>([]);
   const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
@@ -85,6 +88,8 @@ export default function InteracoesPage() {
       const params = new URLSearchParams();
       if (canalSelecionado) params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
+      if (statusSelecionado) params.append('status', statusSelecionado);
+      if (temGatilho) params.append('tem_gatilho', temGatilho);
 
       const [resPendentes, resInteragidos, resMeta, resParceiros] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes&${params.toString()}`, { headers }),
@@ -232,11 +237,32 @@ export default function InteracoesPage() {
           <Title order={2}>Interações de Parceiros Pendentes</Title>
         </Center>
 
-        <Group mb="md">
-          <Button onClick={() => setMostrarGatilhoManual(!mostrarGatilhoManual)} color="teal">
-            {mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
-          </Button>
-        </Group>
+        <Group justify="space-between" mb="md" style={{ flexWrap: 'wrap' }}>
+  <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
+    Meta do dia: {metaAtual}/{metaTotal}
+  </Badge>
+
+  <Group gap="sm">
+    <FileButton onChange={setArquivoGatilho} accept=".xlsx">
+      {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
+    </FileButton>
+    <Button
+      color="blue"
+      onClick={handleUploadGatilho}
+      disabled={!arquivoGatilho}
+    >
+      Enviar Gatilhos
+    </Button>
+    <Button
+      color={mostrarGatilhoManual ? 'red' : 'teal'}
+      variant={mostrarGatilhoManual ? 'outline' : 'filled'}
+      onClick={() => setMostrarGatilhoManual(!mostrarGatilhoManual)}
+    >
+      {mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
+    </Button>
+  </Group>
+</Group>
+
 
         {mostrarGatilhoManual && (
           <Card shadow="sm" padding="lg" mb="md">
@@ -301,6 +327,35 @@ export default function InteracoesPage() {
             />
           </Group>
         )}
+        <Group mb="xl" style={{ flexWrap: 'wrap' }}>
+  <Select
+    label="Filtrar por Status"
+    placeholder="Selecione um status"
+    value={statusSelecionado}
+    onChange={(value) => setStatusSelecionado(value || '')}
+    data={[
+      'Sem Faturamento',
+      'Base Ativa',
+      '30 dias s/ Fat',
+      '60 dias s/ Fat',
+      '90 dias s/ Fat',
+      '120 dias s/ Fat',
+    ]}
+    clearable
+  />
+  <Select
+    label="Filtrar por Gatilho"
+    placeholder="Selecione"
+    value={temGatilho}
+    onChange={(value) => setTemGatilho(value || '')}
+    data={[
+      { value: 'true', label: 'Com Gatilho' },
+      { value: 'false', label: 'Sem Gatilho' },
+    ]}
+    clearable
+  />
+</Group>
+
 
         {carregando ? (
           <Center><Loader /></Center>

@@ -336,7 +336,7 @@ class InteracoesMetasView(APIView):
             data_interacao__date=hoje
         ).count()
 
-        meta_diaria = 10
+        meta_diaria = 6
         progresso = min(interacoes_hoje / meta_diaria, 1.0)
         meta_atingida = interacoes_hoje >= meta_diaria
 
