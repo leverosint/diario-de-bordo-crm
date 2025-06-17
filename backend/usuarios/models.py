@@ -137,6 +137,7 @@ class Interacao(models.Model):
     # 🔥 Adicionar isso
     gatilho_extra = models.CharField(max_length=255, null=True, blank=True)  # ✅
 
+
     
     # ✅ novo campo:
     status = models.CharField(max_length=50, null=True, blank=True)

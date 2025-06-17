@@ -363,6 +363,7 @@ class RegistrarInteracaoView(APIView):
             parceiro_id = request.data.get('parceiro')
             tipo = request.data.get('tipo')
             observacao = request.data.get('observacao', '')
+            gatilho_extra = request.data.get('gatilho_extra', None)
 
             if not parceiro_id:
                 return Response({'error': 'Parceiro não informado.'}, status=400)
@@ -371,16 +372,21 @@ class RegistrarInteracaoView(APIView):
 
             parceiro = Parceiro.objects.get(id=parceiro_id)
 
-            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user).first()
-            gatilho_desc = gatilho.descricao if gatilho else None
+            # Se não vier do request, tenta buscar no banco
+            if not gatilho_extra:
+                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user).first()
+                gatilho_extra = gatilho.descricao if gatilho else None
+            else:
+                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user, descricao=gatilho_extra).first()
 
+            # Cria interação
             interacao = Interacao.objects.create(
                 parceiro=parceiro,
                 usuario=request.user,
                 tipo=tipo,
                 entrou_em_contato=True,
-                gatilho_extra=gatilho_desc,
-                status=parceiro.status
+                status=parceiro.status,
+                gatilho_extra=gatilho_extra
             )
 
             if gatilho:
@@ -397,6 +403,8 @@ class RegistrarInteracaoView(APIView):
             return Response({'error': str(e)}, status=500)
 
 
+
+
 # ====== Interação + Oportunidade ======
 class RegistrarOportunidadeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -407,6 +415,7 @@ class RegistrarOportunidadeView(APIView):
             tipo = request.data.get('tipo')
             valor = request.data.get('valor')
             observacao = request.data.get('observacao', '')
+            gatilho_extra = request.data.get('gatilho_extra', None)
 
             if not parceiro_id:
                 return Response({'error': 'Parceiro não informado.'}, status=400)
@@ -417,25 +426,31 @@ class RegistrarOportunidadeView(APIView):
 
             parceiro = Parceiro.objects.get(id=parceiro_id)
 
-            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user).first()
-            gatilho_desc = gatilho.descricao if gatilho else None
+            # Se não vier do request, tenta buscar no banco
+            if not gatilho_extra:
+                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user).first()
+                gatilho_extra = gatilho.descricao if gatilho else None
+            else:
+                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user, descricao=gatilho_extra).first()
 
+            # 🔥 Cria Interação
             interacao = Interacao.objects.create(
                 parceiro=parceiro,
                 usuario=request.user,
                 tipo=tipo,
                 entrou_em_contato=True,
-                gatilho_extra=gatilho_desc,
-                status=parceiro.status
+                status=parceiro.status,
+                gatilho_extra=gatilho_extra
             )
 
+            # 🔥 Cria Oportunidade
             oportunidade = Oportunidade.objects.create(
                 parceiro=parceiro,
                 usuario=request.user,
                 valor=float(valor),
                 etapa='oportunidade',
                 observacao=observacao,
-                gatilho_extra=gatilho_desc,
+                gatilho_extra=gatilho_extra
             )
 
             if gatilho:
@@ -451,6 +466,8 @@ class RegistrarOportunidadeView(APIView):
             return Response({'error': 'Parceiro não encontrado.'}, status=404)
         except Exception as e:
             return Response({'error': str(e)}, status=500)
+
+
 
 
         
