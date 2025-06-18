@@ -334,13 +334,15 @@ if (modalPerdida) {
         <p>Selecione o motivo da venda perdida:</p>
 
         <Select
-          label="Motivo da Venda Perdida"
-          placeholder="Selecione"
-          data={motivosPerda}
-          value={motivoPerda}
-          onChange={setMotivoPerda}
-          mb="md"
-        />
+  label="Motivo da Venda Perdida"
+  placeholder="Selecione"
+  data={motivosPerda}
+  value={motivoPerda}
+  onChange={setMotivoPerda}
+  mb="md"
+  withinPortal
+/>
+
 
         {motivoPerda === 'outro' && (
           <TextInput
