@@ -36,15 +36,15 @@ export default function TabelaOportunidadesPage() {
   const [valorEdit, setValorEdit] = useState<string>('');
   const [observacaoEdit, setObservacaoEdit] = useState<string>('');
   const [modalAberto, setModalAberto] = useState(false);
-const [idMudandoStatus, setIdMudandoStatus] = useState<number | null>(null);
+  const [idMudandoStatus, setIdMudandoStatus] = useState<number | null>(null);
 
-const [motivoPerda, setMotivoPerda] = useState('');
+  const [motivoPerda, setMotivoPerda] = useState('');
 
-const abrirModalPerda = (id: number) => {
-  setIdMudandoStatus(id);
-  setMotivoPerda('');
-  setModalAberto(true);
-};
+  const abrirModalPerda = (id: number) => {
+    setIdMudandoStatus(id);
+    setMotivoPerda('');
+    setModalAberto(true);
+  };
 
 
   const token = localStorage.getItem('token') ?? '';
@@ -85,10 +85,10 @@ const abrirModalPerda = (id: number) => {
 
   const handleStatusChange = (id: number, novaEtapa: string | null) => {
     if (!novaEtapa) return;
-  
+
     if (novaEtapa === 'perdida') {
       abrirModalPerda(id);
-    
+
     } else {
       axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
         etapa: novaEtapa,
@@ -106,18 +106,18 @@ const abrirModalPerda = (id: number) => {
       });
     }
   };
-  
+
   const confirmarVendaPerdida = async () => {
     if (!idMudandoStatus) {
       alert('ID inválido, tente novamente');
       return;
     }
-  
+
     if (motivoPerda.trim() === '') {
       alert('Por favor, preencha o motivo da venda perdida.');
       return;
     }
-  
+
     try {
       await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`, {
         etapa: 'perdida',
@@ -125,8 +125,8 @@ const abrirModalPerda = (id: number) => {
       }, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
-  
+
+
       setDados(prev =>
         prev.map(o =>
           o.id === idMudandoStatus
@@ -134,7 +134,7 @@ const abrirModalPerda = (id: number) => {
             : o
         )
       );
-  
+
       setModalAberto(false);
       setIdMudandoStatus(null);
       setMotivoPerda('');
@@ -143,8 +143,8 @@ const abrirModalPerda = (id: number) => {
       alert('Erro ao atualizar etapa');
     }
   };
-  
-  
+
+
 
   const dadosFiltrados = useMemo(() => {
     return dados.filter((o) => {
@@ -236,234 +236,260 @@ const abrirModalPerda = (id: number) => {
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <Container fluid style={{ maxWidth: '90vw', padding: '0 40px' }}>
-        <Group justify="space-between" align="center" mt="md" mb="sm">
-          <Title order={2}>Oportunidades por Status</Title>
-          <Button onClick={exportarExcel} variant="light">Exportar Excel</Button>
-        </Group>
+  <Container fluid style={{ maxWidth: '90vw', padding: '0 40px' }}>
+    <Group justify="space-between" align="center" mt="md" mb="sm">
+      <Title order={2}>Oportunidades por Status</Title>
+      <Button onClick={exportarExcel} variant="light">
+        Exportar Excel
+      </Button>
+    </Group>
 
-        <Group mt="xs" mb="md" grow align="end">
-          <TextInput
-            label="Nome do parceiro"
-            placeholder="Filtrar por nome"
-            value={nomeFiltro}
-            onChange={(e) => setNomeFiltro(e.currentTarget.value)}
-          />
-          <Select
-            label="Status"
-            placeholder="Todos"
-            value={etapaFiltro}
-            onChange={setEtapaFiltro}
-            data={etapaOptions}
+    <Group mt="xs" mb="md" grow align="end">
+      <TextInput
+        label="Nome do parceiro"
+        placeholder="Filtrar por nome"
+        value={nomeFiltro}
+        onChange={(e) => setNomeFiltro(e.currentTarget.value)}
+      />
+      <Select
+        label="Status"
+        placeholder="Todos"
+        value={etapaFiltro}
+        onChange={setEtapaFiltro}
+        data={etapaOptions}
+        clearable
+      />
+      {[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
+      { label: 'Data fim', value: dataFim, onChange: setDataFim }].map((item, idx) => (
+        <Box key={idx} style={{ minWidth: 160 }}>
+          <DatePickerInput
+            value={item.value}
+            onChange={item.onChange}
+            locale="pt-br"
+            label={item.label}
+            dropdownType="popover"
             clearable
+            rightSection={null}
           />
-          {[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
-            { label: 'Data fim', value: dataFim, onChange: setDataFim }].map((item, idx) => (
-            <Box key={idx} style={{ minWidth: 160 }}>
-              <DatePickerInput
-                value={item.value}
-                onChange={item.onChange}
-                locale="pt-br"
-                label={item.label}
-                dropdownType="popover"
-                clearable
-                rightSection={null}
-              />
-            </Box>
-          ))}
-        </Group>
+        </Box>
+      ))}
+    </Group>
 
-        {carregando ? <Loader /> : (
-          <ScrollArea>
-            {Object.entries(agrupadoPorStatus).map(([status, lista]) => {
-              const valorTotal = lista.reduce((acc, o) => acc + Number(o.valor), 0);
+    {carregando ? (
+      <Loader />
+    ) : (
+      <ScrollArea>
+        {Object.entries(agrupadoPorStatus).map(([status, lista]) => {
+          const valorTotal = lista.reduce((acc, o) => acc + Number(o.valor), 0);
 
-              return (
-                <Box key={status} mt="xl">
-                  <Card
-                    withBorder
-                    shadow="sm"
-                    radius="lg"
-                    p="xl"
-                    mb="lg"
-                    style={{
-                      borderLeft: `8px solid ${getStatusColor(status)}`,
-                      backgroundColor: '#f9f9f9',
-                      width: '100%',
-                    }}
-                  >
-                    <Group justify="space-between" align="center" mb="sm">
-                      <div>
-                        <Title order={3}>
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </Title>
-                        <p style={{ fontSize: '0.9rem', color: '#555' }}>
-                          Valor total: {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </p>
-                      </div>
-                      <Group>
-                        <Badge color={getStatusColor(status)} variant="light">
-                          {lista.length} oportunidades
-                        </Badge>
-                        <Tooltip label="Tempo médio até status" withArrow>
-                          <Badge color="gray" variant="outline">
-                            ⏱ {calcularTempoMedio(lista)} dias
-                          </Badge>
-                        </Tooltip>
-                      </Group>
-                    </Group>
+          return (
+            <Box key={status} mt="xl">
+              <Card
+                withBorder
+                shadow="sm"
+                radius="lg"
+                p="xl"
+                mb="lg"
+                style={{
+                  borderLeft: `8px solid ${getStatusColor(status)}`,
+                  backgroundColor: '#f9f9f9',
+                  width: '100%',
+                }}
+              >
+                <Group justify="space-between" align="center" mb="sm">
+                  <div>
+                    <Title order={3}>
+                      {status.charAt(0).toUpperCase() + status.slice(1)}
+                    </Title>
+                    <p style={{ fontSize: '0.9rem', color: '#555' }}>
+                      Valor total:{' '}
+                      {valorTotal.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      })}
+                    </p>
+                  </div>
+                  <Group>
+                    <Badge color={getStatusColor(status)} variant="light">
+                      {lista.length} oportunidades
+                    </Badge>
+                    <Tooltip label="Tempo médio até status" withArrow>
+                      <Badge color="gray" variant="outline">
+                        ⏱ {calcularTempoMedio(lista)} dias
+                      </Badge>
+                    </Tooltip>
+                  </Group>
+                </Group>
 
-                    <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-                      <Table striped highlightOnHover withColumnBorders>
-                        <thead>
-                          <tr>
-                            <th className={styles.center}>ID</th>
-                            <th className={styles.left}>Parceiro</th>
-                            <th className={styles.center}>Valor</th>
-                            <th className={styles.center}>Data Criação</th>
-                            <th className={styles.center}>Data Status</th>
-                            <th className={styles.center}>Gatilho</th>
-                            <th className={styles.left}>Observação</th>
-                            <th className={styles.center}>Sem Movimentação</th>
-                            <th className={styles.center}>Status</th>
+                <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                  <Table striped highlightOnHover withColumnBorders>
+                    <thead>
+                      <tr>
+                        <th className={styles.center}>ID</th>
+                        <th className={styles.left}>Parceiro</th>
+                        <th className={styles.center}>Valor</th>
+                        <th className={styles.center}>Data Criação</th>
+                        <th className={styles.center}>Data Status</th>
+                        <th className={styles.center}>Gatilho</th>
+                        <th className={styles.left}>Observação</th>
+                        <th className={styles.center}>Sem Movimentação</th>
+                        <th className={styles.center}>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lista.map((o) => {
+                        const emEdicao = editandoId === o.id;
+                        return (
+                          <tr key={o.id}>
+                            <td className={styles.center}>{o.id}</td>
+                            <td className={styles.left}>{o.parceiro_nome}</td>
+                            <td className={styles.center}>
+                              {emEdicao ? (
+                                <TextInput
+                                  value={valorEdit}
+                                  onChange={(e) => setValorEdit(e.currentTarget.value)}
+                                  size="xs"
+                                />
+                              ) : (
+                                <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
+                              )}
+                            </td>
+                            <td className={styles.center}>
+                              {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
+                            </td>
+                            <td className={styles.center}>
+                              {o.data_status
+                                ? new Date(o.data_status).toLocaleDateString('pt-BR')
+                                : '-'}
+                            </td>
+                            <td className={styles.center}>{o.gatilho_extra || '-'}</td>
+                            <td className={styles.left}>
+                              {emEdicao ? (
+                                <TextInput
+                                  value={observacaoEdit}
+                                  onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
+                                  size="xs"
+                                />
+                              ) : (
+                                o.observacao || '-'
+                              )}
+                            </td>
+                            <td className={styles.center}>
+                              {o.dias_sem_movimentacao !== undefined
+                                ? `${o.dias_sem_movimentacao} dias`
+                                : '-'}
+                            </td>
+                            <td className={styles.center}>
+                              <Group gap="xs" justify="center">
+                                <Select
+                                  value={o.etapa}
+                                  onChange={(value) => value && handleStatusChange(o.id, value)}
+                                  data={etapaOptions}
+                                  size="xs"
+                                  styles={{
+                                    input: {
+                                      backgroundColor: getStatusColor(o.etapa),
+                                      color: 'white',
+                                      fontWeight: 600,
+                                      textAlign: 'center',
+                                      borderRadius: 6,
+                                      minWidth: 120,
+                                    },
+                                  }}
+                                />
+
+                                {emEdicao ? (
+                                  <>
+                                    <Button
+                                      size="xs"
+                                      color="green"
+                                      onClick={() => salvarEdicao(o.id)}
+                                    >
+                                      <Save size={16} />
+                                    </Button>
+                                    <Button
+                                      size="xs"
+                                      variant="outline"
+                                      color="red"
+                                      onClick={cancelarEdicao}
+                                    >
+                                      <X size={16} />
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <Button
+                                    size="xs"
+                                    variant="outline"
+                                    onClick={() => iniciarEdicao(o)}
+                                  >
+                                    <Pencil size={16} />
+                                  </Button>
+                                )}
+                              </Group>
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          {lista.map((o) => {
-                            const emEdicao = editandoId === o.id;
-                            return (
-                              <tr key={o.id}>
-                                <td className={styles.center}>{o.id}</td>
-                                <td className={styles.left}>{o.parceiro_nome}</td>
-                                <td className={styles.center}>
-                                  {emEdicao ? (
-                                    <TextInput
-                                      value={valorEdit}
-                                      onChange={(e) => setValorEdit(e.currentTarget.value)}
-                                      size="xs"
-                                    />
-                                  ) : (
-                                    <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
-                                  )}
-                                </td>
-                                <td className={styles.center}>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
-                                <td className={styles.center}>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
-                                <td className={styles.center}>{o.gatilho_extra || '-'}</td>
-                                <td className={styles.left}>
-                                  {emEdicao ? (
-                                    <TextInput
-                                      value={observacaoEdit}
-                                      onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
-                                      size="xs"
-                                    />
-                                  ) : (
-                                    o.observacao || '-'
-                                  )}
-                                </td>
-                                <td className={styles.center}>
-                                  {o.dias_sem_movimentacao !== undefined ? `${o.dias_sem_movimentacao} dias` : '-'}
-                                </td>
-                                <td className={styles.center}>
-                                  <Group gap="xs" justify="center">
-                                  <Select
-  value={o.etapa}
-  onChange={(value) => value && handleStatusChange(o.id, value)}
-  data={etapaOptions}
-  size="xs"
-  styles={{
-    input: {
-      backgroundColor: getStatusColor(o.etapa),
-      color: 'white',
-      fontWeight: 600,
-      textAlign: 'center',
-      borderRadius: 6,
-      minWidth: 120,
-    }
-  }}
-/>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                </div>
+              </Card>
+            </Box>
+          );
+        })}
+      </ScrollArea>
+    )}
+  </Container>
 
+  {modalAberto && idMudandoStatus !== null && (
+    <Modal
+      opened={modalAberto}
+      onClose={() => setModalAberto(false)}
+      title={
+        <Group>
+          <span style={{ fontSize: 22 }}>🛑</span>
+          <Title order={4} fw={700}>
+            Marcar como Venda Perdida
+          </Title>
+        </Group>
+      }
+      centered
+      overlayProps={{
+        backgroundOpacity: 0.55,
+        blur: 4,
+      }}
+      radius="md"
+      padding="lg"
+    >
+      <p style={{ marginBottom: '8px' }}>Selecione o motivo da venda perdida:</p>
+      <Select
+        label="Motivo da Venda Perdida"
+        placeholder="Selecione"
+        data={[
+          { value: 'preco', label: 'Preço' },
+          { value: 'prazo', label: 'Prazo' },
+          { value: 'concorrente', label: 'Fechou com concorrente' },
+          { value: 'fora_perfil', label: 'Fora de perfil' },
+          { value: 'nao_responde', label: 'Cliente não respondeu' },
+          { value: 'outro', label: 'Outro' },
+        ]}
+        value={motivoPerda}
+        onChange={(value) => setMotivoPerda(value ?? '')}
+        withCheckIcon={false}
+        required
+        clearable
+      />
 
-
-                                    {emEdicao ? (
-                                      <>
-                                        <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
-                                          <Save size={16} />
-                                        </Button>
-                                        <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao}>
-                                          <X size={16} />
-                                        </Button>
-                                      </>
-                                    ) : (
-                                      <Button
-                                        size="xs"
-                                        variant="outline"
-                                        onClick={() => iniciarEdicao(o)}
-                                      >
-                                        <Pencil size={16} />
-                                      </Button>
-                                    )}
-                                  </Group>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </Table>
-                    </div>
-                  </Card>
-                </Box>
-              );
-            })}
-          </ScrollArea>
-        )}
-      </Container>
-
-
-
-      {modalAberto && idMudandoStatus !== null && (
-        <Modal
-  opened={modalAberto}
-  onClose={() => setModalAberto(false)}
-  title="Motivo da Venda Perdida"
-  centered
-  withinPortal={true} // 🔥 Garante que renderiza fora do DOM principal
-  overlayProps={{
-    backgroundOpacity: 0.55,
-    blur: 3,
-  }}
-  zIndex={10000} // 🔥 Força ficar acima de sidebar, header e qualquer outro layout
->
-  <Select
-    label="Motivo da perda"
-    placeholder="Selecione o motivo"
-    data={[
-      { value: 'preco', label: 'Preço' },
-      { value: 'prazo', label: 'Prazo' },
-      { value: 'concorrente', label: 'Escolheu concorrente' },
-      { value: 'outro', label: 'Outro motivo' },
-    ]}
-    value={motivoPerda}
-    onChange={(value) => setMotivoPerda(value ?? '')}
-    required
-    withCheckIcon={false}
-  />
-
-  <Group justify="flex-end" mt="md">
-    <Button variant="outline" onClick={() => setModalAberto(false)}>
-      Cancelar
-    </Button>
-    <Button color="red" onClick={confirmarVendaPerdida}>
-      Confirmar
-    </Button>
-  </Group>
-</Modal>
-
-)}
-
-
-
-
-
+      <Group justify="flex-end" mt="md">
+        <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
+          Cancelar
+        </Button>
+        <Button color="green" onClick={confirmarVendaPerdida}>
+          Confirmar
+        </Button>
+      </Group>
+    </Modal>
+  )}
 </SidebarGestor>
-  );
+);
 }
