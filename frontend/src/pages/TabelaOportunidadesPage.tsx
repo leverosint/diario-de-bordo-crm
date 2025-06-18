@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
   Title, Table, Container, Loader, ScrollArea, Badge, Group,
-  TextInput, Tooltip, Card, Box,
+  TextInput, Button, Tooltip, Card, Box, Select
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
@@ -11,9 +11,6 @@ import SidebarGestor from '../components/SidebarGestor';
 import type { DateValue } from '@mantine/dates';
 import { Pencil, Save, X } from 'lucide-react';
 import styles from './TabelaOportunidadesPage.module.css'; // ✅ CSS
-import { Combobox, useCombobox, Input, Button } from '@mantine/core';
-
-
 
 interface Oportunidade {
   id: number;
@@ -29,17 +26,8 @@ interface Oportunidade {
 }
 
 export default function TabelaOportunidadesPage() {
-  const [modalPerdida, setModalPerdida] = useState<boolean>(false);
-  const [idPerdida, setIdPerdida] = useState<number | null>(null);
-  const [motivoPerda, setMotivoPerda] = useState<string | null>(null);
-  const [outroMotivo, setOutroMotivo] = useState<string>('');
-   const comboboxPerda = useCombobox();
-  const comboboxFiltro = useCombobox();
-
   const [dados, setDados] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
-  const [bloqueados, setBloqueados] = useState<Oportunidade[]>([]);
-  const [mostrarModalBloqueio, setMostrarModalBloqueio] = useState<boolean>(false);
   const [nomeFiltro, setNomeFiltro] = useState('');
   const [etapaFiltro, setEtapaFiltro] = useState<string | null>(null);
   const [dataInicio, setDataInicio] = useState<DateValue>(null);
@@ -47,20 +35,6 @@ export default function TabelaOportunidadesPage() {
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [valorEdit, setValorEdit] = useState<string>('');
   const [observacaoEdit, setObservacaoEdit] = useState<string>('');
-
-  const comboStatusStore = useMemo(() => {
-    return Object.fromEntries(
-      dados.map((o) => [o.id, useCombobox()])
-    );
-  }, [dados]);
-
-  const comboStatusStoreBloqueados = useMemo(() => {
-    return Object.fromEntries(
-      bloqueados.map((o) => [o.id, useCombobox()])
-    );
-  }, [bloqueados]);
-  
-  
 
   const token = localStorage.getItem('token') ?? '';
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
@@ -73,16 +47,6 @@ export default function TabelaOportunidadesPage() {
     { value: 'pedido', label: 'Pedido Realizado' },
     { value: 'perdida', label: 'Venda Perdida' },
   ];
-  
-  const motivosPerda = [
-    { value: 'preco', label: 'Preço' },
-    { value: 'prazo', label: 'Prazo de entrega' },
-    { value: 'concorrente', label: 'Fechou com concorrente' },
-    { value: 'fora_perfil', label: 'Fora de perfil' },
-    { value: 'nao_respondeu', label: 'Cliente não respondeu' },
-    { value: 'outro', label: 'Outro' },
-  ];
-  
 
   const getStatusColor = (etapa: string) => ({
     oportunidade: 'blue',
@@ -91,7 +55,6 @@ export default function TabelaOportunidadesPage() {
     pedido: 'green',
     perdida: 'red',
   }[etapa] || 'gray');
-  
 
   useEffect(() => {
     const fetchDados = async () => {
@@ -99,20 +62,7 @@ export default function TabelaOportunidadesPage() {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-  
         setDados(res.data);
-  
-        const oportunidadesBloqueadas = res.data.filter(
-          (o: Oportunidade) => (o.dias_sem_movimentacao ?? 0) >= 10
-        );
-  
-        if (oportunidadesBloqueadas.length > 0) {
-          setBloqueados(oportunidadesBloqueadas);
-          setMostrarModalBloqueio(true);
-        } else {
-          setMostrarModalBloqueio(false);
-        }
-  
       } catch (err) {
         console.error('Erro ao buscar oportunidades:', err);
       } finally {
@@ -121,8 +71,7 @@ export default function TabelaOportunidadesPage() {
     };
     fetchDados();
   }, [token]);
-  
-  
+
   const handleStatusChange = async (id: number, novaEtapa: string | null) => {
     if (!novaEtapa) return;
     try {
@@ -131,28 +80,15 @@ export default function TabelaOportunidadesPage() {
       }, {
         headers: { Authorization: `Bearer ${token}` },
       });
-  
       setDados(prev =>
         prev.map(o =>
-          o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString(), dias_sem_movimentacao: 0 } : o
+          o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() } : o
         )
       );
-  
-      const novosBloqueados = dados
-        .map(o => (o.id === id ? { ...o, etapa: novaEtapa, dias_sem_movimentacao: 0 } : o))
-        .filter(o => (o.dias_sem_movimentacao ?? 0) >= 10);
-  
-      setBloqueados(novosBloqueados);
-      if (novosBloqueados.length === 0) {
-        setMostrarModalBloqueio(false);
-      }
-  
     } catch (err) {
       console.error('Erro ao atualizar etapa:', err);
     }
   };
-  
-  
 
   const dadosFiltrados = useMemo(() => {
     return dados.filter((o) => {
@@ -242,246 +178,6 @@ export default function TabelaOportunidadesPage() {
     setObservacaoEdit('');
   };
 
-
-
-
-
-  const handlePerdidaSubmit = async () => {
-    if (!motivoPerda) {
-      alert('Selecione o motivo da venda perdida.');
-      return;
-    }
-  
-    try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${idPerdida}/`, {
-        etapa: 'perdida',
-        motivo_venda_perdida: motivoPerda,
-        outro_motivo: motivoPerda === 'outro' ? outroMotivo : null,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-  
-      setDados(prev =>
-        prev.map(o =>
-          o.id === idPerdida
-            ? { ...o, etapa: 'perdida', data_status: new Date().toISOString(), dias_sem_movimentacao: 0 }
-            : o
-        )
-      );
-  
-      setModalPerdida(false);
-      setIdPerdida(null);
-      setMotivoPerda(null);
-      setOutroMotivo('');
-  
-      const novosBloqueados = dados
-        .map(o =>
-          o.id === idPerdida
-            ? { ...o, etapa: 'perdida', dias_sem_movimentacao: 0 }
-            : o
-        )
-        .filter(o => (o.dias_sem_movimentacao ?? 0) >= 10);
-  
-      setBloqueados(novosBloqueados);
-      if (novosBloqueados.length === 0) {
-        setMostrarModalBloqueio(false);
-      }
-  
-    } catch (err) {
-      console.error('Erro ao marcar como perdida:', err);
-      alert('Erro ao salvar. Verifique os campos.');
-    }
-  };
-  
-
-
-
-
-
-// 🔥 Adiciona isso aqui — antes do return (
-// 🔥 Modal de bloqueio por falta de movimentação
-if (mostrarModalBloqueio) {
-  return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
-      <Title order={3} style={{ marginBottom: '1rem' }}>
-  🚨 Oportunidades Sem Movimentação (≥ 10 dias)
-</Title>
-
-        <p>Você precisa movimentar essas oportunidades antes de acessar a tabela.</p>
-
-        <div className={styles.bloqueioLista}>
-          <Table striped highlightOnHover withTableBorder>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Parceiro</th>
-                <th>Valor</th>
-                <th>Sem Movimentação</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-            {bloqueados.map((o) => {
-  const comboStatus = comboStatusStoreBloqueados[o.id] ?? useCombobox(); // ✅ corrigido
-
-    return (
-      <tr key={o.id}>
-        <td>{o.id}</td>
-        <td>{o.parceiro_nome}</td>
-        <td>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-        <td>{o.dias_sem_movimentacao} dias</td>
-        <td>
-          <Combobox
-            store={comboStatus}
-            withinPortal
-            onOptionSubmit={(value) => {
-              handleStatusChange(o.id, value);
-              comboStatus.closeDropdown();
-            }}
-          >
-            <Combobox.Target>
-              <Input
-                pointer
-                onClick={() => comboStatus.toggleDropdown()}
-                value={
-                  etapaOptions.find((e) => e.value === o.etapa)?.label ?? o.etapa
-                }
-                readOnly
-                size="xs"
-                styles={{
-                  input: {
-                    backgroundColor: getStatusColor(o.etapa),
-                    color: 'white',
-                    fontWeight: 600,
-                    textAlign: 'center',
-                    borderRadius: 6,
-                    minWidth: 120,
-                    cursor: 'pointer',
-                  },
-                }}
-              />
-            </Combobox.Target>
-
-            <Combobox.Dropdown>
-              <Combobox.Options>
-                {etapaOptions.map((item) => (
-                  <Combobox.Option key={item.value} value={item.value}>
-                    {item.label}
-                  </Combobox.Option>
-                ))}
-              </Combobox.Options>
-            </Combobox.Dropdown>
-          </Combobox>
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
-
-          </Table>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-// 🔥 Modal de venda perdida
-if (modalPerdida) {
-  return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
-        <Title order={3} mb="md">🛑 Marcar como Venda Perdida</Title>
-        <p>Selecione o motivo da venda perdida:</p>
-
-        <Combobox
-  store={comboboxPerda}
-  withinPortal
-  onOptionSubmit={(value) => {
-    setMotivoPerda(value);
-    comboboxPerda.closeDropdown();
-  }}
->
-  <Combobox.Target>
-    <Input
-      pointer
-      onClick={() => comboboxPerda.toggleDropdown()}
-      value={
-        motivoPerda
-          ? motivosPerda.find((e) => e.value === motivoPerda)?.label
-          : 'Selecione'
-      }
-      readOnly
-      size="xs"
-      styles={{
-        input: {
-          backgroundColor: '#fff',
-          fontWeight: 500,
-          textAlign: 'center',
-          borderRadius: 6,
-          minWidth: 200,
-          cursor: 'pointer',
-        },
-      }}
-    />
-  </Combobox.Target>
-
-  <Combobox.Dropdown>
-    <Combobox.Options>
-      {motivosPerda.map((item) => (
-        <Combobox.Option key={item.value} value={item.value}>
-          {item.label}
-        </Combobox.Option>
-      ))}
-    </Combobox.Options>
-  </Combobox.Dropdown>
-</Combobox>
-
-
-
-
-
-
-
-
-
-        {motivoPerda === 'outro' && (
-          <TextInput
-            label="Outro motivo"
-            placeholder="Descreva o motivo"
-            value={outroMotivo}
-            onChange={(e) => setOutroMotivo(e.currentTarget.value)}
-            mb="md"
-          />
-        )}
-
-        <Group mt="md" justify="flex-end">
-          <Button
-            color="red"
-            variant="outline"
-            onClick={() => {
-              setModalPerdida(false);
-              setIdPerdida(null);
-              setMotivoPerda(null);
-              setOutroMotivo('');
-            }}
-          >
-            Cancelar
-          </Button>
-          <Button color="green" onClick={handlePerdidaSubmit}>
-            Confirmar
-          </Button>
-        </Group>
-      </div>
-    </div>
-  );
-}
-
-
-
-
-
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <Container fluid style={{ maxWidth: '90vw', padding: '0 40px' }}>
@@ -490,83 +186,33 @@ if (modalPerdida) {
           <Button onClick={exportarExcel} variant="light">Exportar Excel</Button>
         </Group>
 
-        <Group
-style={{
-  marginTop: '0.25rem',    // equivalente a mt="xs"
-  marginBottom: '1rem',    // equivalente a mb="md"
-  flexGrow: 1,             // equivalente a grow
-  justifyContent: 'flex-end', // equivalente a align="end"
-}}
-
->
+        <Group mt="xs" mb="md" grow align="end">
           <TextInput
             label="Nome do parceiro"
             placeholder="Filtrar por nome"
             value={nomeFiltro}
             onChange={(e) => setNomeFiltro(e.currentTarget.value)}
           />
-<Combobox
-  store={comboboxFiltro}
-  withinPortal
-  onOptionSubmit={(value) => {
-    setEtapaFiltro(value === 'todos' ? null : value);
-    comboboxFiltro.closeDropdown();
-  }}
->
-  <Combobox.Target>
-    <Input
-      pointer
-      onClick={() => comboboxFiltro.toggleDropdown()}
-      value={
-        etapaFiltro
-          ? etapaOptions.find((e) => e.value === etapaFiltro)?.label
-          : 'Todos'
-      }
-      readOnly
-      size="xs"
-      styles={{
-        input: {
-          backgroundColor: '#fff',
-          fontWeight: 500,
-          textAlign: 'center',
-          borderRadius: 6,
-          minWidth: 150,
-          cursor: 'pointer',
-        },
-      }}
-    />
-  </Combobox.Target>
-
-  <Combobox.Dropdown>
-    <Combobox.Options>
-      <Combobox.Option value="todos">Todos</Combobox.Option>
-      {etapaOptions.map((item) => (
-        <Combobox.Option key={item.value} value={item.value}>
-          {item.label}
-        </Combobox.Option>
-      ))}
-    </Combobox.Options>
-  </Combobox.Dropdown>
-</Combobox>
-
-
-
-
+          <Select
+            label="Status"
+            placeholder="Todos"
+            value={etapaFiltro}
+            onChange={setEtapaFiltro}
+            data={etapaOptions}
+            clearable
+          />
           {[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
             { label: 'Data fim', value: dataFim, onChange: setDataFim }].map((item, idx) => (
             <Box key={idx} style={{ minWidth: 160 }}>
-<DatePickerInput
-  value={item.value}
-  onChange={item.onChange}
-  locale="pt-br"
-  label={item.label}
-  dropdownType="popover"
-  clearable
-  rightSection={null}
-  popoverProps={{ withinPortal: true, zIndex: 9999 }} // 🔥 Isso resolve o z-index
-/>
-
-
+              <DatePickerInput
+                value={item.value}
+                onChange={item.onChange}
+                locale="pt-br"
+                label={item.label}
+                dropdownType="popover"
+                clearable
+                rightSection={null}
+              />
             </Box>
           ))}
         </Group>
@@ -578,45 +224,38 @@ style={{
 
               return (
                 <Box key={status} mt="xl">
-                  // No seu map de agrupadoPorStatus:
-<Card
-  withBorder
-  shadow="sm"
-  radius="lg"
-  p="xl"
-  mb="lg"
-  style={{
-    borderLeft: `8px solid ${getStatusColor(status)}`,
-    backgroundColor: '#f9f9f9',
-    width: '100%',
-  }}
->
-  <Group
-    style={{
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: '0.5rem',
-    }}
-  >
-    <div>
-      <Title order={3}>{status.charAt(0).toUpperCase() + status.slice(1)}</Title>
-      <p style={{ fontSize: '0.9rem', color: '#555' }}>
-        Valor total: {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-      </p>
-    </div>
-    <Group>
-      <Badge color={getStatusColor(status)} variant="light">
-        {lista.length} oportunidades
-      </Badge>
-      <Tooltip label="Tempo médio até status" withArrow>
-        <Badge color="gray" variant="outline">
-          ⏱ {calcularTempoMedio(lista)} dias
-        </Badge>
-      </Tooltip>
-    </Group>
-  </Group>
-
-
+                  <Card
+                    withBorder
+                    shadow="sm"
+                    radius="lg"
+                    p="xl"
+                    mb="lg"
+                    style={{
+                      borderLeft: `8px solid ${getStatusColor(status)}`,
+                      backgroundColor: '#f9f9f9',
+                      width: '100%',
+                    }}
+                  >
+                    <Group justify="space-between" align="center" mb="sm">
+                      <div>
+                        <Title order={3}>
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </Title>
+                        <p style={{ fontSize: '0.9rem', color: '#555' }}>
+                          Valor total: {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </p>
+                      </div>
+                      <Group>
+                        <Badge color={getStatusColor(status)} variant="light">
+                          {lista.length} oportunidades
+                        </Badge>
+                        <Tooltip label="Tempo médio até status" withArrow>
+                          <Badge color="gray" variant="outline">
+                            ⏱ {calcularTempoMedio(lista)} dias
+                          </Badge>
+                        </Tooltip>
+                      </Group>
+                    </Group>
 
                     <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                       <Table striped highlightOnHover withColumnBorders>
@@ -634,121 +273,82 @@ style={{
                           </tr>
                         </thead>
                         <tbody>
-  {lista.map((o) => {
-const comboStatus = comboStatusStore[o.id] ?? useCombobox();
-
-    const emEdicao = editandoId === o.id;
-
-    return (
-      <tr key={o.id}>
-        <td className={styles.center}>{o.id}</td>
-        <td className={styles.left}>{o.parceiro_nome}</td>
-        <td className={styles.center}>
-          {emEdicao ? (
-            <TextInput
-              value={valorEdit}
-              onChange={(e) => setValorEdit(e.currentTarget.value)}
-              size="xs"
-            />
-          ) : (
-            <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
-          )}
-        </td>
-        <td className={styles.center}>
-          {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
-        </td>
-        <td className={styles.center}>
-          {o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}
-        </td>
-        <td className={styles.center}>{o.gatilho_extra || '-'}</td>
-        <td className={styles.left}>
-          {emEdicao ? (
-            <TextInput
-              value={observacaoEdit}
-              onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
-              size="xs"
-            />
-          ) : (
-            o.observacao || '-'
-          )}
-        </td>
-        <td className={styles.center}>
-          {o.dias_sem_movimentacao !== undefined ? `${o.dias_sem_movimentacao} dias` : '-'}
-        </td>
-        <td className={styles.center}>
-          <Group gap="xs" justify="center">
-            <Combobox
-              store={comboStatus}
-              withinPortal
-              onOptionSubmit={(value) => {
-                if (value === 'perdida') {
-                  setModalPerdida(true);
-                  setIdPerdida(o.id);
-                } else {
-                  handleStatusChange(o.id, value);
-                }
-                comboStatus.closeDropdown();
-              }}
-            >
-              <Combobox.Target>
-                <Input
-                  pointer
-                  onClick={() => comboStatus.toggleDropdown()}
-                  value={
-                    etapaOptions.find((e) => e.value === o.etapa)?.label ?? o.etapa
-                  }
-                  readOnly
-                  size="xs"
-                  styles={{
-                    input: {
-                      backgroundColor: getStatusColor(o.etapa),
-                      color: 'white',
-                      fontWeight: 600,
-                      textAlign: 'center',
-                      borderRadius: 6,
-                      minWidth: 120,
-                      cursor: 'pointer',
-                    },
-                  }}
-                />
-              </Combobox.Target>
-
-              <Combobox.Dropdown>
-                <Combobox.Options>
-                  {etapaOptions.map((item) => (
-                    <Combobox.Option key={item.value} value={item.value}>
-                      {item.label}
-                    </Combobox.Option>
-                  ))}
-                </Combobox.Options>
-              </Combobox.Dropdown>
-            </Combobox>
-
-            {emEdicao ? (
-              <>
-                <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
-                  <Save size={16} />
-                </Button>
-                <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao}>
-                  <X size={16} />
-                </Button>
-              </>
-            ) : (
-              <Button
-                size="xs"
-                variant="outline"
-                onClick={() => iniciarEdicao(o)}
-              >
-                <Pencil size={16} />
-              </Button>
-            )}
-          </Group>
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
-
+                          {lista.map((o) => {
+                            const emEdicao = editandoId === o.id;
+                            return (
+                              <tr key={o.id}>
+                                <td className={styles.center}>{o.id}</td>
+                                <td className={styles.left}>{o.parceiro_nome}</td>
+                                <td className={styles.center}>
+                                  {emEdicao ? (
+                                    <TextInput
+                                      value={valorEdit}
+                                      onChange={(e) => setValorEdit(e.currentTarget.value)}
+                                      size="xs"
+                                    />
+                                  ) : (
+                                    <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
+                                  )}
+                                </td>
+                                <td className={styles.center}>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
+                                <td className={styles.center}>{o.data_status ? new Date(o.data_status).toLocaleDateString('pt-BR') : '-'}</td>
+                                <td className={styles.center}>{o.gatilho_extra || '-'}</td>
+                                <td className={styles.left}>
+                                  {emEdicao ? (
+                                    <TextInput
+                                      value={observacaoEdit}
+                                      onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
+                                      size="xs"
+                                    />
+                                  ) : (
+                                    o.observacao || '-'
+                                  )}
+                                </td>
+                                <td className={styles.center}>
+                                  {o.dias_sem_movimentacao !== undefined ? `${o.dias_sem_movimentacao} dias` : '-'}
+                                </td>
+                                <td className={styles.center}>
+                                  <Group gap="xs" justify="center">
+                                    <Select
+                                      value={o.etapa}
+                                      onChange={(value) => value && handleStatusChange(o.id, value)}
+                                      data={etapaOptions}
+                                      size="xs"
+                                      styles={{
+                                        input: {
+                                          backgroundColor: getStatusColor(o.etapa),
+                                          color: 'white',
+                                          fontWeight: 600,
+                                          textAlign: 'center',
+                                          borderRadius: 6,
+                                          minWidth: 120,
+                                        }
+                                      }}
+                                    />
+                                    {emEdicao ? (
+                                      <>
+                                        <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
+                                          <Save size={16} />
+                                        </Button>
+                                        <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao}>
+                                          <X size={16} />
+                                        </Button>
+                                      </>
+                                    ) : (
+                                      <Button
+                                        size="xs"
+                                        variant="outline"
+                                        onClick={() => iniciarEdicao(o)}
+                                      >
+                                        <Pencil size={16} />
+                                      </Button>
+                                    )}
+                                  </Group>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
                       </Table>
                     </div>
                   </Card>
