@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
   Title, Table, Container, Loader, ScrollArea, Badge, Group,
-  TextInput, Tooltip, Card, Box, Text
+  TextInput, Tooltip, Card, Box, Select
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
@@ -391,33 +391,27 @@ if (modalPerdida) {
   }}
 >
   <Combobox.Target>
-    <div>
-      <Text size="sm" fw={500} mb={4}>
-        Motivo da Venda Perdida
-      </Text>
-      <Input
-        placeholder="Selecione"
-        pointer
-        onClick={() => comboboxPerda.toggleDropdown()}
-        value={
-          motivoPerda
-            ? motivosPerda.find((e) => e.value === motivoPerda)?.label
-            : 'Selecione'
-        }
-        readOnly
-        size="xs"
-        styles={{
-          input: {
-            backgroundColor: '#fff',
-            fontWeight: 500,
-            textAlign: 'center',
-            borderRadius: 6,
-            minWidth: 200,
-            cursor: 'pointer',
-          },
-        }}
-      />
-    </div>
+    <Input
+      pointer
+      onClick={() => comboboxPerda.toggleDropdown()}
+      value={
+        motivoPerda
+          ? motivosPerda.find((e) => e.value === motivoPerda)?.label
+          : 'Selecione'
+      }
+      readOnly
+      size="xs"
+      styles={{
+        input: {
+          backgroundColor: '#fff',
+          fontWeight: 500,
+          textAlign: 'center',
+          borderRadius: 6,
+          minWidth: 200,
+          cursor: 'pointer',
+        },
+      }}
+    />
   </Combobox.Target>
 
   <Combobox.Dropdown>
@@ -430,8 +424,6 @@ if (modalPerdida) {
     </Combobox.Options>
   </Combobox.Dropdown>
 </Combobox>
-
-
 
 
 
@@ -681,27 +673,30 @@ style={{
     comboStatus.closeDropdown();
   }}
 >
-  <Combobox.Target>
-    <Input
-      pointer
-      onClick={() => comboStatus.toggleDropdown()}
-      value={o.etapa}
-      readOnly
-      size="xs"
-      styles={{
-        input: {
-          backgroundColor: getStatusColor(o.etapa),
-          color: 'white',
-          fontWeight: 600,
-          textAlign: 'center',
-          borderRadius: 6,
-          minWidth: 120,
-          cursor: 'pointer',
-        },
-      }}
-    />
-  </Combobox.Target>
-
+<Select
+  value={o.etapa}
+  onChange={(value) => {
+    if (value === 'perdida') {
+      setModalPerdida(true);
+      setIdPerdida(o.id);
+    } else if (value) {
+      handleStatusChange(o.id, value);
+    }
+  }}
+  data={etapaOptions}
+  size="xs"
+  styles={{
+    input: {
+      backgroundColor: getStatusColor(o.etapa),
+      color: 'white',
+      fontWeight: 600,
+      textAlign: 'center',
+      borderRadius: 6,
+      minWidth: 120,
+      cursor: 'pointer',
+    }
+  }}
+/>
   <Combobox.Dropdown>
     <Combobox.Options>
       {etapaOptions.map((item) => (
