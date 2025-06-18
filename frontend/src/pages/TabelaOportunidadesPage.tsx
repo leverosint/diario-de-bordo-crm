@@ -545,7 +545,7 @@ const confirmarVendaPerdida = async () => {
 >
   {pendentesMovimentacao.map((o) => (
     <Card key={o.id} withBorder mb="sm">
-      <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className={styles.centralizado}>
         <strong>{o.parceiro_nome}</strong>
         <small>ID: {o.parceiro}</small>
         <strong>{o.dias_sem_movimentacao} dias sem movimentação</strong>
@@ -580,46 +580,47 @@ const confirmarVendaPerdida = async () => {
 
 
       {modalAberto && idMudandoStatus !== null && (
-        <Modal
-          opened={modalAberto}
-          onClose={() => setModalAberto(false)}
-          title="Marcar como Venda Perdida"
-          centered
-          radius="md"
-          withinPortal={false}  // <-- ADICIONE ISSO
-          overlayProps={{
-            backgroundOpacity: 0.55,
-            blur: 4,
-          }}
-        >
-
-
-          <Select
-            label="Motivo da Venda Perdida"
-            placeholder="Selecione"
-            data={[
-              { value: 'preco', label: 'Preço' },
-              { value: 'prazo', label: 'Prazo' },
-              { value: 'concorrente', label: 'Fechou com concorrente' },
-              { value: 'fora_perfil', label: 'Fora de perfil' },
-              { value: 'nao_responde', label: 'Cliente não respondeu' },
-              { value: 'outro', label: 'Outro' },
-            ]}
-            value={motivoPerda}
-            onChange={(value) => setMotivoPerda(value ?? '')}
-            required
-            clearable
-          />
-
-          <Group justify="flex-end" mt="md">
-            <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
-              Cancelar
-            </Button>
-            <Button color="green" onClick={confirmarVendaPerdida}>
-              Confirmar
-            </Button>
-          </Group>
-        </Modal>
+     <Modal
+     opened={modalAberto}
+     onClose={() => setModalAberto(false)}
+     title="Marcar como Venda Perdida"
+     centered
+     radius="md"
+     withinPortal={false}
+     overlayProps={{
+       backgroundOpacity: 0.55,
+       blur: 4,
+     }}
+   >
+     <div className={styles.centralizado}>
+       <Select
+         label="Motivo da Venda Perdida"
+         placeholder="Selecione"
+         data={[
+           { value: 'preco', label: 'Preço' },
+           { value: 'prazo', label: 'Prazo' },
+           { value: 'concorrente', label: 'Fechou com concorrente' },
+           { value: 'fora_perfil', label: 'Fora de perfil' },
+           { value: 'nao_responde', label: 'Cliente não respondeu' },
+           { value: 'outro', label: 'Outro' },
+         ]}
+         value={motivoPerda}
+         onChange={(value) => setMotivoPerda(value ?? '')}
+         required
+         clearable
+       />
+     </div>
+   
+     <Group justify="center" mt="md">
+       <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
+         Cancelar
+       </Button>
+       <Button color="green" onClick={confirmarVendaPerdida}>
+         Confirmar
+       </Button>
+     </Group>
+   </Modal>
+   
 
 
 
