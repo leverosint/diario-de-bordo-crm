@@ -49,36 +49,13 @@
     margin-top: 20px;
   }
   
-  /* Mantine Select dropdown - garante que o dropdown fique na frente */
+  /* Mantine Select dropdown sempre na frente */
   .mantine-Select-dropdown {
-    z-index: 10000 !important;
-    position: absolute !important; /* reforça posicionamento correto */
+    z-index: 100000 !important;
   }
   
-  /* Mantine DatePickerInput ajustes */
-  
-  /* Controla o tamanho do ícone de calendário */
-  .mantine-DatePickerInput-rightSection {
-    width: 24px !important;
-    height: 24px !important;
-    svg {
-      width: 20px !important;
-      height: 20px !important;
-    }
-  }
-  
-  /* Ajusta o container do DatePicker para evitar overflow estranho */
-  .mantine-DatePickerInput-wrapper {
-    max-width: 100%;
-  }
-  
-  /* Opcional: evita que o dropdown do calendário fique escondido */
+  /* Mantine Popover dropdown (ex: calendário) sempre na frente */
   .mantine-Popover-dropdown {
-    z-index: 10000 !important;
-  }
-  
-  /* Se usar popover em dropdown de Select, ajustar o z-index */
-  .mantine-Popover-root {
-    z-index: 10000 !important;
+    z-index: 100000 !important;
   }
   
