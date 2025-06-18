@@ -207,52 +207,50 @@ export default function TabelaOportunidadesPage() {
     setObservacaoEdit('');
   };
 
-
-  {mostrarModalBloqueio && (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modalContent}>
-        <Title order={3} mb="md">🚨 Oportunidades Sem Movimentação (≥ 10 dias)</Title>
-        <p>Você precisa movimentar essas oportunidades antes de acessar a tabela.</p>
+// 🔥 Adiciona isso aqui — antes do return (
+  if (mostrarModalBloqueio) {
+    return (
+      <div className={styles.modalOverlay}>
+        <div className={styles.modalContent}>
+          <Title order={3} mb="md">🚨 Oportunidades Sem Movimentação (≥ 10 dias)</Title>
+          <p>Você precisa movimentar essas oportunidades antes de acessar a tabela.</p>
   
-        <div className={styles.bloqueioLista}>
-          <Table striped highlightOnHover withTableBorder>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Parceiro</th>
-                <th>Valor</th>
-                <th>Sem Movimentação</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bloqueados.map((o) => (
-                <tr key={o.id}>
-                  <td>{o.id}</td>
-                  <td>{o.parceiro_nome}</td>
-                  <td>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                  <td>{o.dias_sem_movimentacao} dias</td>
-                  <td>
-                    <Select
-                      value={o.etapa}
-                      onChange={(value) => value && handleStatusChange(o.id, value)}
-                      data={etapaOptions}
-                      size="xs"
-                    />
-                  </td>
+          <div className={styles.bloqueioLista}>
+            <Table striped highlightOnHover withTableBorder>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Parceiro</th>
+                  <th>Valor</th>
+                  <th>Sem Movimentação</th>
+                  <th>Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </Table>
+              </thead>
+              <tbody>
+                {bloqueados.map((o) => (
+                  <tr key={o.id}>
+                    <td>{o.id}</td>
+                    <td>{o.parceiro_nome}</td>
+                    <td>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                    <td>{o.dias_sem_movimentacao} dias</td>
+                    <td>
+                      <Select
+                        value={o.etapa}
+                        onChange={(value) => value && handleStatusChange(o.id, value)}
+                        data={etapaOptions}
+                        size="xs"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
         </div>
       </div>
-    </div>
-  )}
+    );
+  }
   
-  
-
-
-
 
 
 
