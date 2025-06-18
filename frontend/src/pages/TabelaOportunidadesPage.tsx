@@ -536,51 +536,53 @@ const confirmarVendaPerdida = async () => {
         )}
       </Container>
 
-      {popupAberto && (
-  <>
-    <div className={styles.modalOverlay}></div>
+      <Modal
+  opened={popupAberto}
+  onClose={() => {}}
+  withCloseButton={false}
+  title="⚠️ Oportunidades sem movimentação"
+  centered
+  radius="md"
+  overlayProps={{
+    backgroundOpacity: 0.4,
+    blur: 4,
+  }}
+  withinPortal={false} // ✅ Faz com que o modal fique dentro do layout, respeitando a sidebar
+  zIndex={500}
+>
+  {pendentesMovimentacao.map((o) => (
+    <Card key={o.id} withBorder mb="sm">
+      <div className={styles.centralizado}>
+        <strong>{o.parceiro_nome}</strong>
+        <small>ID: {o.parceiro}</small>
+        <strong>{o.dias_sem_movimentacao} dias sem movimentação</strong>
+        <p>
+          Valor:{' '}
+          {Number(o.valor).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+          })}
+        </p>
+        <p>Observação: {o.observacao || '-'}</p>
+      </div>
 
-    <div className={styles.modalContainer}>
-      <Title order={4} style={{ textAlign: 'center', marginBottom: 8 }}>
-        ⚠️ Oportunidades sem movimentação
-      </Title>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+        <Select
+          placeholder="Mudar etapa"
+          data={etapaOptions}
+          value={o.etapa}
+          onChange={(value) => value && handleStatusChangePopup(o.id, value)}
+        />
+      </div>
+    </Card>
+  ))}
 
-      {pendentesMovimentacao.map((o) => (
-        <Card key={o.id} withBorder mb="sm">
-          <div className={styles.centralizado}>
-            <strong>{o.parceiro_nome}</strong>
-            <small>ID: {o.parceiro}</small>
-            <strong>{o.dias_sem_movimentacao} dias sem movimentação</strong>
-            <p>
-              Valor:{' '}
-              {Number(o.valor).toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-              })}
-            </p>
-            <p>Observação: {o.observacao || '-'}</p>
-          </div>
-
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
-            <Select
-              placeholder="Mudar etapa"
-              data={etapaOptions}
-              value={o.etapa}
-              onChange={(value) => value && handleStatusChangePopup(o.id, value)}
-            />
-          </div>
-        </Card>
-      ))}
-
-      {pendentesMovimentacao.length === 0 && (
-        <Button fullWidth onClick={() => setPopupAberto(false)}>
-          Fechar
-        </Button>
-      )}
-    </div>
-  </>
-)}
-
+  {pendentesMovimentacao.length === 0 && (
+    <Button fullWidth onClick={() => setPopupAberto(false)}>
+      Fechar
+    </Button>
+  )}
+</Modal>
 
 
 
