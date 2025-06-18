@@ -543,10 +543,10 @@ const confirmarVendaPerdida = async () => {
 >
   {pendentesMovimentacao.map((o) => (
     <Card key={o.id} withBorder mb="sm">
-      <div style={{ textAlign: 'center' }}>
-        <strong>{o.parceiro_nome}</strong> <br />
-        <small>ID: {o.parceiro}</small> <br />
-        <strong>{o.dias_sem_movimentacao} dias sem movimentação</strong> <br />
+      <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <strong>{o.parceiro_nome}</strong>
+        <small>ID: {o.parceiro}</small>
+        <strong>{o.dias_sem_movimentacao} dias sem movimentação</strong>
         <p>
           Valor:{' '}
           {Number(o.valor).toLocaleString('pt-BR', {
@@ -557,14 +557,14 @@ const confirmarVendaPerdida = async () => {
         <p>Observação: {o.observacao || '-'}</p>
       </div>
 
-      <Group justify="center" mt="xs">
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
         <Select
           placeholder="Mudar etapa"
           data={etapaOptions}
           value={o.etapa}
           onChange={(value) => value && handleStatusChangePopup(o.id, value)}
         />
-      </Group>
+      </div>
     </Card>
   ))}
 
