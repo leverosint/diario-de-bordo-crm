@@ -34,6 +34,20 @@ table td {
   vertical-align: middle;
 }
 
+.mantine-Modal-root {
+  z-index: 9999 !important;
+}
+
+.mantine-Modal-overlay {
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+body {
+  overflow: auto !important;
+}
+
+
 
 .centeredCell {
   text-align: center;
