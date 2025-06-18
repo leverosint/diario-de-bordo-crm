@@ -64,14 +64,19 @@ export default function TabelaOportunidadesPage() {
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+  
         setDados(res.data);
   
-        // 🔥 Verifica oportunidades com 10 ou mais dias sem movimentação
         const oportunidadesBloqueadas = res.data.filter(
-          (o: Oportunidade) => o.dias_sem_movimentacao !== undefined && o.dias_sem_movimentacao >= 10
+          (o: Oportunidade) => (o.dias_sem_movimentacao ?? 0) >= 10
         );
-        setBloqueados(oportunidadesBloqueadas);
-        setMostrarModalBloqueio(oportunidadesBloqueadas.length > 0);
+  
+        if (oportunidadesBloqueadas.length > 0) {
+          setBloqueados(oportunidadesBloqueadas);
+          setMostrarModalBloqueio(true);
+        } else {
+          setMostrarModalBloqueio(false);
+        }
   
       } catch (err) {
         console.error('Erro ao buscar oportunidades:', err);
@@ -81,6 +86,7 @@ export default function TabelaOportunidadesPage() {
     };
     fetchDados();
   }, [token]);
+  
   
   const handleStatusChange = async (id: number, novaEtapa: string | null) => {
     if (!novaEtapa) return;
@@ -93,21 +99,24 @@ export default function TabelaOportunidadesPage() {
   
       setDados(prev =>
         prev.map(o =>
-          o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() } : o
+          o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString(), dias_sem_movimentacao: 0 } : o
         )
       );
   
-      // 🔥 Atualiza bloqueados → Remove da lista se foi movimentado
-      setBloqueados(prev => {
-        const novos = prev.filter(o => o.id !== id);
-        if (novos.length === 0) setMostrarModalBloqueio(false);
-        return novos;
-      });
+      const novosBloqueados = dados
+        .map(o => (o.id === id ? { ...o, etapa: novaEtapa, dias_sem_movimentacao: 0 } : o))
+        .filter(o => (o.dias_sem_movimentacao ?? 0) >= 10);
+  
+      setBloqueados(novosBloqueados);
+      if (novosBloqueados.length === 0) {
+        setMostrarModalBloqueio(false);
+      }
   
     } catch (err) {
       console.error('Erro ao atualizar etapa:', err);
     }
   };
+  
   
 
   const dadosFiltrados = useMemo(() => {
@@ -240,9 +249,13 @@ export default function TabelaOportunidadesPage() {
     </div>
   )}
   
-  return (
-    <SidebarGestor tipoUser={tipoUser}>
   
+
+
+
+
+
+
 
   return (
     <SidebarGestor tipoUser={tipoUser}>

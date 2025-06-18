@@ -3,7 +3,6 @@ from django.contrib.auth.models import AbstractUser
 from datetime import datetime, timedelta
 from django.conf import settings  # para pegar o AUTH_USER_MODEL
 from django.utils import timezone
-from django.db import models
 
 
 # Canal de venda associado a usuários e parceiros
