@@ -487,21 +487,7 @@ export default function TabelaOportunidadesPage() {
         )}
       </Container>
 
-      {modalAberto && idMudandoStatus !== null && (
       <Modal
-      opened={modalAberto}
-      onClose={() => setModalAberto(false)}
-      title="Marcar como Venda Perdida"
-      centered
-      radius="md"
-      withinPortal={false}  // <-- ADICIONE ISSO
-      overlayProps={{
-        backgroundOpacity: 0.55,
-        blur: 4,
-      }}
-    >
-
-<Modal
   opened={popupAberto}
   onClose={() => {}}
   withCloseButton={false}
@@ -536,6 +522,21 @@ export default function TabelaOportunidadesPage() {
     </Button>
   )}
 </Modal>
+
+
+      {modalAberto && idMudandoStatus !== null && (
+      <Modal
+      opened={modalAberto}
+      onClose={() => setModalAberto(false)}
+      title="Marcar como Venda Perdida"
+      centered
+      radius="md"
+      withinPortal={false}  // <-- ADICIONE ISSO
+      overlayProps={{
+        backgroundOpacity: 0.55,
+        blur: 4,
+      }}
+    >
 
     
   <Select
