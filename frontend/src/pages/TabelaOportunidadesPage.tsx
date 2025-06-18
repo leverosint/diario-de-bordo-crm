@@ -155,34 +155,32 @@ const handleStatusChangePopup = (id: number, novaEtapa: string | null) => {
   if (!novaEtapa) return;
 
   if (novaEtapa === 'perdida') {
-    abrirModalPerda(id); // 🔥 Usa o mesmo modal da perda
+    abrirModalPerda(id);
   } else {
+    const agora = new Date().toISOString();
     axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
       etapa: novaEtapa,
-      data_etapa: new Date().toISOString(),
-      data_status: new Date().toISOString(),
+      data_etapa: agora,
+      data_status: agora,
     }, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(() => {
       setDados(prev =>
         prev.map(o =>
           o.id === id
-            ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString(), dias_sem_movimentacao: 0 }
+            ? { ...o, etapa: novaEtapa, data_status: agora, data_etapa: agora, dias_sem_movimentacao: 0 }
             : o
         )
       );
 
-      const atualizado = pendentesMovimentacao.filter(o => o.id !== id);
-      setPendentesMovimentacao(atualizado);
-      
-      if (atualizado.length === 0) {
-        setPopupAberto(false);
-      }
-      
+      setPendentesMovimentacao((prev) => {
+        const atualizado = prev.filter((o) => o.id !== id);
+        if (atualizado.length === 0) {
+          setPopupAberto(false);
+        }
+        return atualizado;
+      });
 
-      if (pendentesMovimentacao.length - 1 === 0) {
-        setPopupAberto(false);
-      }
     }).catch(err => {
       console.error('Erro ao atualizar etapa:', err);
       alert('Erro ao atualizar etapa');
