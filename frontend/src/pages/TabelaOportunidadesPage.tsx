@@ -37,6 +37,8 @@ export default function TabelaOportunidadesPage() {
   const [observacaoEdit, setObservacaoEdit] = useState<string>('');
   const [modalAberto, setModalAberto] = useState(false);
   const [idMudandoStatus, setIdMudandoStatus] = useState<number | null>(null);
+  const [popupAberto, setPopupAberto] = useState(false);
+  const [pendentesMovimentacao, setPendentesMovimentacao] = useState<Oportunidade[]>([]);
 
   const [motivoPerda, setMotivoPerda] = useState('');
 
@@ -82,6 +84,17 @@ export default function TabelaOportunidadesPage() {
     };
     fetchDados();
   }, [token]);
+  useEffect(() => {
+    const oportunidadesPendentes = dados.filter(o =>
+      o.dias_sem_movimentacao !== undefined &&
+      o.dias_sem_movimentacao >= 10
+    );
+  
+    if (oportunidadesPendentes.length > 0) {
+      setPendentesMovimentacao(oportunidadesPendentes);
+      setPopupAberto(true);
+    }
+  }, [dados]);
 
   const handleStatusChange = (id: number, novaEtapa: string | null) => {
     if (!novaEtapa) return;
@@ -107,6 +120,37 @@ export default function TabelaOportunidadesPage() {
     }
   };
 
+
+
+  const handleStatusChangePopup = (id: number, novaEtapa: string | null) => {
+    if (!novaEtapa) return;
+  
+    axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
+      etapa: novaEtapa,
+    }, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(() => {
+      setDados(prev =>
+        prev.map(o =>
+          o.id === id
+            ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString(), dias_sem_movimentacao: 0 }
+            : o
+        )
+      );
+  
+      setPendentesMovimentacao(prev => prev.filter(o => o.id !== id));
+  
+      if (pendentesMovimentacao.length - 1 === 0) {
+        setPopupAberto(false);
+      }
+    }).catch(err => {
+      console.error('Erro ao atualizar etapa:', err);
+      alert('Erro ao atualizar etapa');
+    });
+  };
+  
+
+
   const confirmarVendaPerdida = async () => {
     if (!idMudandoStatus) {
       alert('ID inválido, tente novamente');
@@ -117,6 +161,7 @@ export default function TabelaOportunidadesPage() {
       alert('Por favor, preencha o motivo da venda perdida.');
       return;
     }
+
 
     try {
       await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`, {
@@ -455,6 +500,43 @@ export default function TabelaOportunidadesPage() {
         blur: 4,
       }}
     >
+
+<Modal
+  opened={popupAberto}
+  onClose={() => {}}
+  withCloseButton={false}
+  title="⚠️ Oportunidades sem movimentação"
+  centered
+  radius="md"
+  overlayProps={{
+    backgroundOpacity: 0.55,
+    blur: 4,
+  }}
+>
+  {pendentesMovimentacao.map((o) => (
+    <Card key={o.id} withBorder mb="sm">
+      <Group justify="space-between">
+        <div>
+          <strong>{o.parceiro_nome}</strong> <br />
+          {o.dias_sem_movimentacao} dias sem movimentação
+        </div>
+        <Select
+          placeholder="Mudar etapa"
+          data={etapaOptions}
+          value={o.etapa}
+          onChange={(value) => value && handleStatusChangePopup(o.id, value)}
+        />
+      </Group>
+    </Card>
+  ))}
+
+  {pendentesMovimentacao.length === 0 && (
+    <Button fullWidth onClick={() => setPopupAberto(false)}>
+      Fechar
+    </Button>
+  )}
+</Modal>
+
     
   <Select
     label="Motivo da Venda Perdida"
@@ -482,6 +564,7 @@ export default function TabelaOportunidadesPage() {
     </Button>
   </Group>
 </Modal>
+
 
 
 )}
