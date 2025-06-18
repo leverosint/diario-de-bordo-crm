@@ -447,7 +447,6 @@ export default function TabelaOportunidadesPage() {
   onClose={() => setModalAberto(false)}
   title="Marcar como Venda Perdida"
   centered
-  withinPortal={false}
   radius="md"
   overlayProps={{
     backgroundOpacity: 0.55,
