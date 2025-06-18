@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
   Title, Table, Container, Loader, ScrollArea, Badge, Group,
-  TextInput, Button, Tooltip, Card, Box, Select, Portal
+  TextInput, Tooltip, Card, Box, Text
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
@@ -11,6 +11,9 @@ import SidebarGestor from '../components/SidebarGestor';
 import type { DateValue } from '@mantine/dates';
 import { Pencil, Save, X } from 'lucide-react';
 import styles from './TabelaOportunidadesPage.module.css'; // ✅ CSS
+import { Combobox, useCombobox, Input, Button } from '@mantine/core';
+
+
 
 interface Oportunidade {
   id: number;
@@ -30,6 +33,9 @@ export default function TabelaOportunidadesPage() {
   const [idPerdida, setIdPerdida] = useState<number | null>(null);
   const [motivoPerda, setMotivoPerda] = useState<string | null>(null);
   const [outroMotivo, setOutroMotivo] = useState<string>('');
+  const combobox = useCombobox();
+  const comboboxPerda = useCombobox();
+  const comboboxFiltro = useCombobox();
 
   const [dados, setDados] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -55,7 +61,7 @@ export default function TabelaOportunidadesPage() {
     { value: 'pedido', label: 'Pedido Realizado' },
     { value: 'perdida', label: 'Venda Perdida' },
   ];
-
+  
   const motivosPerda = [
     { value: 'preco', label: 'Preço' },
     { value: 'prazo', label: 'Prazo de entrega' },
@@ -73,6 +79,7 @@ export default function TabelaOportunidadesPage() {
     pedido: 'green',
     perdida: 'red',
   }[etapa] || 'gray');
+  
 
   useEffect(() => {
     const fetchDados = async () => {
@@ -310,12 +317,48 @@ if (mostrarModalBloqueio) {
                   <td>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                   <td>{o.dias_sem_movimentacao} dias</td>
                   <td>
-                    <Select
-                      value={o.etapa}
-                      onChange={(value) => value && handleStatusChange(o.id, value)}
-                      data={etapaOptions}
-                      size="xs"
-                    />
+                  <Combobox
+  store={combobox}
+  withinPortal
+  onOptionSubmit={(value) => {
+    handleStatusChange(o.id, value);
+    combobox.closeDropdown();
+  }}
+>
+  <Combobox.Target>
+    <Input
+      pointer
+      onClick={() => combobox.toggleDropdown()}
+      value={
+        etapaOptions.find((e) => e.value === o.etapa)?.label ?? o.etapa
+      }
+      readOnly
+      size="xs"
+      styles={{
+        input: {
+          backgroundColor: getStatusColor(o.etapa),
+          color: 'white',
+          fontWeight: 600,
+          textAlign: 'center',
+          borderRadius: 6,
+          minWidth: 120,
+          cursor: 'pointer',
+        },
+      }}
+    />
+  </Combobox.Target>
+
+  <Combobox.Dropdown>
+    <Combobox.Options>
+      {etapaOptions.map((item) => (
+        <Combobox.Option key={item.value} value={item.value}>
+          {item.label}
+        </Combobox.Option>
+      ))}
+    </Combobox.Options>
+  </Combobox.Dropdown>
+</Combobox>
+
                   </td>
                 </tr>
               ))}
@@ -336,14 +379,53 @@ if (modalPerdida) {
         <Title order={3} mb="md">🛑 Marcar como Venda Perdida</Title>
         <p>Selecione o motivo da venda perdida:</p>
 
-        <Select
-  label="Motivo da Venda Perdida"
-  placeholder="Selecione"
-  data={motivosPerda}
-  value={motivoPerda}
-  onChange={setMotivoPerda}
-  style={{ marginBottom: 16 }}
-/>
+        <Combobox
+  store={comboboxPerda}
+  withinPortal
+  onOptionSubmit={(value) => {
+    setMotivoPerda(value);
+    comboboxPerda.closeDropdown();
+  }}
+>
+  <Combobox.Target>
+    <div>
+      <Text size="sm" fw={500} mb={4}>Motivo da Venda Perdida</Text>
+      <Input
+        placeholder="Selecione"
+        pointer
+        onClick={() => comboboxPerda.toggleDropdown()}
+        value={
+          motivoPerda
+            ? motivosPerda.find((e) => e.value === motivoPerda)?.label
+            : 'Selecione'
+        }
+        readOnly
+        size="xs"
+        styles={{
+          input: {
+            backgroundColor: '#fff',
+            fontWeight: 500,
+            textAlign: 'center',
+            borderRadius: 6,
+            minWidth: 200,
+            cursor: 'pointer',
+          },
+        }}
+      />
+    </div>
+  </Combobox.Target>
+
+  <Combobox.Dropdown>
+    <Combobox.Options>
+      {motivosPerda.map((item) => (
+        <Combobox.Option key={item.value} value={item.value}>
+          {item.label}
+        </Combobox.Option>
+      ))}
+    </Combobox.Options>
+  </Combobox.Dropdown>
+</Combobox>
+
 
 
 
@@ -413,14 +495,53 @@ style={{
             value={nomeFiltro}
             onChange={(e) => setNomeFiltro(e.currentTarget.value)}
           />
-          <Select
-            label="Status"
-            placeholder="Todos"
-            value={etapaFiltro}
-            onChange={setEtapaFiltro}
-            data={etapaOptions}
-            clearable
-          />
+<Combobox
+  store={comboboxFiltro}
+  withinPortal
+  onOptionSubmit={(value) => {
+    setEtapaFiltro(value === 'todos' ? null : value);
+    comboboxFiltro.closeDropdown();
+  }}
+>
+  <Combobox.Target>
+    <Input
+      pointer
+      onClick={() => comboboxFiltro.toggleDropdown()}
+      value={
+        etapaFiltro
+          ? etapaOptions.find((e) => e.value === etapaFiltro)?.label
+          : 'Todos'
+      }
+      readOnly
+      size="xs"
+      styles={{
+        input: {
+          backgroundColor: '#fff',
+          fontWeight: 500,
+          textAlign: 'center',
+          borderRadius: 6,
+          minWidth: 150,
+          cursor: 'pointer',
+        },
+      }}
+    />
+  </Combobox.Target>
+
+  <Combobox.Dropdown>
+    <Combobox.Options>
+      <Combobox.Option value="todos">Todos</Combobox.Option>
+      {etapaOptions.map((item) => (
+        <Combobox.Option key={item.value} value={item.value}>
+          {item.label}
+        </Combobox.Option>
+      ))}
+    </Combobox.Options>
+  </Combobox.Dropdown>
+</Combobox>
+
+
+
+
           {[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
             { label: 'Data fim', value: dataFim, onChange: setDataFim }].map((item, idx) => (
             <Box key={idx} style={{ minWidth: 160 }}>
@@ -432,7 +553,9 @@ style={{
   dropdownType="popover"
   clearable
   rightSection={null}
+  popoverProps={{ withinPortal: true, zIndex: 9999 }} // 🔥 Isso resolve o z-index
 />
+
 
             </Box>
           ))}
@@ -445,45 +568,45 @@ style={{
 
               return (
                 <Box key={status} mt="xl">
-                  <Card
-                    withBorder
-                    shadow="sm"
-                    radius="lg"
-                    p="xl"
-                    mb="lg"
-                    style={{
-                      borderLeft: `8px solid ${getStatusColor(status)}`,
-                      backgroundColor: '#f9f9f9',
-                      width: '100%',
-                    }}
-                  >
-                    <Group
-style={{
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  marginBottom: '0.5rem',  // mb="sm"
-}}
+                  // No seu map de agrupadoPorStatus:
+<Card
+  withBorder
+  shadow="sm"
+  radius="lg"
+  p="xl"
+  mb="lg"
+  style={{
+    borderLeft: `8px solid ${getStatusColor(status)}`,
+    backgroundColor: '#f9f9f9',
+    width: '100%',
+  }}
 >
+  <Group
+    style={{
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: '0.5rem',
+    }}
+  >
+    <div>
+      <Title order={3}>{status.charAt(0).toUpperCase() + status.slice(1)}</Title>
+      <p style={{ fontSize: '0.9rem', color: '#555' }}>
+        Valor total: {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+      </p>
+    </div>
+    <Group>
+      <Badge color={getStatusColor(status)} variant="light">
+        {lista.length} oportunidades
+      </Badge>
+      <Tooltip label="Tempo médio até status" withArrow>
+        <Badge color="gray" variant="outline">
+          ⏱ {calcularTempoMedio(lista)} dias
+        </Badge>
+      </Tooltip>
+    </Group>
+  </Group>
 
-                      <div>
-                        <Title order={3}>
-                          {status.charAt(0).toUpperCase() + status.slice(1)}
-                        </Title>
-                        <p style={{ fontSize: '0.9rem', color: '#555' }}>
-                          Valor total: {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </p>
-                      </div>
-                      <Group>
-                        <Badge color={getStatusColor(status)} variant="light">
-                          {lista.length} oportunidades
-                        </Badge>
-                        <Tooltip label="Tempo médio até status" withArrow>
-                          <Badge color="gray" variant="outline">
-                            ⏱ {calcularTempoMedio(lista)} dias
-                          </Badge>
-                        </Tooltip>
-                      </Group>
-                    </Group>
+
 
                     <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                       <Table striped highlightOnHover withColumnBorders>
@@ -537,29 +660,53 @@ style={{
                                 </td>
                                 <td className={styles.center}>
                                   <Group gap="xs" justify="center">
-                                  <Portal>
-  <Select
-    value={o.etapa}
-    onChange={(value) => {
-      if (value === 'perdida') {
-        setModalPerdida(true);
-        setIdPerdida(o.id);
-        return;
-      }
-      value && handleStatusChange(o.id, value);
-    }}
-    data={etapaOptions}
-    size="xs"
-    style={{
-      backgroundColor: getStatusColor(o.etapa),
-      color: 'white',
-      fontWeight: 600,
-      textAlign: 'center',
-      borderRadius: 6,
-      minWidth: 120,
-    }}
-  />
-</Portal>
+                                  
+
+<Combobox
+  store={combobox}
+  withinPortal
+  onOptionSubmit={(value) => {
+    if (value === 'perdida') {
+      setModalPerdida(true);
+      setIdPerdida(o.id);
+    } else {
+      handleStatusChange(o.id, value);
+    }
+    combobox.closeDropdown();
+  }}
+>
+  <Combobox.Target>
+    <Input
+      pointer
+      onClick={() => combobox.toggleDropdown()}
+      value={o.etapa}
+      readOnly
+      size="xs"
+      styles={{
+        input: {
+          backgroundColor: getStatusColor(o.etapa),
+          color: 'white',
+          fontWeight: 600,
+          textAlign: 'center',
+          borderRadius: 6,
+          minWidth: 120,
+          cursor: 'pointer',
+        },
+      }}
+    />
+  </Combobox.Target>
+
+  <Combobox.Dropdown>
+    <Combobox.Options>
+      {etapaOptions.map((item) => (
+        <Combobox.Option value={item.value} key={item.value}>
+          {item.label}
+        </Combobox.Option>
+      ))}
+    </Combobox.Options>
+  </Combobox.Dropdown>
+</Combobox>
+
 
 
 
