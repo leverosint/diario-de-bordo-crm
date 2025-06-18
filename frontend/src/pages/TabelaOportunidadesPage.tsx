@@ -172,7 +172,13 @@ const handleStatusChangePopup = (id: number, novaEtapa: string | null) => {
         )
       );
 
-      setPendentesMovimentacao(prev => prev.filter(o => o.id !== id));
+      const atualizado = pendentesMovimentacao.filter(o => o.id !== id);
+      setPendentesMovimentacao(atualizado);
+      
+      if (atualizado.length === 0) {
+        setPopupAberto(false);
+      }
+      
 
       if (pendentesMovimentacao.length - 1 === 0) {
         setPopupAberto(false);
