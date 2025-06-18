@@ -121,10 +121,11 @@ export default function TabelaOportunidadesPage() {
     try {
       await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`, {
         etapa: 'perdida',
-        observacao: motivoPerda,
-      }, {
+        motivo_venda_perdida: motivoPerda,  // ✅ Envia para o backend
+    }, {
         headers: { Authorization: `Bearer ${token}` },
-      });
+    });
+    
 
 
       setDados(prev =>

@@ -162,6 +162,12 @@ class Oportunidade(models.Model):
 
     etapa = models.CharField(max_length=20, choices=ETAPA_CHOICES, default='oportunidade')
     observacao = models.TextField(blank=True, null=True)
+    motivo_venda_perdida = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name="Motivo da Venda Perdida"
+    )
     data_criacao = models.DateTimeField(auto_now_add=True)
     data_etapa = models.DateTimeField(null=True, blank=True)  # NOVO CAMPO
     data_status = models.DateTimeField(null=True, blank=True)

@@ -106,6 +106,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             'usuario_nome',
             'valor',
             'observacao',
+            'motivo_venda_perdida',  # ✅ 🔥 NOVO CAMPO
             'etapa',
             'data_criacao',
             'data_status',
@@ -113,6 +114,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             'dias_sem_movimentacao',
             'gatilho_extra',
         ]
+
         read_only_fields = ['data_criacao', 'data_etapa', 'usuario']
 
     def get_dias_sem_movimentacao(self, obj):
