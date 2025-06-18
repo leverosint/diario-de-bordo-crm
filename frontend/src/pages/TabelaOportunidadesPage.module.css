@@ -49,3 +49,8 @@
     margin-top: 20px;
   }
   
+  /* Garante que o dropdown do Select fique na frente, com z-index alto */
+.mantine-Select-dropdown {
+    z-index: 10000 !important;
+  }
+  
