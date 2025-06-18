@@ -3,6 +3,8 @@ from django.contrib.auth.models import AbstractUser
 from datetime import datetime, timedelta
 from django.conf import settings  # para pegar o AUTH_USER_MODEL
 from django.utils import timezone
+from django.db import models
+
 
 # Canal de venda associado a usuários e parceiros
 class CanalVenda(models.Model):
@@ -149,28 +151,46 @@ class Interacao(models.Model):
 
 class Oportunidade(models.Model):
     ETAPA_CHOICES = [
-    ('oportunidade', 'Oportunidade'),
-    ('orcamento', 'Orçamento'),
-    ('aguardando', 'Aguardando Pagamento'),  # 👈 adicionado aqui
-    ('pedido', 'Pedido'),
-    ('perdida', 'Venda Perdida'),
-]
+        ('oportunidade', 'Oportunidade'),
+        ('orcamento', 'Orçamento'),
+        ('aguardando', 'Aguardando Pagamento'),
+        ('pedido', 'Pedido'),
+        ('perdida', 'Venda Perdida'),
+    ]
+
+    MOTIVO_PERDA_CHOICES = [
+        ('preco', 'Preço'),
+        ('prazo', 'Prazo de entrega'),
+        ('concorrente', 'Fechou com concorrente'),
+        ('fora_perfil', 'Fora de perfil'),
+        ('nao_respondeu', 'Cliente não respondeu'),
+        ('outro', 'Outro'),
+    ]
 
     parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='oportunidades')
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='oportunidades')
     valor = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-
     etapa = models.CharField(max_length=20, choices=ETAPA_CHOICES, default='oportunidade')
     observacao = models.TextField(blank=True, null=True)
     data_criacao = models.DateTimeField(auto_now_add=True)
-    data_etapa = models.DateTimeField(null=True, blank=True)  # NOVO CAMPO
+    data_etapa = models.DateTimeField(null=True, blank=True)
     data_status = models.DateTimeField(null=True, blank=True)
-        # 🔥 Adicionar isso
-    gatilho_extra = models.CharField(max_length=255, null=True, blank=True)  # ✅
+    gatilho_extra = models.CharField(max_length=255, null=True, blank=True)
 
+    motivo_venda_perdida = models.CharField(
+        max_length=100,
+        choices=MOTIVO_PERDA_CHOICES,
+        blank=True,
+        null=True
+    )
+    outro_motivo = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Preencher se selecionou 'Outro'"
+    )
 
     def save(self, *args, **kwargs):
-        # se for uma nova ou a etapa foi alterada, atualiza a data_etapa
         if not self.pk:
             self.data_etapa = timezone.now()
         else:
@@ -178,13 +198,19 @@ class Oportunidade(models.Model):
             if self.etapa != original.etapa:
                 self.data_etapa = timezone.now()
 
-        super().save(*args, **kwargs)
+        # 🔥 Validação forte → obrigar motivo quando for perdida
+        if self.etapa == 'perdida' and not self.motivo_venda_perdida:
+            raise ValueError("É obrigatório informar o motivo da venda perdida.")
 
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.parceiro.parceiro} - R$ {self.valor} - {self.get_etapa_display()}"
 
-# Gatilhos extras (eventos manuais)
+
+
+
+
 class GatilhoExtra(models.Model):
     parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='gatilhos_extras')
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='gatilhos_extras')

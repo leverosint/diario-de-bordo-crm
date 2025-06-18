@@ -61,6 +61,10 @@ export default function InteracoesPage() {
   const [expandirId, setExpandirId] = useState<number | null>(null);
   const [valorOportunidade, setValorOportunidade] = useState('');
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
+  const [etapaSelecionada, setEtapaSelecionada] = useState<{ [key: number]: string }>({});
+  const [motivoPerdaSelecionado, setMotivoPerdaSelecionado] = useState<{ [key: number]: string }>({});
+  const [outroMotivo, setOutroMotivo] = useState<{ [key: number]: string }>({});
+
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
   const [statusSelecionado, setStatusSelecionado] = useState('');
   const [temGatilho, setTemGatilho] = useState('');
@@ -81,6 +85,23 @@ export default function InteracoesPage() {
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   const tipoUser = usuario?.tipo_user;
   const token = localStorage.getItem('token');
+  const etapas = [
+    { value: 'oportunidade', label: 'Oportunidade' },
+    { value: 'orcamento', label: 'Orçamento' },
+    { value: 'aguardando', label: 'Aguardando Pagamento' },
+    { value: 'pedido', label: 'Pedido' },
+    { value: 'perdida', label: 'Venda Perdida' },
+  ];
+  
+  const motivosPerda = [
+    { value: 'preco', label: 'Preço' },
+    { value: 'prazo', label: 'Prazo de entrega' },
+    { value: 'concorrente', label: 'Fechou com concorrente' },
+    { value: 'fora_perfil', label: 'Fora de perfil' },
+    { value: 'nao_respondeu', label: 'Cliente não respondeu' },
+    { value: 'outro', label: 'Outro' },
+  ];
+  
 
   const carregarDados = async () => {
     setCarregando(true);
@@ -191,46 +212,56 @@ export default function InteracoesPage() {
     observacao?: string
   ) => {
     try {
+      const etapa = etapaSelecionada[parceiroId] || 'oportunidade';
+      const motivoPerda = motivoPerdaSelecionado[parceiroId] || '';
+      const outro = outroMotivo[parceiroId] || '';
+  
+      if (etapa === 'perdida' && !motivoPerda) {
+        alert('Selecione o motivo da venda perdida.');
+        return;
+      }
+      if (etapa === 'perdida' && motivoPerda === 'outro' && !outro) {
+        alert('Preencha o campo "Outro motivo".');
+        return;
+      }
+  
       const headers = { Authorization: `Bearer ${token}` };
-  
-      // 👉 Pega o parceiro atual
       const parceiro = pendentes.find(p => p.id === parceiroId);
-  
-      // 👉 Extrai o gatilho_extra desse parceiro
       const gatilhoExtra = parceiro?.gatilho_extra || null;
   
       if (oportunidade) {
-        // 🔥 Se for gerar oportunidade
         await axios.post(`${import.meta.env.VITE_API_URL}/oportunidades/registrar/`, {
           parceiro: parceiroId,
           tipo,
           valor,
           observacao,
-          gatilho_extra: gatilhoExtra, // 🔥 Envia o gatilho_extra
+          etapa,
+          motivo_venda_perdida: etapa === 'perdida' ? motivoPerda : null,
+          outro_motivo: motivoPerda === 'outro' ? outro : null,
+          gatilho_extra: gatilhoExtra,
         }, { headers });
       } else {
-        // ✅ Só interação
         await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, {
           parceiro: parceiroId,
           tipo,
           observacao,
-          gatilho_extra: gatilhoExtra, // 🔥 Envia o gatilho_extra
+          gatilho_extra: gatilhoExtra,
         }, { headers });
       }
   
       setExpandirId(null);
       setValorOportunidade('');
       setObservacaoOportunidade('');
+      setMotivoPerdaSelecionado(prev => ({ ...prev, [parceiroId]: '' }));
+      setOutroMotivo(prev => ({ ...prev, [parceiroId]: '' }));
+      setEtapaSelecionada(prev => ({ ...prev, [parceiroId]: '' }));
       await carregarDados();
     } catch (err) {
-      console.error('Erro ao registrar interação ou oportunidade:', err);
+      console.error('Erro ao registrar:', err);
       alert('Erro ao registrar interação ou oportunidade. Tente novamente.');
     }
-    if (!tipo) {
-      alert('Selecione o tipo de interação');
-      return;
-    }
   };
+  
   
   
 
@@ -431,6 +462,37 @@ export default function InteracoesPage() {
                                 onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
                               />
                             </Group>
+                            <Group grow mt="md">
+  <Select
+    label="Etapa"
+    placeholder="Selecione a etapa"
+    value={etapaSelecionada[item.id] || ''}
+    onChange={(value) => setEtapaSelecionada((prev) => ({ ...prev, [item.id]: value || '' }))}
+    data={etapas}
+  />
+
+  {etapaSelecionada[item.id] === 'perdida' && (
+    <Select
+      label="Motivo da Venda Perdida"
+      placeholder="Selecione o motivo"
+      value={motivoPerdaSelecionado[item.id] || ''}
+      onChange={(value) => setMotivoPerdaSelecionado((prev) => ({ ...prev, [item.id]: value || '' }))}
+      data={motivosPerda}
+    />
+  )}
+
+  {motivoPerdaSelecionado[item.id] === 'outro' && etapaSelecionada[item.id] === 'perdida' && (
+    <TextInput
+      label="Outro motivo"
+      placeholder="Descreva o motivo"
+      value={outroMotivo[item.id] || ''}
+      onChange={(e) =>
+        setOutroMotivo((prev) => ({ ...prev, [item.id]: e.currentTarget.value }))
+      }
+    />
+  )}
+</Group>
+
                             <Group mt="md" justify="flex-end">
                               <Button
                                 color="blue"

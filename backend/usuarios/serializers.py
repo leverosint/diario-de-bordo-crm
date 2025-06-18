@@ -91,10 +91,8 @@ class InteracaoPendentesSerializer(serializers.ModelSerializer):
 class OportunidadeSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
-    data_status = serializers.DateTimeField(read_only=True)
     dias_sem_movimentacao = serializers.SerializerMethodField()
-    valor = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, default=0)
-    gatilho_extra = serializers.CharField(required=False, allow_null=True, default=None)  # ✅ 🔥 Adicionado corretamente
+    data_status = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = Oportunidade
@@ -107,13 +105,28 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             'valor',
             'observacao',
             'etapa',
+            'motivo_venda_perdida',  # ✅ novo
+            'outro_motivo',          # ✅ novo
             'data_criacao',
-            'data_status',
             'data_etapa',
+            'data_status',
             'dias_sem_movimentacao',
             'gatilho_extra',
         ]
         read_only_fields = ['data_criacao', 'data_etapa', 'usuario']
+
+    def validate(self, data):
+        etapa = data.get('etapa') or self.instance.etapa
+        motivo = data.get('motivo_venda_perdida') or (self.instance.motivo_venda_perdida if self.instance else None)
+        outro = data.get('outro_motivo') or (self.instance.outro_motivo if self.instance else None)
+
+        if etapa == 'perdida' and not motivo:
+            raise serializers.ValidationError("O campo 'Motivo da Venda Perdida' é obrigatório quando a etapa for 'Venda Perdida'.")
+
+        if motivo == 'outro' and not outro:
+            raise serializers.ValidationError("Se o motivo da venda perdida for 'Outro', preencha o campo 'Outro motivo'.")
+
+        return data
 
     def get_dias_sem_movimentacao(self, obj):
         from django.utils.timezone import now
@@ -124,6 +137,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
         return None
 
 
+
 # ===== Gatilho Extra =====
 class GatilhoExtraSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
@@ -132,3 +146,7 @@ class GatilhoExtraSerializer(serializers.ModelSerializer):
     class Meta:
         model = GatilhoExtra
         fields = ['id', 'parceiro', 'parceiro_nome', 'usuario', 'usuario_nome', 'descricao']
+
+
+
+
