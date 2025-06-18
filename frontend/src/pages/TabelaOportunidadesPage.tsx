@@ -280,56 +280,59 @@ export default function TabelaOportunidadesPage() {
 
 
 // 🔥 Adiciona isso aqui — antes do return (
-  if (mostrarModalBloqueio) {
-    return (
-      <div className={styles.modalOverlay}>
-        <div className={styles.modalContent}>
-          <Title order={3} mb="md">🚨 Oportunidades Sem Movimentação (≥ 10 dias)</Title>
-          <p>Você precisa movimentar essas oportunidades antes de acessar a tabela.</p>
-  
-          <div className={styles.bloqueioLista}>
-            <Table striped highlightOnHover withTableBorder>
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Parceiro</th>
-                  <th>Valor</th>
-                  <th>Sem Movimentação</th>
-                  <th>Status</th>
+// 🔥 Modal de bloqueio por falta de movimentação
+if (mostrarModalBloqueio) {
+  return (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalContent}>
+        <Title order={3} mb="md">🚨 Oportunidades Sem Movimentação (≥ 10 dias)</Title>
+        <p>Você precisa movimentar essas oportunidades antes de acessar a tabela.</p>
+
+        <div className={styles.bloqueioLista}>
+          <Table striped highlightOnHover withTableBorder>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Parceiro</th>
+                <th>Valor</th>
+                <th>Sem Movimentação</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bloqueados.map((o) => (
+                <tr key={o.id}>
+                  <td>{o.id}</td>
+                  <td>{o.parceiro_nome}</td>
+                  <td>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                  <td>{o.dias_sem_movimentacao} dias</td>
+                  <td>
+                    <Select
+                      value={o.etapa}
+                      onChange={(value) => value && handleStatusChange(o.id, value)}
+                      data={etapaOptions}
+                      size="xs"
+                    />
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {bloqueados.map((o) => (
-                  <tr key={o.id}>
-                    <td>{o.id}</td>
-                    <td>{o.parceiro_nome}</td>
-                    <td>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                    <td>{o.dias_sem_movimentacao} dias</td>
-                    <td>
-                      <Select
-                        value={o.etapa}
-                        onChange={(value) => value && handleStatusChange(o.id, value)}
-                        data={etapaOptions}
-                        size="xs"
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
+              ))}
+            </tbody>
+          </Table>
         </div>
       </div>
-    );
-  }
-  
+    </div>
+  );
+}
 
-  {modalPerdida && (
+
+// 🔥 Modal de venda perdida
+if (modalPerdida) {
+  return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
         <Title order={3} mb="md">🛑 Marcar como Venda Perdida</Title>
         <p>Selecione o motivo da venda perdida:</p>
-  
+
         <Select
           label="Motivo da Venda Perdida"
           placeholder="Selecione"
@@ -338,7 +341,7 @@ export default function TabelaOportunidadesPage() {
           onChange={setMotivoPerda}
           mb="md"
         />
-  
+
         {motivoPerda === 'outro' && (
           <TextInput
             label="Outro motivo"
@@ -348,14 +351,18 @@ export default function TabelaOportunidadesPage() {
             mb="md"
           />
         )}
-  
+
         <Group mt="md" justify="flex-end">
-          <Button color="red" variant="outline" onClick={() => {
-            setModalPerdida(false);
-            setIdPerdida(null);
-            setMotivoPerda(null);
-            setOutroMotivo('');
-          }}>
+          <Button
+            color="red"
+            variant="outline"
+            onClick={() => {
+              setModalPerdida(false);
+              setIdPerdida(null);
+              setMotivoPerda(null);
+              setOutroMotivo('');
+            }}
+          >
             Cancelar
           </Button>
           <Button color="green" onClick={handlePerdidaSubmit}>
@@ -364,8 +371,8 @@ export default function TabelaOportunidadesPage() {
         </Group>
       </div>
     </div>
-  )}
-  
+  );
+}
 
 
   return (
