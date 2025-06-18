@@ -536,77 +536,54 @@ const confirmarVendaPerdida = async () => {
         )}
       </Container>
 
-      {popupAberto && (
-  <>
-    {/* 🔲 Overlay bloqueando interações */}
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100vw',
-        height: '100vh',
-        backgroundColor: 'rgba(0, 0, 0, 0.1)', // se quiser deixar bem claro pode usar rgba(255,255,255,0.2)
-        zIndex: 999, // abaixo do popup, acima da página
-        backdropFilter: 'blur(2px)', // opcional: dá um leve blur no fundo
-      }}
-      onClick={() => { }} // impede clique no fundo
-    />
+      <Modal
+  opened={popupAberto}
+  onClose={() => {}}
+  withCloseButton={false}
+  title="⚠️ Oportunidades sem movimentação"
+  centered
+  radius="md"
+  overlayProps={{
+    backgroundOpacity: 0.4,
+    blur: 4,
+  }}
+  withinPortal={false} // ✅ Faz com que o modal fique dentro do layout, respeitando a sidebar
+  zIndex={500}
+>
+  {pendentesMovimentacao.map((o) => (
+    <Card key={o.id} withBorder mb="sm">
+      <div className={styles.centralizado}>
+        <strong>{o.parceiro_nome}</strong>
+        <small>ID: {o.parceiro}</small>
+        <strong>{o.dias_sem_movimentacao} dias sem movimentação</strong>
+        <p>
+          Valor:{' '}
+          {Number(o.valor).toLocaleString('pt-BR', {
+            style: 'currency',
+            currency: 'BRL',
+          })}
+        </p>
+        <p>Observação: {o.observacao || '-'}</p>
+      </div>
 
-    {/* 🪪 Popup Card */}
-    <Card
-      shadow="md"
-      padding="lg"
-      radius="md"
-      style={{
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        zIndex: 1000,
-        width: '400px',
-        maxHeight: '80vh',
-        overflowY: 'auto',
-        backgroundColor: 'white',
-      }}
-    >
-      <Title order={4} mb="sm">
-        ⚠️ Oportunidades sem movimentação
-      </Title>
-
-      {pendentesMovimentacao.map((o) => (
-        <Card key={o.id} withBorder mb="sm">
-          <div style={{ textAlign: 'center' }}>
-            <strong>{o.parceiro_nome}</strong> <br />
-            <small>ID: {o.parceiro}</small> <br />
-            <strong>{o.dias_sem_movimentacao} dias sem movimentação</strong> <br />
-            <p>
-              Valor:{' '}
-              {Number(o.valor).toLocaleString('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-              })}
-            </p>
-            <p>Observação: {o.observacao || '-'}</p>
-          </div>
-
-          <Group justify="center" mt="xs">
-            <Select
-              placeholder="Mudar etapa"
-              data={etapaOptions}
-              value={o.etapa}
-              onChange={(value) => value && handleStatusChangePopup(o.id, value)}
-            />
-          </Group>
-        </Card>
-      ))}
-
-      <Button fullWidth mt="sm" onClick={() => setPopupAberto(false)}>
-        Fechar
-      </Button>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+        <Select
+          placeholder="Mudar etapa"
+          data={etapaOptions}
+          value={o.etapa}
+          onChange={(value) => value && handleStatusChangePopup(o.id, value)}
+        />
+      </div>
     </Card>
-  </>
-)}
+  ))}
+
+  {pendentesMovimentacao.length === 0 && (
+    <Button fullWidth onClick={() => setPopupAberto(false)}>
+      Fechar
+    </Button>
+  )}
+</Modal>
+
 
 
 

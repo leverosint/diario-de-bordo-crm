@@ -108,10 +108,10 @@ body {
   overflow: auto !important;
 }
 
+/* TabelaOportunidadesPage.module.css */
 .centralizado {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   text-align: center;
 }
