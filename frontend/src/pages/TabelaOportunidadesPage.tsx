@@ -511,17 +511,19 @@ useEffect(() => {
       </Container>
 
       <Modal
-        opened={popupAberto}
-        onClose={() => { }}
-        withCloseButton={false}
-        title="⚠️ Oportunidades sem movimentação"
-        centered
-        radius="md"
-        overlayProps={{
-          backgroundOpacity: 0.55,
-          blur: 4,
-        }}
-      >
+  opened={popupAberto}
+  onClose={() => {}}
+  withCloseButton={false}
+  title="⚠️ Oportunidades sem movimentação"
+  centered
+  radius="md"
+  withinPortal={false}  // 👈 ISSO RESOLVE TUDO
+  overlayProps={{
+    backgroundOpacity: 0.55,
+    blur: 4,
+  }}
+>
+
         {pendentesMovimentacao.map((o) => (
           <Card key={o.id} withBorder mb="sm">
             <Group justify="space-between">
