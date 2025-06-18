@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
   Title, Table, Container, Loader, ScrollArea, Badge, Group,
-  TextInput, Button, Tooltip, Card, Box, Select
+  TextInput, Button, Tooltip, Card, Box, Select, Portal
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
@@ -537,30 +537,29 @@ style={{
                                 </td>
                                 <td className={styles.center}>
                                   <Group gap="xs" justify="center">
-                                  <Select
-  value={o.etapa}
-  onChange={(value) => {
-    if (value === 'perdida') {
-      setModalPerdida(true);
-      setIdPerdida(o.id);
-      return;
-    }
-    value && handleStatusChange(o.id, value);
-  }}
-  data={etapaOptions}
-  size="xs"
-  style={{
-    backgroundColor: getStatusColor(o.etapa),
-    color: 'white',
-    fontWeight: 600,
-    textAlign: 'center',
-    borderRadius: 6,
-    minWidth: 120,
-  }}
-
-/>
-
-
+                                  <Portal>
+  <Select
+    value={o.etapa}
+    onChange={(value) => {
+      if (value === 'perdida') {
+        setModalPerdida(true);
+        setIdPerdida(o.id);
+        return;
+      }
+      value && handleStatusChange(o.id, value);
+    }}
+    data={etapaOptions}
+    size="xs"
+    style={{
+      backgroundColor: getStatusColor(o.etapa),
+      color: 'white',
+      fontWeight: 600,
+      textAlign: 'center',
+      borderRadius: 6,
+      minWidth: 120,
+    }}
+  />
+</Portal>
 
 
 
