@@ -88,19 +88,18 @@ useEffect(() => {
   fetchDados();
 }, [token]);
 
-// ✅ Calcular os dias sem movimentação SEM alterar o estado
 const dadosComDias: Oportunidade[] = useMemo(() => {
   return dados.map((o) => ({
     ...o,
     dias_sem_movimentacao: o.data_status
-    ? Math.floor(
-        (new Date().getTime() - new Date(o.data_status).getTime()) /
-          (1000 * 60 * 60 * 24)
-      )
-    : undefined,
-  
+      ? Math.floor(
+          (new Date().getTime() - new Date(o.data_status).getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      : undefined,
   }));
 }, [dados]);
+
 
 
 // 🔥 Verificar se tem oportunidades sem movimentação
