@@ -389,7 +389,9 @@ if (modalPerdida) {
 >
   <Combobox.Target>
     <div>
-      <Text size="sm" fw={500} mb={4}>Motivo da Venda Perdida</Text>
+      <Text size="sm" fw={500} mb={4}>
+        Motivo da Venda Perdida
+      </Text>
       <Input
         placeholder="Selecione"
         pointer
