@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
   Title, Table, Container, Loader, ScrollArea, Badge, Group,
-  TextInput, Button, Tooltip, Card, Box, Select, Text,
+  TextInput, Button, Tooltip, Card, Box, Select, Text, Modal
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
@@ -236,229 +236,234 @@ export default function TabelaOportunidadesPage() {
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-  <Container fluid style={{ maxWidth: '90vw', padding: '0 40px' }}>
-    <Group justify="space-between" align="center" mt="md" mb="sm">
-      <Title order={2}>Oportunidades por Status</Title>
-      <Button onClick={exportarExcel} variant="light">
-        Exportar Excel
-      </Button>
-    </Group>
+      <Container fluid style={{ maxWidth: '90vw', padding: '0 40px' }}>
+        <Group justify="space-between" align="center" mt="md" mb="sm">
+          <Title order={2}>Oportunidades por Status</Title>
+          <Button onClick={exportarExcel} variant="light">
+            Exportar Excel
+          </Button>
+        </Group>
 
-    <Group mt="xs" mb="md" grow align="end">
-      <TextInput
-        label="Nome do parceiro"
-        placeholder="Filtrar por nome"
-        value={nomeFiltro}
-        onChange={(e) => setNomeFiltro(e.currentTarget.value)}
-      />
-      <Select
-        label="Status"
-        placeholder="Todos"
-        value={etapaFiltro}
-        onChange={setEtapaFiltro}
-        data={etapaOptions}
-        clearable
-      />
-      {[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
-      { label: 'Data fim', value: dataFim, onChange: setDataFim }].map((item, idx) => (
-        <Box key={idx} style={{ minWidth: 160 }}>
-          <DatePickerInput
-            value={item.value}
-            onChange={item.onChange}
-            locale="pt-br"
-            label={item.label}
-            dropdownType="popover"
-            clearable
-            rightSection={null}
+        <Group mt="xs" mb="md" grow align="end">
+          <TextInput
+            label="Nome do parceiro"
+            placeholder="Filtrar por nome"
+            value={nomeFiltro}
+            onChange={(e) => setNomeFiltro(e.currentTarget.value)}
           />
-        </Box>
-      ))}
-    </Group>
-
-    {carregando ? (
-      <Loader />
-    ) : (
-      <ScrollArea>
-        {Object.entries(agrupadoPorStatus).map(([status, lista]) => {
-          const valorTotal = lista.reduce((acc, o) => acc + Number(o.valor), 0);
-
-          return (
-            <Box key={status} mt="xl">
-              <Card
-                withBorder
-                shadow="sm"
-                radius="lg"
-                p="xl"
-                mb="lg"
-                style={{
-                  borderLeft: `8px solid ${getStatusColor(status)}`,
-                  backgroundColor: '#f9f9f9',
-                  width: '100%',
-                }}
-              >
-                <Group justify="space-between" align="center" mb="sm">
-                  <div>
-                    <Title order={3}>
-                      {status.charAt(0).toUpperCase() + status.slice(1)}
-                    </Title>
-                    <p style={{ fontSize: '0.9rem', color: '#555' }}>
-                      Valor total:{' '}
-                      {valorTotal.toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      })}
-                    </p>
-                  </div>
-                  <Group>
-                    <Badge color={getStatusColor(status)} variant="light">
-                      {lista.length} oportunidades
-                    </Badge>
-                    <Tooltip label="Tempo médio até status" withArrow>
-                      <Badge color="gray" variant="outline">
-                        ⏱ {calcularTempoMedio(lista)} dias
-                      </Badge>
-                    </Tooltip>
-                  </Group>
-                </Group>
-
-                <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-                  <Table striped highlightOnHover withColumnBorders>
-                    <thead>
-                      <tr>
-                        <th className={styles.center}>ID</th>
-                        <th className={styles.left}>Parceiro</th>
-                        <th className={styles.center}>Valor</th>
-                        <th className={styles.center}>Data Criação</th>
-                        <th className={styles.center}>Data Status</th>
-                        <th className={styles.center}>Gatilho</th>
-                        <th className={styles.left}>Observação</th>
-                        <th className={styles.center}>Sem Movimentação</th>
-                        <th className={styles.center}>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lista.map((o) => {
-                        const emEdicao = editandoId === o.id;
-                        return (
-                          <tr key={o.id}>
-                            <td className={styles.center}>{o.id}</td>
-                            <td className={styles.left}>{o.parceiro_nome}</td>
-                            <td className={styles.center}>
-                              {emEdicao ? (
-                                <TextInput
-                                  value={valorEdit}
-                                  onChange={(e) => setValorEdit(e.currentTarget.value)}
-                                  size="xs"
-                                />
-                              ) : (
-                                <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
-                              )}
-                            </td>
-                            <td className={styles.center}>
-                              {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
-                            </td>
-                            <td className={styles.center}>
-                              {o.data_status
-                                ? new Date(o.data_status).toLocaleDateString('pt-BR')
-                                : '-'}
-                            </td>
-                            <td className={styles.center}>{o.gatilho_extra || '-'}</td>
-                            <td className={styles.left}>
-                              {emEdicao ? (
-                                <TextInput
-                                  value={observacaoEdit}
-                                  onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
-                                  size="xs"
-                                />
-                              ) : (
-                                o.observacao || '-'
-                              )}
-                            </td>
-                            <td className={styles.center}>
-                              {o.dias_sem_movimentacao !== undefined
-                                ? `${o.dias_sem_movimentacao} dias`
-                                : '-'}
-                            </td>
-                            <td className={styles.center}>
-                              <Group gap="xs" justify="center">
-                                <Select
-                                  value={o.etapa}
-                                  onChange={(value) => value && handleStatusChange(o.id, value)}
-                                  data={etapaOptions}
-                                  size="xs"
-                                  styles={{
-                                    input: {
-                                      backgroundColor: getStatusColor(o.etapa),
-                                      color: 'white',
-                                      fontWeight: 600,
-                                      textAlign: 'center',
-                                      borderRadius: 6,
-                                      minWidth: 120,
-                                    },
-                                  }}
-                                />
-
-                                {emEdicao ? (
-                                  <>
-                                    <Button
-                                      size="xs"
-                                      color="green"
-                                      onClick={() => salvarEdicao(o.id)}
-                                    >
-                                      <Save size={16} />
-                                    </Button>
-                                    <Button
-                                      size="xs"
-                                      variant="outline"
-                                      color="red"
-                                      onClick={cancelarEdicao}
-                                    >
-                                      <X size={16} />
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <Button
-                                    size="xs"
-                                    variant="outline"
-                                    onClick={() => iniciarEdicao(o)}
-                                  >
-                                    <Pencil size={16} />
-                                  </Button>
-                                )}
-                              </Group>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </Table>
-                </div>
-              </Card>
+          <Select
+            label="Status"
+            placeholder="Todos"
+            value={etapaFiltro}
+            onChange={setEtapaFiltro}
+            data={etapaOptions}
+            clearable
+          />
+          {[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
+          { label: 'Data fim', value: dataFim, onChange: setDataFim }].map((item, idx) => (
+            <Box key={idx} style={{ minWidth: 160 }}>
+              <DatePickerInput
+                value={item.value}
+                onChange={item.onChange}
+                locale="pt-br"
+                label={item.label}
+                dropdownType="popover"
+                clearable
+                rightSection={null}
+              />
             </Box>
-          );
-        })}
-      </ScrollArea>
-    )}
-  </Container>
+          ))}
+        </Group>
 
-  {modalAberto && idMudandoStatus !== null && (
-  <Card withBorder shadow="sm" radius="lg" mt="xl" style={{ backgroundColor: '#fff' }}>
-    <Group justify="space-between" align="center">
+        {carregando ? (
+          <Loader />
+        ) : (
+          <ScrollArea>
+            {Object.entries(agrupadoPorStatus).map(([status, lista]) => {
+              const valorTotal = lista.reduce((acc, o) => acc + Number(o.valor), 0);
+
+              return (
+                <Box key={status} mt="xl">
+                  <Card
+                    withBorder
+                    shadow="sm"
+                    radius="lg"
+                    p="xl"
+                    mb="lg"
+                    style={{
+                      borderLeft: `8px solid ${getStatusColor(status)}`,
+                      backgroundColor: '#f9f9f9',
+                      width: '100%',
+                    }}
+                  >
+                    <Group justify="space-between" align="center" mb="sm">
+                      <div>
+                        <Title order={3}>
+                          {status.charAt(0).toUpperCase() + status.slice(1)}
+                        </Title>
+                        <p style={{ fontSize: '0.9rem', color: '#555' }}>
+                          Valor total:{' '}
+                          {valorTotal.toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          })}
+                        </p>
+                      </div>
+                      <Group>
+                        <Badge color={getStatusColor(status)} variant="light">
+                          {lista.length} oportunidades
+                        </Badge>
+                        <Tooltip label="Tempo médio até status" withArrow>
+                          <Badge color="gray" variant="outline">
+                            ⏱ {calcularTempoMedio(lista)} dias
+                          </Badge>
+                        </Tooltip>
+                      </Group>
+                    </Group>
+
+                    <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                      <Table striped highlightOnHover withColumnBorders>
+                        <thead>
+                          <tr>
+                            <th className={styles.center}>ID</th>
+                            <th className={styles.left}>Parceiro</th>
+                            <th className={styles.center}>Valor</th>
+                            <th className={styles.center}>Data Criação</th>
+                            <th className={styles.center}>Data Status</th>
+                            <th className={styles.center}>Gatilho</th>
+                            <th className={styles.left}>Observação</th>
+                            <th className={styles.center}>Sem Movimentação</th>
+                            <th className={styles.center}>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {lista.map((o) => {
+                            const emEdicao = editandoId === o.id;
+                            return (
+                              <tr key={o.id}>
+                                <td className={styles.center}>{o.id}</td>
+                                <td className={styles.left}>{o.parceiro_nome}</td>
+                                <td className={styles.center}>
+                                  {emEdicao ? (
+                                    <TextInput
+                                      value={valorEdit}
+                                      onChange={(e) => setValorEdit(e.currentTarget.value)}
+                                      size="xs"
+                                    />
+                                  ) : (
+                                    <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
+                                  )}
+                                </td>
+                                <td className={styles.center}>
+                                  {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
+                                </td>
+                                <td className={styles.center}>
+                                  {o.data_status
+                                    ? new Date(o.data_status).toLocaleDateString('pt-BR')
+                                    : '-'}
+                                </td>
+                                <td className={styles.center}>{o.gatilho_extra || '-'}</td>
+                                <td className={styles.left}>
+                                  {emEdicao ? (
+                                    <TextInput
+                                      value={observacaoEdit}
+                                      onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
+                                      size="xs"
+                                    />
+                                  ) : (
+                                    o.observacao || '-'
+                                  )}
+                                </td>
+                                <td className={styles.center}>
+                                  {o.dias_sem_movimentacao !== undefined
+                                    ? `${o.dias_sem_movimentacao} dias`
+                                    : '-'}
+                                </td>
+                                <td className={styles.center}>
+                                  <Group gap="xs" justify="center">
+                                    <Select
+                                      value={o.etapa}
+                                      onChange={(value) => value && handleStatusChange(o.id, value)}
+                                      data={etapaOptions}
+                                      size="xs"
+                                      styles={{
+                                        input: {
+                                          backgroundColor: getStatusColor(o.etapa),
+                                          color: 'white',
+                                          fontWeight: 600,
+                                          textAlign: 'center',
+                                          borderRadius: 6,
+                                          minWidth: 120,
+                                        },
+                                      }}
+                                    />
+
+                                    {emEdicao ? (
+                                      <>
+                                        <Button
+                                          size="xs"
+                                          color="green"
+                                          onClick={() => salvarEdicao(o.id)}
+                                        >
+                                          <Save size={16} />
+                                        </Button>
+                                        <Button
+                                          size="xs"
+                                          variant="outline"
+                                          color="red"
+                                          onClick={cancelarEdicao}
+                                        >
+                                          <X size={16} />
+                                        </Button>
+                                      </>
+                                    ) : (
+                                      <Button
+                                        size="xs"
+                                        variant="outline"
+                                        onClick={() => iniciarEdicao(o)}
+                                      >
+                                        <Pencil size={16} />
+                                      </Button>
+                                    )}
+                                  </Group>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </Table>
+                    </div>
+                  </Card>
+                </Box>
+              );
+            })}
+          </ScrollArea>
+        )}
+      </Container>
+
+      {modalAberto && idMudandoStatus !== null && (
+  <Modal
+    opened={modalAberto}
+    onClose={() => setModalAberto(false)}
+    title={
       <Group>
         <span style={{ fontSize: 22 }}>🛑</span>
         <Title order={4} fw={700}>
           Marcar como Venda Perdida - ID {idMudandoStatus}
         </Title>
       </Group>
-      <Button variant="subtle" color="red" onClick={() => setModalAberto(false)}>
-        Fechar
-      </Button>
-    </Group>
-
-    <Text mt="md" mb="xs">
-      Selecione o motivo da venda perdida:
-    </Text>
-
+    }
+    centered
+    radius="md"
+    padding="lg"
+    zIndex={9999}
+    withinPortal
+    overlayProps={{
+      backgroundOpacity: 0.55,
+      blur: 4,
+    }}
+  >
+    <Text mb="sm">Selecione o motivo da venda perdida:</Text>
     <Select
       label="Motivo da Venda Perdida"
       placeholder="Selecione"
@@ -485,8 +490,9 @@ export default function TabelaOportunidadesPage() {
         Confirmar
       </Button>
     </Group>
-  </Card>
+  </Modal>
 )}
-</SidebarGestor>
-);
+  
+    </SidebarGestor>
+  );
 }
