@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
   Title, Table, Container, Loader, ScrollArea, Badge, Group,
-  TextInput, Button, Tooltip, Card, Box, Select
+  TextInput, Button, Tooltip, Card, Box, Select, Modal
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
@@ -35,6 +35,17 @@ export default function TabelaOportunidadesPage() {
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [valorEdit, setValorEdit] = useState<string>('');
   const [observacaoEdit, setObservacaoEdit] = useState<string>('');
+  const [modalAberto, setModalAberto] = useState(false);
+const [idMudandoStatus, setIdMudandoStatus] = useState<number | null>(null);
+const [novoStatus, setNovoStatus] = useState<string | null>(null);
+const [motivoPerda, setMotivoPerda] = useState('');
+
+const abrirModalPerda = (id: number, status: string) => {
+  setIdMudandoStatus(id);
+  setNovoStatus(status);
+  setMotivoPerda('');
+  setModalAberto(true);
+};
 
   const token = localStorage.getItem('token') ?? '';
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
@@ -72,23 +83,63 @@ export default function TabelaOportunidadesPage() {
     fetchDados();
   }, [token]);
 
-  const handleStatusChange = async (id: number, novaEtapa: string | null) => {
+  const handleStatusChange = (id: number, novaEtapa: string | null) => {
     if (!novaEtapa) return;
-    try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
+  
+    if (novaEtapa === 'perdida') {
+      abrirModalPerda(id, novaEtapa);
+    } else {
+      axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
         etapa: novaEtapa,
       }, {
         headers: { Authorization: `Bearer ${token}` },
+      }).then(() => {
+        setDados(prev =>
+          prev.map(o =>
+            o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() } : o
+          )
+        );
+      }).catch(err => {
+        console.error('Erro ao atualizar etapa:', err);
+        alert('Erro ao atualizar etapa');
       });
-      setDados(prev =>
-        prev.map(o =>
-          o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() } : o
-        )
-      );
-    } catch (err) {
-      console.error('Erro ao atualizar etapa:', err);
     }
   };
+  
+  const confirmarVendaPerdida = async () => {
+    if (!idMudandoStatus || !novoStatus) return;
+  
+    if (motivoPerda.trim() === '') {
+      alert('Por favor, preencha o motivo da venda perdida.');
+      return;
+    }
+  
+    try {
+      await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`, {
+        etapa: novoStatus,
+        observacao: motivoPerda,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      setDados(prev =>
+        prev.map(o =>
+          o.id === idMudandoStatus
+            ? { ...o, etapa: novoStatus, data_status: new Date().toISOString(), observacao: motivoPerda }
+            : o
+        )
+      );
+  
+      setModalAberto(false);
+      setIdMudandoStatus(null);
+      setNovoStatus(null);
+      setMotivoPerda('');
+    } catch (err) {
+      console.error('Erro ao atualizar etapa:', err);
+      alert('Erro ao atualizar etapa');
+    }
+  };
+  
 
   const dadosFiltrados = useMemo(() => {
     return dados.filter((o) => {
@@ -309,22 +360,25 @@ export default function TabelaOportunidadesPage() {
                                 </td>
                                 <td className={styles.center}>
                                   <Group gap="xs" justify="center">
-                                    <Select
-                                      value={o.etapa}
-                                      onChange={(value) => value && handleStatusChange(o.id, value)}
-                                      data={etapaOptions}
-                                      size="xs"
-                                      styles={{
-                                        input: {
-                                          backgroundColor: getStatusColor(o.etapa),
-                                          color: 'white',
-                                          fontWeight: 600,
-                                          textAlign: 'center',
-                                          borderRadius: 6,
-                                          minWidth: 120,
-                                        }
-                                      }}
-                                    />
+                                  <Select
+  value={o.etapa}
+  onChange={(value) => value && handleStatusChange(o.id, value)}
+  data={etapaOptions}
+  size="xs"
+  styles={{
+    input: {
+      backgroundColor: getStatusColor(o.etapa),
+      color: 'white',
+      fontWeight: 600,
+      textAlign: 'center',
+      borderRadius: 6,
+      minWidth: 120,
+    }
+  }}
+/>
+
+
+
                                     {emEdicao ? (
                                       <>
                                         <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
@@ -358,6 +412,34 @@ export default function TabelaOportunidadesPage() {
           </ScrollArea>
         )}
       </Container>
+      <Modal
+  opened={modalAberto}
+  onClose={() => setModalAberto(false)}
+  title="Motivo da Venda Perdida"
+  centered
+  overlayProps={{
+    backgroundOpacity: 0.55,
+    blur: 3,
+  }}
+  zIndex={1000}
+>
+  <TextInput
+    label="Descreva o motivo"
+    placeholder="Ex: Cliente desistiu, preço, prazo, etc."
+    value={motivoPerda}
+    onChange={(e) => setMotivoPerda(e.currentTarget.value)}
+    required
+  />
+  <Group justify="flex-end" mt="md">
+    <Button variant="outline" onClick={() => setModalAberto(false)}>
+      Cancelar
+    </Button>
+    <Button onClick={confirmarVendaPerdida}>
+      Confirmar
+    </Button>
+  </Group>
+</Modal>
+
     </SidebarGestor>
   );
 }
