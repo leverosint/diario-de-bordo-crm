@@ -39,14 +39,16 @@ export default function TabelaOportunidadesPage() {
   const [idMudandoStatus, setIdMudandoStatus] = useState<number | null>(null);
   const [popupAberto, setPopupAberto] = useState(false);
   const [pendentesMovimentacao, setPendentesMovimentacao] = useState<Oportunidade[]>([]);
-
   const [motivoPerda, setMotivoPerda] = useState('');
+
+
 
   const abrirModalPerda = (id: number) => {
     setIdMudandoStatus(id);
     setMotivoPerda('');
     setModalAberto(true);
   };
+
 
 
   const token = localStorage.getItem('token') ?? '';
@@ -69,32 +71,52 @@ export default function TabelaOportunidadesPage() {
     perdida: 'red',
   }[etapa] || 'gray');
 
-  useEffect(() => {
-    const fetchDados = async () => {
-      try {
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setDados(res.data);
-      } catch (err) {
-        console.error('Erro ao buscar oportunidades:', err);
-      } finally {
-        setCarregando(false);
-      }
-    };
-    fetchDados();
-  }, [token]);
-  useEffect(() => {
-    const oportunidadesPendentes = dados.filter(o =>
-      o.dias_sem_movimentacao !== undefined &&
-      o.dias_sem_movimentacao >= 10
-    );
-  
-    if (oportunidadesPendentes.length > 0) {
-      setPendentesMovimentacao(oportunidadesPendentes);
-      setPopupAberto(true);
+// 🔗 Carregar dados da API (mantém igual)
+useEffect(() => {
+  const fetchDados = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDados(res.data);
+    } catch (err) {
+      console.error('Erro ao buscar oportunidades:', err);
+    } finally {
+      setCarregando(false);
     }
-  }, [dados]);
+  };
+  fetchDados();
+}, [token]);
+
+// ✅ Calcular os dias sem movimentação SEM alterar o estado
+const dadosComDias: Oportunidade[] = useMemo(() => {
+  return dados.map((o) => ({
+    ...o,
+    dias_sem_movimentacao: o.data_status
+    ? Math.floor(
+        (new Date().getTime() - new Date(o.data_status).getTime()) /
+          (1000 * 60 * 60 * 24)
+      )
+    : undefined,
+  
+  }));
+}, [dados]);
+
+
+// 🔥 Verificar se tem oportunidades sem movimentação
+useEffect(() => {
+  const oportunidadesPendentes = dadosComDias.filter(
+    (o) => (o.dias_sem_movimentacao ?? 0) >= 10
+  );
+  
+
+  if (oportunidadesPendentes.length > 0) {
+    setPendentesMovimentacao(oportunidadesPendentes);
+    setPopupAberto(true);
+  }
+}, [dadosComDias]);
+
+
 
   const handleStatusChange = (id: number, novaEtapa: string | null) => {
     if (!novaEtapa) return;
@@ -124,7 +146,7 @@ export default function TabelaOportunidadesPage() {
 
   const handleStatusChangePopup = (id: number, novaEtapa: string | null) => {
     if (!novaEtapa) return;
-  
+
     axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
       etapa: novaEtapa,
     }, {
@@ -137,9 +159,9 @@ export default function TabelaOportunidadesPage() {
             : o
         )
       );
-  
+
       setPendentesMovimentacao(prev => prev.filter(o => o.id !== id));
-  
+
       if (pendentesMovimentacao.length - 1 === 0) {
         setPopupAberto(false);
       }
@@ -148,7 +170,7 @@ export default function TabelaOportunidadesPage() {
       alert('Erro ao atualizar etapa');
     });
   };
-  
+
 
 
   const confirmarVendaPerdida = async () => {
@@ -167,10 +189,10 @@ export default function TabelaOportunidadesPage() {
       await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`, {
         etapa: 'perdida',
         motivo_venda_perdida: motivoPerda,  // ✅ Envia para o backend
-    }, {
+      }, {
         headers: { Authorization: `Bearer ${token}` },
-    });
-    
+      });
+
 
 
       setDados(prev =>
@@ -193,7 +215,7 @@ export default function TabelaOportunidadesPage() {
 
 
   const dadosFiltrados = useMemo(() => {
-    return dados.filter((o) => {
+    return dadosComDias.filter((o) => {
       const nomeMatch = nomeFiltro === '' || o.parceiro_nome.toLowerCase().includes(nomeFiltro.toLowerCase());
       const etapaMatch = !etapaFiltro || o.etapa === etapaFiltro;
       const dataCriacao = new Date(o.data_criacao);
@@ -202,7 +224,8 @@ export default function TabelaOportunidadesPage() {
         (!dataFim || dataCriacao <= new Date(dataFim as Date));
       return nomeMatch && etapaMatch && dataMatch;
     });
-  }, [dados, nomeFiltro, etapaFiltro, dataInicio, dataFim]);
+  }, [dadosComDias, nomeFiltro, etapaFiltro, dataInicio, dataFim]);
+  
 
   const agrupadoPorStatus = useMemo((): Record<string, Oportunidade[]> => {
     const agrupado: Record<string, Oportunidade[]> = {};
@@ -421,7 +444,7 @@ export default function TabelaOportunidadesPage() {
                                   )}
                                 </td>
                                 <td className={styles.center}>
-                                  {o.dias_sem_movimentacao !== undefined
+                                  {o.dias_sem_movimentacao !== null
                                     ? `${o.dias_sem_movimentacao} dias`
                                     : '-'}
                                 </td>
@@ -488,88 +511,88 @@ export default function TabelaOportunidadesPage() {
       </Container>
 
       <Modal
-  opened={popupAberto}
-  onClose={() => {}}
-  withCloseButton={false}
-  title="⚠️ Oportunidades sem movimentação"
-  centered
-  radius="md"
-  overlayProps={{
-    backgroundOpacity: 0.55,
-    blur: 4,
-  }}
->
-  {pendentesMovimentacao.map((o) => (
-    <Card key={o.id} withBorder mb="sm">
-      <Group justify="space-between">
-        <div>
-          <strong>{o.parceiro_nome}</strong> <br />
-          {o.dias_sem_movimentacao} dias sem movimentação
-        </div>
-        <Select
-          placeholder="Mudar etapa"
-          data={etapaOptions}
-          value={o.etapa}
-          onChange={(value) => value && handleStatusChangePopup(o.id, value)}
-        />
-      </Group>
-    </Card>
-  ))}
+        opened={popupAberto}
+        onClose={() => { }}
+        withCloseButton={false}
+        title="⚠️ Oportunidades sem movimentação"
+        centered
+        radius="md"
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 4,
+        }}
+      >
+        {pendentesMovimentacao.map((o) => (
+          <Card key={o.id} withBorder mb="sm">
+            <Group justify="space-between">
+              <div>
+                <strong>{o.parceiro_nome}</strong> <br />
+                {o.dias_sem_movimentacao} dias sem movimentação
+              </div>
+              <Select
+                placeholder="Mudar etapa"
+                data={etapaOptions}
+                value={o.etapa}
+                onChange={(value) => value && handleStatusChangePopup(o.id, value)}
+              />
+            </Group>
+          </Card>
+        ))}
 
-  {pendentesMovimentacao.length === 0 && (
-    <Button fullWidth onClick={() => setPopupAberto(false)}>
-      Fechar
-    </Button>
-  )}
-</Modal>
+        {pendentesMovimentacao.length === 0 && (
+          <Button fullWidth onClick={() => setPopupAberto(false)}>
+            Fechar
+          </Button>
+        )}
+      </Modal>
 
 
       {modalAberto && idMudandoStatus !== null && (
-      <Modal
-      opened={modalAberto}
-      onClose={() => setModalAberto(false)}
-      title="Marcar como Venda Perdida"
-      centered
-      radius="md"
-      withinPortal={false}  // <-- ADICIONE ISSO
-      overlayProps={{
-        backgroundOpacity: 0.55,
-        blur: 4,
-      }}
-    >
-
-    
-  <Select
-    label="Motivo da Venda Perdida"
-    placeholder="Selecione"
-    data={[
-      { value: 'preco', label: 'Preço' },
-      { value: 'prazo', label: 'Prazo' },
-      { value: 'concorrente', label: 'Fechou com concorrente' },
-      { value: 'fora_perfil', label: 'Fora de perfil' },
-      { value: 'nao_responde', label: 'Cliente não respondeu' },
-      { value: 'outro', label: 'Outro' },
-    ]}
-    value={motivoPerda}
-    onChange={(value) => setMotivoPerda(value ?? '')}
-    required
-    clearable
-  />
-
-  <Group justify="flex-end" mt="md">
-    <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
-      Cancelar
-    </Button>
-    <Button color="green" onClick={confirmarVendaPerdida}>
-      Confirmar
-    </Button>
-  </Group>
-</Modal>
+        <Modal
+          opened={modalAberto}
+          onClose={() => setModalAberto(false)}
+          title="Marcar como Venda Perdida"
+          centered
+          radius="md"
+          withinPortal={false}  // <-- ADICIONE ISSO
+          overlayProps={{
+            backgroundOpacity: 0.55,
+            blur: 4,
+          }}
+        >
 
 
+          <Select
+            label="Motivo da Venda Perdida"
+            placeholder="Selecione"
+            data={[
+              { value: 'preco', label: 'Preço' },
+              { value: 'prazo', label: 'Prazo' },
+              { value: 'concorrente', label: 'Fechou com concorrente' },
+              { value: 'fora_perfil', label: 'Fora de perfil' },
+              { value: 'nao_responde', label: 'Cliente não respondeu' },
+              { value: 'outro', label: 'Outro' },
+            ]}
+            value={motivoPerda}
+            onChange={(value) => setMotivoPerda(value ?? '')}
+            required
+            clearable
+          />
 
-)}
-  
+          <Group justify="flex-end" mt="md">
+            <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
+              Cancelar
+            </Button>
+            <Button color="green" onClick={confirmarVendaPerdida}>
+              Confirmar
+            </Button>
+          </Group>
+        </Modal>
+
+
+
+      )}
+
     </SidebarGestor>
   );
 }
