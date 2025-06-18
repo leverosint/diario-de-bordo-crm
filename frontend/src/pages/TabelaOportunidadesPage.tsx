@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
   Title, Table, Container, Loader, ScrollArea, Badge, Group,
-  TextInput, Button, Tooltip, Card, Box, Select, Modal
+  TextInput, Button, Tooltip, Card, Box, Select,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
@@ -442,54 +442,51 @@ export default function TabelaOportunidadesPage() {
   </Container>
 
   {modalAberto && idMudandoStatus !== null && (
-    <Modal
-      opened={modalAberto}
-      onClose={() => setModalAberto(false)}
-      title={
-        <Group>
-          <span style={{ fontSize: 22 }}>🛑</span>
-          <Title order={4} fw={700}>
-            Marcar como Venda Perdida
-          </Title>
-        </Group>
-      }
-      centered
-      overlayProps={{
-        backgroundOpacity: 0.55,
-        blur: 4,
-      }}
-      radius="md"
-      padding="lg"
-    >
-      <p style={{ marginBottom: '8px' }}>Selecione o motivo da venda perdida:</p>
-      <Select
-        label="Motivo da Venda Perdida"
-        placeholder="Selecione"
-        data={[
-          { value: 'preco', label: 'Preço' },
-          { value: 'prazo', label: 'Prazo' },
-          { value: 'concorrente', label: 'Fechou com concorrente' },
-          { value: 'fora_perfil', label: 'Fora de perfil' },
-          { value: 'nao_responde', label: 'Cliente não respondeu' },
-          { value: 'outro', label: 'Outro' },
-        ]}
-        value={motivoPerda}
-        onChange={(value) => setMotivoPerda(value ?? '')}
-        withCheckIcon={false}
-        required
-        clearable
-      />
-
-      <Group justify="flex-end" mt="md">
-        <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
-          Cancelar
-        </Button>
-        <Button color="green" onClick={confirmarVendaPerdida}>
-          Confirmar
-        </Button>
+  <Card withBorder shadow="sm" radius="lg" mt="xl" style={{ backgroundColor: '#fff' }}>
+    <Group justify="space-between" align="center">
+      <Group>
+        <span style={{ fontSize: 22 }}>🛑</span>
+        <Title order={4} fw={700}>
+          Marcar como Venda Perdida - ID {idMudandoStatus}
+        </Title>
       </Group>
-    </Modal>
-  )}
+      <Button variant="subtle" color="red" onClick={() => setModalAberto(false)}>
+        Fechar
+      </Button>
+    </Group>
+
+    <Text mt="md" mb="xs">
+      Selecione o motivo da venda perdida:
+    </Text>
+
+    <Select
+      label="Motivo da Venda Perdida"
+      placeholder="Selecione"
+      data={[
+        { value: 'preco', label: 'Preço' },
+        { value: 'prazo', label: 'Prazo' },
+        { value: 'concorrente', label: 'Fechou com concorrente' },
+        { value: 'fora_perfil', label: 'Fora de perfil' },
+        { value: 'nao_responde', label: 'Cliente não respondeu' },
+        { value: 'outro', label: 'Outro' },
+      ]}
+      value={motivoPerda}
+      onChange={(value) => setMotivoPerda(value ?? '')}
+      withCheckIcon={false}
+      required
+      clearable
+    />
+
+    <Group justify="flex-end" mt="md">
+      <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
+        Cancelar
+      </Button>
+      <Button color="green" onClick={confirmarVendaPerdida}>
+        Confirmar
+      </Button>
+    </Group>
+  </Card>
+)}
 </SidebarGestor>
 );
 }
