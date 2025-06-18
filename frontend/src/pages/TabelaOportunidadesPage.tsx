@@ -543,12 +543,11 @@ const confirmarVendaPerdida = async () => {
   title="⚠️ Oportunidades sem movimentação"
   centered
   radius="md"
+  withinPortal={false}
   overlayProps={{
-    backgroundOpacity: 0.4,
+    backgroundOpacity: 0.55,
     blur: 4,
   }}
-  withinPortal={false} // ✅ Faz com que o modal fique dentro do layout, respeitando a sidebar
-  zIndex={500}
 >
   {pendentesMovimentacao.map((o) => (
     <Card key={o.id} withBorder mb="sm">
@@ -566,14 +565,14 @@ const confirmarVendaPerdida = async () => {
         <p>Observação: {o.observacao || '-'}</p>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
+      <Group justify="center" mt="xs">
         <Select
           placeholder="Mudar etapa"
           data={etapaOptions}
           value={o.etapa}
           onChange={(value) => value && handleStatusChangePopup(o.id, value)}
         />
-      </div>
+      </Group>
     </Card>
   ))}
 
@@ -583,6 +582,7 @@ const confirmarVendaPerdida = async () => {
     </Button>
   )}
 </Modal>
+
 
 
 
