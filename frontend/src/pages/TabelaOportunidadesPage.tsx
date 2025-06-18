@@ -118,58 +118,66 @@ useEffect(() => {
 
 
 
-  const handleStatusChange = (id: number, novaEtapa: string | null) => {
-    if (!novaEtapa) return;
+const handleStatusChange = (id: number, novaEtapa: string | null) => {
+  if (!novaEtapa) return;
 
-    if (novaEtapa === 'perdida') {
-      abrirModalPerda(id);
-
-    } else {
-      axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
-        etapa: novaEtapa,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then(() => {
-        setDados(prev =>
-          prev.map(o =>
-            o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() } : o
-          )
-        );
-      }).catch(err => {
-        console.error('Erro ao atualizar etapa:', err);
-        alert('Erro ao atualizar etapa');
-      });
-    }
-  };
-
-
-
-  const handleStatusChangePopup = (id: number, novaEtapa: string | null) => {
-    if (!novaEtapa) return;
-
+  if (novaEtapa === 'perdida') {
+    abrirModalPerda(id);
+  } else {
+    const agora = new Date().toISOString();
     axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
       etapa: novaEtapa,
+      data_etapa: new Date().toISOString(), // 🔥 Atualiza data_etapa
+      data_status: new Date().toISOString(), // 🔥 Atualiza data_status
     }, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(() => {
       setDados(prev =>
         prev.map(o =>
           o.id === id
-            ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString(), dias_sem_movimentacao: 0 }
+            ? { ...o, etapa: novaEtapa, data_status: agora }
             : o
         )
       );
-
-      setPendentesMovimentacao(prev => prev.filter(o => o.id !== id));
-
-      if (pendentesMovimentacao.length - 1 === 0) {
-        setPopupAberto(false);
-      }
     }).catch(err => {
       console.error('Erro ao atualizar etapa:', err);
       alert('Erro ao atualizar etapa');
     });
-  };
+  }
+};
+
+
+
+
+const handleStatusChangePopup = (id: number, novaEtapa: string | null) => {
+  if (!novaEtapa) return;
+
+  const agora = new Date().toISOString();
+  axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
+    etapa: novaEtapa,
+    data_etapa: new Date().toISOString(), // 🔥 Atualiza data_etapa
+    data_status: new Date().toISOString(), // 🔥 Atualiza data_status
+  }, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(() => {
+    setDados(prev =>
+      prev.map(o =>
+        o.id === id
+          ? { ...o, etapa: novaEtapa, data_status: agora, dias_sem_movimentacao: 0 }
+          : o
+      )
+    );
+
+    setPendentesMovimentacao(prev => prev.filter(o => o.id !== id));
+
+    if (pendentesMovimentacao.length - 1 === 0) {
+      setPopupAberto(false);
+    }
+  }).catch(err => {
+    console.error('Erro ao atualizar etapa:', err);
+    alert('Erro ao atualizar etapa');
+  });
+};
 
 
 
