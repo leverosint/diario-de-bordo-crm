@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
   Title, Table, Container, Loader, ScrollArea, Badge, Group,
-  TextInput, Tooltip, Card, Box, Select
+  TextInput, Tooltip, Card, Box,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
@@ -623,6 +623,7 @@ style={{
                         <tbody>
                           {lista.map((o) => {
                               const comboStatus = useCombobox(); // ✅ obrigatório aqui
+                              
                             const emEdicao = editandoId === o.id;
                             return (
                               <tr key={o.id}>
@@ -660,8 +661,10 @@ style={{
                                   <Group gap="xs" justify="center">
                                   
 
+                                  
+
 <Combobox
-  store={comboStatus} 
+  store={comboStatus}
   withinPortal
   onOptionSubmit={(value) => {
     if (value === 'perdida') {
@@ -673,40 +676,38 @@ style={{
     comboStatus.closeDropdown();
   }}
 >
-<Select
-  value={o.etapa}
-  onChange={(value) => {
-    if (value === 'perdida') {
-      setModalPerdida(true);
-      setIdPerdida(o.id);
-    } else if (value) {
-      handleStatusChange(o.id, value);
-    }
-  }}
-  data={etapaOptions}
-  size="xs"
-  styles={{
-    input: {
-      backgroundColor: getStatusColor(o.etapa),
-      color: 'white',
-      fontWeight: 600,
-      textAlign: 'center',
-      borderRadius: 6,
-      minWidth: 120,
-      cursor: 'pointer',
-    }
-  }}
-/>
+  <Combobox.Target>
+    <Input
+      pointer
+      onClick={() => comboStatus.toggleDropdown()}
+      value={etapaOptions.find((e) => e.value === o.etapa)?.label ?? o.etapa}
+      readOnly
+      size="xs"
+      styles={{
+        input: {
+          backgroundColor: getStatusColor(o.etapa),
+          color: 'white',
+          fontWeight: 600,
+          textAlign: 'center',
+          borderRadius: 6,
+          minWidth: 120,
+          cursor: 'pointer',
+        },
+      }}
+    />
+  </Combobox.Target>
+
   <Combobox.Dropdown>
     <Combobox.Options>
       {etapaOptions.map((item) => (
-        <Combobox.Option value={item.value} key={item.value}>
+        <Combobox.Option key={item.value} value={item.value}>
           {item.label}
         </Combobox.Option>
       ))}
     </Combobox.Options>
   </Combobox.Dropdown>
 </Combobox>
+
 
 
 
