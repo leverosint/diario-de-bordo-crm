@@ -20,10 +20,12 @@ interface Oportunidade {
   etapa: string;
   data_criacao: string;
   data_status: string | null;
+  data_etapa: string | null; // <-- 🔥 Adiciona isso
   gatilho_extra?: string;
   observacao?: string;
   dias_sem_movimentacao?: number;
 }
+
 
 export default function TabelaOportunidadesPage() {
   const [dados, setDados] = useState<Oportunidade[]>([]);
@@ -91,14 +93,15 @@ useEffect(() => {
 const dadosComDias: Oportunidade[] = useMemo(() => {
   return dados.map((o) => ({
     ...o,
-    dias_sem_movimentacao: o.data_status
+    dias_sem_movimentacao: o.data_etapa
       ? Math.floor(
-          (new Date().getTime() - new Date(o.data_status).getTime()) /
+          (new Date().getTime() - new Date(o.data_etapa).getTime()) /
             (1000 * 60 * 60 * 24)
         )
       : undefined,
   }));
 }, [dados]);
+
 
 
 
