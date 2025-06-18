@@ -33,8 +33,7 @@ export default function TabelaOportunidadesPage() {
   const [idPerdida, setIdPerdida] = useState<number | null>(null);
   const [motivoPerda, setMotivoPerda] = useState<string | null>(null);
   const [outroMotivo, setOutroMotivo] = useState<string>('');
-  const combobox = useCombobox();
-  const comboboxPerda = useCombobox();
+   const comboboxPerda = useCombobox();
   const comboboxFiltro = useCombobox();
 
   const [dados, setDados] = useState<Oportunidade[]>([]);
@@ -310,59 +309,63 @@ if (mostrarModalBloqueio) {
               </tr>
             </thead>
             <tbody>
-              {bloqueados.map((o) => (
-                <tr key={o.id}>
-                  <td>{o.id}</td>
-                  <td>{o.parceiro_nome}</td>
-                  <td>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                  <td>{o.dias_sem_movimentacao} dias</td>
-                  <td>
-                  <Combobox
-  store={combobox}
-  withinPortal
-  onOptionSubmit={(value) => {
-    handleStatusChange(o.id, value);
-    combobox.closeDropdown();
-  }}
->
-  <Combobox.Target>
-    <Input
-      pointer
-      onClick={() => combobox.toggleDropdown()}
-      value={
-        etapaOptions.find((e) => e.value === o.etapa)?.label ?? o.etapa
-      }
-      readOnly
-      size="xs"
-      styles={{
-        input: {
-          backgroundColor: getStatusColor(o.etapa),
-          color: 'white',
-          fontWeight: 600,
-          textAlign: 'center',
-          borderRadius: 6,
-          minWidth: 120,
-          cursor: 'pointer',
-        },
-      }}
-    />
-  </Combobox.Target>
+  {bloqueados.map((o) => {
+    const comboStatus = useCombobox(); // ✅ Aqui é certo
 
-  <Combobox.Dropdown>
-    <Combobox.Options>
-      {etapaOptions.map((item) => (
-        <Combobox.Option key={item.value} value={item.value}>
-          {item.label}
-        </Combobox.Option>
-      ))}
-    </Combobox.Options>
-  </Combobox.Dropdown>
-</Combobox>
+    return (
+      <tr key={o.id}>
+        <td>{o.id}</td>
+        <td>{o.parceiro_nome}</td>
+        <td>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+        <td>{o.dias_sem_movimentacao} dias</td>
+        <td>
+          <Combobox
+            store={comboStatus}
+            withinPortal
+            onOptionSubmit={(value) => {
+              handleStatusChange(o.id, value);
+              comboStatus.closeDropdown();
+            }}
+          >
+            <Combobox.Target>
+              <Input
+                pointer
+                onClick={() => comboStatus.toggleDropdown()}
+                value={
+                  etapaOptions.find((e) => e.value === o.etapa)?.label ?? o.etapa
+                }
+                readOnly
+                size="xs"
+                styles={{
+                  input: {
+                    backgroundColor: getStatusColor(o.etapa),
+                    color: 'white',
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    borderRadius: 6,
+                    minWidth: 120,
+                    cursor: 'pointer',
+                  },
+                }}
+              />
+            </Combobox.Target>
 
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+            <Combobox.Dropdown>
+              <Combobox.Options>
+                {etapaOptions.map((item) => (
+                  <Combobox.Option key={item.value} value={item.value}>
+                    {item.label}
+                  </Combobox.Option>
+                ))}
+              </Combobox.Options>
+            </Combobox.Dropdown>
+          </Combobox>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
+
           </Table>
         </div>
       </div>
@@ -627,6 +630,7 @@ style={{
                         </thead>
                         <tbody>
                           {lista.map((o) => {
+                              const comboStatus = useCombobox(); // ✅ obrigatório aqui
                             const emEdicao = editandoId === o.id;
                             return (
                               <tr key={o.id}>
@@ -665,7 +669,7 @@ style={{
                                   
 
 <Combobox
-  store={combobox}
+  store={comboStatus} 
   withinPortal
   onOptionSubmit={(value) => {
     if (value === 'perdida') {
@@ -674,13 +678,13 @@ style={{
     } else {
       handleStatusChange(o.id, value);
     }
-    combobox.closeDropdown();
+    comboStatus.closeDropdown();
   }}
 >
   <Combobox.Target>
     <Input
       pointer
-      onClick={() => combobox.toggleDropdown()}
+      onClick={() => comboStatus.toggleDropdown()}
       value={o.etapa}
       readOnly
       size="xs"
