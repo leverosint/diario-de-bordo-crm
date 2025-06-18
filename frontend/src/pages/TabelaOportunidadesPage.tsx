@@ -37,15 +37,15 @@ export default function TabelaOportunidadesPage() {
   const [observacaoEdit, setObservacaoEdit] = useState<string>('');
   const [modalAberto, setModalAberto] = useState(false);
 const [idMudandoStatus, setIdMudandoStatus] = useState<number | null>(null);
-const [novoStatus, setNovoStatus] = useState<string | null>(null);
+
 const [motivoPerda, setMotivoPerda] = useState('');
 
-const abrirModalPerda = (id: number, status: string) => {
+const abrirModalPerda = (id: number) => {
   setIdMudandoStatus(id);
-  setNovoStatus(status);
   setMotivoPerda('');
   setModalAberto(true);
 };
+
 
   const token = localStorage.getItem('token') ?? '';
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
@@ -87,7 +87,8 @@ const abrirModalPerda = (id: number, status: string) => {
     if (!novaEtapa) return;
   
     if (novaEtapa === 'perdida') {
-      abrirModalPerda(id, novaEtapa);
+      abrirModalPerda(id);
+    
     } else {
       axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
         etapa: novaEtapa,
@@ -107,7 +108,10 @@ const abrirModalPerda = (id: number, status: string) => {
   };
   
   const confirmarVendaPerdida = async () => {
-    if (!idMudandoStatus || !novoStatus) return;
+    if (!idMudandoStatus) {
+      alert('ID inválido, tente novamente');
+      return;
+    }
   
     if (motivoPerda.trim() === '') {
       alert('Por favor, preencha o motivo da venda perdida.');
@@ -116,29 +120,30 @@ const abrirModalPerda = (id: number, status: string) => {
   
     try {
       await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`, {
-        etapa: novoStatus,
+        etapa: 'perdida',
         observacao: motivoPerda,
       }, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      
   
       setDados(prev =>
         prev.map(o =>
           o.id === idMudandoStatus
-            ? { ...o, etapa: novoStatus, data_status: new Date().toISOString(), observacao: motivoPerda }
+            ? { ...o, etapa: 'perdida', data_status: new Date().toISOString(), observacao: motivoPerda }
             : o
         )
       );
   
       setModalAberto(false);
       setIdMudandoStatus(null);
-      setNovoStatus(null);
       setMotivoPerda('');
     } catch (err) {
       console.error('Erro ao atualizar etapa:', err);
       alert('Erro ao atualizar etapa');
     }
   };
+  
   
 
   const dadosFiltrados = useMemo(() => {
@@ -412,33 +417,47 @@ const abrirModalPerda = (id: number, status: string) => {
           </ScrollArea>
         )}
       </Container>
-      <Modal
-  opened={modalAberto}
-  onClose={() => setModalAberto(false)}
-  title="Motivo da Venda Perdida"
-  centered
-  overlayProps={{
-    backgroundOpacity: 0.55,
-    blur: 3,
-  }}
-  zIndex={1000}
->
-  <TextInput
-    label="Descreva o motivo"
-    placeholder="Ex: Cliente desistiu, preço, prazo, etc."
-    value={motivoPerda}
-    onChange={(e) => setMotivoPerda(e.currentTarget.value)}
-    required
-  />
-  <Group justify="flex-end" mt="md">
-    <Button variant="outline" onClick={() => setModalAberto(false)}>
-      Cancelar
-    </Button>
-    <Button onClick={confirmarVendaPerdida}>
-      Confirmar
-    </Button>
-  </Group>
-</Modal>
+      {modalAberto && idMudandoStatus !== null && (
+  <Modal
+    opened={modalAberto}
+    onClose={() => setModalAberto(false)}
+    title="Motivo da Venda Perdida"
+    centered
+    overlayProps={{
+      backgroundOpacity: 0.55,
+      blur: 3,
+    }}
+    zIndex={1000}
+  >
+    <Select
+
+label="Motivo da perda"
+placeholder="Selecione o motivo"
+data={[
+  { value: 'preco', label: 'Preço' },
+  { value: 'prazo', label: 'Prazo' },
+  { value: 'concorrente', label: 'Escolheu concorrente' },
+  { value: 'outro', label: 'Outro motivo' },
+]}
+value={motivoPerda}
+onChange={(value) => setMotivoPerda(value || '')}
+required
+/>
+
+
+    <Group justify="flex-end" mt="md">
+      <Button variant="outline" onClick={() => setModalAberto(false)}>
+        Cancelar
+      </Button>
+      <Button
+        color="red"
+        onClick={confirmarVendaPerdida}
+      >
+        Confirmar
+      </Button>
+    </Group>
+  </Modal>
+)}
 
     </SidebarGestor>
   );
