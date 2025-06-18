@@ -536,52 +536,60 @@ const confirmarVendaPerdida = async () => {
         )}
       </Container>
 
-      <Modal
-  opened={popupAberto}
-  onClose={() => {}}
-  withCloseButton={false}
-  title="⚠️ Oportunidades sem movimentação"
-  centered
-  radius="md"
-  withinPortal={false}
-  overlayProps={{
-    backgroundOpacity: 0.55,
-    blur: 4,
-  }}
->
-  {pendentesMovimentacao.map((o) => (
-    <Card key={o.id} withBorder mb="sm">
-      <div className={styles.centralizado}>
-        <strong>{o.parceiro_nome}</strong>
-        <small>ID: {o.parceiro}</small>
-        <strong>{o.dias_sem_movimentacao} dias sem movimentação</strong>
-        <p>
-          Valor:{' '}
-          {Number(o.valor).toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-          })}
-        </p>
-        <p>Observação: {o.observacao || '-'}</p>
-      </div>
+      {popupAberto && (
+  <Card
+    shadow="md"
+    padding="lg"
+    radius="md"
+    style={{
+      position: 'fixed',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      zIndex: 1000,
+      width: '400px',
+      maxHeight: '80vh',
+      overflowY: 'auto',
+      backgroundColor: 'white',
+    }}
+  >
+    <Title order={4} mb="sm">
+      ⚠️ Oportunidades sem movimentação
+    </Title>
 
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '8px' }}>
-        <Select
-          placeholder="Mudar etapa"
-          data={etapaOptions}
-          value={o.etapa}
-          onChange={(value) => value && handleStatusChangePopup(o.id, value)}
-        />
-      </div>
-    </Card>
-  ))}
+    {pendentesMovimentacao.map((o) => (
+      <Card key={o.id} withBorder mb="sm">
+        <div style={{ textAlign: 'center' }}>
+          <strong>{o.parceiro_nome}</strong> <br />
+          <small>ID: {o.parceiro}</small> <br />
+          <strong>{o.dias_sem_movimentacao} dias sem movimentação</strong> <br />
+          <p>
+            Valor:{' '}
+            {Number(o.valor).toLocaleString('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            })}
+          </p>
+          <p>Observação: {o.observacao || '-'}</p>
+        </div>
 
-  {pendentesMovimentacao.length === 0 && (
-    <Button fullWidth onClick={() => setPopupAberto(false)}>
+        <Group justify="center" mt="xs">
+          <Select
+            placeholder="Mudar etapa"
+            data={etapaOptions}
+            value={o.etapa}
+            onChange={(value) => value && handleStatusChangePopup(o.id, value)}
+          />
+        </Group>
+      </Card>
+    ))}
+
+    <Button fullWidth mt="sm" onClick={() => setPopupAberto(false)}>
       Fechar
     </Button>
-  )}
-</Modal>
+  </Card>
+)}
+
 
 
 
