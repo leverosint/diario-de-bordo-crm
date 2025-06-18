@@ -152,73 +152,83 @@ const handleStatusChange = (id: number, novaEtapa: string | null) => {
 const handleStatusChangePopup = (id: number, novaEtapa: string | null) => {
   if (!novaEtapa) return;
 
-  const agora = new Date().toISOString();
-  axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
-    etapa: novaEtapa,
-    data_etapa: new Date().toISOString(), // 🔥 Atualiza data_etapa
-    data_status: new Date().toISOString(), // 🔥 Atualiza data_status
-  }, {
-    headers: { Authorization: `Bearer ${token}` },
-  }).then(() => {
-    setDados(prev =>
-      prev.map(o =>
-        o.id === id
-          ? { ...o, etapa: novaEtapa, data_status: agora, dias_sem_movimentacao: 0 }
-          : o
-      )
-    );
-
-    setPendentesMovimentacao(prev => prev.filter(o => o.id !== id));
-
-    if (pendentesMovimentacao.length - 1 === 0) {
-      setPopupAberto(false);
-    }
-  }).catch(err => {
-    console.error('Erro ao atualizar etapa:', err);
-    alert('Erro ao atualizar etapa');
-  });
-};
-
-
-
-  const confirmarVendaPerdida = async () => {
-    if (!idMudandoStatus) {
-      alert('ID inválido, tente novamente');
-      return;
-    }
-
-    if (motivoPerda.trim() === '') {
-      alert('Por favor, preencha o motivo da venda perdida.');
-      return;
-    }
-
-
-    try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`, {
-        etapa: 'perdida',
-        motivo_venda_perdida: motivoPerda,  // ✅ Envia para o backend
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-
-
+  if (novaEtapa === 'perdida') {
+    abrirModalPerda(id); // 🔥 Usa o mesmo modal da perda
+  } else {
+    axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
+      etapa: novaEtapa,
+      data_etapa: new Date().toISOString(),
+      data_status: new Date().toISOString(),
+    }, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(() => {
       setDados(prev =>
         prev.map(o =>
-          o.id === idMudandoStatus
-            ? { ...o, etapa: 'perdida', data_status: new Date().toISOString(), observacao: motivoPerda }
+          o.id === id
+            ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString(), dias_sem_movimentacao: 0 }
             : o
         )
       );
 
-      setModalAberto(false);
-      setIdMudandoStatus(null);
-      setMotivoPerda('');
-    } catch (err) {
+      setPendentesMovimentacao(prev => prev.filter(o => o.id !== id));
+
+      if (pendentesMovimentacao.length - 1 === 0) {
+        setPopupAberto(false);
+      }
+    }).catch(err => {
       console.error('Erro ao atualizar etapa:', err);
       alert('Erro ao atualizar etapa');
+    });
+  }
+};
+
+
+
+
+const confirmarVendaPerdida = async () => {
+  if (!idMudandoStatus) {
+    alert('ID inválido, tente novamente');
+    return;
+  }
+
+  if (motivoPerda.trim() === '') {
+    alert('Por favor, preencha o motivo da venda perdida.');
+    return;
+  }
+
+  try {
+    await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`, {
+      etapa: 'perdida',
+      motivo_venda_perdida: motivoPerda,
+      data_etapa: new Date().toISOString(),
+      data_status: new Date().toISOString(),
+    }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    setDados(prev =>
+      prev.map(o =>
+        o.id === idMudandoStatus
+          ? { ...o, etapa: 'perdida', data_status: new Date().toISOString(), observacao: motivoPerda }
+          : o
+      )
+    );
+
+    setPendentesMovimentacao(prev => prev.filter(o => o.id !== idMudandoStatus));
+
+    if (pendentesMovimentacao.length - 1 === 0) {
+      setPopupAberto(false);
     }
-  };
+
+    setModalAberto(false);
+    setIdMudandoStatus(null);
+    setMotivoPerda('');
+  } catch (err) {
+    console.error('Erro ao atualizar etapa:', err);
+    alert('Erro ao atualizar etapa');
+  }
+};
+
 
 
 
