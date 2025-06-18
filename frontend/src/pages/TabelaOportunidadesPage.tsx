@@ -427,37 +427,36 @@ const abrirModalPerda = (id: number) => {
       backgroundOpacity: 0.55,
       blur: 3,
     }}
-    zIndex={1000}
   >
     <Select
-
-label="Motivo da perda"
-placeholder="Selecione o motivo"
-data={[
-  { value: 'preco', label: 'Preço' },
-  { value: 'prazo', label: 'Prazo' },
-  { value: 'concorrente', label: 'Escolheu concorrente' },
-  { value: 'outro', label: 'Outro motivo' },
-]}
-value={motivoPerda}
-onChange={(value) => setMotivoPerda(value || '')}
-required
-/>
-
+      label="Motivo da perda"
+      placeholder="Selecione o motivo"
+      data={[
+        { value: 'preco', label: 'Preço' },
+        { value: 'prazo', label: 'Prazo' },
+        { value: 'concorrente', label: 'Escolheu concorrente' },
+        { value: 'outro', label: 'Outro motivo' },
+      ]}
+      value={motivoPerda}
+      onChange={(value) => setMotivoPerda(value ?? '')}
+      required
+      withCheckIcon={false}
+    />
 
     <Group justify="flex-end" mt="md">
       <Button variant="outline" onClick={() => setModalAberto(false)}>
         Cancelar
       </Button>
-      <Button
-        color="red"
-        onClick={confirmarVendaPerdida}
-      >
+      <Button color="red" onClick={confirmarVendaPerdida}>
         Confirmar
       </Button>
     </Group>
   </Modal>
 )}
+
+
+
+
 
     </SidebarGestor>
   );
