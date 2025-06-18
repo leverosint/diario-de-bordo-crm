@@ -2,7 +2,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MantineProvider } from '@mantine/core';
-import { ModalsProvider } from '@mantine/modals';
 import '@mantine/core/styles.css';
 
 import Relatorios from './pages/Relatorios';
@@ -23,19 +22,17 @@ createRoot(document.getElementById('root')!).render(
       defaultColorScheme="light"
       withCssVariables
     >
-      <ModalsProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LoginPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/cadastro-parceiro" element={<CadastroParceiroPage />} />
-            <Route path="/cadastro-usuarios" element={<CadastroUsuariosPage />} />
-            <Route path="/interacoes" element={<InteracoesPage />} />
-            <Route path="/relatorios" element={<Relatorios />} />
-            <Route path="/tabela-oportunidades" element={<TabelaOportunidadesPage />} />
-          </Routes>
-        </BrowserRouter>
-      </ModalsProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LoginPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/cadastro-parceiro" element={<CadastroParceiroPage />} />
+          <Route path="/cadastro-usuarios" element={<CadastroUsuariosPage />} />
+          <Route path="/interacoes" element={<InteracoesPage />} />
+          <Route path="/relatorios" element={<Relatorios />} />
+          <Route path="/tabela-oportunidades" element={<TabelaOportunidadesPage />} />
+        </Routes>
+      </BrowserRouter>
     </MantineProvider>
   </StrictMode>
 );
