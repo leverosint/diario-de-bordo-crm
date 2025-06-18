@@ -26,6 +26,11 @@ interface Oportunidade {
 }
 
 export default function TabelaOportunidadesPage() {
+  const [modalPerdida, setModalPerdida] = useState<boolean>(false);
+  const [idPerdida, setIdPerdida] = useState<number | null>(null);
+  const [motivoPerda, setMotivoPerda] = useState<string | null>(null);
+  const [outroMotivo, setOutroMotivo] = useState<string>('');
+
   const [dados, setDados] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [bloqueados, setBloqueados] = useState<Oportunidade[]>([]);
@@ -38,6 +43,7 @@ export default function TabelaOportunidadesPage() {
   const [valorEdit, setValorEdit] = useState<string>('');
   const [observacaoEdit, setObservacaoEdit] = useState<string>('');
 
+
   const token = localStorage.getItem('token') ?? '';
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   const tipoUser = usuario?.tipo_user ?? '';
@@ -49,6 +55,16 @@ export default function TabelaOportunidadesPage() {
     { value: 'pedido', label: 'Pedido Realizado' },
     { value: 'perdida', label: 'Venda Perdida' },
   ];
+
+  const motivosPerda = [
+    { value: 'preco', label: 'Preço' },
+    { value: 'prazo', label: 'Prazo de entrega' },
+    { value: 'concorrente', label: 'Fechou com concorrente' },
+    { value: 'fora_perfil', label: 'Fora de perfil' },
+    { value: 'nao_respondeu', label: 'Cliente não respondeu' },
+    { value: 'outro', label: 'Outro' },
+  ];
+  
 
   const getStatusColor = (etapa: string) => ({
     oportunidade: 'blue',
@@ -207,6 +223,62 @@ export default function TabelaOportunidadesPage() {
     setObservacaoEdit('');
   };
 
+
+
+
+
+  const handlePerdidaSubmit = async () => {
+    if (!motivoPerda) {
+      alert('Selecione o motivo da venda perdida.');
+      return;
+    }
+  
+    try {
+      await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${idPerdida}/`, {
+        etapa: 'perdida',
+        motivo_venda_perdida: motivoPerda,
+        outro_motivo: motivoPerda === 'outro' ? outroMotivo : null,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      setDados(prev =>
+        prev.map(o =>
+          o.id === idPerdida
+            ? { ...o, etapa: 'perdida', data_status: new Date().toISOString(), dias_sem_movimentacao: 0 }
+            : o
+        )
+      );
+  
+      setModalPerdida(false);
+      setIdPerdida(null);
+      setMotivoPerda(null);
+      setOutroMotivo('');
+  
+      const novosBloqueados = dados
+        .map(o =>
+          o.id === idPerdida
+            ? { ...o, etapa: 'perdida', dias_sem_movimentacao: 0 }
+            : o
+        )
+        .filter(o => (o.dias_sem_movimentacao ?? 0) >= 10);
+  
+      setBloqueados(novosBloqueados);
+      if (novosBloqueados.length === 0) {
+        setMostrarModalBloqueio(false);
+      }
+  
+    } catch (err) {
+      console.error('Erro ao marcar como perdida:', err);
+      alert('Erro ao salvar. Verifique os campos.');
+    }
+  };
+  
+
+
+
+
+
 // 🔥 Adiciona isso aqui — antes do return (
   if (mostrarModalBloqueio) {
     return (
@@ -252,7 +324,48 @@ export default function TabelaOportunidadesPage() {
   }
   
 
-
+  {modalPerdida && (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalContent}>
+        <Title order={3} mb="md">🛑 Marcar como Venda Perdida</Title>
+        <p>Selecione o motivo da venda perdida:</p>
+  
+        <Select
+          label="Motivo da Venda Perdida"
+          placeholder="Selecione"
+          data={motivosPerda}
+          value={motivoPerda}
+          onChange={setMotivoPerda}
+          mb="md"
+        />
+  
+        {motivoPerda === 'outro' && (
+          <TextInput
+            label="Outro motivo"
+            placeholder="Descreva o motivo"
+            value={outroMotivo}
+            onChange={(e) => setOutroMotivo(e.currentTarget.value)}
+            mb="md"
+          />
+        )}
+  
+        <Group mt="md" justify="flex-end">
+          <Button color="red" variant="outline" onClick={() => {
+            setModalPerdida(false);
+            setIdPerdida(null);
+            setMotivoPerda(null);
+            setOutroMotivo('');
+          }}>
+            Cancelar
+          </Button>
+          <Button color="green" onClick={handlePerdidaSubmit}>
+            Confirmar
+          </Button>
+        </Group>
+      </div>
+    </div>
+  )}
+  
 
 
   return (
@@ -386,22 +499,30 @@ export default function TabelaOportunidadesPage() {
                                 </td>
                                 <td className={styles.center}>
                                   <Group gap="xs" justify="center">
-                                    <Select
-                                      value={o.etapa}
-                                      onChange={(value) => value && handleStatusChange(o.id, value)}
-                                      data={etapaOptions}
-                                      size="xs"
-                                      styles={{
-                                        input: {
-                                          backgroundColor: getStatusColor(o.etapa),
-                                          color: 'white',
-                                          fontWeight: 600,
-                                          textAlign: 'center',
-                                          borderRadius: 6,
-                                          minWidth: 120,
-                                        }
-                                      }}
-                                    />
+                                  <Select
+  value={o.etapa}
+  onChange={(value) => {
+    if (value === 'perdida') {
+      setModalPerdida(true);
+      setIdPerdida(o.id);
+      return;
+    }
+    value && handleStatusChange(o.id, value);
+  }}
+  data={etapaOptions}
+  size="xs"
+  styles={{
+    input: {
+      backgroundColor: getStatusColor(o.etapa),
+      color: 'white',
+      fontWeight: 600,
+      textAlign: 'center',
+      borderRadius: 6,
+      minWidth: 120,
+    }
+  }}
+/>
+
                                     {emEdicao ? (
                                       <>
                                         <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
