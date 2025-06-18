@@ -424,15 +424,16 @@ style={{
           {[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
             { label: 'Data fim', value: dataFim, onChange: setDataFim }].map((item, idx) => (
             <Box key={idx} style={{ minWidth: 160 }}>
-              <DatePickerInput
-                value={item.value}
-                onChange={item.onChange}
-                locale="pt-br"
-                label={item.label}
-                dropdownType="popover"
-                clearable
-                rightSection={null}
-              />
+<DatePickerInput
+  value={item.value}
+  onChange={item.onChange}
+  locale="pt-br"
+  label={item.label}
+  dropdownType="popover"
+  clearable
+  rightSection={null}
+/>
+
             </Box>
           ))}
         </Group>
@@ -556,7 +557,9 @@ style={{
     borderRadius: 6,
     minWidth: 120,
   }}
+
 />
+
 
 
 
