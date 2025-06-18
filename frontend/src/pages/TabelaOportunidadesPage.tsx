@@ -442,17 +442,17 @@ export default function TabelaOportunidadesPage() {
       </Container>
 
       {modalAberto && idMudandoStatus !== null && (
-  <Modal
+        <Modal
   opened={modalAberto}
   onClose={() => setModalAberto(false)}
   title="Marcar como Venda Perdida"
   centered
-  size="md"
+  withinPortal={false}
+  radius="md"
   overlayProps={{
     backgroundOpacity: 0.55,
     blur: 4,
   }}
-  radius="md"
 >
   <Select
     label="Motivo da Venda Perdida"
@@ -480,6 +480,7 @@ export default function TabelaOportunidadesPage() {
     </Button>
   </Group>
 </Modal>
+
 
 )}
   
