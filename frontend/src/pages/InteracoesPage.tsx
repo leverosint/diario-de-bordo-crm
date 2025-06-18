@@ -263,7 +263,8 @@ export default function InteracoesPage() {
           <Title order={2}>Interações de Parceiros Pendentes</Title>
         </Center>
 
-        <Group justify="space-between" mb="md" style={{ flexWrap: 'wrap' }}>
+        <Group justify="space-between" style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+
   <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
     Meta do dia: {metaAtual}/{metaTotal}
   </Badge>
@@ -305,7 +306,8 @@ export default function InteracoesPage() {
                 label="Descrição do Gatilho"
                 placeholder="Ex: Urgente, Precisa Retorno..."
                 value={descricaoGatilho}
-                onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDescricaoGatilho(e.currentTarget.value)}
+
               />
               <Button color="blue" onClick={salvarGatilhoManual}>
                 Salvar Gatilho Manual
@@ -318,7 +320,8 @@ export default function InteracoesPage() {
  
       
 {tipoUser === 'GESTOR' && (
-  <Group mb="xl" style={{ flexWrap: 'wrap' }}>
+  <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+
   <Select
     label="Filtrar por Canal de Venda"
     placeholder="Selecione um canal"
@@ -362,7 +365,8 @@ export default function InteracoesPage() {
           <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
         ) : (
           <>
-            <Divider label="A Interagir" mb="xs" />
+            <Divider style={{ marginBottom: 8 }} label="A Interagir" />
+
             <div className={styles.tableWrapper}>
               <Table striped highlightOnHover withTableBorder className={styles.table}>
                 <thead>
@@ -422,16 +426,17 @@ export default function InteracoesPage() {
                                 label="Valor da Oportunidade (R$)"
                                 placeholder="5000"
                                 value={valorOportunidade}
-                                onChange={(e) => setValorOportunidade(e.currentTarget.value)}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValorOportunidade(e.currentTarget.value)}
                               />
                               <Textarea
                                 label="Observação"
                                 placeholder="Detalhes adicionais..."
                                 value={observacaoOportunidade}
-                                onChange={(e) => setObservacaoOportunidade(e.currentTarget.value)}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setObservacaoOportunidade(e.currentTarget.value)}
+
                               />
                             </Group>
-                            <Group mt="md" justify="flex-end">
+                            <Group style={{ marginTop: 16 }} justify="flex-end">
                               <Button
                                 color="blue"
                                 onClick={() => registrarInteracao(
@@ -471,7 +476,8 @@ export default function InteracoesPage() {
               </Table>
             </div>
 
-            <Divider label="Interagidos Hoje" mt="xl" mb="md" />
+            <Divider label="Interagidos Hoje" style={{ marginTop: 32, marginBottom: 16 }} />
+
             <div className={styles.tableWrapper}>
               <Table striped highlightOnHover withTableBorder className={styles.table}>
                 <thead>

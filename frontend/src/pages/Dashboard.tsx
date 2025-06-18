@@ -300,9 +300,9 @@ STATUS_ORDER.forEach(status => {
   </BarChart>
 </ResponsiveContainer>
 
-<Divider my="md" />
+<Divider style={{ marginTop: 16, marginBottom: 16 }} />
 
-<Group mb="xl" grow>
+<Group grow style={{ marginBottom: 32 }}>
          
          <Select
            data={MESES}
@@ -334,7 +334,7 @@ STATUS_ORDER.forEach(status => {
        </Group>
 
 
-<Divider my="md" />
+       <Divider style={{ marginTop: 16, marginBottom: 16 }} />
 
 
 {/* Interações por Status */}
@@ -359,7 +359,7 @@ STATUS_ORDER.forEach(status => {
 
 
 
-<Divider my="md" />
+<Divider style={{ marginTop: 16, marginBottom: 16 }} />
 <Title order={3} mb="sm">Parceiros Contatados por Status</Title>
 <ResponsiveContainer width="100%" height={300}>
   <BarChart data={STATUS_ORDER.map(status => ({
@@ -379,9 +379,9 @@ STATUS_ORDER.forEach(status => {
 
 
 
-<Divider my="md" />
+<Divider style={{ marginTop: 16, marginBottom: 16 }} />
 <Title order={3} mb="sm">Resumo de Contato com Parceiros</Title>
-<Grid mb="xl">
+<Grid style={{ marginBottom: 32 }}>
   <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
     <Card shadow="md" padding="lg" radius="lg" withBorder>
       <Title order={4} style={{ textAlign: 'center' }}>Parceiros Contactados</Title>
@@ -412,7 +412,7 @@ STATUS_ORDER.forEach(status => {
 
 
 <Title order={3} mb="sm">Distribuição de Status na Carteira Filtrada</Title>
-<Grid mb="xl">
+<Grid style={{ marginBottom: 32 }}>
   {STATUS_ORDER.map(status => (
     <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={`percentual-${status}`}>
       <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: '#ffffff' }}>
@@ -431,13 +431,13 @@ STATUS_ORDER.forEach(status => {
 
 
 
-          <Divider my="lg" />
+<Divider style={{ marginTop: 24, marginBottom: 24 }} />
 
           
 
           {/* KPIs - Indicadores */}
           <Title order={3} mb="sm">Indicadores de Atividades e Resultados</Title>
-<Grid mb="xl">
+          <Grid style={{ marginBottom: 32 }}>
   {['Interações', 'Oportunidades', 'Valor Gerado'].map(title => (
     <Grid.Col span={{ base: 12, sm: 6, md: 4 }} key={title}>
       <Card shadow="md" padding="lg" radius="lg" withBorder>
@@ -451,11 +451,11 @@ STATUS_ORDER.forEach(status => {
 </Grid>
 
 
-          <Divider my="lg" />
+<Divider style={{ marginTop: 24, marginBottom: 24 }} />
 
           {/* KPIs - Taxas */}
           <Title order={3} mb="sm">Taxas de Conversão por Etapa</Title>
-          <Grid mb="xl">
+          <Grid style={{ marginBottom: 32 }}>
             {['Taxa Interação > Oportunidade', 'Taxa Oportunidade > Orçamento', 'Taxa Orçamento > Pedido'].map(title => (
               <Grid.Col span={{ base: 12, sm: 6, md: 4 }} key={title}>
                 <Card shadow="md" padding="lg" radius="lg" withBorder>
@@ -468,12 +468,12 @@ STATUS_ORDER.forEach(status => {
             ))}
           </Grid>
 
-          <Divider my="lg" />
+          <Divider style={{ marginTop: 24, marginBottom: 24 }} />
 
           
 
           {/* Tabelas */}
-          <Divider my="xl" />
+          <Divider style={{ marginTop: 24, marginBottom: 24 }} />
           {[
             { title: "Todos os Parceiros", data: parceirosFiltrados, exportName: "parceiros" },
             { title: "Parceiros com Interação", data: parceirosInteracoes, exportName: "parceiros_interacoes", exportarHistorico: true },
@@ -483,7 +483,8 @@ STATUS_ORDER.forEach(status => {
             <div key={index}>
               <Title order={3} mb="md">{section.title} ({section.data.length})</Title>
               <Card shadow="md" padding="md" radius="md" withBorder mb="lg">
-                <Group justify="space-between" mb="sm">
+              <Group justify="space-between" style={{ marginBottom: 16 }}>
+
                   <Button
                     variant="outline"
                     color="teal"

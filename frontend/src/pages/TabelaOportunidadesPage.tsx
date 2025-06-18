@@ -285,7 +285,10 @@ if (mostrarModalBloqueio) {
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent}>
-        <Title order={3} mb="md">🚨 Oportunidades Sem Movimentação (≥ 10 dias)</Title>
+      <Title order={3} style={{ marginBottom: '1rem' }}>
+  🚨 Oportunidades Sem Movimentação (≥ 10 dias)
+</Title>
+
         <p>Você precisa movimentar essas oportunidades antes de acessar a tabela.</p>
 
         <div className={styles.bloqueioLista}>
@@ -334,13 +337,22 @@ if (modalPerdida) {
         <p>Selecione o motivo da venda perdida:</p>
 
         <Select
-          label="Motivo da Venda Perdida"
-          placeholder="Selecione"
-          data={motivosPerda}
-          value={motivoPerda}
-          onChange={setMotivoPerda}
-          mb="md"
-        />
+  label="Motivo da Venda Perdida"
+  placeholder="Selecione"
+  data={motivosPerda}
+  value={motivoPerda}
+  onChange={setMotivoPerda}
+  style={{ marginBottom: 16 }}
+/>
+
+
+
+
+
+
+
+
+
 
         {motivoPerda === 'outro' && (
           <TextInput
@@ -386,7 +398,15 @@ if (modalPerdida) {
           <Button onClick={exportarExcel} variant="light">Exportar Excel</Button>
         </Group>
 
-        <Group mt="xs" mb="md" grow align="end">
+        <Group
+style={{
+  marginTop: '0.25rem',    // equivalente a mt="xs"
+  marginBottom: '1rem',    // equivalente a mb="md"
+  flexGrow: 1,             // equivalente a grow
+  justifyContent: 'flex-end', // equivalente a align="end"
+}}
+
+>
           <TextInput
             label="Nome do parceiro"
             placeholder="Filtrar por nome"
@@ -436,7 +456,14 @@ if (modalPerdida) {
                       width: '100%',
                     }}
                   >
-                    <Group justify="space-between" align="center" mb="sm">
+                    <Group
+style={{
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: '0.5rem',  // mb="sm"
+}}
+>
+
                       <div>
                         <Title order={3}>
                           {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -521,17 +548,18 @@ if (modalPerdida) {
   }}
   data={etapaOptions}
   size="xs"
-  styles={{
-    input: {
-      backgroundColor: getStatusColor(o.etapa),
-      color: 'white',
-      fontWeight: 600,
-      textAlign: 'center',
-      borderRadius: 6,
-      minWidth: 120,
-    }
+  style={{
+    backgroundColor: getStatusColor(o.etapa),
+    color: 'white',
+    fontWeight: 600,
+    textAlign: 'center',
+    borderRadius: 6,
+    minWidth: 120,
   }}
 />
+
+
+
 
                                     {emEdicao ? (
                                       <>
