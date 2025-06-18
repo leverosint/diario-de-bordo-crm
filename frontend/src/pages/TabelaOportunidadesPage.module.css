@@ -1,24 +1,82 @@
+/* === Alinhamento de tabela (mantido) === */
 .center {
-    text-align: center;
-    vertical-align: middle;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.left {
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  text-align: center;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+  text-align: left;
+}
+
+th:nth-child(7),
+td:nth-child(7) {
+  text-align: left;
+}
+
+/* === Ajustes específicos para Modal === */
+.mantine-Modal-content {
+  border-radius: 12px;
+  padding: 24px;
+  background-color: #fff;
+}
+
+.mantine-Modal-header {
+  border-bottom: 1px solid #eaeaea;
+  margin-bottom: 16px;
+}
+
+.mantine-Modal-title {
+  font-weight: 600;
+  font-size: 20px;
+  color: #333;
+}
+
+.mantine-Modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mantine-Modal-overlay {
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  z-index: 9999 !important;
+}
+
+.mantine-Modal-inner {
+  z-index: 10000 !important;
+}
+
+/* === Dropdown do Select dentro do Modal === */
+.mantine-Select-dropdown {
+  z-index: 10001 !important;
+}
+
+/* Evita que o dropdown do Select apareça atrás do Modal */
+.mantine-Select-dropdown:has(.mantine-Select-item) {
+  position: relative;
+}
+
+/* Botões dentro do Modal */
+.modal-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Garante responsividade do Modal */
+@media (max-width: 500px) {
+  .mantine-Modal-content {
+    width: 90vw;
   }
-  
-  .left {
-    text-align: left;
-    vertical-align: middle;
-  }
-  
-  th {
-    text-align: center;
-  }
-  
-  th:nth-child(2),
-  td:nth-child(2) {
-    text-align: left;
-  }
-  
-  th:nth-child(7),
-  td:nth-child(7) {
-    text-align: left;
-  }
-  
+}
