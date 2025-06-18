@@ -1,4 +1,4 @@
-/* === Alinhamento de tabela (mantido) === */
+/* === Alinhamento da Tabela === */
 .center {
   text-align: center;
   vertical-align: middle;
@@ -23,11 +23,22 @@ td:nth-child(7) {
   text-align: left;
 }
 
-/* === Ajustes específicos para Modal === */
+/* === Modal (Mantine) === */
+.mantine-Modal-overlay {
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.4) !important;
+  z-index: 9999 !important;
+}
+
+.mantine-Modal-inner {
+  z-index: 10000 !important;
+}
+
 .mantine-Modal-content {
   border-radius: 12px;
   padding: 24px;
   background-color: #fff;
+  z-index: 10001 !important;
 }
 
 .mantine-Modal-header {
@@ -47,36 +58,52 @@ td:nth-child(7) {
   gap: 16px;
 }
 
-.mantine-Modal-overlay {
-  backdrop-filter: blur(4px);
-  background-color: rgba(0, 0, 0, 0.4) !important;
-  z-index: 9999 !important;
-}
-
-.mantine-Modal-inner {
-  z-index: 10000 !important;
-}
-
-/* === Dropdown do Select dentro do Modal === */
+/* === Dropdown do Select === */
 .mantine-Select-dropdown {
-  z-index: 10001 !important;
+  z-index: 10002 !important;
 }
 
-/* Evita que o dropdown do Select apareça atrás do Modal */
 .mantine-Select-dropdown:has(.mantine-Select-item) {
   position: relative;
 }
 
-/* Botões dentro do Modal */
+/* === Botões dentro do Modal === */
 .modal-buttons {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
 
-/* Garante responsividade do Modal */
+/* === Responsividade Modal === */
 @media (max-width: 500px) {
   .mantine-Modal-content {
     width: 90vw;
   }
+}
+
+/* === Scroll personalizado da tabela === */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+/* === Badge de status (se quiser aplicar mais estilo) === */
+.badge-status {
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+/* === Ajuste preventivo geral === */
+body {
+  overflow: auto !important;
 }

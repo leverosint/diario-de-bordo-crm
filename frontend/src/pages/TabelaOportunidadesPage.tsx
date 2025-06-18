@@ -417,47 +417,53 @@ const abrirModalPerda = (id: number) => {
           </ScrollArea>
         )}
       </Container>
-      {modalAberto && idMudandoStatus !== null && (
-  <Modal
-    opened={modalAberto}
-    onClose={() => setModalAberto(false)}
-    title="Motivo da Venda Perdida"
-    centered
-    overlayProps={{
-      backgroundOpacity: 0.55,
-      blur: 3,
-    }}
-  >
-    <Select
-      label="Motivo da perda"
-      placeholder="Selecione o motivo"
-      data={[
-        { value: 'preco', label: 'Preço' },
-        { value: 'prazo', label: 'Prazo' },
-        { value: 'concorrente', label: 'Escolheu concorrente' },
-        { value: 'outro', label: 'Outro motivo' },
-      ]}
-      value={motivoPerda}
-      onChange={(value) => setMotivoPerda(value ?? '')}
-      required
-      withCheckIcon={false}
-    />
 
-    <Group justify="flex-end" mt="md">
-      <Button variant="outline" onClick={() => setModalAberto(false)}>
-        Cancelar
-      </Button>
-      <Button color="red" onClick={confirmarVendaPerdida}>
-        Confirmar
-      </Button>
-    </Group>
-  </Modal>
+
+
+      {modalAberto && idMudandoStatus !== null && (
+        <Modal
+  opened={modalAberto}
+  onClose={() => setModalAberto(false)}
+  title="Motivo da Venda Perdida"
+  centered
+  withinPortal={true} // 🔥 Garante que renderiza fora do DOM principal
+  overlayProps={{
+    backgroundOpacity: 0.55,
+    blur: 3,
+  }}
+  zIndex={10000} // 🔥 Força ficar acima de sidebar, header e qualquer outro layout
+>
+  <Select
+    label="Motivo da perda"
+    placeholder="Selecione o motivo"
+    data={[
+      { value: 'preco', label: 'Preço' },
+      { value: 'prazo', label: 'Prazo' },
+      { value: 'concorrente', label: 'Escolheu concorrente' },
+      { value: 'outro', label: 'Outro motivo' },
+    ]}
+    value={motivoPerda}
+    onChange={(value) => setMotivoPerda(value ?? '')}
+    required
+    withCheckIcon={false}
+  />
+
+  <Group justify="flex-end" mt="md">
+    <Button variant="outline" onClick={() => setModalAberto(false)}>
+      Cancelar
+    </Button>
+    <Button color="red" onClick={confirmarVendaPerdida}>
+      Confirmar
+    </Button>
+  </Group>
+</Modal>
+
 )}
 
 
 
 
 
-    </SidebarGestor>
+</SidebarGestor>
   );
 }
