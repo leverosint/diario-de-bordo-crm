@@ -28,6 +28,8 @@ interface Oportunidade {
 export default function TabelaOportunidadesPage() {
   const [dados, setDados] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [bloqueados, setBloqueados] = useState<Oportunidade[]>([]);
+  const [mostrarModalBloqueio, setMostrarModalBloqueio] = useState<boolean>(false);
   const [nomeFiltro, setNomeFiltro] = useState('');
   const [etapaFiltro, setEtapaFiltro] = useState<string | null>(null);
   const [dataInicio, setDataInicio] = useState<DateValue>(null);
@@ -63,6 +65,14 @@ export default function TabelaOportunidadesPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
         setDados(res.data);
+  
+        // 🔥 Verifica oportunidades com 10 ou mais dias sem movimentação
+        const oportunidadesBloqueadas = res.data.filter(
+          (o: Oportunidade) => o.dias_sem_movimentacao !== undefined && o.dias_sem_movimentacao >= 10
+        );
+        setBloqueados(oportunidadesBloqueadas);
+        setMostrarModalBloqueio(oportunidadesBloqueadas.length > 0);
+  
       } catch (err) {
         console.error('Erro ao buscar oportunidades:', err);
       } finally {
@@ -71,7 +81,7 @@ export default function TabelaOportunidadesPage() {
     };
     fetchDados();
   }, [token]);
-
+  
   const handleStatusChange = async (id: number, novaEtapa: string | null) => {
     if (!novaEtapa) return;
     try {
@@ -80,15 +90,25 @@ export default function TabelaOportunidadesPage() {
       }, {
         headers: { Authorization: `Bearer ${token}` },
       });
+  
       setDados(prev =>
         prev.map(o =>
           o.id === id ? { ...o, etapa: novaEtapa, data_status: new Date().toISOString() } : o
         )
       );
+  
+      // 🔥 Atualiza bloqueados → Remove da lista se foi movimentado
+      setBloqueados(prev => {
+        const novos = prev.filter(o => o.id !== id);
+        if (novos.length === 0) setMostrarModalBloqueio(false);
+        return novos;
+      });
+  
     } catch (err) {
       console.error('Erro ao atualizar etapa:', err);
     }
   };
+  
 
   const dadosFiltrados = useMemo(() => {
     return dados.filter((o) => {
@@ -177,6 +197,52 @@ export default function TabelaOportunidadesPage() {
     setValorEdit('');
     setObservacaoEdit('');
   };
+
+
+  {mostrarModalBloqueio && (
+    <div className={styles.modalOverlay}>
+      <div className={styles.modalContent}>
+        <Title order={3} mb="md">🚨 Oportunidades Sem Movimentação (≥ 10 dias)</Title>
+        <p>Você precisa movimentar essas oportunidades antes de acessar a tabela.</p>
+  
+        <div className={styles.bloqueioLista}>
+          <Table striped highlightOnHover withTableBorder>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Parceiro</th>
+                <th>Valor</th>
+                <th>Sem Movimentação</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {bloqueados.map((o) => (
+                <tr key={o.id}>
+                  <td>{o.id}</td>
+                  <td>{o.parceiro_nome}</td>
+                  <td>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                  <td>{o.dias_sem_movimentacao} dias</td>
+                  <td>
+                    <Select
+                      value={o.etapa}
+                      onChange={(value) => value && handleStatusChange(o.id, value)}
+                      data={etapaOptions}
+                      size="xs"
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
+      </div>
+    </div>
+  )}
+  
+  return (
+    <SidebarGestor tipoUser={tipoUser}>
+  
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
