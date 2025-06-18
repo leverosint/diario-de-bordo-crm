@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
   Title, Table, Container, Loader, ScrollArea, Badge, Group,
-  TextInput, Button, Tooltip, Card, Box, Select,
+  TextInput, Button, Tooltip, Card, Box, Select, Text,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
