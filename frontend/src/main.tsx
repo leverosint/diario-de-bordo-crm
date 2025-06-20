@@ -11,8 +11,8 @@ import Dashboard from './pages/Dashboard';
 import CadastroParceiroPage from './pages/CadastroParceiroPage';
 import CadastroUsuariosPage from './pages/CadastroUsuariosPage';
 import InteracoesPage from './pages/InteracoesPage';
-import SolicitarResetPage from './pages/SolicitarResetPage'; ✅ // Nova página
-import ResetarSenhaPage from './pages/ResetarSenhaPage'; ✅ // Nova página
+import SolicitarResetPage from './pages/SolicitarResetPage'; 
+import ResetarSenhaPage from './pages/ResetarSenhaPage'; 
 
 import './index.css';
 import { customTheme } from './styles/theme';
