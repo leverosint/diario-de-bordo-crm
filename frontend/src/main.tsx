@@ -11,6 +11,8 @@ import Dashboard from './pages/Dashboard';
 import CadastroParceiroPage from './pages/CadastroParceiroPage';
 import CadastroUsuariosPage from './pages/CadastroUsuariosPage';
 import InteracoesPage from './pages/InteracoesPage';
+import SolicitarResetPage from './pages/SolicitarResetPage'; ✅ // Nova página
+import ResetarSenhaPage from './pages/ResetarSenhaPage'; ✅ // Nova página
 
 import './index.css';
 import { customTheme } from './styles/theme';
@@ -31,6 +33,10 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/interacoes" element={<InteracoesPage />} />
           <Route path="/relatorios" element={<Relatorios />} />
           <Route path="/tabela-oportunidades" element={<TabelaOportunidadesPage />} />
+
+          {/* 🔥 Rotas novas para recuperar senha */}
+          <Route path="/solicitar-reset" element={<SolicitarResetPage />} />
+          <Route path="/resetar-senha/:uid/:token" element={<ResetarSenhaPage />} />
         </Routes>
       </BrowserRouter>
     </MantineProvider>

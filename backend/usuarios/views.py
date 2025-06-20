@@ -19,6 +19,12 @@ from .serializers import ParceiroSerializer
 from rest_framework import status
 from .models import Interacao, Oportunidade, GatilhoExtra, Parceiro
 from .serializers import InteracaoSerializer, OportunidadeSerializer
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.conf import settings
+
 
 
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra, CustomUser
@@ -826,14 +832,69 @@ class AlterarSenhaView(APIView):
         senha_atual = request.data.get('senha_atual')
         nova_senha = request.data.get('nova_senha')
 
-        if not nova_senha:
-            return Response({'erro': 'A nova senha é obrigatória'}, status=400)
+        if not senha_atual or not nova_senha:
+            return Response({'erro': 'Senha atual e nova senha são obrigatórias.'}, status=400)
 
-        # (Opcional) Validação da senha atual:
-        if senha_atual and not user.check_password(senha_atual):
-            return Response({'erro': 'Senha atual incorreta'}, status=400)
+        if not user.check_password(senha_atual):
+            return Response({'erro': 'Senha atual incorreta.'}, status=400)
 
         user.set_password(nova_senha)
         user.save()
 
-        return Response({'mensagem': 'Senha alterada com sucesso'}, status=200)
+        return Response({'mensagem': 'Senha alterada com sucesso.'}, status=200)
+
+    
+    
+class SolicitarResetSenhaView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+
+        if not email:
+            return Response({'erro': 'E-mail é obrigatório.'}, status=400)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({'erro': 'Usuário não encontrado com esse e-mail.'}, status=404)
+
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        link = f"{settings.FRONTEND_URL}/resetar-senha/{uid}/{token}"
+
+        send_mail(
+            subject='Recuperação de Senha - Diário de Bordo',
+            message=f'Olá {user.username},\n\nClique no link abaixo para redefinir sua senha:\n\n{link}\n\nSe não solicitou, ignore este e-mail.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
+        return Response({'mensagem': 'E-mail de recuperação enviado com sucesso.'}, status=200)
+
+
+
+class ResetSenhaConfirmarView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, uidb64, token):
+        nova_senha = request.data.get('nova_senha')
+
+        if not nova_senha:
+            return Response({'erro': 'Nova senha é obrigatória.'}, status=400)
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError, TypeError):
+            return Response({'erro': 'Link inválido.'}, status=400)
+
+        if not default_token_generator.check_token(user, token):
+            return Response({'erro': 'Token inválido ou expirado.'}, status=400)
+
+        user.set_password(nova_senha)
+        user.save()
+
+        return Response({'mensagem': 'Senha alterada com sucesso.'}, status=200)

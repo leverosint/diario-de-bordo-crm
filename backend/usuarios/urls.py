@@ -19,7 +19,9 @@ from .views import (
     UploadGatilhosExtrasView,
     usuarios_por_canal,
     criar_gatilho_manual,
-    AlterarSenhaView,  # 🔥 ADICIONA AQUI
+    AlterarSenhaView,
+    SolicitarResetSenhaView, 
+    ResetSenhaConfirmarView
 )
 
 # 🔗 ROTAS DO ROUTER
@@ -57,4 +59,10 @@ urlpatterns = [
 
     # Inclui os routers
     path('', include(router.urls)),
+]
+
+
+urlpatterns += [
+    path('solicitar-reset-senha/', SolicitarResetSenhaView.as_view(), name='solicitar-reset-senha'),
+    path('reset-senha-confirmar/<uidb64>/<token>/', ResetSenhaConfirmarView.as_view(), name='reset-senha-confirmar'),
 ]

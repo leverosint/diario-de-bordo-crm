@@ -234,19 +234,19 @@ export default function LoginPage() {
 
           {/* Esqueci minha senha */}
           <Center mt={-5} mb={5}>
-            <Text
-              style={{
-                color: '#005A64',
-                fontSize: 13,
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                fontWeight: 600,
-              }}
-              onClick={() => navigate('/alterar-senha')}
-            >
-              Esqueci minha senha
-            </Text>
-          </Center>
+  <Text
+    style={{
+      color: '#005A64',
+      fontSize: 13,
+      cursor: 'pointer',
+      textDecoration: 'underline',
+      fontWeight: 600,
+    }}
+    onClick={() => navigate('/solicitar-reset')}
+  >
+    Esqueci minha senha
+  </Text>
+</Center>
         </form>
       </Paper>
     </div>
