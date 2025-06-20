@@ -125,13 +125,10 @@ CORS_ALLOWED_ORIGINS = [
     "https://diario-de-bordo-crm-1.onrender.com",
 ]
 
-
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # ou o SMTP da sua empresa
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
-EMAIL_HOST_USER = 'seuemail@dominio.com'
-EMAIL_HOST_PASSWORD = 'sua-senha-ou-app-password'
 EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = 'Diário de Bordo <seuemail@dominio.com>'
-
-FRONTEND_URL = 'https://seufrontend.com'  # 🔥 Importante para gerar o link correto
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = f'Diário de Bordo <{EMAIL_HOST_USER}>'
