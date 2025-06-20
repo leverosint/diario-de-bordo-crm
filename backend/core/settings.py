@@ -2,9 +2,12 @@ import os
 from decouple import config
 from pathlib import Path
 from datetime import timedelta
+import dj_database_url  # 🔥 Importa para facilitar a configuração do banco com SSL
 
 # Caminho base do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Segurança
 SECRET_KEY = config('SECRET_KEY', default='unsafe-secret-key')
@@ -24,7 +27,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    # apps futuros
 ]
 
 # JWT
@@ -83,14 +85,11 @@ if USE_SQLITE:
     }
 else:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME'),
-            'USER': config('DB_USER'),
-            'PASSWORD': config('DB_PASSWORD'),
-            'HOST': config('DB_HOST'),
-            'PORT': config('DB_PORT', default='5432'),
-        }
+        'default': dj_database_url.config(
+            default=f"postgres://{config('DB_USER')}:{config('DB_PASSWORD')}@{config('DB_HOST')}:{config('DB_PORT')}/{config('DB_NAME')}",
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
 
 # Validação de senha
@@ -113,19 +112,19 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Arquivos de mídia (para upload de arquivos)
+# Arquivos de mídia
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Modelo de usuário personalizado
 AUTH_USER_MODEL = 'usuarios.CustomUser'
 
-# Domínios permitidos para CORS
+# CORS
 CORS_ALLOWED_ORIGINS = [
     "https://diario-de-bordo-crm-1.onrender.com",
 ]
 
-
+# E-mail
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
