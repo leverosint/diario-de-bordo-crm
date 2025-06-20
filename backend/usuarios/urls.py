@@ -62,7 +62,20 @@ urlpatterns = [
 ]
 
 
-urlpatterns += [
+from django.urls import path
+from rest_framework.routers import DefaultRouter
+from .views import (
+    SolicitarResetSenhaView,
+    ResetSenhaConfirmarView,
+    # outras views
+)
+
+router = DefaultRouter()
+# router.register(r'parceiros', ParceiroViewSet)  # exemplo
+
+urlpatterns = [
     path('solicitar-reset-senha/', SolicitarResetSenhaView.as_view(), name='solicitar-reset-senha'),
     path('reset-senha-confirmar/<uidb64>/<token>/', ResetSenhaConfirmarView.as_view(), name='reset-senha-confirmar'),
 ]
+
+urlpatterns += router.urls
