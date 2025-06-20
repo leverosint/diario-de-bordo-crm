@@ -855,7 +855,7 @@ class SolicitarResetSenhaView(APIView):
             return Response({'erro': 'E-mail é obrigatório.'}, status=400)
 
         try:
-            user = User.objects.get(endereco_email=email)
+            user = User.objects.get(email__iexact=email)  # 🔥 Aqui corrige caixa alta/baixa
         except User.DoesNotExist:
             return Response({'erro': 'Usuário não encontrado com esse e-mail.'}, status=404)
 
@@ -873,6 +873,7 @@ class SolicitarResetSenhaView(APIView):
         )
 
         return Response({'mensagem': 'E-mail de recuperação enviado com sucesso.'}, status=200)
+
 
 
 
@@ -898,3 +899,4 @@ class ResetSenhaConfirmarView(APIView):
         user.save()
 
         return Response({'mensagem': 'Senha alterada com sucesso.'}, status=200)
+
