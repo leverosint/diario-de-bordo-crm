@@ -19,17 +19,22 @@ TIPOS_USUARIO = [
 ]
 
 # Usuário customizado
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+
 class CustomUser(AbstractUser):
-    tipo_user = models.CharField(max_length=20, choices=TIPOS_USUARIO)
-    canais_venda = models.ManyToManyField(CanalVenda, blank=True, related_name='usuarios')
-    id_vendedor = models.CharField(max_length=50, blank=True, null=True)
-    primeiro_acesso = models.BooleanField(default=True)
+    email = models.EmailField(unique=True)  # 🔥 Esse é obrigatório para funcionar
+
+    tipo_user = models.CharField(max_length=20)
+    id_vendedor = models.CharField(max_length=100, blank=True, null=True)
+    canais_venda = models.ManyToManyField('CanalVenda', blank=True)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email']
 
     def __str__(self):
         return self.username
+
 
 # Modelo de Parceiro
 class Parceiro(models.Model):
