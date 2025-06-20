@@ -855,7 +855,7 @@ class SolicitarResetSenhaView(APIView):
             return Response({'erro': 'E-mail é obrigatório.'}, status=400)
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(endereco_email=email)
         except User.DoesNotExist:
             return Response({'erro': 'Usuário não encontrado com esse e-mail.'}, status=404)
 
