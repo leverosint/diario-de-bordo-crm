@@ -29,11 +29,14 @@ class CustomUser(AbstractUser):
     id_vendedor = models.CharField(max_length=100, blank=True, null=True)
     canais_venda = models.ManyToManyField('CanalVenda', blank=True)
 
+    primeiro_acesso = models.DateTimeField(blank=True, null=True)  # ✅ Aqui está o campo correto
+
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email']
 
     def __str__(self):
         return self.username
+
 
 
 # Modelo de Parceiro
