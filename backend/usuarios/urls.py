@@ -19,6 +19,7 @@ from .views import (
     UploadGatilhosExtrasView,
     usuarios_por_canal,
     criar_gatilho_manual,
+    AlterarSenhaView,  # 🔥 ADICIONA AQUI
 )
 
 # 🔗 ROTAS DO ROUTER
@@ -30,6 +31,8 @@ router.register(r'oportunidades', OportunidadeViewSet, basename='oportunidades')
 # 🔥 URLPATTERNS PRINCIPAL
 urlpatterns = [
     path('login/', LoginView.as_view()),
+    path('alterar-senha/', AlterarSenhaView.as_view(), name='alterar-senha'),  # 🔥 ADICIONA ESSA LINHA
+
     path('upload-parceiros/', UploadParceirosView.as_view({'post': 'create'})),
     path('upload-gatilhos/', UploadGatilhosExtrasView.as_view({'post': 'create'})),
     path('criar-gatilho-manual/', criar_gatilho_manual, name='criar-gatilho-manual'),

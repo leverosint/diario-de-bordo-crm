@@ -816,3 +816,24 @@ def criar_gatilho_manual(request):
         {'mensagem': 'Gatilho criado com sucesso.'},
         status=status.HTTP_201_CREATED
     )
+
+
+class AlterarSenhaView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        senha_atual = request.data.get('senha_atual')
+        nova_senha = request.data.get('nova_senha')
+
+        if not nova_senha:
+            return Response({'erro': 'A nova senha é obrigatória'}, status=400)
+
+        # (Opcional) Validação da senha atual:
+        if senha_atual and not user.check_password(senha_atual):
+            return Response({'erro': 'Senha atual incorreta'}, status=400)
+
+        user.set_password(nova_senha)
+        user.save()
+
+        return Response({'mensagem': 'Senha alterada com sucesso'}, status=200)
