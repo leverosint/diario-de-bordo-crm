@@ -105,15 +105,21 @@ class UploadParceirosView(viewsets.ViewSet):
         try:
             with transaction.atomic():
                 for _, row in df.iterrows():
-                    canal_nome = "Canal Padrão"
-                    canal, _ = CanalVenda.objects.get_or_create(nome=canal_nome)
+                    nome_unidade = str(row['unidade']).strip()
+
+                    # 🔥 Busca a unidade ignorando maiúsculas/minúsculas
+                    canal = CanalVenda.objects.filter(nome__iexact=nome_unidade).first()
+
+                    if not canal:
+                        # 🔥 Se não encontrar, seta para 'Canal Padrão'
+                        canal, _ = CanalVenda.objects.get_or_create(nome="Canal Padrão")
 
                     parceiro_data = {
                         'codigo': str(row['codigo']).strip(),
                         'parceiro': str(row['parceiro']).strip(),
                         'classificacao': str(row['classificacao']).strip(),
                         'consultor': str(row['consultor']).strip(),
-                        'unidade': str(row['unidade']).strip(),
+                        'unidade': nome_unidade,
                         'cidade': str(row['cidade']).strip(),
                         'uf': str(row['uf']).strip(),
                         'primeiro_fat': parse_data(row['primeiro_fat']),
@@ -141,7 +147,6 @@ class UploadParceirosView(viewsets.ViewSet):
                         defaults=parceiro_data
                     )
 
-                    # 🔄 Garante que o .save() com lógica personalizada seja executado
                     parceiro_obj.save()
 
                     if created:
@@ -157,6 +162,7 @@ class UploadParceirosView(viewsets.ViewSet):
 
         except Exception as e:
             return Response({'erro': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 
