@@ -30,13 +30,19 @@ router.register(r'parceiros-list', ParceiroViewSet, basename='parceiros')
 router.register(r'canais-venda', CanalVendaViewSet, basename='canais-venda')
 router.register(r'oportunidades', OportunidadeViewSet, basename='oportunidades')
 
-# 🔥 URLPATTERNS PRINCIPAL
+# 🔥 URLPATTERNS FINAL CORRETO
 urlpatterns = [
-    path('login/', LoginView.as_view()),
-    path('alterar-senha/', AlterarSenhaView.as_view(), name='alterar-senha'),  # 🔥 ADICIONA ESSA LINHA
+    # Auth
+    path('login/', LoginView.as_view(), name='login'),
+    path('alterar-senha/', AlterarSenhaView.as_view(), name='alterar-senha'),
+    path('solicitar-reset-senha/', SolicitarResetSenhaView.as_view(), name='solicitar-reset-senha'),
+    path('reset-senha-confirmar/<uidb64>/<token>/', ResetSenhaConfirmarView.as_view(), name='reset-senha-confirmar'),
 
+    # Uploads
     path('upload-parceiros/', UploadParceirosView.as_view({'post': 'create'})),
     path('upload-gatilhos/', UploadGatilhosExtrasView.as_view({'post': 'create'})),
+
+    # Gatilho manual e usuários
     path('criar-gatilho-manual/', criar_gatilho_manual, name='criar-gatilho-manual'),
     path('usuarios-por-canal/', usuarios_por_canal, name='usuarios-por-canal'),
 
@@ -57,32 +63,6 @@ urlpatterns = [
     # Oportunidades
     path('oportunidades/registrar/', RegistrarOportunidadeView.as_view(), name='registrar-oportunidade'),
 
-    # Inclui os routers
+    # Inclui routers (parceiros, canais, oportunidades)
     path('', include(router.urls)),
-]
-
-
-from django.urls import path
-from rest_framework.routers import DefaultRouter
-from .views import (
-    SolicitarResetSenhaView,
-    ResetSenhaConfirmarView,
-    # outras views
-)
-
-router = DefaultRouter()
-# router.register(r'parceiros', ParceiroViewSet)  # exemplo
-
-urlpatterns = [
-    path('solicitar-reset-senha/', SolicitarResetSenhaView.as_view(), name='solicitar-reset-senha'),
-    path('reset-senha-confirmar/<uidb64>/<token>/', ResetSenhaConfirmarView.as_view(), name='reset-senha-confirmar'),
-]
-
-urlpatterns += router.urls
-
-from django.urls import path
-from .views import LoginView
-
-urlpatterns = [
-    path('login/', LoginView.as_view(), name='login'),
 ]
