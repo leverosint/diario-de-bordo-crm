@@ -21,23 +21,27 @@ export default function SolicitarResetPage() {
   };
 
   return (
-    <Center style={{ height: '100vh' }}>
-      <Paper withBorder p="lg" shadow="md" style={{ width: 380 }}>
-        <Title order={2} style={{ color: '#005A64', marginBottom: 10 }} ta="center">
+    <Center style={{ height: '100vh', width: '100vw' }}>
+      <Paper p="lg" shadow="md" style={{ width: '90%', maxWidth: 380 }}>
+        <Title order={2} style={{ color: '#005A64', marginBottom: 10 }}>
           Recuperar Senha
         </Title>
         <TextInput
           label="E-mail"
           placeholder="Digite seu e-mail cadastrado"
-          type="email"
           value={email}
           onChange={(e) => setEmail(e.currentTarget.value)}
         />
-        <Button fullWidth mt="md" onClick={handleSubmit} style={{ backgroundColor: '#005A64' }}>
+        <Button
+          fullWidth
+          mt="md"
+          onClick={handleSubmit}
+          style={{ backgroundColor: '#005A64' }}
+        >
           Enviar Link
         </Button>
-        {mensagem && <Text c="green" mt="md">{mensagem}</Text>}
-        {erro && <Text c="red" mt="md">{erro}</Text>}
+        {mensagem && <Text color="green" mt="md">{mensagem}</Text>}
+        {erro && <Text color="red" mt="md">{erro}</Text>}
       </Paper>
     </Center>
   );

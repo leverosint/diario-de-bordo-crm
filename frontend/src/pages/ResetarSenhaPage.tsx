@@ -17,9 +17,10 @@ export default function ResetarSenhaPage() {
       return;
     }
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/reset-senha-confirmar/${uid}/${token}/`, {
-        nova_senha: novaSenha,
-      });
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/reset-senha-confirmar/${uid}/${token}/`,
+        { nova_senha: novaSenha }
+      );
       setMensagem('Senha redefinida com sucesso!');
       setErro('');
       setTimeout(() => navigate('/'), 2000);
@@ -30,8 +31,8 @@ export default function ResetarSenhaPage() {
   };
 
   return (
-    <Center style={{ height: '100vh' }}>
-      <Paper withBorder p="lg" shadow="md" style={{ width: 380 }}>
+    <Center style={{ height: '100vh', width: '100vw' }}>
+      <Paper withBorder p="lg" shadow="md" style={{ width: '90%', maxWidth: 380 }}>
         <Title order={2} style={{ color: '#005A64', marginBottom: 10 }} ta="center">
           Redefinir Senha
         </Title>
@@ -50,7 +51,12 @@ export default function ResetarSenhaPage() {
           onChange={(e) => setConfirmarSenha(e.currentTarget.value)}
           mt="sm"
         />
-        <Button fullWidth mt="md" onClick={handleSubmit} style={{ backgroundColor: '#005A64' }}>
+        <Button
+          fullWidth
+          mt="md"
+          onClick={handleSubmit}
+          style={{ backgroundColor: '#005A64' }}
+        >
           Alterar Senha
         </Button>
         {mensagem && <Text c="green" mt="md">{mensagem}</Text>}
