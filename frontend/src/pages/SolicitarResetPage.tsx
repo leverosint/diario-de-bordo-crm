@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TextInput, Paper, Title, Button, Center, Text, } from '@mantine/core';
+import { TextInput, Button, Paper, Title, Text, Center } from '@mantine/core';
 import axios from 'axios';
 
 export default function SolicitarResetPage() {
@@ -9,8 +9,10 @@ export default function SolicitarResetPage() {
 
   const handleSubmit = async () => {
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/solicitar-reset-senha/`, { email });
-      setMensagem('Verifique seu e-mail para redefinir a senha.');
+      await axios.post(`${import.meta.env.VITE_API_URL}/solicitar-reset-senha/`, {
+        email: email,
+      });
+      setMensagem('Enviamos um link para seu e-mail!');
       setErro('');
     } catch (error) {
       setErro('E-mail não encontrado.');
@@ -20,19 +22,22 @@ export default function SolicitarResetPage() {
 
   return (
     <Center style={{ height: '100vh' }}>
-      <Paper p="lg" shadow="md" style={{ width: 380 }}>
-        <Title order={2} style={{ color: '#005A64', marginBottom: 10 }}>Recuperar Senha</Title>
+      <Paper withBorder p="lg" shadow="md" style={{ width: 380 }}>
+        <Title order={2} style={{ color: '#005A64', marginBottom: 10 }} ta="center">
+          Recuperar Senha
+        </Title>
         <TextInput
           label="E-mail"
           placeholder="Digite seu e-mail cadastrado"
+          type="email"
           value={email}
           onChange={(e) => setEmail(e.currentTarget.value)}
         />
         <Button fullWidth mt="md" onClick={handleSubmit} style={{ backgroundColor: '#005A64' }}>
           Enviar Link
         </Button>
-        {mensagem && <Text color="green" mt="md">{mensagem}</Text>}
-        {erro && <Text color="red" mt="md">{erro}</Text>}
+        {mensagem && <Text c="green" mt="md">{mensagem}</Text>}
+        {erro && <Text c="red" mt="md">{erro}</Text>}
       </Paper>
     </Center>
   );

@@ -31,8 +31,10 @@ export default function ResetarSenhaPage() {
 
   return (
     <Center style={{ height: '100vh' }}>
-      <Paper p="lg" shadow="md" style={{ width: 380 }}>
-        <Title order={2} style={{ color: '#005A64', marginBottom: 10 }}>Redefinir Senha</Title>
+      <Paper withBorder p="lg" shadow="md" style={{ width: 380 }}>
+        <Title order={2} style={{ color: '#005A64', marginBottom: 10 }} ta="center">
+          Redefinir Senha
+        </Title>
         <TextInput
           label="Nova senha"
           placeholder="Digite a nova senha"
@@ -51,8 +53,8 @@ export default function ResetarSenhaPage() {
         <Button fullWidth mt="md" onClick={handleSubmit} style={{ backgroundColor: '#005A64' }}>
           Alterar Senha
         </Button>
-        {mensagem && <Text color="green" mt="md">{mensagem}</Text>}
-        {erro && <Text color="red" mt="md">{erro}</Text>}
+        {mensagem && <Text c="green" mt="md">{mensagem}</Text>}
+        {erro && <Text c="red" mt="md">{erro}</Text>}
       </Paper>
     </Center>
   );
