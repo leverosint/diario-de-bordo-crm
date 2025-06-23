@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Parceiro, CanalVenda, Interacao, CustomUser, Oportunidade, GatilhoExtra
 from django.utils import timezone
+from django.utils.timezone import now
 
 
 # ===== Canal de Venda =====
@@ -138,23 +139,23 @@ class GatilhoExtraSerializer(serializers.ModelSerializer):
 # ===== Parceiro para Dashboard =====
 class ParceiroDashboardSerializer(serializers.ModelSerializer):
     ultima_interacao = serializers.SerializerMethodField()
+    dias_sem_interacao = serializers.SerializerMethodField()
 
     class Meta:
         model = Parceiro
         fields = [
-            'id',
-            'codigo',
-            'parceiro',
-            'classificacao',
-            'consultor',
-            'unidade',
-            'status',
-            'total_geral',
-            'ultima_interacao',
+            'id', 'codigo', 'parceiro', 'classificacao', 'consultor',
+            'unidade', 'status', 'total', 'ultima_interacao', 'dias_sem_interacao'
         ]
 
     def get_ultima_interacao(self, obj):
-        ultima = obj.interacoes.order_by('-data_interacao').first()
-        if ultima:
-            return ultima.data_interacao.strftime('%d/%m/%Y %H:%M')
+        interacao = obj.interacoes.order_by('-data_interacao').first()
+        if interacao:
+            return interacao.data_interacao.strftime('%d/%m/%Y %H:%M')
+        return None
+
+    def get_dias_sem_interacao(self, obj):
+        interacao = obj.interacoes.order_by('-data_interacao').first()
+        if interacao:
+            return (now().date() - interacao.data_interacao.date()).days
         return None

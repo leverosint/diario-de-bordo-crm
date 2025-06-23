@@ -502,12 +502,23 @@ STATUS_ORDER.forEach(status => {
       <tbody>
         {getPaginatedData('parceiros', parceirosFiltrados).map((p: any, idx: number) => {
           const diasSemInteracao = (() => {
+            if (p.dias_sem_interacao !== undefined && p.dias_sem_interacao !== null) {
+              return `${p.dias_sem_interacao} dias`;
+            }
+
             if (!p.ultima_interacao) return 'Sem Interação';
-            const dataUltima = new Date(p.ultima_interacao);
-            const hoje = new Date();
-            const diffTime = Math.abs(hoje.getTime() - dataUltima.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            return `${diffDays} dias`;
+
+            try {
+              const [dataStr] = p.ultima_interacao.split(' ');
+              const [dia, mes, ano] = dataStr.split('/').map(Number);
+              const dataUltima = new Date(ano, mes - 1, dia);
+              const hoje = new Date();
+              const diffTime = Math.abs(hoje.getTime() - dataUltima.getTime());
+              const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+              return `${diffDays} dias`;
+            } catch {
+              return 'Erro na data';
+            }
           })();
 
           return (
@@ -535,6 +546,7 @@ STATUS_ORDER.forEach(status => {
     />
   </div>
 </Card>
+
 
         </div>
       </Container>
