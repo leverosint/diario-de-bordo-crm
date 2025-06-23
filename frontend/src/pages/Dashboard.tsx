@@ -120,6 +120,15 @@ export default function Dashboard() {
     }
   };
 
+  const aplicarFiltro = () => {
+    const filtrado = consultorSelecionado
+      ? tabelaParceiros.filter(p => (p.consultor || '').trim().toLowerCase() === consultorSelecionado.trim().toLowerCase())
+      : tabelaParceiros;
+    
+    setDadosFiltrados(filtrado);
+  };
+  
+
   useEffect(() => {
     if (!token) {
       navigate('/');
@@ -325,9 +334,10 @@ STATUS_ORDER.forEach(status => {
              searchable
            />
          )}
-         <Button color="teal" variant="filled" onClick={fetchDashboardData}>
-           Aplicar Filtro
-         </Button>
+<Button color="teal" variant="filled" onClick={aplicarFiltro}>
+  Aplicar Filtro
+</Button>
+
        </Group>
 
 
