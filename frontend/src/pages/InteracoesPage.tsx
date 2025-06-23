@@ -40,9 +40,8 @@ interface CanalVenda {
 }
 
 interface Vendedor {
-  id: number;
-  username: string;
-  id_vendedor: string;
+  value: string;
+  label: string;
 }
 
 interface Parceiro {
@@ -137,21 +136,30 @@ export default function InteracoesPage() {
     }
   };
 
-  const handleCanalChange = async (value: string | null) => {
+  const handleCanalChange = (value: string | null) => {
     setCanalSelecionado(value || '');
-    setVendedorSelecionado('');
-    if (!value) {
-      setVendedores([]);
-    } else {
+  };
+  useEffect(() => {
+    const fetchVendedores = async () => {
       try {
         const headers = { Authorization: `Bearer ${token}` };
-        const res = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${value}`, { headers });
-        setVendedores(res.data);
+        const params = canalSelecionado ? `?canal_id=${canalSelecionado}` : '';
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/${params}`, { headers });
+        const vendedoresFormatados = res.data.map((v: any) => ({
+          value: v.id_vendedor,
+          label: v.username,
+        }));
+        setVendedores(vendedoresFormatados);
       } catch (error) {
         console.error('Erro ao carregar vendedores:', error);
       }
+    };
+  
+    if (tipoUser === 'GESTOR' || tipoUser === 'ADMIN') {
+      fetchVendedores();
     }
-  };
+  }, [canalSelecionado, tipoUser, token]);
+  
 
   const handleVendedorChange = (value: string | null) => {
     setVendedorSelecionado(value || '');
@@ -331,14 +339,14 @@ export default function InteracoesPage() {
     clearable
   />
   <Select
-    label="Filtrar por Vendedor"
-    placeholder="Selecione um vendedor"
-    value={vendedorSelecionado}
-    onChange={handleVendedorChange}
-    data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
-    disabled={!canalSelecionado}
-    clearable
-  />
+  label="Filtrar por Vendedor"
+  placeholder="Selecione um vendedor"
+  value={vendedorSelecionado}
+  onChange={handleVendedorChange}
+  data={vendedores}
+  clearable
+/>
+
   <Select
     label="Filtrar por Status"
     placeholder="Selecione um status"
