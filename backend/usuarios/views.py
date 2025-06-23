@@ -568,26 +568,14 @@ class DashboardKPIView(APIView):
 
         if user.tipo_user == 'ADMIN':
             parceiros_vivos = Parceiro.objects.all()
-
         elif user.tipo_user == 'GESTOR':
             parceiros_vivos = Parceiro.objects.filter(canal_venda__in=user.canais_venda.all())
-
         elif user.tipo_user == 'VENDEDOR':
             parceiros_vivos = Parceiro.objects.filter(consultor__iexact=user.id_vendedor.strip())
-
         else:
             parceiros_vivos = Parceiro.objects.none()
 
-        interacoes = Interacao.objects.filter(
-            parceiro__in=parceiros_vivos,
-            data_interacao__range=(data_inicio, data_fim)
-        )
-
-        oportunidades = Oportunidade.objects.filter(
-            parceiro__in=parceiros_vivos,
-            data_criacao__range=(data_inicio, data_fim)
-        )
-
+        # 🔥 Contagem de status dos parceiros
         status_counts = {
             'Sem Faturamento': parceiros_vivos.filter(status='Sem Faturamento').count(),
             'Base Ativa': parceiros_vivos.filter(status='Base Ativa').count(),
@@ -596,6 +584,16 @@ class DashboardKPIView(APIView):
             '90 dias s/ Fat': parceiros_vivos.filter(status='90 dias s/ Fat').count(),
             '120 dias s/ Fat': parceiros_vivos.filter(status='120 dias s/ Fat').count(),
         }
+
+        # 🔥 Interações e oportunidades no período
+        interacoes = Interacao.objects.filter(
+            parceiro__in=parceiros_vivos,
+            data_interacao__range=(data_inicio, data_fim)
+        )
+        oportunidades = Oportunidade.objects.filter(
+            parceiro__in=parceiros_vivos,
+            data_criacao__range=(data_inicio, data_fim)
+        )
 
         total_interacoes = interacoes.count()
         total_oportunidades = oportunidades.count()
@@ -608,6 +606,7 @@ class DashboardKPIView(APIView):
         taxa_oportunidade_orcamento = (total_orcamentos / total_oportunidades * 100) if total_oportunidades > 0 else 0
         taxa_orcamento_pedido = (total_pedidos / total_orcamentos * 100) if total_orcamentos > 0 else 0
 
+        # 🔥 KPIs principais
         kpis = [
             {"title": "Sem Faturamento", "value": status_counts['Sem Faturamento']},
             {"title": "Base Ativa", "value": status_counts['Base Ativa']},
@@ -626,10 +625,27 @@ class DashboardKPIView(APIView):
 
         parceiros_lista = ParceiroDashboardSerializer(parceiros_vivos, many=True).data
 
+        # 🔥 Parceiros contatados por status
+        parceiros_contatados_status = defaultdict(int)
+        for interacao in interacoes:
+            parceiros_contatados_status[interacao.parceiro.status] += 1
+
+        # 🔥 Interações por status do parceiro
+        interacoes_status = defaultdict(int)
+        for interacao in interacoes:
+            interacoes_status[interacao.parceiro.status] += 1
+
         return Response({
             "kpis": kpis,
-            "parceiros": parceiros_lista
+            "parceiros": parceiros_lista,
+            "parceiros_contatados_status": parceiros_contatados_status,
+            "interacoes_status": interacoes_status
         })
+
+
+
+
+
 
 
 
