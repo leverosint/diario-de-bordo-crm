@@ -566,7 +566,7 @@ class DashboardKPIView(APIView):
         data_inicio = make_aware(datetime(ano, mes, 1))
         data_fim = make_aware(datetime(ano + 1, 1, 1)) if mes == 12 else make_aware(datetime(ano, mes + 1, 1))
 
-        # 🔥 Filtros por perfil
+        # 🔥 Filtra os parceiros de acordo com o tipo de usuário
         if user.tipo_user == 'ADMIN':
             parceiros_vivos = Parceiro.objects.all()
 
@@ -579,7 +579,7 @@ class DashboardKPIView(APIView):
         else:
             parceiros_vivos = Parceiro.objects.none()
 
-        # 🔥 Interações e oportunidades puxam tudo relacionado aos parceiros vivos, não ao usuário diretamente
+        # 🔥 Interações e Oportunidades relacionadas aos parceiros
         interacoes = Interacao.objects.filter(
             parceiro__in=parceiros_vivos,
             data_interacao__range=(data_inicio, data_fim)
@@ -600,7 +600,7 @@ class DashboardKPIView(APIView):
             '120 dias s/ Fat': parceiros_vivos.filter(status='120 dias s/ Fat').count(),
         }
 
-        # 🔥 KPIs numéricos
+        # 🔥 KPIs de números
         total_interacoes = interacoes.count()
         total_oportunidades = oportunidades.count()
         total_orcamentos = oportunidades.filter(etapa='orcamento').count()
@@ -661,6 +661,7 @@ class DashboardKPIView(APIView):
             "parceiros_sem_fat_status": parceiros_sem_fat_status,
             "parceiros": parceiros_lista
         })
+
 
 
       
