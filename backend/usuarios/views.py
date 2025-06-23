@@ -573,7 +573,7 @@ class DashboardKPIView(APIView):
             parceiros_vivos = Parceiro.objects.filter(canal_venda__in=user.canais_venda.all())
 
         elif user.tipo_user == 'VENDEDOR':
-            parceiros_vivos = Parceiro.objects.filter(consultor__iexact=user.id_vendedor)
+            parceiros_vivos = Parceiro.objects.filter(consultor__iexact=user.id_vendedor.strip())
 
         else:
             parceiros_vivos = Parceiro.objects.none()

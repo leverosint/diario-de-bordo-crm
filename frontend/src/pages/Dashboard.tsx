@@ -173,8 +173,9 @@ if (usuario.tipo_user === 'GESTOR' || usuario.tipo_user === 'ADMIN') {
   }
 
   const parceirosFiltrados = consultorSelecionado
-  ? dadosFiltrados.filter(p => String(p.consultor_id) === String(consultorSelecionado))
+  ? dadosFiltrados.filter(p => (p.consultor || '').trim().toLowerCase() === consultorSelecionado.trim().toLowerCase())
   : dadosFiltrados;
+
 
   
 
