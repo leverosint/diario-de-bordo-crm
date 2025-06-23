@@ -192,9 +192,7 @@ for (const parceiro of parceirosFiltrados) {
 }
 
 
-  const parceirosInteracoes = parceirosFiltrados.filter(p => p.tem_interacao);
-  const parceirosOportunidades = parceirosFiltrados.filter(p => p.tem_oportunidade);
-  const parceirosPendentes = parceirosFiltrados.filter(p => !p.tem_interacao);
+
   // 📊 Cálculo de KPIs de Contato
   const totalCarteira = parceirosFiltrados.length;
   const totalContatados = Object.values(parceirosContatadosStatus).reduce((sum, val) => sum + val, 0);
@@ -474,61 +472,70 @@ STATUS_ORDER.forEach(status => {
 
           {/* Tabelas */}
           <Divider style={{ marginTop: 24, marginBottom: 24 }} />
-          {[
-            { title: "Todos os Parceiros", data: parceirosFiltrados, exportName: "parceiros" },
-            { title: "Parceiros com Interação", data: parceirosInteracoes, exportName: "parceiros_interacoes", exportarHistorico: true },
-            { title: "Parceiros com Oportunidade", data: parceirosOportunidades, exportName: "parceiros_oportunidades" },
-            { title: "Parceiros Pendentes", data: parceirosPendentes, exportName: "parceiros_pendentes" },
-          ].map((section, index) => (
-            <div key={index}>
-              <Title order={3} mb="md">{section.title} ({section.data.length})</Title>
-              <Card shadow="md" padding="md" radius="md" withBorder mb="lg">
-              <Group justify="space-between" style={{ marginBottom: 16 }}>
+          <Title order={3} mb="md">
+  Todos os Parceiros ({parceirosFiltrados.length})
+</Title>
 
-                  <Button
-                    variant="outline"
-                    color="teal"
-                    size="xs"
-                    onClick={() => exportToExcel(section.data, section.exportName, section.exportarHistorico)}
-                  >
-                    Exportar Excel
-                  </Button>
-                </Group>
-                <ScrollArea>
-                  <Table striped highlightOnHover withColumnBorders>
-                    <thead style={{ backgroundColor: '#f1f3f5' }}>
-                      <tr>
-                        <th>Parceiro</th>
-                        <th>Status</th>
-                        <th style={{ textAlign: 'center' }}>Faturamento Total</th>
-                        <th style={{ textAlign: 'center' }}>Última Interação</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {getPaginatedData(section.title, section.data).map((p: any, idx: number) => (
-                        <tr key={idx}>
-                          <td>{p.parceiro}</td>
-                          <td>{p.status}</td>
-                          <td style={{ textAlign: 'center' }}>
-                            R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </td>
-                          <td style={{ textAlign: 'center' }}>{p.ultima_interacao || '-'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </Table>
-                </ScrollArea>
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
-                  <Pagination
-                    value={pageMap[section.title] || 1}
-                    onChange={(page) => handlePageChange(section.title, page)}
-                    total={Math.ceil(section.data.length / recordsPerPage)}
-                    size="sm"
-                  />
-                </div>
-              </Card>
-            </div>
-          ))}
+<Card shadow="md" padding="md" radius="md" withBorder mb="lg">
+  <Group justify="space-between" style={{ marginBottom: 16 }}>
+    <Button
+      variant="outline"
+      color="teal"
+      size="xs"
+      onClick={() => exportToExcel(parceirosFiltrados, 'parceiros')}
+    >
+      Exportar Excel
+    </Button>
+  </Group>
+
+  <ScrollArea>
+    <Table striped highlightOnHover withColumnBorders>
+      <thead style={{ backgroundColor: '#f1f3f5' }}>
+        <tr>
+          <th>Parceiro</th>
+          <th>Status</th>
+          <th style={{ textAlign: 'center' }}>Faturamento Total</th>
+          <th style={{ textAlign: 'center' }}>Última Interação</th>
+          <th style={{ textAlign: 'center' }}>Dias sem Interação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {getPaginatedData('parceiros', parceirosFiltrados).map((p: any, idx: number) => {
+          const diasSemInteracao = (() => {
+            if (!p.ultima_interacao) return 'Sem Interação';
+            const dataUltima = new Date(p.ultima_interacao);
+            const hoje = new Date();
+            const diffTime = Math.abs(hoje.getTime() - dataUltima.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return `${diffDays} dias`;
+          })();
+
+          return (
+            <tr key={idx}>
+              <td>{p.parceiro}</td>
+              <td>{p.status}</td>
+              <td style={{ textAlign: 'center' }}>
+                R$ {Number(p.total || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </td>
+              <td style={{ textAlign: 'center' }}>{p.ultima_interacao || '-'}</td>
+              <td style={{ textAlign: 'center' }}>{diasSemInteracao}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </Table>
+  </ScrollArea>
+
+  <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
+    <Pagination
+      value={pageMap['parceiros'] || 1}
+      onChange={(page) => handlePageChange('parceiros', page)}
+      total={Math.ceil(parceirosFiltrados.length / recordsPerPage)}
+      size="sm"
+    />
+  </div>
+</Card>
+
         </div>
       </Container>
     </SidebarGestor>
