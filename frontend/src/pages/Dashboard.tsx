@@ -250,13 +250,11 @@ STATUS_ORDER.forEach(status => {
   };
 
 
-  const statusDataCompleto = STATUS_ORDER.map(status => {
-    const parceirosDoStatus = tabelaParceiros.filter(p => p.status === status);
-    return {
+
+    const statusDataCompleto = STATUS_ORDER.map(status => ({
       status: STATUS_LABELS[status] || status,
-      parceiros: parceirosDoStatus.length,
-    };
-  });
+      parceiros: parceirosFiltrados.filter(p => p.status === status).length,
+    }));
 
 
 
