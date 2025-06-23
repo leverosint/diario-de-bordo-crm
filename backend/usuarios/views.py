@@ -306,6 +306,7 @@ class InteracoesPendentesView(APIView):
                     'data_interacao': '',
                     'entrou_em_contato': False,
                     'gatilho_extra': gatilho.descricao,
+                    'canal_venda_id': parceiro.canal_venda_id,
                 })
 
             # 🔥 Interagidos Hoje
@@ -339,6 +340,7 @@ class InteracoesPendentesView(APIView):
                     'data_interacao': '',
                     'entrou_em_contato': False,
                     'gatilho_extra': None,
+                    'canal_venda_id': parceiro.canal_venda_id,
                 })
 
         # 🔥 Geração dinâmica dos filtros disponíveis (Status e Gatilhos)
@@ -783,7 +785,9 @@ def usuarios_por_canal(request):
     else:
         usuarios = CustomUser.objects.filter(tipo_user='VENDEDOR')
 
-    resultado = usuarios.values('id', 'username', 'id_vendedor')
+    resultado = usuarios.filter(id_vendedor__isnull=False).values(
+        'id', 'username', 'id_vendedor'
+    )
 
     return Response(resultado)
 

@@ -145,10 +145,13 @@ export default function InteracoesPage() {
         const headers = { Authorization: `Bearer ${token}` };
         const params = canalSelecionado ? `?canal_id=${canalSelecionado}` : '';
         const res = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/${params}`, { headers });
-        const vendedoresFormatados = res.data.map((v: any) => ({
-          value: v.id_vendedor,
-          label: v.username,
+        const vendedoresFormatados = res.data
+        .filter((v: any) => v.id_vendedor)  // 🔥 só inclui se tiver id_vendedor
+        .map((v: any) => ({
+          value: String(v.id_vendedor),
+          label: v.username || 'Sem nome',
         }));
+      
         setVendedores(vendedoresFormatados);
       } catch (error) {
         console.error('Erro ao carregar vendedores:', error);
