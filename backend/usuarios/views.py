@@ -554,6 +554,7 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
 
 # ... 🛑 o código é muito grande para caber aqui, quer que eu continue com o Dashboard KPIs, Funil, Oportunidades Mensais e o endpoint usuarios_por_canal em mais uma sequência?
 # ===== Dashboard KPIs + Parceiros =====
+# ===== Dashboard KPIs + Parceiros =====
 class DashboardKPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -563,31 +564,33 @@ class DashboardKPIView(APIView):
         ano = int(request.query_params.get('ano', now().year))
 
         data_inicio = make_aware(datetime(ano, mes, 1))
-        if mes == 12:
-            data_fim = make_aware(datetime(ano + 1, 1, 1))
-        else:
-            data_fim = make_aware(datetime(ano, mes + 1, 1))
+        data_fim = make_aware(datetime(ano + 1, 1, 1)) if mes == 12 else make_aware(datetime(ano, mes + 1, 1))
 
+        # 🔥 Filtros por perfil
         if user.tipo_user == 'ADMIN':
             parceiros_vivos = Parceiro.objects.all()
-            interacoes = Interacao.objects.filter(data_interacao__range=(data_inicio, data_fim))
-            oportunidades = Oportunidade.objects.filter(data_criacao__range=(data_inicio, data_fim))
+
         elif user.tipo_user == 'GESTOR':
             parceiros_vivos = Parceiro.objects.filter(canal_venda__in=user.canais_venda.all())
-            interacoes = Interacao.objects.filter(
-                parceiro__canal_venda__in=user.canais_venda.all(),
-                data_interacao__range=(data_inicio, data_fim)
-            )
-            oportunidades = Oportunidade.objects.filter(
-                parceiro__canal_venda__in=user.canais_venda.all(),
-                data_criacao__range=(data_inicio, data_fim)
-            )
-        else:
-            parceiros_vivos = Parceiro.objects.filter(consultor=user.id_vendedor)
-            interacoes = Interacao.objects.filter(usuario=user, data_interacao__range=(data_inicio, data_fim))
-            oportunidades = Oportunidade.objects.filter(usuario=user, data_criacao__range=(data_inicio, data_fim))
 
-        # KPIs
+        elif user.tipo_user == 'VENDEDOR':
+            parceiros_vivos = Parceiro.objects.filter(consultor=user.id_vendedor)
+
+        else:
+            parceiros_vivos = Parceiro.objects.none()
+
+        # 🔥 Interações e oportunidades puxam tudo relacionado aos parceiros vivos, não ao usuário diretamente
+        interacoes = Interacao.objects.filter(
+            parceiro__in=parceiros_vivos,
+            data_interacao__range=(data_inicio, data_fim)
+        )
+
+        oportunidades = Oportunidade.objects.filter(
+            parceiro__in=parceiros_vivos,
+            data_criacao__range=(data_inicio, data_fim)
+        )
+
+        # ===== KPIs de status =====
         status_counts = {
             'Sem Faturamento': parceiros_vivos.filter(status='Sem Faturamento').count(),
             'Base Ativa': parceiros_vivos.filter(status='Base Ativa').count(),
@@ -597,6 +600,7 @@ class DashboardKPIView(APIView):
             '120 dias s/ Fat': parceiros_vivos.filter(status='120 dias s/ Fat').count(),
         }
 
+        # 🔥 KPIs numéricos
         total_interacoes = interacoes.count()
         total_oportunidades = oportunidades.count()
         total_orcamentos = oportunidades.filter(etapa='orcamento').count()
@@ -624,39 +628,30 @@ class DashboardKPIView(APIView):
             {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
         ]
 
-        # Interações por Status
-        interacoes_por_status = (
-            interacoes.values('status')
-            .annotate(total=Count('id'))
-        )
+        # 🔥 Interações por status
+        interacoes_por_status = interacoes.values('status').annotate(total=Count('id'))
         interacoes_status_dict = {
             item['status'] or 'Sem Status': item['total']
             for item in interacoes_por_status
         }
 
-        # Parceiros contatados por status
-        primeiras_interacoes = (
-            interacoes.order_by('parceiro_id', 'data_interacao')
-            .distinct('parceiro_id')
-        )
-        parceiros_contatados_status = defaultdict(int)
+        # 🔥 Parceiros contatados por status
+        primeiras_interacoes = interacoes.order_by('parceiro_id', 'data_interacao').distinct('parceiro_id')
+        parceiros_contatados_status = {}
         for interacao in primeiras_interacoes:
             status = interacao.status or 'Sem Status'
-            parceiros_contatados_status[status] += 1
+            parceiros_contatados_status[status] = parceiros_contatados_status.get(status, 0) + 1
 
-        # Parceiros sem interação no mês
+        # 🔥 Parceiros sem interação no mês
         ids_com_interacao = interacoes.values_list('parceiro_id', flat=True).distinct()
         sem_interacao = parceiros_vivos.exclude(id__in=ids_com_interacao)
-        sem_interacao_por_status = (
-            sem_interacao.values('status')
-            .annotate(total=Count('id'))
-        )
+        sem_interacao_por_status = sem_interacao.values('status').annotate(total=Count('id'))
         parceiros_sem_fat_status = {
             item['status'] or 'Sem Status': item['total']
             for item in sem_interacao_por_status
         }
 
-        # Lista de parceiros (usando Serializer)
+        # 🔥 Lista de parceiros
         parceiros_lista = ParceiroDashboardSerializer(parceiros_vivos, many=True).data
 
         return Response({
@@ -667,6 +662,8 @@ class DashboardKPIView(APIView):
             "parceiros": parceiros_lista
         })
 
+
+      
 
 
       
