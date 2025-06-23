@@ -24,7 +24,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
-
+from .serializers import ParceiroDashboardSerializer
 
 
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra, CustomUser
@@ -560,14 +560,12 @@ class DashboardKPIView(APIView):
         mes = int(request.query_params.get('mes', now().month))
         ano = int(request.query_params.get('ano', now().year))
 
-        # Data do mês filtrado
         data_inicio = make_aware(datetime(ano, mes, 1))
         if mes == 12:
             data_fim = make_aware(datetime(ano + 1, 1, 1))
         else:
             data_fim = make_aware(datetime(ano, mes + 1, 1))
 
-        # ========= 1. FILTROS POR TIPO DE USUÁRIO ========= #
         if user.tipo_user == 'ADMIN':
             parceiros_vivos = Parceiro.objects.all()
             interacoes = Interacao.objects.filter(data_interacao__range=(data_inicio, data_fim))
@@ -582,12 +580,12 @@ class DashboardKPIView(APIView):
                 parceiro__canal_venda__in=user.canais_venda.all(),
                 data_criacao__range=(data_inicio, data_fim)
             )
-        else:  # VENDEDOR
+        else:
             parceiros_vivos = Parceiro.objects.filter(consultor=user.id_vendedor)
             interacoes = Interacao.objects.filter(usuario=user, data_interacao__range=(data_inicio, data_fim))
             oportunidades = Oportunidade.objects.filter(usuario=user, data_criacao__range=(data_inicio, data_fim))
 
-        # ========= 2. KPIs VIVOS (status atual dos parceiros) ========= #
+        # KPIs
         status_counts = {
             'Sem Faturamento': parceiros_vivos.filter(status='Sem Faturamento').count(),
             'Base Ativa': parceiros_vivos.filter(status='Base Ativa').count(),
@@ -597,7 +595,6 @@ class DashboardKPIView(APIView):
             '120 dias s/ Fat': parceiros_vivos.filter(status='120 dias s/ Fat').count(),
         }
 
-        # ========= 3. KPIs numéricos de interações/oportunidades ========= #
         total_interacoes = interacoes.count()
         total_oportunidades = oportunidades.count()
         total_orcamentos = oportunidades.filter(etapa='orcamento').count()
@@ -625,7 +622,7 @@ class DashboardKPIView(APIView):
             {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
         ]
 
-                # ========= 4. Interações por Status (agrupado por status da interação no mês) ========= #
+        # Interações por Status
         interacoes_por_status = (
             interacoes.values('status')
             .annotate(total=Count('id'))
@@ -635,7 +632,7 @@ class DashboardKPIView(APIView):
             for item in interacoes_por_status
         }
 
-        # ========= 5. Parceiros contatados por status (primeira interação do mês) ========= #
+        # Parceiros contatados por status
         primeiras_interacoes = (
             interacoes.order_by('parceiro_id', 'data_interacao')
             .distinct('parceiro_id')
@@ -645,10 +642,9 @@ class DashboardKPIView(APIView):
             status = interacao.status or 'Sem Status'
             parceiros_contatados_status[status] += 1
 
-        # ========= 6. Parceiros sem nenhuma interação no mês, agrupado por status ========= #
+        # Parceiros sem interação no mês
         ids_com_interacao = interacoes.values_list('parceiro_id', flat=True).distinct()
         sem_interacao = parceiros_vivos.exclude(id__in=ids_com_interacao)
-
         sem_interacao_por_status = (
             sem_interacao.values('status')
             .annotate(total=Count('id'))
@@ -658,18 +654,16 @@ class DashboardKPIView(APIView):
             for item in sem_interacao_por_status
         }
 
-        # Serialize os parceiros_vivos
-        parceiros_serializados = ParceiroSerializer(parceiros_vivos, many=True).data
+        # Lista de parceiros (usando Serializer)
+        parceiros_lista = ParceiroDashboardSerializer(parceiros_vivos, many=True).data
 
         return Response({
-    "kpis": kpis,
-    "interacoes_status": interacoes_status_dict,
-    "parceiros_contatados_status": parceiros_contatados_status,
-    "parceiros_sem_fat_status": parceiros_sem_fat_status,
-    "parceiros": parceiros_serializados  # ✅ ESSENCIAL para o dashboard funcionar corretamente
-})
-
-
+            "kpis": kpis,
+            "interacoes_status": interacoes_status_dict,
+            "parceiros_contatados_status": parceiros_contatados_status,
+            "parceiros_sem_fat_status": parceiros_sem_fat_status,
+            "parceiros": parceiros_lista
+        })
 
 
 

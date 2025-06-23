@@ -134,3 +134,27 @@ class GatilhoExtraSerializer(serializers.ModelSerializer):
     class Meta:
         model = GatilhoExtra
         fields = ['id', 'parceiro', 'parceiro_nome', 'usuario', 'usuario_nome', 'descricao']
+
+# ===== Parceiro para Dashboard =====
+class ParceiroDashboardSerializer(serializers.ModelSerializer):
+    ultima_interacao = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Parceiro
+        fields = [
+            'id',
+            'codigo',
+            'parceiro',
+            'classificacao',
+            'consultor',
+            'unidade',
+            'status',
+            'total_geral',
+            'ultima_interacao',
+        ]
+
+    def get_ultima_interacao(self, obj):
+        ultima = obj.interacoes.order_by('-data_interacao').first()
+        if ultima:
+            return ultima.data_interacao.strftime('%d/%m/%Y %H:%M')
+        return None
