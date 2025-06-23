@@ -564,8 +564,12 @@ class DashboardKPIView(APIView):
         ano = int(request.query_params.get('ano', now().year))
 
         data_inicio = make_aware(datetime(ano, mes, 1))
-        data_fim = make_aware(datetime(ano + 1, 1, 1)) if mes == 12 else make_aware(datetime(ano, mes + 1, 1))
+        data_fim = (
+            make_aware(datetime(ano + 1, 1, 1)) if mes == 12
+            else make_aware(datetime(ano, mes + 1, 1))
+        )
 
+        # 🔥 Filtra os parceiros conforme o tipo de usuário
         if user.tipo_user == 'ADMIN':
             parceiros_vivos = Parceiro.objects.all()
         elif user.tipo_user == 'GESTOR':
@@ -574,16 +578,6 @@ class DashboardKPIView(APIView):
             parceiros_vivos = Parceiro.objects.filter(consultor__iexact=user.id_vendedor.strip())
         else:
             parceiros_vivos = Parceiro.objects.none()
-
-        # 🔥 Contagem de status dos parceiros
-        status_counts = {
-            'Sem Faturamento': parceiros_vivos.filter(status='Sem Faturamento').count(),
-            'Base Ativa': parceiros_vivos.filter(status='Base Ativa').count(),
-            '30 dias s/ Fat': parceiros_vivos.filter(status='30 dias s/ Fat').count(),
-            '60 dias s/ Fat': parceiros_vivos.filter(status='60 dias s/ Fat').count(),
-            '90 dias s/ Fat': parceiros_vivos.filter(status='90 dias s/ Fat').count(),
-            '120 dias s/ Fat': parceiros_vivos.filter(status='120 dias s/ Fat').count(),
-        }
 
         # 🔥 Interações e oportunidades no período
         interacoes = Interacao.objects.filter(
@@ -595,6 +589,13 @@ class DashboardKPIView(APIView):
             data_criacao__range=(data_inicio, data_fim)
         )
 
+        # 🔥 Contagem por status
+        status_counts = {
+            status: parceiros_vivos.filter(status=status).count()
+            for status in ['Sem Faturamento', 'Base Ativa', '30 dias s/ Fat', '60 dias s/ Fat', '90 dias s/ Fat', '120 dias s/ Fat']
+        }
+
+        # 🔥 KPIs principais
         total_interacoes = interacoes.count()
         total_oportunidades = oportunidades.count()
         total_orcamentos = oportunidades.filter(etapa='orcamento').count()
@@ -606,7 +607,6 @@ class DashboardKPIView(APIView):
         taxa_oportunidade_orcamento = (total_orcamentos / total_oportunidades * 100) if total_oportunidades > 0 else 0
         taxa_orcamento_pedido = (total_pedidos / total_orcamentos * 100) if total_orcamentos > 0 else 0
 
-        # 🔥 KPIs principais
         kpis = [
             {"title": "Sem Faturamento", "value": status_counts['Sem Faturamento']},
             {"title": "Base Ativa", "value": status_counts['Base Ativa']},
@@ -623,8 +623,6 @@ class DashboardKPIView(APIView):
             {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
         ]
 
-        parceiros_lista = ParceiroDashboardSerializer(parceiros_vivos, many=True).data
-
         # 🔥 Parceiros contatados por status
         parceiros_contatados_status = defaultdict(int)
         for interacao in interacoes:
@@ -635,12 +633,38 @@ class DashboardKPIView(APIView):
         for interacao in interacoes:
             interacoes_status[interacao.parceiro.status] += 1
 
+        # 🔥 Enriquecimento dos dados dos parceiros
+        parceiros_serializados = ParceiroDashboardSerializer(parceiros_vivos, many=True).data
+
+        for parceiro in parceiros_serializados:
+            parceiro_id = parceiro['id']
+
+            interacoes_parceiro = interacoes.filter(parceiro_id=parceiro_id)
+            oportunidades_parceiro = oportunidades.filter(parceiro_id=parceiro_id)
+
+            parceiro['tem_interacao'] = interacoes_parceiro.exists()
+            parceiro['tem_oportunidade'] = oportunidades_parceiro.exists()
+            parceiro['qtd_interacoes'] = interacoes_parceiro.count()
+
+            ultima = interacoes_parceiro.order_by('-data_interacao').first()
+            parceiro['ultima_interacao'] = (
+                ultima.data_interacao.strftime('%d/%m/%Y') if ultima else None
+            )
+
         return Response({
             "kpis": kpis,
-            "parceiros": parceiros_lista,
+            "parceiros": parceiros_serializados,
             "parceiros_contatados_status": parceiros_contatados_status,
             "interacoes_status": interacoes_status
         })
+
+
+
+
+
+
+
+
 
 
 
