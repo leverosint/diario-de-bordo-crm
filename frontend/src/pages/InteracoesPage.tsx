@@ -91,10 +91,6 @@ export default function InteracoesPage() {
   const tipoUser = usuario?.tipo_user;
   const token = localStorage.getItem('token');
 
-  const isAdmin = tipoUser === 'ADMIN';
-  const isGestor = tipoUser === 'GESTOR';
-  const isVendedor = tipoUser === 'VENDEDOR';
-
   const carregarDados = async () => {
     setCarregando(true);
     setErro(null);
@@ -456,10 +452,10 @@ export default function InteracoesPage() {
 
 
  
-      
+
 <Divider style={{ marginBottom: 8 }} label="Filtros" />
 
-{(isAdmin || isGestor) && (
+{(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') ? (
   <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
     <Select
       label="Filtrar por Canal de Venda"
@@ -495,9 +491,7 @@ export default function InteracoesPage() {
       clearable
     />
   </Group>
-)}
-
-{isVendedor && (
+) : tipoUser === 'VENDEDOR' ? (
   <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
     <Select
       label="Filtrar por Status"
@@ -516,7 +510,7 @@ export default function InteracoesPage() {
       clearable
     />
   </Group>
-)}
+) : null}
 
 
 
