@@ -42,6 +42,7 @@ export default function TabelaOportunidadesPage() {
   const [popupAberto, setPopupAberto] = useState(false);
   const [pendentesMovimentacao, setPendentesMovimentacao] = useState<Oportunidade[]>([]);
   const [motivoPerda, setMotivoPerda] = useState('');
+  const [filtroGatilho, setFiltroGatilho] = useState<string>('');
 
 
 
@@ -51,7 +52,12 @@ export default function TabelaOportunidadesPage() {
     setModalAberto(true);
   };
 
-
+  // extrai todas as strings de gatilho que realmente existem na lista
+  const gatilhoOptions = useMemo(() => {
+    const all = dados.map((o) => o.gatilho_extra).filter((g): g is string => !!g);
+    const unique = Array.from(new Set(all));
+    return unique.map((g) => ({ value: g, label: g }));
+  }, [dados]);
 
   const token = localStorage.getItem('token') ?? '';
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
@@ -275,6 +281,11 @@ const dadosFiltrados = useMemo(() => {
       return false;
     }
 
+       // **AQUI o filtro de gatilho**:
+       if (filtroGatilho !== '' && o.gatilho_extra !== filtroGatilho) {
+        return false;
+      }
+
     // 2) se for “perdida” ou “pedido”, só exibe no dia da própria data_etapa
     if ((o.etapa === 'perdida' || o.etapa === 'pedido') && o.data_etapa) {
       const dataEtapa = new Date(o.data_etapa);
@@ -295,7 +306,6 @@ const dadosFiltrados = useMemo(() => {
 }, [dadosComDias, nomeFiltro, etapaFiltro, dataInicio, dataFim]);
 
 
-  
 
   const agrupadoPorStatus = useMemo((): Record<string, Oportunidade[]> => {
     const agrupado: Record<string, Oportunidade[]> = {};
@@ -390,6 +400,15 @@ const dadosFiltrados = useMemo(() => {
             value={nomeFiltro}
             onChange={(e) => setNomeFiltro(e.currentTarget.value)}
           />
+       <Select
+  label="Gatilho"
+  placeholder="Todos"
+  data={[{ value: '', label: 'Todos' }, ...gatilhoOptions]}
+  value={filtroGatilho}
+  onChange={(v) => setFiltroGatilho(v ?? '')}  // transforma null em ''
+  clearable
+/>
+
           <Select
             label="Status"
             placeholder="Todos"

@@ -560,11 +560,14 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
 
         canal_id = self.request.query_params.get('canal_id')
         consultor = self.request.query_params.get('consultor')
+        gatilho   = self.request.query_params.get('gatilho')  # ← novo
 
         if canal_id:
             queryset = queryset.filter(parceiro__canal_venda_id=canal_id)
         if consultor:
             queryset = queryset.filter(parceiro__consultor=consultor)
+        if gatilho:
+            queryset = queryset.filter(gatilho_extra__iexact=gatilho)
 
         return queryset
     
