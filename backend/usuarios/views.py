@@ -24,6 +24,8 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
+from .serializers import UsuarioReportSerializer
+from django.contrib.auth import get_user_model
 
 
 
@@ -923,3 +925,12 @@ class ResetSenhaConfirmarView(APIView):
 
         return Response({'mensagem': 'Senha alterada com sucesso.'}, status=200)
 
+User = get_user_model()
+
+class UsuarioReportView(generics.ListAPIView):
+    """
+    Lista todos os usuários com id + nome, para uso em selects ou relatórios.
+    """
+    queryset = User.objects.all()  # ou filtrar apenas vendedores: .filter(tipo_user='VENDEDOR')
+    serializer_class = UsuarioReportSerializer
+    permission_classes = [IsAuthenticated]

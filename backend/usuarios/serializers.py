@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Parceiro, CanalVenda, Interacao, CustomUser, Oportunidade, GatilhoExtra
 from django.utils import timezone
+from django.contrib.auth import get_user_model
 
 
 # ===== Canal de Venda =====
@@ -134,3 +135,17 @@ class GatilhoExtraSerializer(serializers.ModelSerializer):
     class Meta:
         model = GatilhoExtra
         fields = ['id', 'parceiro', 'parceiro_nome', 'usuario', 'usuario_nome', 'descricao']
+
+User = get_user_model()
+
+class UsuarioReportSerializer(serializers.ModelSerializer):
+    nome = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'nome']
+
+    def get_nome(self, obj):
+        # Se você usa first_name/last_name no seu model de usuário:
+        full = f"{obj.first_name} {obj.last_name}".strip()
+        return full or obj.username

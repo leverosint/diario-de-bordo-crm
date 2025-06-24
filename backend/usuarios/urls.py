@@ -21,7 +21,9 @@ from .views import (
     criar_gatilho_manual,
     AlterarSenhaView,
     SolicitarResetSenhaView, 
-    ResetSenhaConfirmarView
+    ResetSenhaConfirmarView,
+    UsuarioReportView,  # ← adicione esta linha
+    
 )
 
 # 🔗 ROTAS DO ROUTER
@@ -62,6 +64,11 @@ urlpatterns = [
 
     # Oportunidades
     path('oportunidades/registrar/', RegistrarOportunidadeView.as_view(), name='registrar-oportunidade'),
+
+
+
+# relatório de usuários (id + nome)
+path('usuarios/report/', UsuarioReportView.as_view(), name='usuarios-report'),
 
     # Inclui routers (parceiros, canais, oportunidades)
     path('', include(router.urls)),
