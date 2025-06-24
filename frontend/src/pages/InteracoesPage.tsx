@@ -72,6 +72,8 @@ export default function InteracoesPage() {
   const [tipoInteracaoManual, setTipoInteracaoManual] = useState<string | null>(null);
   const [valorInteracaoManual, setValorInteracaoManual] = useState<string>('');
   const [obsInteracaoManual, setObsInteracaoManual] = useState('');
+ 
+
 
 
 
@@ -88,6 +90,10 @@ export default function InteracoesPage() {
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   const tipoUser = usuario?.tipo_user;
   const token = localStorage.getItem('token');
+
+  const isAdmin = tipoUser === 'ADMIN';
+  const isGestor = tipoUser === 'GESTOR';
+  const isVendedor = tipoUser === 'VENDEDOR';
 
   const carregarDados = async () => {
     setCarregando(true);
@@ -295,7 +301,7 @@ export default function InteracoesPage() {
     >
       {mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
     </Button>
-
+    {isVendedor && (
     <Button
       variant="filled"
       styles={{
@@ -310,7 +316,7 @@ export default function InteracoesPage() {
         ? 'Fechar Interação Manual'
         : 'Adicionar Interação Manual'}
     </Button>
-
+    )}
 </Group>
 
   
@@ -451,44 +457,67 @@ export default function InteracoesPage() {
 <Divider style={{ marginBottom: 8 }} label="Filtros" />
  
       
-{tipoUser === 'GESTOR' && (
-  <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+<Divider style={{ marginBottom: 8 }} label="Filtros" />
 
-  <Select
-    label="Filtrar por Canal de Venda"
-    placeholder="Selecione um canal"
-    value={canalSelecionado}
-    onChange={handleCanalChange}
-    data={canaisVenda.map((c) => ({ value: String(c.id), label: c.nome }))}
-    clearable
-  />
-  <Select
-    label="Filtrar por Vendedor"
-    placeholder="Selecione um vendedor"
-    value={vendedorSelecionado}
-    onChange={handleVendedorChange}
-    data={vendedores.map((v) => ({ value: v.id_vendedor, label: v.username }))}
-    disabled={!canalSelecionado}
-    clearable
-  />
-  <Select
-    label="Filtrar por Status"
-    placeholder="Selecione um status"
-    value={statusSelecionado}
-    onChange={(value) => setStatusSelecionado(value || '')}
-    data={statusDisponiveis.map((status) => ({ value: status, label: status }))}
-    clearable
-  />
-  <Select
-    label="Filtrar por Gatilho"
-    placeholder="Selecione"
-    value={temGatilho}
-    onChange={(value) => setTemGatilho(value || '')}
-    data={gatilhosDisponiveis.map((gatilho) => ({ value: gatilho, label: gatilho }))}
-    clearable
-  />
-</Group>
-)}  {/* 👈 Fecha corretamente aqui */}
+{(isAdmin || isGestor) && (
+  <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+    <Select
+      label="Filtrar por Canal de Venda"
+      placeholder="Selecione um canal"
+      value={canalSelecionado}
+      onChange={handleCanalChange}
+      data={canaisVenda.map(c => ({ value: String(c.id), label: c.nome }))}
+      clearable
+    />
+    <Select
+      label="Filtrar por Vendedor"
+      placeholder="Selecione um vendedor"
+      value={vendedorSelecionado}
+      onChange={handleVendedorChange}
+      data={vendedores.map(v => ({ value: v.id_vendedor, label: v.username }))}
+      disabled={!canalSelecionado}
+      clearable
+    />
+    <Select
+      label="Filtrar por Status"
+      placeholder="Selecione um status"
+      value={statusSelecionado}
+      onChange={v => setStatusSelecionado(v || '')}
+      data={statusDisponiveis.map(s => ({ value: s, label: s }))}
+      clearable
+    />
+    <Select
+      label="Filtrar por Gatilho"
+      placeholder="Selecione"
+      value={temGatilho}
+      onChange={v => setTemGatilho(v || '')}
+      data={gatilhosDisponiveis.map(g => ({ value: g, label: g }))}
+      clearable
+    />
+  </Group>
+)}
+
+{isVendedor && (
+  <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+    <Select
+      label="Filtrar por Status"
+      placeholder="Selecione um status"
+      value={statusSelecionado}
+      onChange={v => setStatusSelecionado(v || '')}
+      data={statusDisponiveis.map(s => ({ value: s, label: s }))}
+      clearable
+    />
+    <Select
+      label="Filtrar por Gatilho"
+      placeholder="Selecione"
+      value={temGatilho}
+      onChange={v => setTemGatilho(v || '')}
+      data={gatilhosDisponiveis.map(g => ({ value: g, label: g }))}
+      clearable
+    />
+  </Group>
+)}
+
 
 
         {carregando ? (
