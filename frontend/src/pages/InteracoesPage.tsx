@@ -454,7 +454,7 @@ export default function InteracoesPage() {
           </Card>
         )}
 
-<Divider style={{ marginBottom: 8 }} label="Filtros" />
+
  
       
 <Divider style={{ marginBottom: 8 }} label="Filtros" />
@@ -497,7 +497,7 @@ export default function InteracoesPage() {
   </Group>
 )}
 
-{isVendedor && (
+{(isAdmin || isGestor || isVendedor) && (
   <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
     <Select
       label="Filtrar por Status"
