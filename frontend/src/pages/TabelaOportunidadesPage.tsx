@@ -204,33 +204,47 @@ const confirmarVendaPerdida = async () => {
   }
 
   try {
-    await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`, {
-      etapa: 'perdida',
-      motivo_venda_perdida: motivoPerda,
-      data_etapa: new Date().toISOString(),
-      data_status: new Date().toISOString(),
-    }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    // Atualiza no back-end
+    await axios.patch(
+      `${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`,
+      {
+        etapa: 'perdida',
+        motivo_venda_perdida: motivoPerda,
+        data_etapa: new Date().toISOString(),
+        data_status: new Date().toISOString(),
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
+    // Reflete no front-end em `dados`
     setDados(prev =>
       prev.map(o =>
         o.id === idMudandoStatus
-          ? { ...o, etapa: 'perdida', data_status: new Date().toISOString(), observacao: motivoPerda }
+          ? {
+              ...o,
+              etapa: 'perdida',
+              data_status: new Date().toISOString(),
+              observacao: motivoPerda,
+              // se você quiser também zerar dias_sem_movimentacao:
+              dias_sem_movimentacao: 0,
+              data_etapa: new Date().toISOString(),
+            }
           : o
       )
     );
 
+    // Remove da lista de pendentes e fecha o popup quando zerar
     setPendentesMovimentacao(prev => {
       const atualizado = prev.filter(o => o.id !== idMudandoStatus);
-      // se removi o último, fecho o popup
       if (atualizado.length === 0) {
         setPopupAberto(false);
       }
       return atualizado;
     });
-    
 
+    // Fecha modal e limpa estado
     setModalAberto(false);
     setIdMudandoStatus(null);
     setMotivoPerda('');
@@ -239,6 +253,7 @@ const confirmarVendaPerdida = async () => {
     alert('Erro ao atualizar etapa');
   }
 };
+
 
 
 
