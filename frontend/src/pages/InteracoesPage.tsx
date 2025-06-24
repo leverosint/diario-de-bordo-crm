@@ -270,13 +270,13 @@ export default function InteracoesPage() {
           <Title order={2}>Interações de Parceiros Pendentes</Title>
         </Center>
 
-        <Group justify="space-between" style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+        <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
 
   <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
     Meta do dia: {metaAtual}/{metaTotal}
   </Badge>
 
-  <Group gap="sm">
+  <Group gap="sm" style={{ flexWrap: 'wrap' }}>
     <FileButton onChange={setArquivoGatilho} accept=".xlsx">
       {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
     </FileButton>
@@ -303,6 +303,7 @@ export default function InteracoesPage() {
   >
     {mostrarInteracaoManual ? 'Fechar Interação Manual' : 'Adicionar Interação Manual'}
   </Button>
+  
 </Group>
 
 {mostrarInteracaoManual && (
