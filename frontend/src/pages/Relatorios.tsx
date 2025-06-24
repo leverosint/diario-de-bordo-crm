@@ -80,6 +80,9 @@ export default function Relatorios() {
     data_criacao: 'Data de Criação',
   };
 
+
+  
+
   return (
     <SidebarGestor tipoUser={localStorage.getItem('tipo_user') || ''}>
       <Container size="xl" py="xl">
