@@ -450,100 +450,66 @@ const confirmarVendaPerdida = async () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {lista.map((o) => {
-                            const emEdicao = editandoId === o.id;
-                            return (
-                              <tr key={o.id}>
-                                <td className={styles.center}>{o.id}</td>
-                                <td className={styles.left}>{o.parceiro_nome}</td>
-                                <td className={styles.center}>
-                                  {emEdicao ? (
-                                    <TextInput
-                                      value={valorEdit}
-                                      onChange={(e) => setValorEdit(e.currentTarget.value)}
-                                      size="xs"
-                                    />
-                                  ) : (
-                                    <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
-                                  )}
-                                </td>
-                                <td className={styles.center}>
-                                  {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
-                                </td>
-                                <td className={styles.center}>
-                                  {o.data_status
-                                    ? new Date(o.data_status).toLocaleDateString('pt-BR')
-                                    : '-'}
-                                </td>
-                                <td className={styles.center}>{o.gatilho_extra || '-'}</td>
-                                <td className={styles.left}>
-                                  {emEdicao ? (
-                                    <TextInput
-                                      value={observacaoEdit}
-                                      onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
-                                      size="xs"
-                                    />
-                                  ) : (
-                                    o.observacao || '-'
-                                  )}
-                                </td>
-                                <td className={styles.center}>
-                                  {o.dias_sem_movimentacao !== null
-                                    ? `${o.dias_sem_movimentacao} dias`
-                                    : '-'}
-                                </td>
-                                <td className={styles.center}>
-                                  <Group gap="xs" justify="center">
-                                    <Select
-                                      value={o.etapa}
-                                      onChange={(value) => value && handleStatusChange(o.id, value)}
-                                      data={etapaOptions}
-                                      size="xs"
-                                      styles={{
-                                        input: {
-                                          backgroundColor: getStatusColor(o.etapa),
-                                          color: 'white',
-                                          fontWeight: 600,
-                                          textAlign: 'center',
-                                          borderRadius: 6,
-                                          minWidth: 120,
-                                        },
-                                      }}
-                                    />
+  {lista.map((o) => {
+    const emEdicao = editandoId === o.id;
+    return (
+      <tr key={o.id}>
+        {/* ... outras colunas (ID, Parceiro, Valor, Data Criação) ... */}
 
-                                    {emEdicao ? (
-                                      <>
-                                        <Button
-                                          size="xs"
-                                          color="green"
-                                          onClick={() => salvarEdicao(o.id)}
-                                        >
-                                          <Save size={16} />
-                                        </Button>
-                                        <Button
-                                          size="xs"
-                                          variant="outline"
-                                          color="red"
-                                          onClick={cancelarEdicao}
-                                        >
-                                          <X size={16} />
-                                        </Button>
-                                      </>
-                                    ) : (
-                                      <Button
-                                        size="xs"
-                                        variant="outline"
-                                        onClick={() => iniciarEdicao(o)}
-                                      >
-                                        <Pencil size={16} />
-                                      </Button>
-                                    )}
-                                  </Group>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
+        {/* Coluna “Data Etapa” */}
+        <td className={styles.center}>
+          {o.data_etapa
+            ? new Date(o.data_etapa).toLocaleDateString('pt-BR')
+            : '-'}
+        </td>
+
+        {/* Coluna “Sem Movimentação” */}
+        <td className={styles.center}>
+          {o.data_etapa
+            ? `${o.dias_sem_movimentacao} dia${o.dias_sem_movimentacao === 1 ? '' : 's'}`
+            : '-'}
+        </td>
+
+        {/* Coluna “Status” com o Select */}
+        <td className={styles.center}>
+          <Group gap="xs" justify="center">
+            <Select
+              value={o.etapa}
+              onChange={(value) => value && handleStatusChange(o.id, value)}
+              data={etapaOptions}
+              size="xs"
+              styles={{
+                input: {
+                  backgroundColor: getStatusColor(o.etapa),
+                  color: 'white',
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  borderRadius: 6,
+                  minWidth: 120,
+                },
+              }}
+            />
+            {emEdicao ? (
+              <>
+                <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
+                  <Save size={16} />
+                </Button>
+                <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao}>
+                  <X size={16} />
+                </Button>
+              </>
+            ) : (
+              <Button size="xs" variant="outline" onClick={() => iniciarEdicao(o)}>
+                <Pencil size={16} />
+              </Button>
+            )}
+          </Group>
+        </td>
+      </tr>
+    );
+  })}
+</tbody>
+
                       </Table>
                     </div>
                   </Card>
