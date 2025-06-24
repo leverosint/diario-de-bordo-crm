@@ -173,13 +173,14 @@ const handleStatusChangePopup = (id: number, novaEtapa: string | null) => {
         )
       );
 
-      setPendentesMovimentacao((prev) => {
-        const atualizado = prev.filter((o) => o.id !== id);
+      setPendentesMovimentacao(prev => {
+        const atualizado = prev.filter(o => o.id !== idMudandoStatus);
         if (atualizado.length === 0) {
           setPopupAberto(false);
         }
         return atualizado;
       });
+      
 
     }).catch(err => {
       console.error('Erro ao atualizar etapa:', err);
@@ -220,11 +221,15 @@ const confirmarVendaPerdida = async () => {
       )
     );
 
-    setPendentesMovimentacao(prev => prev.filter(o => o.id !== idMudandoStatus));
-
-    if (pendentesMovimentacao.length - 1 === 0) {
-      setPopupAberto(false);
-    }
+    setPendentesMovimentacao(prev => {
+      const atualizado = prev.filter(o => o.id !== idMudandoStatus);
+      // se removi o último, fecho o popup
+      if (atualizado.length === 0) {
+        setPopupAberto(false);
+      }
+      return atualizado;
+    });
+    
 
     setModalAberto(false);
     setIdMudandoStatus(null);
