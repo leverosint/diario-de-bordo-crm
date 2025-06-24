@@ -78,7 +78,8 @@ export default function InteracoesPage() {
   const [tipoInteracaoManual, setTipoInteracaoManual] = useState<string | null>(null);
   const [valorInteracaoManual, setValorInteracaoManual] = useState<string>('');
   const [obsInteracaoManual, setObsInteracaoManual] = useState('');
- 
+  const [parceiroFilter, setParceiroFilter] = useState<string | null>(null);
+
 
 
 
@@ -103,6 +104,7 @@ export default function InteracoesPage() {
     try {
       const headers = { Authorization: `Bearer ${token}` };
       const params = new URLSearchParams();
+      if (parceiroFilter)     params.append('parceiro', parceiroFilter);
       if (canalSelecionado)   params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
       if (statusSelecionado)   params.append('status', statusSelecionado);
@@ -499,6 +501,20 @@ export default function InteracoesPage() {
  
 
 <Divider style={{ marginBottom: 8 }} label="Filtros" />
+
+{/* SELECT de Parceiro: TODOS veem */}
+<Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+  <Select
+    label="Filtrar por Parceiro"
+    placeholder="Selecione um parceiro"
+    data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
+    value={parceiroFilter}
+    onChange={setParceiroFilter}
+    searchable
+    clearable
+    style={{ minWidth: 200 }}
+  />
+</Group>
 
 {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') ? (
   <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
