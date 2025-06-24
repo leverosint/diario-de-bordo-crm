@@ -15,6 +15,7 @@ import {
   Textarea,
   FileButton,
   Card,
+  Pagination,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import styles from './InteracoesPage.module.css';
@@ -51,6 +52,11 @@ interface Parceiro {
 }
 
 export default function InteracoesPage() {
+ 
+    // 2) Defina quantos itens por página e o estado de página atual
+  const itemsPerPage = 5;              // ← quantos itens exibir em cada página
+  const [pagePend, setPagePend] = useState(1);     // ← página atual de “A Interagir”
+  const [pageInter, setPageInter] = useState(1);   // ← página atual de “Interagidos Hoje”
   const [pendentes, setPendentes] = useState<Interacao[]>([]);
   const [interagidos, setInteragidos] = useState<Interacao[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -292,6 +298,15 @@ export default function InteracoesPage() {
     carregarDados();
   }, [canalSelecionado, vendedorSelecionado, statusSelecionado, temGatilho]);
   
+  // 3) Calcule quais itens aparecem em cada tabela, conforme a página atual
+  const pendentesExibidos = pendentes.slice(
+    (pagePend - 1) * itemsPerPage,
+    pagePend * itemsPerPage
+  );
+  const interagidosExibidos = interagidos.slice(
+    (pageInter - 1) * itemsPerPage,
+    pageInter * itemsPerPage
+  );
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
@@ -544,153 +559,170 @@ export default function InteracoesPage() {
 
 
 
-        {carregando ? (
-          <Center><Loader /></Center>
-        ) : erro ? (
-          <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
-        ) : (
-          <>
-            <Divider style={{ marginBottom: 8 }} label="A Interagir" />
+{carregando ? (
+  <Center><Loader /></Center>
+) : erro ? (
+  <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
+) : (
+  <>
+    {/* === Tabela “A Interagir” === */}
+    <Divider style={{ marginBottom: 8 }} label="A Interagir" />
+    <div className={styles.tableWrapper}>
+      <Table striped highlightOnHover withTableBorder className={styles.table}>
+        <thead>
+          <tr>
+            <th>Parceiro</th>
+            <th>Unidade</th>
+            <th>Classificação</th>
+            <th>Status</th>
+            <th>Gatilho Extra</th>
+            <th>Tipo</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {pendentesExibidos.map((item) => (
+            <Fragment key={item.id}>
+              <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
+                <td>{item.parceiro}</td>
+                <td>{item.unidade}</td>
+                <td>{item.classificacao}</td>
+                <td>{item.status}</td>
+                <td>
+                  {item.gatilho_extra
+                    ? <Badge color="red" size="sm">{item.gatilho_extra}</Badge>
+                    : "-"}
+                </td>
+                <td>
+                  <Select
+                    placeholder="Tipo"
+                    className={styles.select}
+                    value={tipoSelecionado[item.id] || ''}
+                    onChange={(v) => {
+                      if (v) setTipoSelecionado(prev => ({ ...prev, [item.id]: v }));
+                    }}
+                    data={[
+                      { value: 'whatsapp', label: 'WhatsApp' },
+                      { value: 'email',    label: 'E-mail' },
+                      { value: 'ligacao',  label: 'Ligação' },
+                    ]}
+                    clearable={false}
+                  />
+                </td>
+                <td>
+                  <Button size="xs" onClick={() => setExpandirId(item.id)}>
+                    Marcar como interagido
+                  </Button>
+                </td>
+              </tr>
 
-            <div className={styles.tableWrapper}>
-              <Table striped highlightOnHover withTableBorder className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Parceiro</th>
-                    <th>Unidade</th>
-                    <th>Classificação</th>
-                    <th>Status</th>
-                    <th>Gatilho Extra</th>
-                    <th>Tipo</th>
-                    <th>Ação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendentes.map((item) => (
-                    <Fragment key={item.id}>
-                      <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
-                        <td>{item.parceiro}</td>
-                        <td>{item.unidade}</td>
-                        <td>{item.classificacao}</td>
-                        <td>{item.status}</td>
-                        <td>
-                          {item.gatilho_extra ? (
-                            <Badge color="red" size="sm">
-                              {item.gatilho_extra}
-                            </Badge>
-                          ) : "-"}
-                        </td>
-                        <td>
-                          <Select
-                            placeholder="Tipo"
-                            className={styles.select}
-                            value={tipoSelecionado[item.id] || ''}
-                            onChange={(value) => {
-                              if (value) {
-                                setTipoSelecionado((prev) => ({ ...prev, [item.id]: value }));
-                              }
-                            }}
-                            data={[
-                              { value: 'whatsapp', label: 'WhatsApp' },
-                              { value: 'email', label: 'E-mail' },
-                              { value: 'ligacao', label: 'Ligação' },
-                            ]}
-                          />
-                        </td>
-                        <td>
-                          <Button size="xs" className={styles.button} onClick={() => setExpandirId(item.id)}>
-                            Marcar como interagido
-                          </Button>
-                        </td>
-                      </tr>
-                      {expandirId === item.id && (
-                        <tr>
-                          <td colSpan={7}>
-                            <Group grow style={{ marginTop: 10 }}>
-                              <TextInput
-                                label="Valor da Oportunidade (R$)"
-                                placeholder="5000"
-                                value={valorOportunidade}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setValorOportunidade(e.currentTarget.value)}
-                              />
-                              <Textarea
-                                label="Observação"
-                                placeholder="Detalhes adicionais..."
-                                value={observacaoOportunidade}
-                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setObservacaoOportunidade(e.currentTarget.value)}
+              {expandirId === item.id && (
+                <tr>
+                  <td colSpan={7}>
+                    <Group grow style={{ marginTop: 10 }}>
+                      <TextInput
+                        label="Valor da Oportunidade (R$)"
+                        placeholder="5000"
+                        value={valorOportunidade}
+                        onChange={e => setValorOportunidade(e.currentTarget.value)}
+                      />
+                      <Textarea
+                        label="Observação"
+                        placeholder="Detalhes adicionais..."
+                        value={observacaoOportunidade}
+                        onChange={e => setObservacaoOportunidade(e.currentTarget.value)}
+                      />
+                    </Group>
+                    <Group style={{ marginTop: 16 }} justify="flex-end">
+                      <Button
+                        color="blue"
+                        onClick={() => registrarInteracao(
+                          item.id,
+                          tipoSelecionado[item.id] || '',
+                          true,
+                          parseFloat(valorOportunidade.replace(',', '.')),
+                          observacaoOportunidade
+                        )}
+                      >
+                        Salvar e Criar Oportunidade
+                      </Button>
+                      <Button
+                        color="gray"
+                        onClick={() => registrarInteracao(
+                          item.id,
+                          tipoSelecionado[item.id] || '',
+                          false
+                        )}
+                      >
+                        Só Interagir
+                      </Button>
+                      <Button
+                        color="red"
+                        variant="outline"
+                        onClick={() => {
+                          setExpandirId(null);
+                          setValorOportunidade('');
+                          setObservacaoOportunidade('');
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                    </Group>
+                  </td>
+                </tr>
+              )}
+            </Fragment>
+          ))}
+        </tbody>
+      </Table>
 
-                              />
-                            </Group>
-                            <Group style={{ marginTop: 16 }} justify="flex-end">
-                              <Button
-                                color="blue"
-                                onClick={() => registrarInteracao(
-                                  item.id,
-                                  tipoSelecionado[item.id] || '',
-                                  true,
-                                  parseFloat(valorOportunidade.replace(',', '.')),
-                                  observacaoOportunidade
-                                )}
-                              >
-                                Salvar e Criar Oportunidade
-                              </Button>
-                              <Button
-                                color="gray"
-                                onClick={() => registrarInteracao(item.id, tipoSelecionado[item.id] || '', false)}
-                              >
-                                Só Interagir
-                              </Button>
-                              <Button
-                                color="red"
-                                variant="outline"
-                                onClick={() => {
-                                  setExpandirId(null);
-                                  setValorOportunidade('');
-                                  setObservacaoOportunidade('');
-                                }}
-                              >
-                                Cancelar
-                              </Button>
-                            </Group>
-                          </td>
-                        </tr>
-                      )}
-                    </Fragment>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
+      {/* Paginação “A Interagir” */}
+      <Pagination
+        value={pagePend}
+        onChange={setPagePend}
+        total={Math.ceil(pendentes.length / itemsPerPage)}
+        mt="md"
+      />
+    </div>
 
-            <Divider label="Interagidos Hoje" style={{ marginTop: 32, marginBottom: 16 }} />
+    {/* === Tabela “Interagidos Hoje” === */}
+    <Divider label="Interagidos Hoje" style={{ marginTop: 32, marginBottom: 16 }} />
+    <div className={styles.tableWrapper}>
+      <Table striped highlightOnHover withTableBorder className={styles.table}>
+        <thead>
+          <tr>
+            <th>Parceiro</th>
+            <th>Unidade</th>
+            <th>Classificação</th>
+            <th>Status</th>
+            <th>Data</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {interagidosExibidos.map((item) => (
+            <tr key={item.id}>
+              <td>{item.parceiro}</td>
+              <td>{item.unidade}</td>
+              <td>{item.classificacao}</td>
+              <td>{item.status}</td>
+              <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
+              <td>{item.tipo}</td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
 
-            <div className={styles.tableWrapper}>
-              <Table striped highlightOnHover withTableBorder className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Parceiro</th>
-                    <th>Unidade</th>
-                    <th>Classificação</th>
-                    <th>Status</th>
-                    <th>Data</th>
-                    <th>Tipo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {interagidos.map((item) => (
-                    <tr key={item.id}>
-                      <td>{item.parceiro}</td>
-                      <td>{item.unidade}</td>
-                      <td>{item.classificacao}</td>
-                      <td>{item.status}</td>
-                      <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
-                      <td>{item.tipo}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
-          </>
-        )}
+      {/* Paginação “Interagidos Hoje” */}
+      <Pagination
+        value={pageInter}
+        onChange={setPageInter}
+        total={Math.ceil(interagidos.length / itemsPerPage)}
+        mt="md"
+      />
+    </div>
+  </>
+)}  {/* fecha o ternário carregando/erro/conteúdo */}
       </div>
     </SidebarGestor>
   );
