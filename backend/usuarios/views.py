@@ -942,5 +942,14 @@ class UsuarioReportView(generics.ListAPIView):
 
 class ParceiroReportView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
-    queryset         = Parceiro.objects.all()
-    serializer_class = ReportParceiroSerializer
+    serializer_class   = ReportParceiroSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.tipo_user == 'ADMIN':
+            return Parceiro.objects.all()
+        elif user.tipo_user == 'GESTOR':
+            return Parceiro.objects.filter(canal_venda__in=user.canais_venda.all())
+        elif user.tipo_user == 'VENDEDOR':
+            return Parceiro.objects.filter(consultor=user.id_vendedor)
+        return Parceiro.objects.none()
