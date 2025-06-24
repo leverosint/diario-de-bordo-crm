@@ -442,7 +442,7 @@ const confirmarVendaPerdida = async () => {
                             <th className={styles.left}>Parceiro</th>
                             <th className={styles.center}>Valor</th>
                             <th className={styles.center}>Data Criação</th>
-                            <th className={styles.center}>Data Status</th>
+                            <th className={styles.center}>Data Etapa</th>
                             <th className={styles.center}>Gatilho</th>
                             <th className={styles.left}>Observação</th>
                             <th className={styles.center}>Sem Movimentação</th>
@@ -454,23 +454,63 @@ const confirmarVendaPerdida = async () => {
     const emEdicao = editandoId === o.id;
     return (
       <tr key={o.id}>
-        {/* ... outras colunas (ID, Parceiro, Valor, Data Criação) ... */}
+        {/* ID */}
+        <td className={styles.center}>{o.id}</td>
 
-        {/* Coluna “Data Etapa” */}
+        {/* Parceiro */}
+        <td className={styles.left}>{o.parceiro_nome}</td>
+
+        {/* Valor (editável) */}
+        <td className={styles.center}>
+          {emEdicao ? (
+            <TextInput
+              value={valorEdit}
+              onChange={(e) => setValorEdit(e.currentTarget.value)}
+              size="xs"
+            />
+          ) : (
+            <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
+          )}
+        </td>
+
+        {/* Data Criação */}
+        <td className={styles.center}>
+          {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
+        </td>
+
+        {/* Data Etapa */}
         <td className={styles.center}>
           {o.data_etapa
             ? new Date(o.data_etapa).toLocaleDateString('pt-BR')
             : '-'}
         </td>
 
-        {/* Coluna “Sem Movimentação” */}
+        {/* Gatilho */}
         <td className={styles.center}>
-          {o.data_etapa
+          {o.gatilho_extra || '-'}
+        </td>
+
+        {/* Observação (editável) */}
+        <td className={styles.left}>
+          {emEdicao ? (
+            <TextInput
+              value={observacaoEdit}
+              onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
+              size="xs"
+            />
+          ) : (
+            o.observacao || '-'
+          )}
+        </td>
+
+        {/* Sem Movimentação */}
+        <td className={styles.center}>
+          {typeof o.dias_sem_movimentacao === 'number'
             ? `${o.dias_sem_movimentacao} dia${o.dias_sem_movimentacao === 1 ? '' : 's'}`
             : '-'}
         </td>
 
-        {/* Coluna “Status” com o Select */}
+        {/* Status + botões de editar/salvar */}
         <td className={styles.center}>
           <Group gap="xs" justify="center">
             <Select
