@@ -277,46 +277,54 @@ export default function InteracoesPage() {
     Meta do dia: {metaAtual}/{metaTotal}
   </Badge>
 
-  <Group gap="sm">
-    <FileButton onChange={setArquivoGatilho} accept=".xlsx">
-      {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
-    </FileButton>
+  {/* Para ADMIN e GESTOR: importar gatilhos e gatilho manual */}
+  {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
+    <Group gap="sm">
+      <FileButton onChange={setArquivoGatilho} accept=".xlsx">
+        {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
+      </FileButton>
 
-    <Button
-      color="blue"
-      onClick={handleUploadGatilho}
-      disabled={!arquivoGatilho}
-    >
-      Enviar Gatilhos
-    </Button>
+      <Button
+        color="blue"
+        onClick={handleUploadGatilho}
+        disabled={!arquivoGatilho}
+      >
+        Enviar Gatilhos
+      </Button>
 
-    <Button
-      color={mostrarGatilhoManual ? 'red' : 'teal'}
-      variant={mostrarGatilhoManual ? 'outline' : 'filled'}
-      onClick={() => setMostrarGatilhoManual((o) => !o)}
-    >
-      {mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
-    </Button>
-  
-    <Button
-      variant="filled"
-      styles={{
-        root: {
-          backgroundColor: '#005A64',
-          '&:hover': { backgroundColor: '#004F57' },
-        },
-      }}
-      onClick={() => setMostrarInteracaoManual((o) => !o)}
-    >
-      {mostrarInteracaoManual
-        ? 'Fechar Interação Manual'
-        : 'Adicionar Interação Manual'}
-    </Button>
+      <Button
+        color={mostrarGatilhoManual ? 'red' : 'teal'}
+        variant={mostrarGatilhoManual ? 'outline' : 'filled'}
+        onClick={() => setMostrarGatilhoManual((o) => !o)}
+      >
+        {mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
+      </Button>
+    </Group>
+  )}
 
+  {/* Para TODOS (ADMIN, GESTOR e VENDEDOR): interação manual */}
+  {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR' || tipoUser === 'VENDEDOR') && (
+    <Group gap="sm">
+      <Button
+        variant="filled"
+        styles={{
+          root: {
+            backgroundColor: '#005A64',
+            '&:hover': { backgroundColor: '#004F57' },
+          },
+        }}
+        onClick={() => setMostrarInteracaoManual((o) => !o)}
+      >
+        {mostrarInteracaoManual
+          ? 'Fechar Interação Manual'
+          : 'Adicionar Interação Manual'}
+      </Button>
+    </Group>
+  )}
 </Group>
 
-  
-</Group>
+
+
 
 {mostrarInteracaoManual && (
   <Card shadow="sm" padding="lg" mb="md">
