@@ -17,12 +17,13 @@ export default function Relatorios() {
       let endpoint = '';
 
       if (tipoRelatorio === 'parceiros') {
-        endpoint = `${import.meta.env.VITE_API_URL}/parceiros-list/`;
+        endpoint = `${import.meta.env.VITE_API_URL}/relatorios/parceiros/`;
       } else if (tipoRelatorio === 'interacoes') {
         endpoint = `${import.meta.env.VITE_API_URL}/interacoes/`;
       } else if (tipoRelatorio === 'oportunidades') {
         endpoint = `${import.meta.env.VITE_API_URL}/oportunidades/`;
       }
+      
 
       const response = await axios.get(endpoint, { headers });
 
@@ -55,6 +56,8 @@ export default function Relatorios() {
     codigo: 'Código',
     classificacao: 'Classificação',
     consultor: 'Consultor',
+    consultor_id:   'ID do Consultor',
+    consultor_nome: 'Nome do Consultor',
     unidade: 'Unidade',
     cidade: 'Cidade',
     uf: 'UF',

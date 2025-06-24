@@ -1,5 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from .views import ParceiroReportView
 from .views import (
     LoginView,
     UploadParceirosView,
@@ -23,6 +24,7 @@ from .views import (
     SolicitarResetSenhaView, 
     ResetSenhaConfirmarView,
     UsuarioReportView,  # ← adicione esta linha
+    
     
 )
 
@@ -69,6 +71,13 @@ urlpatterns = [
 
 # relatório de usuários (id + nome)
 path('usuarios/report/', UsuarioReportView.as_view(), name='usuarios-report'),
+
+ # Relatório de usuários
+    path('relatorios/usuarios/', UsuarioReportView.as_view(), name='relatorio-usuarios'),
+
+    # relatório “apenas parceiros” com consultor_id
+    path('relatorios/parceiros/', ParceiroReportView.as_view(), name='relatorio-parceiros'),
+
 
     # Inclui routers (parceiros, canais, oportunidades)
     path('', include(router.urls)),

@@ -26,6 +26,9 @@ from django.core.mail import send_mail
 from django.conf import settings
 from .serializers import UsuarioReportSerializer
 from django.contrib.auth import get_user_model
+from rest_framework import generics
+from rest_framework import generics
+from .serializers import ReportParceiroSerializer
 
 
 
@@ -934,3 +937,10 @@ class UsuarioReportView(generics.ListAPIView):
     queryset = User.objects.all()  # ou filtrar apenas vendedores: .filter(tipo_user='VENDEDOR')
     serializer_class = UsuarioReportSerializer
     permission_classes = [IsAuthenticated]
+
+
+
+class ParceiroReportView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset         = Parceiro.objects.all()
+    serializer_class = ReportParceiroSerializer

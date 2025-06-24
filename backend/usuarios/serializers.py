@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Parceiro, CanalVenda, Interacao, CustomUser, Oportunidade, GatilhoExtra
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from .models import CustomUser
 
 
 # ===== Canal de Venda =====
@@ -149,3 +150,20 @@ class UsuarioReportSerializer(serializers.ModelSerializer):
         # Se você usa first_name/last_name no seu model de usuário:
         full = f"{obj.first_name} {obj.last_name}".strip()
         return full or obj.username
+    
+class ReportParceiroSerializer(serializers.ModelSerializer):
+    canal_venda = CanalVendaSerializer(read_only=True)
+    # esses dois campos puxam do relacionamento consultor → CustomUser
+    consultor_id   = serializers.IntegerField(source='consultor.id',    read_only=True)
+    consultor_nome = serializers.CharField( source='consultor.username', read_only=True)
+
+    class Meta:
+        model = Parceiro
+        fields = [
+            'id', 'codigo', 'parceiro',
+            'consultor_id', 'consultor_nome',
+            'unidade', 'cidade', 'uf',
+            'canal_venda',
+            'status',
+            'primeiro_fat','ultimo_fat','atualizado_em',
+        ]
