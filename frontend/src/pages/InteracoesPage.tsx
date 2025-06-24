@@ -66,6 +66,13 @@ export default function InteracoesPage() {
   const [temGatilho, setTemGatilho] = useState('');
   const [statusDisponiveis, setStatusDisponiveis] = useState<string[]>([]);
   const [gatilhosDisponiveis, setGatilhosDisponiveis] = useState<string[]>([]);
+  // logo abaixo dos outros useState(...)
+  const [mostrarInteracaoManual, setMostrarInteracaoManual] = useState(false);
+  const [parceiroInteracaoManual, setParceiroInteracaoManual] = useState<string | null>(null);
+  const [tipoInteracaoManual, setTipoInteracaoManual] = useState<string | null>(null);
+  const [valorInteracaoManual, setValorInteracaoManual] = useState<string>('');
+  const [obsInteracaoManual, setObsInteracaoManual] = useState('');
+
 
 
   const [parceiros, setParceiros] = useState<Parceiro[]>([]);
@@ -288,7 +295,121 @@ export default function InteracoesPage() {
       {mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
     </Button>
   </Group>
+    {/* novo */}
+    <Button
+    color={mostrarInteracaoManual ? 'red' : 'green'}
+    variant={mostrarInteracaoManual ? 'outline' : 'filled'}
+    onClick={() => setMostrarInteracaoManual(!mostrarInteracaoManual)}
+  >
+    {mostrarInteracaoManual ? 'Fechar Interação Manual' : 'Adicionar Interação Manual'}
+  </Button>
 </Group>
+
+{mostrarInteracaoManual && (
+  <Card shadow="sm" padding="lg" mb="md">
+    <Group grow>
+      {/* Seleção de parceiro */}
+      <Select
+        label="Parceiro"
+        placeholder="Selecione um parceiro"
+        data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
+        value={parceiroInteracaoManual}
+        onChange={setParceiroInteracaoManual}
+        searchable
+        required
+      />
+
+      {/* Tipo de interação */}
+      <Select
+        label="Tipo de Interação"
+        placeholder="Selecione"
+        data={[
+          { value: 'whatsapp', label: 'WhatsApp' },
+          { value: 'email',    label: 'E-mail' },
+          { value: 'ligacao',  label: 'Ligação' },
+        ]}
+        value={tipoInteracaoManual}
+        onChange={setTipoInteracaoManual}
+        required
+      />
+
+      {/* Valor da oportunidade */}
+      <TextInput
+        label="Valor da Oportunidade (R$)"
+        placeholder="5000"
+        value={valorInteracaoManual}
+        onChange={e => setValorInteracaoManual(e.currentTarget.value)}
+      />
+
+      {/* Observação */}
+      <Textarea
+        label="Observação"
+        placeholder="Detalhes adicionais..."
+        value={obsInteracaoManual}
+        onChange={e => setObsInteracaoManual(e.currentTarget.value)}
+        autosize
+        minRows={2}
+      />
+    </Group>
+
+    <Group justify="flex-end" mt="md">
+      <Button
+        variant="outline"
+        onClick={async () => {
+          if (!parceiroInteracaoManual || !tipoInteracaoManual) {
+            return alert('Preencha Parceiro e Tipo de Interação');
+          }
+          try {
+            await axios.post(
+              `${import.meta.env.VITE_API_URL}/interacoes/registrar/`,
+              {
+                parceiro: parceiroInteracaoManual,
+                tipo: tipoInteracaoManual,
+                observacao: obsInteracaoManual,
+              },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            setMostrarInteracaoManual(false);
+            carregarDados();
+          } catch (err) {
+            console.error(err);
+            alert('Erro ao registrar interação.');
+          }
+        }}
+      >
+        Só Interagir
+      </Button>
+
+      <Button
+        onClick={async () => {
+          if (!parceiroInteracaoManual || !tipoInteracaoManual || !valorInteracaoManual) {
+            return alert('Preencha Parceiro, Tipo e Valor para criar oportunidade');
+          }
+          try {
+            await axios.post(
+              `${import.meta.env.VITE_API_URL}/oportunidades/registrar/`,
+              {
+                parceiro: parceiroInteracaoManual,
+                tipo: tipoInteracaoManual,
+                valor: parseFloat(valorInteracaoManual.replace(',', '.')),
+                observacao: obsInteracaoManual,
+              },
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            setMostrarInteracaoManual(false);
+            carregarDados();
+          } catch (err) {
+            console.error(err);
+            alert('Erro ao criar oportunidade.');
+          }
+        }}
+      >
+        Salvar e Criar Oportunidade
+      </Button>
+    </Group>
+  </Card>
+)}
+
 
 
         {mostrarGatilhoManual && (
