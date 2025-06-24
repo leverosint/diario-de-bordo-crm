@@ -270,16 +270,16 @@ export default function InteracoesPage() {
           <Title order={2}>Interações de Parceiros Pendentes</Title>
         </Center>
 
-        <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
-
+        <Group justify="space-between" mb="md">
   <Badge color={metaAtual >= metaTotal ? 'teal' : 'yellow'} size="lg">
     Meta do dia: {metaAtual}/{metaTotal}
   </Badge>
 
-  <Group gap="sm" style={{ flexWrap: 'wrap' }}>
+  <Group gap="sm">
     <FileButton onChange={setArquivoGatilho} accept=".xlsx">
       {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
     </FileButton>
+
     <Button
       color="blue"
       onClick={handleUploadGatilho}
@@ -287,22 +287,32 @@ export default function InteracoesPage() {
     >
       Enviar Gatilhos
     </Button>
+
     <Button
       color={mostrarGatilhoManual ? 'red' : 'teal'}
       variant={mostrarGatilhoManual ? 'outline' : 'filled'}
-      onClick={() => setMostrarGatilhoManual(!mostrarGatilhoManual)}
+      onClick={() => setMostrarGatilhoManual((o) => !o)}
     >
       {mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
     </Button>
-  </Group>
-    {/* novo */}
+
     <Button
-    color={mostrarInteracaoManual ? 'red' : 'green'}
-    variant={mostrarInteracaoManual ? 'outline' : 'filled'}
-    onClick={() => setMostrarInteracaoManual(!mostrarInteracaoManual)}
-  >
-    {mostrarInteracaoManual ? 'Fechar Interação Manual' : 'Adicionar Interação Manual'}
-  </Button>
+      variant="filled"
+      styles={{
+        root: {
+          backgroundColor: '#005A64',
+          '&:hover': { backgroundColor: '#004F57' },
+        },
+      }}
+      onClick={() => setMostrarInteracaoManual((o) => !o)}
+    >
+      {mostrarInteracaoManual
+        ? 'Fechar Interação Manual'
+        : 'Adicionar Interação Manual'}
+    </Button>
+
+</Group>
+
   
 </Group>
 
