@@ -301,7 +301,7 @@ export default function InteracoesPage() {
     >
       {mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
     </Button>
-    {isVendedor && (
+  
     <Button
       variant="filled"
       styles={{
@@ -316,7 +316,7 @@ export default function InteracoesPage() {
         ? 'Fechar Interação Manual'
         : 'Adicionar Interação Manual'}
     </Button>
-    )}
+
 </Group>
 
   
