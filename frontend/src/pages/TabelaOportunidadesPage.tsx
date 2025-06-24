@@ -257,18 +257,44 @@ const confirmarVendaPerdida = async () => {
 
 
 
+const dadosFiltrados = useMemo(() => {
+  // zera as horas de hoje para comparar somente datas
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
 
-  const dadosFiltrados = useMemo(() => {
-    return dadosComDias.filter((o) => {
-      const nomeMatch = nomeFiltro === '' || o.parceiro_nome.toLowerCase().includes(nomeFiltro.toLowerCase());
-      const etapaMatch = !etapaFiltro || o.etapa === etapaFiltro;
-      const dataCriacao = new Date(o.data_criacao);
-      const dataMatch =
-        (!dataInicio || dataCriacao >= new Date(dataInicio as Date)) &&
-        (!dataFim || dataCriacao <= new Date(dataFim as Date));
-      return nomeMatch && etapaMatch && dataMatch;
-    });
-  }, [dadosComDias, nomeFiltro, etapaFiltro, dataInicio, dataFim]);
+  return dadosComDias.filter((o) => {
+    // 1) filtros atuais: nome, etapa e data de criação
+    const nomeMatch = nomeFiltro === '' ||
+      o.parceiro_nome.toLowerCase().includes(nomeFiltro.toLowerCase());
+    const etapaMatch = !etapaFiltro || o.etapa === etapaFiltro;
+    const dataCriacao = new Date(o.data_criacao);
+    const dataMatch =
+      (!dataInicio || dataCriacao >= new Date(dataInicio as Date)) &&
+      (!dataFim    || dataCriacao <= new Date(dataFim as Date));
+    if (!nomeMatch || !etapaMatch || !dataMatch) {
+      return false;
+    }
+
+    // 2) se for “perdida” ou “pedido”, só exibe no dia da própria data_etapa
+    if ((o.etapa === 'perdida' || o.etapa === 'pedido') && o.data_etapa) {
+      const dataEtapa = new Date(o.data_etapa);
+      dataEtapa.setHours(0, 0, 0, 0);
+
+      const diffDias = Math.floor(
+        (hoje.getTime() - dataEtapa.getTime()) / (1000 * 60 * 60 * 24)
+      );
+      // já passou de hoje? remove do painel
+      if (diffDias >= 1) {
+        return false;
+      }
+    }
+
+    // caso contrário, mantém no resultado
+    return true;
+  });
+}, [dadosComDias, nomeFiltro, etapaFiltro, dataInicio, dataFim]);
+
+
   
 
   const agrupadoPorStatus = useMemo((): Record<string, Oportunidade[]> => {
