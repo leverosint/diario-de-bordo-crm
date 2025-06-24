@@ -298,7 +298,8 @@ export default function InteracoesPage() {
 
   useEffect(() => {
     carregarDados();
-  }, [canalSelecionado, vendedorSelecionado, statusSelecionado, temGatilho]);
+  }, [canalSelecionado, vendedorSelecionado, parceiroFilter, statusSelecionado, temGatilho]);
+  
   
   // 3) Calcule quais itens aparecem em cada tabela, conforme a página atual
   const pendentesExibidos = pendentes.slice(
@@ -503,16 +504,18 @@ export default function InteracoesPage() {
 <Divider style={{ marginBottom: 8 }} label="Filtros" />
 
 {/* SELECT de Parceiro: TODOS veem */}
+
 <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+  {/* Dropdown de Parceiro: TODOS */}
   <Select
     label="Filtrar por Parceiro"
     placeholder="Selecione um parceiro"
-    data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
     value={parceiroFilter}
     onChange={setParceiroFilter}
+    data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
     searchable
     clearable
-    style={{ minWidth: 200 }}
+    style={{ minWidth: 200, marginRight: 16 }}
   />
 </Group>
 
