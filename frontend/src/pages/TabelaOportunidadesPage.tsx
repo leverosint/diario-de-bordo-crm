@@ -270,13 +270,14 @@ const dadosFiltrados = useMemo(() => {
 
   return dadosComDias.filter((o) => {
     // 1) filtros atuais: nome, etapa e data de criação
-    const nomeMatch = nomeFiltro === '' ||
+    const nomeMatch =
+      nomeFiltro === '' ||
       o.parceiro_nome.toLowerCase().includes(nomeFiltro.toLowerCase());
     const etapaMatch = !etapaFiltro || o.etapa === etapaFiltro;
     const dataCriacao = new Date(o.data_criacao);
     const dataMatch =
       (!dataInicio || dataCriacao >= new Date(dataInicio as Date)) &&
-      (!dataFim    || dataCriacao <= new Date(dataFim as Date));
+      (!dataFim || dataCriacao <= new Date(dataFim as Date));
     if (!nomeMatch || !etapaMatch || !dataMatch) {
       return false;
     }
@@ -303,7 +304,7 @@ const dadosFiltrados = useMemo(() => {
     // caso contrário, mantém no resultado
     return true;
   });
-}, [dadosComDias, nomeFiltro, etapaFiltro, dataInicio, dataFim]);
+}, [dadosComDias, nomeFiltro, etapaFiltro, dataInicio, dataFim, filtroGatilho,]);
 
 
 
