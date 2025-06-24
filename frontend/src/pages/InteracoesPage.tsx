@@ -96,47 +96,74 @@ export default function InteracoesPage() {
     setErro(null);
     try {
       const headers = { Authorization: `Bearer ${token}` };
-
       const params = new URLSearchParams();
-      if (canalSelecionado) params.append('canal_id', canalSelecionado);
+      if (canalSelecionado)   params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
-      if (statusSelecionado) params.append('status', statusSelecionado);
-      if (temGatilho) params.append('gatilho_extra', temGatilho);
-
-
-      const [resPendentes, resInteragidos, resMeta, resParceiros] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes&${params.toString()}`, { headers }),
-        axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=interagidos&${params.toString()}`, { headers }),
-        axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers }),
-        axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers }),
-      ]);
-
+      if (statusSelecionado)   params.append('status', statusSelecionado);
+      if (temGatilho)          params.append('gatilho_extra', temGatilho);
+  
       const canalNome = (id: number) => {
-        const canal = usuario.canais_venda?.find((c: any) => c.id === id);
-        return canal ? canal.nome : '';
+        const c = usuario.canais_venda?.find((x: any) => x.id === id);
+        return c ? c.nome : '';
       };
-
-      setPendentes(resPendentes.data.dados.map((p: any) => ({
-        ...p,
-        canal_venda_nome: canalNome(p.canal_venda_id),
-      })));
-      setInteragidos(resInteragidos.data.dados.map((p: any) => ({
-        ...p,
-        canal_venda_nome: canalNome(p.canal_venda_id),
-      })));
-      
-      // Pegando os filtros diretamente da API:
+  
+      const [
+        resPendentes,
+        resInteragidosHoje,
+        resMeta,
+        resParceiros,
+      ] = await Promise.all([
+        axios.get(
+          `${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes&${params.toString()}`,
+          { headers }
+        ),
+        axios.get(
+          `${import.meta.env.VITE_API_URL}/interacoes/hoje/`,
+          { headers }
+        ),
+        axios.get(
+          `${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`,
+          { headers }
+        ),
+        axios.get(
+          `${import.meta.env.VITE_API_URL}/parceiros-list/`,
+          { headers }
+        ),
+      ]);
+  
+      // A Interagir
+      setPendentes(
+        resPendentes.data.dados.map((p: any) => ({
+          ...p,
+          canal_venda_nome: canalNome(p.canal_venda_id),
+        }))
+      );
+  
+      // Interagidos Hoje
+      setInteragidos(
+        resInteragidosHoje.data.map((i: any) => ({
+          id:               i.id,
+          parceiro:         i.parceiro_nome,
+          unidade:          i.unidade,
+          classificacao:    i.classificacao,
+          status:           i.status,
+          data_interacao:   i.data_interacao,
+          tipo:             i.tipo,
+          gatilho_extra:    i.gatilho_extra,
+          canal_venda_nome: canalNome(i.canal_venda_id),
+        }))
+      );
+  
+      // Filtros e metas
       setStatusDisponiveis(resPendentes.data.status_disponiveis);
       setGatilhosDisponiveis(resPendentes.data.gatilhos_disponiveis);
-      
-
       setMetaAtual(resMeta.data.interacoes_realizadas);
       setMetaTotal(resMeta.data.meta_diaria);
       setParceiros(resParceiros.data);
-
+  
       if (tipoUser === 'GESTOR') {
         const canais = usuario.canais_venda || [];
-        setCanaisVenda(canais.map((c: { id: number; nome: string }) => ({ id: c.id, nome: c.nome })));
+        setCanaisVenda(canais.map((c: any) => ({ id: c.id, nome: c.nome })));
       }
     } catch (err) {
       console.error('Erro ao carregar interações:', err);
@@ -145,7 +172,8 @@ export default function InteracoesPage() {
       setCarregando(false);
     }
   };
-
+  
+  
   const handleCanalChange = async (value: string | null) => {
     setCanalSelecionado(value || '');
     setVendedorSelecionado('');
@@ -374,59 +402,53 @@ export default function InteracoesPage() {
     </Group>
 
     <Group justify="flex-end" mt="md">
-      <Button
-        variant="outline"
-        onClick={async () => {
-          if (!parceiroInteracaoManual || !tipoInteracaoManual) {
-            return alert('Preencha Parceiro e Tipo de Interação');
-          }
-          try {
-            await axios.post(
-              `${import.meta.env.VITE_API_URL}/interacoes/registrar/`,
-              {
-                parceiro: parceiroInteracaoManual,
-                tipo: tipoInteracaoManual,
-                observacao: obsInteracaoManual,
-              },
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-            setMostrarInteracaoManual(false);
-            carregarDados();
-          } catch (err) {
-            console.error(err);
-            alert('Erro ao registrar interação.');
-          }
-        }}
-      >
-        Só Interagir
-      </Button>
+    <Button
+  variant="outline"
+  onClick={async () => {
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/interacoes/registrar/`,
+        { parceiro: parceiroInteracaoManual, tipo: tipoInteracaoManual, observacao: obsInteracaoManual },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // 1) Primeiro recarrega dados...
+      await carregarDados();
+      // 2) Só então fecha o formulário
+      setMostrarInteracaoManual(false);
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao registrar interação.');
+    }
+  }}
+>
+  Só Interagir
+</Button>
 
-      <Button
-        onClick={async () => {
-          if (!parceiroInteracaoManual || !tipoInteracaoManual || !valorInteracaoManual) {
-            return alert('Preencha Parceiro, Tipo e Valor para criar oportunidade');
-          }
-          try {
-            await axios.post(
-              `${import.meta.env.VITE_API_URL}/oportunidades/registrar/`,
-              {
-                parceiro: parceiroInteracaoManual,
-                tipo: tipoInteracaoManual,
-                valor: parseFloat(valorInteracaoManual.replace(',', '.')),
-                observacao: obsInteracaoManual,
-              },
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-            setMostrarInteracaoManual(false);
-            carregarDados();
-          } catch (err) {
-            console.error(err);
-            alert('Erro ao criar oportunidade.');
-          }
-        }}
-      >
-        Salvar e Criar Oportunidade
-      </Button>
+
+<Button
+  onClick={async () => {
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/oportunidades/registrar/`,
+        {
+          parceiro: parceiroInteracaoManual,
+          tipo: tipoInteracaoManual,
+          valor: parseFloat(valorInteracaoManual.replace(',', '.')),
+          observacao: obsInteracaoManual,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await carregarDados();
+      setMostrarInteracaoManual(false);
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao criar oportunidade.');
+    }
+  }}
+>
+  Salvar e Criar Oportunidade
+</Button>
+
     </Group>
   </Card>
 )}
