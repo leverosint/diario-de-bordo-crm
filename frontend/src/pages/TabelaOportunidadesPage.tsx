@@ -61,7 +61,7 @@ export default function TabelaOportunidadesPage() {
     { value: 'oportunidade', label: 'Oportunidade' },
     { value: 'orcamento', label: 'Orçamento' },
     { value: 'aguardando', label: 'Aguardando Pagamento' },
-    { value: 'pedido', label: 'Pedido Realizado' },
+    { value: 'pedido', label: 'Pedido Faturado' },
     { value: 'perdida', label: 'Venda Perdida' },
   ];
 
