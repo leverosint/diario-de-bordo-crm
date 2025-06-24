@@ -501,12 +501,11 @@ export default function InteracoesPage() {
 
  
 
+{/* === FILTROS === */}
 <Divider style={{ marginBottom: 8 }} label="Filtros" />
 
-{/* SELECT de Parceiro: TODOS veem */}
-
 <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
-  {/* Dropdown de Parceiro: TODOS */}
+  {/* 1) Parceiro: todo mundo vê */}
   <Select
     label="Filtrar por Parceiro"
     placeholder="Selecione um parceiro"
@@ -517,64 +516,55 @@ export default function InteracoesPage() {
     clearable
     style={{ minWidth: 200, marginRight: 16 }}
   />
+
+  {/* 2) Canal / Vendedor: só ADMIN ou GESTOR */}
+  {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
+    <>
+      <Select
+        label="Filtrar por Canal"
+        placeholder="Selecione um canal"
+        value={canalSelecionado}
+        onChange={handleCanalChange}
+        data={canaisVenda.map(c => ({ value: String(c.id), label: c.nome }))}
+        clearable
+        style={{ minWidth: 200, marginRight: 16 }}
+      />
+      <Select
+        label="Filtrar por Vendedor"
+        placeholder="Selecione um vendedor"
+        value={vendedorSelecionado}
+        onChange={handleVendedorChange}
+        data={vendedores.map(v => ({ value: v.id_vendedor, label: v.username }))}
+        disabled={!canalSelecionado}
+        clearable
+        style={{ minWidth: 200, marginRight: 16 }}
+      />
+    </>
+  )}
+
+  {/* 3) Status: todo mundo vê */}
+  <Select
+    label="Filtrar por Status"
+    placeholder="Selecione um status"
+    value={statusSelecionado}
+    onChange={v => setStatusSelecionado(v || '')}
+    data={statusDisponiveis.map(s => ({ value: s, label: s }))}
+    clearable
+    style={{ minWidth: 200, marginRight: 16 }}
+  />
+
+  {/* 4) Gatilho: todo mundo vê */}
+  <Select
+    label="Filtrar por Gatilho"
+    placeholder="Selecione"
+    value={temGatilho}
+    onChange={v => setTemGatilho(v || '')}
+    data={gatilhosDisponiveis.map(g => ({ value: g, label: g }))}
+    clearable
+    style={{ minWidth: 200 }}
+  />
 </Group>
 
-{(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') ? (
-  <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
-    <Select
-      label="Filtrar por Canal de Venda"
-      placeholder="Selecione um canal"
-      value={canalSelecionado}
-      onChange={handleCanalChange}
-      data={canaisVenda.map(c => ({ value: String(c.id), label: c.nome }))}
-      clearable
-    />
-    <Select
-      label="Filtrar por Vendedor"
-      placeholder="Selecione um vendedor"
-      value={vendedorSelecionado}
-      onChange={handleVendedorChange}
-      data={vendedores.map(v => ({ value: v.id_vendedor, label: v.username }))}
-      disabled={!canalSelecionado}
-      clearable
-    />
-    <Select
-      label="Filtrar por Status"
-      placeholder="Selecione um status"
-      value={statusSelecionado}
-      onChange={v => setStatusSelecionado(v || '')}
-      data={statusDisponiveis.map(s => ({ value: s, label: s }))}
-      clearable
-    />
-    <Select
-      label="Filtrar por Gatilho"
-      placeholder="Selecione"
-      value={temGatilho}
-      onChange={v => setTemGatilho(v || '')}
-      data={gatilhosDisponiveis.map(g => ({ value: g, label: g }))}
-      clearable
-    />
-  </Group>
-) : tipoUser === 'VENDEDOR' ? (
-  <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
-    <Select
-      label="Filtrar por Status"
-      placeholder="Selecione um status"
-      value={statusSelecionado}
-      onChange={v => setStatusSelecionado(v || '')}
-      data={statusDisponiveis.map(s => ({ value: s, label: s }))}
-      clearable
-    />
-    <Select
-      label="Filtrar por Gatilho"
-      placeholder="Selecione"
-      value={temGatilho}
-      onChange={v => setTemGatilho(v || '')}
-      data={gatilhosDisponiveis.map(g => ({ value: g, label: g }))}
-      clearable
-    />
-  </Group>
-) : null}
 
 
 
