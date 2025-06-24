@@ -448,7 +448,7 @@ export default function InteracoesPage() {
           </Card>
         )}
 
-        
+<Divider style={{ marginBottom: 8 }} label="Filtros" />
  
       
 {tipoUser === 'GESTOR' && (
