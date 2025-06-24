@@ -54,7 +54,7 @@ interface Parceiro {
 export default function InteracoesPage() {
  
     // 2) Defina quantos itens por página e o estado de página atual
-  const itemsPerPage = 5;              // ← quantos itens exibir em cada página
+  const itemsPerPage = 10;              // ← quantos itens exibir em cada página
   const [pagePend, setPagePend] = useState(1);     // ← página atual de “A Interagir”
   const [pageInter, setPageInter] = useState(1);   // ← página atual de “Interagidos Hoje”
   const [pendentes, setPendentes] = useState<Interacao[]>([]);
