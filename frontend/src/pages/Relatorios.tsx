@@ -52,7 +52,7 @@ export default function Relatorios() {
 
   // Traduções de colunas
   const traducoes: { [key: string]: string } = {
-    parceiro: 'Nome do Parceiro',
+    parceiro: 'ID parceiro',
     codigo: 'Código',
     classificacao: 'Classificação',
     consultor: 'Consultor',

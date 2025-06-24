@@ -151,19 +151,26 @@ class UsuarioReportSerializer(serializers.ModelSerializer):
         full = f"{obj.first_name} {obj.last_name}".strip()
         return full or obj.username
     
+User = get_user_model()
+
 class ReportParceiroSerializer(serializers.ModelSerializer):
-    canal_venda = CanalVendaSerializer(read_only=True)
-    # esses dois campos puxam do relacionamento consultor → CustomUser
-    consultor_id   = serializers.IntegerField(source='consultor.id',    read_only=True)
-    consultor_nome = serializers.CharField( source='consultor.username', read_only=True)
+    canal_venda     = CanalVendaSerializer(read_only=True)
+    consultor_id    = serializers.SerializerMethodField()
+    consultor_nome  = serializers.CharField(source='consultor', read_only=True)
 
     class Meta:
         model = Parceiro
         fields = [
-            'id', 'codigo', 'parceiro',
-            'consultor_id', 'consultor_nome',
-            'unidade', 'cidade', 'uf',
-            'canal_venda',
-            'status',
+            'id','codigo','parceiro',
+            'consultor_id','consultor_nome',
+            'unidade','cidade','uf',
+            'canal_venda','status',
             'primeiro_fat','ultimo_fat','atualizado_em',
         ]
+
+    def get_consultor_id(self, obj):
+        try:
+            user = User.objects.get(username=obj.consultor)
+            return user.id
+        except User.DoesNotExist:
+            return None

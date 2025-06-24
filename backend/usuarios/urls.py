@@ -1,7 +1,9 @@
+# urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ParceiroReportView
 from .views import (
+    ParceiroReportView,
+    UsuarioReportView,
     LoginView,
     UploadParceirosView,
     ParceiroViewSet,
@@ -21,20 +23,15 @@ from .views import (
     usuarios_por_canal,
     criar_gatilho_manual,
     AlterarSenhaView,
-    SolicitarResetSenhaView, 
+    SolicitarResetSenhaView,
     ResetSenhaConfirmarView,
-    UsuarioReportView,  # ← adicione esta linha
-    
-    
 )
 
-# 🔗 ROTAS DO ROUTER
 router = DefaultRouter()
 router.register(r'parceiros-list', ParceiroViewSet, basename='parceiros')
 router.register(r'canais-venda', CanalVendaViewSet, basename='canais-venda')
 router.register(r'oportunidades', OportunidadeViewSet, basename='oportunidades')
 
-# 🔥 URLPATTERNS FINAL CORRETO
 urlpatterns = [
     # Auth
     path('login/', LoginView.as_view(), name='login'),
@@ -46,7 +43,7 @@ urlpatterns = [
     path('upload-parceiros/', UploadParceirosView.as_view({'post': 'create'})),
     path('upload-gatilhos/', UploadGatilhosExtrasView.as_view({'post': 'create'})),
 
-    # Gatilho manual e usuários
+    # Gatilho manual e usuário por canal
     path('criar-gatilho-manual/', criar_gatilho_manual, name='criar-gatilho-manual'),
     path('usuarios-por-canal/', usuarios_por_canal, name='usuarios-por-canal'),
 
@@ -67,18 +64,11 @@ urlpatterns = [
     # Oportunidades
     path('oportunidades/registrar/', RegistrarOportunidadeView.as_view(), name='registrar-oportunidade'),
 
-
-
-# relatório de usuários (id + nome)
-path('usuarios/report/', UsuarioReportView.as_view(), name='usuarios-report'),
-
- # Relatório de usuários
+    # Relatórios
+    path('usuarios/report/', UsuarioReportView.as_view(), name='usuarios-report'),
     path('relatorios/usuarios/', UsuarioReportView.as_view(), name='relatorio-usuarios'),
-
-    # relatório “apenas parceiros” com consultor_id
     path('relatorios/parceiros/', ParceiroReportView.as_view(), name='relatorio-parceiros'),
 
-
-    # Inclui routers (parceiros, canais, oportunidades)
+    # Finalmente, as rotas do router
     path('', include(router.urls)),
 ]
