@@ -302,14 +302,25 @@ export default function InteracoesPage() {
   
   
   // 3) Calcule quais itens aparecem em cada tabela, conforme a página atual
-  const pendentesExibidos = pendentes.slice(
-    (pagePend - 1) * itemsPerPage,
-    pagePend * itemsPerPage
-  );
-  const interagidosExibidos = interagidos.slice(
-    (pageInter - 1) * itemsPerPage,
-    pageInter * itemsPerPage
-  );
+ // 3a) primeiro, aplique o filtro de parceiro—se parceiroFilter estiver setado
+const pendentesFiltrados = parceiroFilter
+? pendentes.filter(item => String(item.id) === parceiroFilter)
+: pendentes;
+
+const interagidosFiltrados = parceiroFilter
+? interagidos.filter(item => String(item.id) === parceiroFilter)
+: interagidos;
+
+// 3b) agora sim, pagine sobre o array já filtrado
+const pendentesExibidos = pendentesFiltrados.slice(
+(pagePend - 1) * itemsPerPage,
+pagePend * itemsPerPage
+);
+const interagidosExibidos = interagidosFiltrados.slice(
+(pageInter - 1) * itemsPerPage,
+pageInter * itemsPerPage
+);
+
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
@@ -687,11 +698,12 @@ export default function InteracoesPage() {
 
       {/* Paginação “A Interagir” */}
       <Pagination
-        value={pagePend}
-        onChange={setPagePend}
-        total={Math.ceil(pendentes.length / itemsPerPage)}
-        mt="md"
-      />
+  value={pagePend}
+  onChange={setPagePend}
+  // usa o tamanho do array filtrado
+  total={Math.ceil(pendentesFiltrados.length / itemsPerPage)}
+  mt="md"
+/>
     </div>
 
     {/* === Tabela “Interagidos Hoje” === */}
@@ -724,11 +736,11 @@ export default function InteracoesPage() {
 
       {/* Paginação “Interagidos Hoje” */}
       <Pagination
-        value={pageInter}
-        onChange={setPageInter}
-        total={Math.ceil(interagidos.length / itemsPerPage)}
-        mt="md"
-      />
+  value={pageInter}
+  onChange={setPageInter}
+  total={Math.ceil(interagidosFiltrados.length / itemsPerPage)}
+  mt="md"
+/>
     </div>
   </>
 )}  {/* fecha o ternário carregando/erro/conteúdo */}
