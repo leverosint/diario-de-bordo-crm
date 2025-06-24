@@ -497,7 +497,7 @@ export default function InteracoesPage() {
   </Group>
 )}
 
-{(isAdmin || isGestor || isVendedor) && (
+{isVendedor && (
   <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
     <Select
       label="Filtrar por Status"
