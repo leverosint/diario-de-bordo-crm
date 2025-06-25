@@ -41,8 +41,8 @@ export default function TabelaOportunidadesPage() {
   const [valorEdit, setValorEdit] = useState<string>('');
   const [observacaoEdit, setObservacaoEdit] = useState<string>('');
   const [etapaTemporaria, setEtapaTemporaria] = useState<{ [id: number]: string }>({});
-  
   const [popupAberto, setPopupAberto] = useState(false);
+  
   const [pendentesMovimentacao, setPendentesMovimentacao] = useState<Oportunidade[]>([]);
   
   const [filtroGatilho, setFiltroGatilho] = useState<string>('');
@@ -60,6 +60,33 @@ const [numeroPedido, setNumeroPedido] = useState('');
   };
 
   
+
+<Modal
+  opened={popupAberto}
+  onClose={() => {}} // Impede fechar manualmente
+  withCloseButton={false}
+  title="Oportunidades sem movimentação"
+  centered
+>
+  <p>Você tem oportunidades sem movimentação há mais de 10 dias.<br />Atualize o status para continuar!</p>
+  <ul style={{ listStyle: 'none', padding: 0 }}>
+    {pendentesMovimentacao.map((o) => (
+      <li key={o.id} style={{ marginBottom: 24 }}>
+        <b>{o.parceiro_nome}</b> (ID: {o.id}) — <span style={{ color: '#e8590c', fontWeight: 600 }}>{o.dias_sem_movimentacao} dias parado</span>
+        <Group mt="xs" gap="xs">
+          <Select
+            data={etapaOptions}
+            value={o.etapa}
+            onChange={(novaEtapa) => handleStatusChangePopup(o.id, novaEtapa)}
+            placeholder="Atualizar status"
+            size="xs"
+            style={{ minWidth: 180 }}
+          />
+        </Group>
+      </li>
+    ))}
+  </ul>
+</Modal>
 
   
   const [etapaParaAtualizar, setEtapaParaAtualizar] = useState<string | null>(null);
@@ -90,6 +117,42 @@ const [numeroPedido, setNumeroPedido] = useState('');
     pedido: 'green',
     perdida: 'red',
   }[etapa] || 'gray');
+
+
+  const confirmarNumeroPedido = async () => {
+    if (!idMudandoStatus || numeroPedido.trim() === '') {
+      alert('Por favor, preencha o número do pedido.');
+      return;
+    }
+    const agora = new Date().toISOString();
+    try {
+      await axios.patch(
+        `${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`,
+        {
+          etapa: 'aguardando',
+          numero_pedido: numeroPedido,
+          data_etapa: agora,
+          data_status: agora,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setDados(prev =>
+        prev.map(o =>
+          o.id === idMudandoStatus
+            ? { ...o, etapa: 'aguardando', numero_pedido: numeroPedido, data_etapa: agora, data_status: agora, dias_sem_movimentacao: 0 }
+            : o
+        )
+      );
+      setModalAberto(false);
+      setIdMudandoStatus(null);
+      setEtapaParaAtualizar(null);
+      setNumeroPedido('');
+    } catch (err) {
+      console.error('Erro ao salvar número do pedido:', err);
+      alert('Erro ao atualizar etapa.');
+    }
+  };
+  
 
 // 🔗 Carregar dados da API (mantém igual)
 useEffect(() => {
@@ -170,13 +233,11 @@ const atualizarEtapaDireta = (id: number, novaEtapa: string) => {
 const handleStatusChange = (id: number, novaEtapa: string | null) => {
   if (!novaEtapa) return;
 
-  // guarda a etapa atual para desfazer, se quiser
   const oportunidade = dados.find((item) => item.id === id);
   const etapaAtual = oportunidade?.etapa ?? '';
   setEtapaTemporaria((prev) => ({ ...prev, [id]: etapaAtual }));
 
   if (novaEtapa === 'perdida') {
-    // abre modal de motivo de perda
     setIdMudandoStatus(id);
     setEtapaParaAtualizar('perdida');
     setMotivoPerda('');
@@ -185,7 +246,6 @@ const handleStatusChange = (id: number, novaEtapa: string | null) => {
   }
 
   if (novaEtapa === 'aguardando') {
-    // abre modal de informar número do pedido
     setIdMudandoStatus(id);
     setEtapaParaAtualizar('aguardando');
     setNumeroPedido('');
@@ -193,7 +253,6 @@ const handleStatusChange = (id: number, novaEtapa: string | null) => {
     return;
   }
 
-  // para "pedido" e demais etapas: atualiza direto
   atualizarEtapaDireta(id, novaEtapa);
 };
 
@@ -202,6 +261,7 @@ const handleStatusChange = (id: number, novaEtapa: string | null) => {
 
 const handleStatusChangePopup = (id: number, novaEtapa: string | null) => {
   if (!novaEtapa) return;
+
 
 
 
@@ -327,42 +387,7 @@ const confirmarVendaPerdida = async () => {
     
     
     
-    const confirmarNumeroPedido = async () => {
-      if (!idMudandoStatus || numeroPedido.trim() === '') {
-        alert('Por favor, preencha o número do pedido.');
-        return;
-      }
-      const agora = new Date().toISOString();
-      try {
-        await axios.patch(
-          `${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`,
-          {
-            etapa: 'aguardando',
-            numero_pedido: numeroPedido,
-            data_etapa: agora,
-            data_status: agora,
-          },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        // atualiza no front
-        setDados(prev =>
-          prev.map(o =>
-            o.id === idMudandoStatus
-              ? { ...o, etapa: 'aguardando', numero_pedido: numeroPedido, data_etapa: agora, data_status: agora, dias_sem_movimentacao: 0 }
-              : o
-          )
-        );
-        setModalAberto(false);
-        setIdMudandoStatus(null);
-        setEtapaParaAtualizar(null);
-        setNumeroPedido('');
-      } catch (err) {
-        console.error('Erro ao salvar número do pedido:', err);
-        alert('Erro ao atualizar etapa.');
-      }
-    };
-    
-    
+   
 
     // Reflete no front-end em `dados`
     setDados(prev =>
@@ -702,9 +727,9 @@ const dadosFiltrados = useMemo(() => {
                             <th className={styles.center}>Gatilho</th>
                             <th className={styles.left}>Observação</th>
                             <th className={styles.center}>Sem Movimentação</th>
-                            <th className={styles.center}>Status</th>
                             <th>Nº Pedido</th>
-                          </tr>
+                            <th className={styles.center}>Status</th>
+                                                      </tr>
                         </thead>
                         <tbody>
   {lista.map((o) => {
@@ -818,103 +843,55 @@ const dadosFiltrados = useMemo(() => {
         )}
       </Container>
 
-      <Modal
-  opened={popupAberto}
-  onClose={() => {}}
-  withCloseButton={false}
-  title="⚠️ Oportunidades sem movimentação"
-  centered
-  radius="md"
-  withinPortal={false}
-  overlayProps={{
-    backgroundOpacity: 0.55,
-    blur: 4,
-  }}
->
-  {pendentesMovimentacao.map((o) => (
-    <Card key={o.id} withBorder mb="sm">
-      <div className={styles.centralizado}>
-        <strong>{o.parceiro_nome}</strong>
-        <small>ID: {o.parceiro}</small>
-        <strong>{o.dias_sem_movimentacao} dias sem movimentação</strong>
-        <p>
-          Valor:{' '}
-          {Number(o.valor).toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-          })}
-        </p>
-        <p>Observação: {o.observacao || '-'}</p>
-      </div>
-
-      <Group justify="center" mt="xs">
-        <Select
-          placeholder="Mudar etapa"
-          data={etapaOptions}
-          value={o.etapa}
-          onChange={(value) => value && handleStatusChangePopup(o.id, value)}
-        />
-      </Group>
-    </Card>
-  ))}
-
-  {pendentesMovimentacao.length === 0 && (
-    <Button fullWidth onClick={() => setPopupAberto(false)}>
-      Fechar
-    </Button>
-  )}
-</Modal>
-
-
+      
 
 
 
       {modalAberto && idMudandoStatus !== null && (
-     <Modal
-     opened={modalAberto}
-     onClose={() => setModalAberto(false)}
-     title="Marcar como Venda Perdida"
-     centered
-     radius="md"
-     withinPortal={false}
-     overlayProps={{
-       backgroundOpacity: 0.55,
-       blur: 4,
-     }}
-   >
-     <div className={styles.centralizado}>
-       <Select
-         label="Motivo da Venda Perdida"
-         placeholder="Selecione"
-         data={[
-           { value: 'preco', label: 'Preço' },
-           { value: 'prazo', label: 'Prazo' },
-           { value: 'concorrente', label: 'Fechou com concorrente' },
-           { value: 'fora_perfil', label: 'Fora de perfil' },
-           { value: 'nao_responde', label: 'Cliente não respondeu' },
-           { value: 'outro', label: 'Outro' },
-         ]}
-         value={motivoPerda}
-         onChange={(value) => setMotivoPerda(value ?? '')}
-         required
-         clearable
-       />
-     </div>
+  <Modal
+    opened={modalAberto}
+    onClose={() => setModalAberto(false)}
+    title="Marcar como Venda Perdida"
+    centered
+    radius="md"
+    withinPortal={false}
+    overlayProps={{
+      backgroundOpacity: 0.55,
+      blur: 4,
+    }}
+  >
+    <div className={styles.centralizado}>
+      <Select
+        label="Motivo da Venda Perdida"
+        placeholder="Selecione"
+        data={[
+          { value: 'preco', label: 'Preço' },
+          { value: 'prazo', label: 'Prazo' },
+          { value: 'concorrente', label: 'Fechou com concorrente' },
+          { value: 'fora_perfil', label: 'Fora de perfil' },
+          { value: 'nao_responde', label: 'Cliente não respondeu' },
+          { value: 'outro', label: 'Outro' },
+        ]}
+        value={motivoPerda}
+        onChange={(value) => setMotivoPerda(value ?? '')}
+        required
+        clearable
+      />
+    </div>
+  
+    <Group justify="center" mt="md">
+      <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
+        Cancelar
+      </Button>
+      <Button color="green" onClick={confirmarVendaPerdida}>
+        Confirmar
+      </Button>
+    </Group>
+  </Modal>
+)}
+
    
-     <Group justify="center" mt="md">
-       <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
-         Cancelar
-       </Button>
-       <Button color="green" onClick={confirmarVendaPerdida}>
-         Confirmar
-       </Button>
-     </Group>
-   </Modal>
-   
 
-
-
-      )}
 
     </SidebarGestor>
   );
