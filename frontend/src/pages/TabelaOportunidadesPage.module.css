@@ -14,10 +14,7 @@ th {
 }
 
 th:nth-child(2),
-td:nth-child(2) {
-  text-align: left;
-}
-
+td:nth-child(2),
 th:nth-child(7),
 td:nth-child(7) {
   text-align: left;
@@ -58,30 +55,7 @@ td:nth-child(7) {
   gap: 16px;
 }
 
-/* === Dropdown do Select === */
-.mantine-Select-dropdown {
-  z-index: 10002 !important;
-}
-
-.mantine-Select-dropdown:has(.mantine-Select-item) {
-  position: relative;
-}
-
-/* === Botões dentro do Modal === */
-.modal-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-/* === Responsividade Modal === */
-@media (max-width: 500px) {
-  .mantine-Modal-content {
-    width: 90vw;
-  }
-}
-
-/* === Scroll personalizado da tabela === */
+/* === Scroll customizado da tabela === */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -96,19 +70,19 @@ td:nth-child(7) {
   border-radius: 10px;
 }
 
-/* === Badge de status (se quiser aplicar mais estilo) === */
+/* === Badge de status === */
 .badge-status {
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 8px;
 }
 
-/* === Ajuste preventivo geral === */
+/* === Override geral para evitar overflow inesperado === */
 body {
   overflow: auto !important;
 }
 
-/* TabelaOportunidadesPage.module.css */
+/* === Centralização em cards de popup === */
 .centralizado {
   display: flex;
   flex-direction: column;
@@ -116,98 +90,45 @@ body {
   text-align: center;
 }
 
-/* TabelaOportunidadesPage.module.css */
-.centralizado {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
+/* === DatePicker personalizado via CSS Modules === */
+.datePickerDropdown {
+  width: 350px !important;
 }
 
-.modalContainer {
-  position: fixed;
-  top: 50%;
-  left: calc(50% + 120px); /* Ajuste conforme a largura da sidebar */
-  transform: translate(-50%, -50%);
-  background-color: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  z-index: 999;
-}
-
-.modalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(3px);
-  z-index: 998;
-}
-
-/* === Estilos para DatePicker do Mantine === */
-.datePickerHeaderControl {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 4px; /* opcional, para dar um pequeno espaçamento */
-}
-
-.datePickerHeaderControl svg {
-  width: 14px;
-  height: 14px;
-}
-
-/* === Layout personalizado do calendário === */
-.customCalendar {
-  /* largura do popover */
-  width: 320px;
-}
-
-.customCalendarHeader {
-  /* header em linha só */
-  display: flex;
+.datePickerHeader {
+  display: flex !important;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 8px;
+  padding: 8px 12px;
 }
 
-.customCalendarLevel {
-  /* mês/ano centralizado */
-  flex: 1;
-  text-align: center;
-  font-weight: 600;
+.datePickerLevel {
+  flex: 1 !important;
+  text-align: center !important;
+  font-weight: 600 !important;
 }
 
-.customCalendarControl {
-  /* botão de navegação (“<” / “>”) */
-  width: 28px;
-  height: 28px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.datePickerControl {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 4px !important;
+  border: 1px solid #ccc !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
-.customCalendarControl svg {
-  /* ícone menor */
-  width: 16px;
-  height: 16px;
+/* Ícones menores dentro das setas */
+.datePickerControl svg {
+  width: 16px !important;
+  height: 16px !important;
 }
 
-/* === Força largura maior no popover do DatePicker === */
+/* === Overrides globais do Mantine Calendar (caso ainda queira reforçar) === */
 :global(.mantine-Popover-dropdown) {
-  width: 320px !important; /* ajuste para o valor que quiser */
+  width: 350px !important;
 }
 
-/* === Header do calendário numa única linha === */
 :global(.mantine-Calendar-header) {
   display: flex !important;
   justify-content: space-between;
@@ -215,17 +136,15 @@ body {
   padding: 8px 12px;
 }
 
-/* === Mês/Ano centralizado entre as setas === */
 :global(.mantine-Calendar-level) {
   flex: 1;
   text-align: center;
   font-weight: 600;
 }
 
-/* === Botões de navegação (“<” e “>”) === */
 :global(.mantine-Calendar-calendarHeaderControl) {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 4px;
   border: 1px solid #ccc;
   display: flex;
@@ -233,8 +152,11 @@ body {
   justify-content: center;
 }
 
-/* === Ícones menores dentro dos botões === */
 :global(.mantine-Calendar-calendarHeaderControl svg) {
   width: 16px;
   height: 16px;
+}
+
+:global(.mantine-Calendar-months) {
+  width: 100% !important;
 }

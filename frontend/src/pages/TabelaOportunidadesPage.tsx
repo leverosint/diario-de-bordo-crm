@@ -436,34 +436,15 @@ const dadosFiltrados = useMemo(() => {
   clearable
   rightSection={null}
 
-  /* largura do pop-up */
-  popoverProps={{ width: 320 }}
+  // 1) força o width do pop-over
+  popoverProps={{ width: 350 }}
 
-  /* só o header em flex-row e botões pequenos */
-  styles={{
-    calendarHeader: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '4px 8px',
-    },
-    calendarHeaderLevel: {
-      flex: 1,
-      textAlign: 'center',
-      fontWeight: 600,
-    },
-    calendarHeaderControl: {
-      width: 28,
-      height: 28,
-      borderRadius: 4,
-      border: '1px solid #ccc',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-  }}
+  // 2) injeta classes personalizadas
+
 
   valueFormat="DD/MM/YYYY"
+
+
 />
 
   </Box>
