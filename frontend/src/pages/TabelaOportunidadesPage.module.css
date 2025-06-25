@@ -126,3 +126,26 @@ body {
   width: 16px;
   height: 16px;
 }
+
+:global(.mantine-Popover-dropdown) {
+  border-radius: 8px  !important;
+  overflow: hidden    !important;
+}
+
+:global(.mantine-Calendar-header) {
+  background-color: #f7f9fa;
+  padding: 8px 12px;
+}
+
+:global(.mantine-Calendar-level) {
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+:global(.mantine-Calendar-calendarHeaderControl) {
+  color: #005a64;
+}
+
+:global(.mantine-Calendar-day) {
+  border-radius: 4px;
+}
