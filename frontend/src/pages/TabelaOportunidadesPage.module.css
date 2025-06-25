@@ -110,6 +110,7 @@ body {
   text-align: center;
   font-weight: 600;
   font-size: 0.95rem;
+  text-transform: capitalize;
 }
 
 :global(.mantine-Calendar-calendarHeaderControl) {
@@ -123,6 +124,26 @@ body {
   color: #005a64;
 }
 
+:global(.mantine-Calendar-calendarHeaderControlIcon) {
+  display: none !important; /* esconde os ícones de seta */
+}
+
+:global(.mantine-Calendar-weekdays) {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  color: #555;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 :global(.mantine-Calendar-day) {
   border-radius: 4px;
+  font-size: 0.9rem;
+  padding: 4px;
+  cursor: pointer;
+}
+
+:global(.mantine-DatePickerInput-icon),
+:global(.mantine-DatePickerInput-rightSection) {
+  display: none !important; /* esconde ícone do input */
 }
