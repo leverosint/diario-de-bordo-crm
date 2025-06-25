@@ -140,10 +140,15 @@ useEffect(() => {
 // 1) primeiro defina esta função acima de handleStatusChange:
 const atualizarEtapaDireta = (id: number, novaEtapa: string) => {
   const agora = new Date().toISOString();
+
   axios
     .patch(
       `${import.meta.env.VITE_API_URL}/oportunidades/${id}/`,
-      { etapa: novaEtapa, data_etapa: agora, data_status: agora },
+      {
+        etapa: novaEtapa,
+        data_etapa: agora,
+        data_status: agora,
+      },
       { headers: { Authorization: `Bearer ${token}` } }
     )
     .then(() => {
@@ -164,34 +169,33 @@ const atualizarEtapaDireta = (id: number, novaEtapa: string) => {
 // 2) depois o seu handleStatusChange, chamando atualizarEtapaDireta:
 const handleStatusChange = (id: number, novaEtapa: string | null) => {
   if (!novaEtapa) return;
+
+  // guarda a etapa atual para desfazer, se quiser
   const oportunidade = dados.find((item) => item.id === id);
-  const etapaAtual = oportunidade?.etapa || '';
+  const etapaAtual = oportunidade?.etapa ?? '';
+  setEtapaTemporaria((prev) => ({ ...prev, [id]: etapaAtual }));
 
   if (novaEtapa === 'perdida') {
-    setEtapaTemporaria((prev) => ({ ...prev, [id]: etapaAtual }));
+    // abre modal de motivo de perda
     setIdMudandoStatus(id);
-    setMotivoPerda('');
     setEtapaParaAtualizar('perdida');
+    setMotivoPerda('');
     setModalAberto(true);
     return;
   }
 
   if (novaEtapa === 'aguardando') {
-    setEtapaTemporaria((prev) => ({ ...prev, [id]: etapaAtual }));
-    // abre modal de pedido
+    // abre modal de informar número do pedido
     setIdMudandoStatus(id);
-    setNumeroPedido('');
     setEtapaParaAtualizar('aguardando');
+    setNumeroPedido('');
     setModalAberto(true);
     return;
   }
 
-  // etapas comuns vão pra cá
+  // para "pedido" e demais etapas: atualiza direto
   atualizarEtapaDireta(id, novaEtapa);
 };
-
-
-
 
 
 
