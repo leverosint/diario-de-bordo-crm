@@ -162,6 +162,7 @@ class Oportunidade(models.Model):
     ('aguardando', 'Aguardando Pagamento'),  # 👈 adicionado aqui
     ('pedido', 'Pedido'),
     ('perdida', 'Venda Perdida'),
+    
 ]
 
     parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='oportunidades')
@@ -181,6 +182,7 @@ class Oportunidade(models.Model):
     data_status = models.DateTimeField(null=True, blank=True)
         # 🔥 Adicionar isso
     gatilho_extra = models.CharField(max_length=255, null=True, blank=True)  # ✅
+    numero_pedido = models.CharField(max_length=100, null=True, blank=True)  # ⬅️ NOVO CAMPO
 
 
     def save(self, *args, **kwargs):

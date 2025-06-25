@@ -67,6 +67,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
     dias_sem_movimentacao = serializers.SerializerMethodField()
     valor = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, default=0)
     gatilho_extra = serializers.CharField(required=False, allow_null=True, default=None)
+    numero_pedido = serializers.CharField(required=False, allow_null=True, allow_blank=True)  # ⬅️ ADICIONE
 
     class Meta:
         model = Oportunidade
@@ -74,9 +75,11 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             'id', 'parceiro', 'codigo', 'parceiro_nome',
             'usuario', 'usuario_nome',
             'valor', 'observacao', 'motivo_venda_perdida', 'etapa',
+            'numero_pedido',  # ⬅️ INCLUA AQUI
             'data_criacao', 'data_status', 'data_etapa',
             'dias_sem_movimentacao', 'gatilho_extra'
         ]
+
         read_only_fields = ['data_criacao', 'data_etapa', 'usuario']
 
     def get_dias_sem_movimentacao(self, obj):
@@ -85,6 +88,10 @@ class OportunidadeSerializer(serializers.ModelSerializer):
         if ultima:
             return (now().date() - ultima.data_interacao.date()).days
         return None
+
+
+
+
 
 
 class GatilhoExtraSerializer(serializers.ModelSerializer):
