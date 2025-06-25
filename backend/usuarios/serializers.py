@@ -1,5 +1,3 @@
-# serializers.py
-
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra
@@ -37,12 +35,14 @@ class ParceiroSerializer(serializers.ModelSerializer):
 
 class InteracaoSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
+    codigo = serializers.CharField(source='parceiro.codigo', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
 
     class Meta:
         model = Interacao
         fields = [
-            'id', 'parceiro', 'parceiro_nome', 'usuario', 'usuario_nome',
+            'id', 'parceiro', 'codigo', 'parceiro_nome',
+            'usuario', 'usuario_nome',
             'tipo', 'data_interacao', 'entrou_em_contato', 'status', 'gatilho_extra'
         ]
         read_only_fields = ['data_interacao', 'usuario', 'status']
@@ -61,6 +61,7 @@ class InteracaoPendentesSerializer(serializers.ModelSerializer):
 
 class OportunidadeSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
+    codigo = serializers.CharField(source='parceiro.codigo', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
     data_status = serializers.DateTimeField(read_only=True)
     dias_sem_movimentacao = serializers.SerializerMethodField()
@@ -70,7 +71,8 @@ class OportunidadeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Oportunidade
         fields = [
-            'id', 'parceiro', 'parceiro_nome', 'usuario', 'usuario_nome',
+            'id', 'parceiro', 'codigo', 'parceiro_nome',
+            'usuario', 'usuario_nome',
             'valor', 'observacao', 'motivo_venda_perdida', 'etapa',
             'data_criacao', 'data_status', 'data_etapa',
             'dias_sem_movimentacao', 'gatilho_extra'
@@ -114,19 +116,11 @@ class ReportParceiroSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Parceiro
         fields = [
-            'id',
-            'codigo',           # <–– agora incluído
-            'parceiro',
-            'consultor_id',
-            'consultor_nome',
-            'unidade',
-            'cidade',
-            'uf',
-            'canal_venda',
-            'status',
-            'primeiro_fat',
-            'ultimo_fat',
-            'atualizado_em',
+            'id', 'codigo', 'parceiro',
+            'consultor_id', 'consultor_nome',
+            'unidade', 'cidade', 'uf',
+            'canal_venda', 'status',
+            'primeiro_fat', 'ultimo_fat', 'atualizado_em',
         ]
 
     def get_consultor_id(self, obj):
