@@ -12,6 +12,8 @@ import type { DateValue } from '@mantine/dates';
 import { Pencil, Save, X } from 'lucide-react';
 import styles from './TabelaOportunidadesPage.module.css'; // ✅ CSS
 
+
+
 interface Oportunidade {
   id: number;
   parceiro: number;
@@ -28,6 +30,7 @@ interface Oportunidade {
 
 
 export default function TabelaOportunidadesPage() {
+ 
   const [dados, setDados] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [nomeFiltro, setNomeFiltro] = useState('');
@@ -51,6 +54,8 @@ export default function TabelaOportunidadesPage() {
     setMotivoPerda('');
     setModalAberto(true);
   };
+
+  
 
   // extrai todas as strings de gatilho que realmente existem na lista
   const gatilhoOptions = useMemo(() => {
@@ -418,20 +423,26 @@ const dadosFiltrados = useMemo(() => {
             data={etapaOptions}
             clearable
           />
-          {[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
-          { label: 'Data fim', value: dataFim, onChange: setDataFim }].map((item, idx) => (
-            <Box key={idx} style={{ minWidth: 160 }}>
-              <DatePickerInput
-                value={item.value}
-                onChange={item.onChange}
-                locale="pt-br"
-                label={item.label}
-                dropdownType="popover"
-                clearable
-                rightSection={null}
-              />
-            </Box>
-          ))}
+{[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
+  { label: 'Data fim',    value: dataFim,    onChange: setDataFim }].map((item, idx) => (
+  <Box key={idx} style={{ minWidth: 160 }}>
+    <DatePickerInput
+  label={item.label}
+  placeholder={`Selecione ${item.label.toLowerCase()}`}
+  value={item.value}
+  onChange={item.onChange}
+  locale="pt-br"
+  dropdownType="popover"
+  clearable
+  rightSection={null}    // esconde o ícone grande do input
+  classNames={{          // mapeia o slot interno para sua classe
+    calendarHeaderControl: styles.datePickerHeaderControl,
+  }}
+  valueFormat="DD/MM/YYYY"
+    />
+  </Box>
+))}
+
         </Group>
 
         {carregando ? (
