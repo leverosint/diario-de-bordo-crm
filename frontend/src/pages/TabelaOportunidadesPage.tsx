@@ -434,24 +434,40 @@ const dadosFiltrados = useMemo(() => {
   locale="pt-br"
   dropdownType="popover"
   clearable
-  size="sm"            // deixa o campo mais compacto
-  radius="md"          // bordas levemente mais arredondadas
+  rightSection={null}
   valueFormat="DD/MM/YYYY"
+
+  // ===============================
+  // 1) INPUT + WRAPPER (opcional)
+  // ===============================
+  classNames={{
+    // se quiser customizar o input e o label
+    input:  styles.datePickerInput,
+    label:  styles.datePickerLabel,
+
+    // ===============================
+    // 2) CALENDAR (Styles API do DatePickerInput)
+    // ===============================
+    calendar:                styles.datePickerCalendar,       // root do calendário
+    calendarHeader:          styles.datePickerHeader,         // cabeçalho (mês + setas)
+    calendarHeaderControl:   styles.datePickerControl,        // botão ‹ ›
+    calendarHeaderControlIcon: styles.datePickerControlIcon,  // ícone dentro do botão
+    calendarHeaderLevel:     styles.datePickerLevel,          // título do mês
+    day:                     styles.datePickerDay,            // célula de cada dia
+    // (existem muitos outros: monthThead, weekday, etc — adicione conforme precisar)
+  }}
+
+  // ===============================
+  // 3) POPOVER (tamanho e wrapper do popover)
+  // ===============================
   popoverProps={{
     width: 350,
-    shadow: 'md',      // adiciona uma sombra suave
-  }}
-  styles={{
-    input: {
-      // deixa o ícone e o texto centralizados verticalmente
-      display: 'flex',
-      alignItems: 'center',
-      // um pouco de padding extra
-      paddingLeft: 12,
-      paddingRight: 12,
+    classNames: {
+      dropdown: styles.datePickerDropdown, // controla o .mantine-Popover-dropdown
     },
   }}
 />
+
   </Box>
 ))}
 

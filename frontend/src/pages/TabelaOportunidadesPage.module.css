@@ -14,8 +14,8 @@ th {
 }
 
 th:nth-child(2),
-td:nth-child(2),
 th:nth-child(7),
+td:nth-child(2),
 td:nth-child(7) {
   text-align: left;
 }
@@ -90,59 +90,36 @@ body {
   text-align: center;
 }
 
-/* define o tamanho do dropdown inteiro */
-.datePickerDropdown {
-  width: 350px;
-}
-
-/* cabeçalho do calendário (mês + setas) */
-.datePickerHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-}
-
-/* o título do mês */
-.datePickerLevel {
-  flex: 1;
-  text-align: center;
-  font-weight: 600;
-}
-
-/* botão de avanço/retrocesso */
-.datePickerControl {
-  width: 30px;
-  height: 30px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* tamanho do ícone dentro do botão */
-.datePickerControl svg {
-  width: 16px;
-  height: 16px;
-}
-
+/* === Global Mantine Popover & Calendar Overrides === */
 :global(.mantine-Popover-dropdown) {
-  border-radius: 8px  !important;
-  overflow: hidden    !important;
+  width: 350px !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
 }
 
 :global(.mantine-Calendar-header) {
   background-color: #f7f9fa;
   padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 :global(.mantine-Calendar-level) {
-  font-weight: 500;
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
   font-size: 0.95rem;
 }
 
 :global(.mantine-Calendar-calendarHeaderControl) {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #005a64;
 }
 
