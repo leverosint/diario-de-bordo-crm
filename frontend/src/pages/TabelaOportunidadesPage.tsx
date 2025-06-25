@@ -118,6 +118,14 @@ const [numeroPedido, setNumeroPedido] = useState('');
     { value: 'perdida', label: 'Venda Perdida' },
   ];
 
+  const transicoesPermitidas: Record<string, string[]> = {
+    oportunidade: ['orcamento', 'perdida'],
+    orcamento: ['aguardando', 'perdida'],
+    aguardando: ['pedido', 'perdida'],
+    pedido: [],
+    perdida: [],
+  };
+
   const getStatusColor = (etapa: string) => ({
     oportunidade: 'blue',
     orcamento: 'teal',
@@ -241,8 +249,6 @@ const handleStatusChange = (id: number, novaEtapa: string | null) => {
     });
   }
 };
-
-
 
 
 
@@ -659,113 +665,107 @@ const dadosFiltrados = useMemo(() => {
                     </Group>
 
                     <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-                      <Table striped highlightOnHover withColumnBorders>
-                      <thead>
-  <tr>
-    <th className={styles.center}>ID</th>
-    <th className={styles.left}>Parceiro</th>
-    <th className={styles.center}>Valor</th>
-    <th className={styles.center}>Data Criação</th>
-    <th className={styles.center}>Data Etapa</th>
-    <th className={styles.center}>Gatilho</th>
-    <th className={styles.left}>Observação</th>
-    <th className={styles.center}>Sem Movimentação</th>
-    <th className={styles.center}>Nº Pedido</th>
-    <th className={styles.center}>Status</th>
-  </tr>
-</thead>
-                        <tbody>
-  {lista.map((o) => {
-    const emEdicao = editandoId === o.id;
-    return (
-      <tr key={o.id}>
-        {/* ID */}
-        <td className={styles.center}>{o.id}</td>
-        {/* Parceiro */}
-        <td className={styles.left}>{o.parceiro_nome}</td>
-        {/* Valor (editável) */}
-        <td className={styles.center}>
-          {emEdicao ? (
-            <TextInput
-              value={valorEdit}
-              onChange={(e) => setValorEdit(e.currentTarget.value)}
-              size="xs"
-            />
-          ) : (
-            <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
-          )}
-        </td>
-        {/* Data Criação */}
-        <td className={styles.center}>
-          {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
-        </td>
-        {/* Data Etapa */}
-        <td className={styles.center}>
-          {o.data_etapa ? new Date(o.data_etapa).toLocaleDateString('pt-BR') : '-'}
-        </td>
-        {/* Gatilho */}
-        <td className={styles.center}>{o.gatilho_extra || '-'}</td>
-        {/* Observação (editável) */}
-        <td className={styles.left}>
-          {emEdicao ? (
-            <TextInput
-              value={observacaoEdit}
-              onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
-              size="xs"
-            />
-          ) : (
-            o.observacao || '-'
-          )}
-        </td>
-        {/* Sem Movimentação */}
-        <td className={styles.center}>
-          {typeof o.dias_sem_movimentacao === 'number'
-            ? `${o.dias_sem_movimentacao} dia${o.dias_sem_movimentacao === 1 ? '' : 's'}`
-            : '-'}
-        </td>
-        {/* Nº Pedido */}
-        <td className={styles.center}>
-          {o.numero_pedido || '-'}
-        </td>
-        {/* Status + botões de editar/salvar */}
-        <td className={styles.center}>
-          <Group gap="xs" justify="center">
-          <Select
-  value={o.etapa}
-  onChange={(value) => value && handleStatusChange(o.id, value)}
-  data={etapaOptions}
-  size="xs"
-  styles={{
-    input: {
-      backgroundColor: getStatusColor(o.etapa),
-      color: 'white',
-      fontWeight: 600,
-      textAlign: 'center',
-      borderRadius: 6,
-      minWidth: 120,
-    },
-  }}
-/>
+                    <Table striped highlightOnHover withColumnBorders>
+  <thead>
+    <tr>
+      <th className={styles.center}>ID</th>
+      <th className={styles.left}>Parceiro</th>
+      <th className={styles.center}>Valor</th>
+      <th className={styles.center}>Data Criação</th>
+      <th className={styles.center}>Data Etapa</th>
+      <th className={styles.center}>Gatilho</th>
+      <th className={styles.left}>Observação</th>
+      <th className={styles.center}>Sem Movimentação</th>
+      <th className={styles.center}>Nº Pedido</th>
+      <th className={styles.center}>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {lista.map((o) => {
+      const emEdicao = editandoId === o.id;
+      return (
+        <tr key={o.id}>
+          <td className={styles.center}>{o.id}</td>
+          <td className={styles.left}>{o.parceiro_nome}</td>
+          <td className={styles.center}>
             {emEdicao ? (
-              <>
-                <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
-                  <Save size={16} />
-                </Button>
-                <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao}>
-                  <X size={16} />
-                </Button>
-              </>
+              <TextInput
+                value={valorEdit}
+                onChange={(e) => setValorEdit(e.currentTarget.value)}
+                size="xs"
+              />
             ) : (
-              <Button size="xs" variant="outline" onClick={() => iniciarEdicao(o)}>
-                <Pencil size={16} />
-              </Button>
+              <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
             )}
-          </Group>
-        </td>
-      </tr>
-    );
-  })}
-</tbody>
+          </td>
+          <td className={styles.center}>
+            {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
+          </td>
+          <td className={styles.center}>
+            {o.data_etapa ? new Date(o.data_etapa).toLocaleDateString('pt-BR') : '-'}
+          </td>
+          <td className={styles.center}>{o.gatilho_extra || '-'}</td>
+          <td className={styles.left}>
+            {emEdicao ? (
+              <TextInput
+                value={observacaoEdit}
+                onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
+                size="xs"
+              />
+            ) : (
+              o.observacao || '-'
+            )}
+          </td>
+          <td className={styles.center}>
+            {typeof o.dias_sem_movimentacao === 'number'
+              ? `${o.dias_sem_movimentacao} dia${o.dias_sem_movimentacao === 1 ? '' : 's'}`
+              : '-'}
+          </td>
+          <td className={styles.center}>
+            {o.numero_pedido || '-'}
+          </td>
+          {/* --------- SELECT DE STATUS COM FILTRO DE FLUXO -------- */}
+          <td className={styles.center}>
+            <Group gap="xs" justify="center">
+              <Select
+                value={o.etapa}
+                onChange={(value) => value && handleStatusChange(o.id, value)}
+                data={etapaOptions.filter(opt =>
+                  opt.value === o.etapa ||
+                  transicoesPermitidas[o.etapa]?.includes(opt.value)
+                )}
+                size="xs"
+                styles={{
+                  input: {
+                    backgroundColor: getStatusColor(o.etapa),
+                    color: 'white',
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    borderRadius: 6,
+                    minWidth: 120,
+                  },
+                }}
+              />
+              {emEdicao ? (
+                <>
+                  <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
+                    <Save size={16} />
+                  </Button>
+                  <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao}>
+                    <X size={16} />
+                  </Button>
+                </>
+              ) : (
+                <Button size="xs" variant="outline" onClick={() => iniciarEdicao(o)}>
+                  <Pencil size={16} />
+                </Button>
+              )}
+            </Group>
+          </td>
+        </tr>
+      );
+    })}
+  </tbody>
 
                       </Table>
                     </div>
