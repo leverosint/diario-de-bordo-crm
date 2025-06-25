@@ -440,7 +440,7 @@ const dadosFiltrados = useMemo(() => {
               rightSection={null}
 
               /* largura do popover em px */
-              popoverProps={{ width: 500 }}
+              popoverProps={{ width: 400 }}
 
               /* formata a data no input */
               valueFormat="DD/MM/YYYY"

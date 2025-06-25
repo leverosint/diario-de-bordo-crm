@@ -92,7 +92,7 @@ body {
 
 /* === Global Mantine Popover & Calendar Overrides === */
 :global(.mantine-Popover-dropdown) {
-  width: 350px !important;
+  width: 320px !important;
   border-radius: 8px !important;
   overflow: hidden !important;
 }
