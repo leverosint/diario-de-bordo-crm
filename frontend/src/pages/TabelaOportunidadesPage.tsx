@@ -60,6 +60,8 @@ const [numeroPedido, setNumeroPedido] = useState('');
   };
 
   
+
+  
   const [etapaParaAtualizar, setEtapaParaAtualizar] = useState<string | null>(null);
 
   // extrai todas as strings de gatilho que realmente existem na lista
@@ -135,10 +137,33 @@ useEffect(() => {
 }, [dadosComDias]);
 
 
+// 1) primeiro defina esta função acima de handleStatusChange:
+const atualizarEtapaDireta = (id: number, novaEtapa: string) => {
+  const agora = new Date().toISOString();
+  axios
+    .patch(
+      `${import.meta.env.VITE_API_URL}/oportunidades/${id}/`,
+      { etapa: novaEtapa, data_etapa: agora, data_status: agora },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    .then(() => {
+      setDados((prev) =>
+        prev.map((o) =>
+          o.id === id
+            ? { ...o, etapa: novaEtapa, data_etapa: agora, data_status: agora, dias_sem_movimentacao: 0 }
+            : o
+        )
+      );
+    })
+    .catch((err) => {
+      console.error('Erro ao atualizar etapa:', err);
+      alert('Erro ao atualizar etapa');
+    });
+};
 
+// 2) depois o seu handleStatusChange, chamando atualizarEtapaDireta:
 const handleStatusChange = (id: number, novaEtapa: string | null) => {
   if (!novaEtapa) return;
-
   const oportunidade = dados.find((item) => item.id === id);
   const etapaAtual = oportunidade?.etapa || '';
 
@@ -146,47 +171,25 @@ const handleStatusChange = (id: number, novaEtapa: string | null) => {
     setEtapaTemporaria((prev) => ({ ...prev, [id]: etapaAtual }));
     setIdMudandoStatus(id);
     setMotivoPerda('');
-    setEtapaParaAtualizar(novaEtapa);
+    setEtapaParaAtualizar('perdida');
     setModalAberto(true);
     return;
   }
 
   if (novaEtapa === 'aguardando') {
     setEtapaTemporaria((prev) => ({ ...prev, [id]: etapaAtual }));
+    // abre modal de pedido
     setIdMudandoStatus(id);
     setNumeroPedido('');
-    setEtapaParaAtualizar(novaEtapa);
+    setEtapaParaAtualizar('aguardando');
     setModalAberto(true);
     return;
   }
 
+  // etapas comuns vão pra cá
   atualizarEtapaDireta(id, novaEtapa);
 };
 
-
-
-const atualizarEtapaDireta = (id: number, novaEtapa: string) => {
-  const agora = new Date().toISOString();
-
-  axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
-    etapa: novaEtapa,
-    data_etapa: agora,
-    data_status: agora,
-  }, {
-    headers: { Authorization: `Bearer ${token}` },
-  }).then(() => {
-    setDados(prev =>
-      prev.map(o =>
-        o.id === id
-          ? { ...o, etapa: novaEtapa, data_etapa: agora, data_status: agora, dias_sem_movimentacao: 0 }
-          : o
-      )
-    );
-  }).catch(err => {
-    console.error('Erro ao atualizar etapa:', err);
-    alert('Erro ao atualizar etapa');
-  });
-};
 
 
 
@@ -265,10 +268,9 @@ const confirmarVendaPerdida = async () => {
 
 
 
-    // confirmar numero pedido
-    const confirmarNumeroPedido = async () => {
-      if (!idMudandoStatus || numeroPedido.trim() === '') {
-        alert('Por favor, preencha o número do pedido.');
+    const confirmarVendaPerdida = async () => {
+      if (!idMudandoStatus || motivoPerda.trim() === '') {
+        alert('Por favor, preencha o motivo da perda.');
         return;
       }
     
@@ -278,8 +280,8 @@ const confirmarVendaPerdida = async () => {
         await axios.patch(
           `${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`,
           {
-            etapa: 'aguardando',
-            numero_pedido: numeroPedido,
+            etapa: 'perdida',
+            observacao: motivoPerda,
             data_etapa: agora,
             data_status: agora,
           },
@@ -293,8 +295,8 @@ const confirmarVendaPerdida = async () => {
             o.id === idMudandoStatus
               ? {
                   ...o,
-                  etapa: 'aguardando',
-                  numero_pedido: numeroPedido,
+                  etapa: 'perdida',
+                  observacao: motivoPerda,
                   data_etapa: agora,
                   data_status: agora,
                   dias_sem_movimentacao: 0,
@@ -310,15 +312,51 @@ const confirmarVendaPerdida = async () => {
         });
     
         setModalAberto(false);
-        setNumeroPedido('');
+        setMotivoPerda('');
         setEtapaParaAtualizar(null);
         setIdMudandoStatus(null);
+      } catch (err) {
+        console.error('Erro ao salvar motivo de perda:', err);
+        alert('Erro ao atualizar etapa.');
+      }
+    };
+    
+    
+    
+    const confirmarNumeroPedido = async () => {
+      if (!idMudandoStatus || numeroPedido.trim() === '') {
+        alert('Por favor, preencha o número do pedido.');
+        return;
+      }
+      const agora = new Date().toISOString();
+      try {
+        await axios.patch(
+          `${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`,
+          {
+            etapa: 'aguardando',
+            numero_pedido: numeroPedido,
+            data_etapa: agora,
+            data_status: agora,
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        // atualiza no front
+        setDados(prev =>
+          prev.map(o =>
+            o.id === idMudandoStatus
+              ? { ...o, etapa: 'aguardando', numero_pedido: numeroPedido, data_etapa: agora, data_status: agora, dias_sem_movimentacao: 0 }
+              : o
+          )
+        );
+        setModalAberto(false);
+        setIdMudandoStatus(null);
+        setEtapaParaAtualizar(null);
+        setNumeroPedido('');
       } catch (err) {
         console.error('Erro ao salvar número do pedido:', err);
         alert('Erro ao atualizar etapa.');
       }
     };
-    
     
     
 
@@ -358,47 +396,32 @@ const confirmarVendaPerdida = async () => {
   title={
     etapaParaAtualizar === 'perdida'
       ? 'Motivo da Venda Perdida'
-      : etapaParaAtualizar === 'aguardando'
-      ? 'Informar Número do Pedido'
-      : ''
+      : 'Informar Número do Pedido'
   }
   centered
   radius="md"
-  withinPortal={false}
 >
-  {etapaParaAtualizar === 'perdida' && (
+  {etapaParaAtualizar === 'perdida' ? (
     <>
       <TextInput
         label="Motivo da perda"
         value={motivoPerda}
         onChange={(e) => setMotivoPerda(e.currentTarget.value)}
+        required
       />
-      <Group mt="md" justify="center">
-        <Button onClick={() => setModalAberto(false)}>Cancelar</Button>
-        <Button color="green" onClick={confirmarVendaPerdida}>Confirmar</Button>
+      <Group justify="center" mt="md">
+        <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
+          Cancelar
+        </Button>
+        <Button color="green" onClick={confirmarVendaPerdida}>
+          Confirmar
+        </Button>
       </Group>
     </>
-  )}
-
-  {etapaParaAtualizar === 'aguardando' && (
+  ) : (
     <>
       <TextInput
         label="Número do Pedido"
-        value={numeroPedido}
-        onChange={(e) => setNumeroPedido(e.currentTarget.value)}
-      />
-      <Group mt="md" justify="center">
-        <Button onClick={() => setModalAberto(false)}>Cancelar</Button>
-        <Button color="green" onClick={confirmarNumeroPedido}>Confirmar</Button>
-      </Group>
-    </>
-  )}
-
-  {etapaParaAtualizar === 'aguardando' && (
-    <>
-      <TextInput
-        label="Número do Pedido"
-        placeholder="Digite o número do pedido"
         value={numeroPedido}
         onChange={(e) => setNumeroPedido(e.currentTarget.value)}
         required
@@ -414,6 +437,7 @@ const confirmarVendaPerdida = async () => {
     </>
   )}
 </Modal>
+
 
     // Fecha modal e limpa estado
     setModalAberto(false);
@@ -675,6 +699,7 @@ const dadosFiltrados = useMemo(() => {
                             <th className={styles.left}>Observação</th>
                             <th className={styles.center}>Sem Movimentação</th>
                             <th className={styles.center}>Status</th>
+                            <th>Nº Pedido</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -717,6 +742,7 @@ const dadosFiltrados = useMemo(() => {
         <td className={styles.center}>
           {o.gatilho_extra || '-'}
         </td>
+
 
         {/* Observação (editável) */}
         <td className={styles.left}>
