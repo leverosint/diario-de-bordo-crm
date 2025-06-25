@@ -437,34 +437,13 @@ const dadosFiltrados = useMemo(() => {
   rightSection={null}
   valueFormat="DD/MM/YYYY"
 
-  // ===============================
-  // 1) INPUT + WRAPPER (opcional)
-  // ===============================
+  // Só o popover (tamanho)
+  popoverProps={{ width: 350 }}
+
+  // Se quiser estilizar só o input/label, ainda cabe aqui:
   classNames={{
-    // se quiser customizar o input e o label
-    input:  styles.datePickerInput,
-    label:  styles.datePickerLabel,
-
-    // ===============================
-    // 2) CALENDAR (Styles API do DatePickerInput)
-    // ===============================
-    calendar:                styles.datePickerCalendar,       // root do calendário
-    calendarHeader:          styles.datePickerHeader,         // cabeçalho (mês + setas)
-    calendarHeaderControl:   styles.datePickerControl,        // botão ‹ ›
-    calendarHeaderControlIcon: styles.datePickerControlIcon,  // ícone dentro do botão
-    calendarHeaderLevel:     styles.datePickerLevel,          // título do mês
-    day:                     styles.datePickerDay,            // célula de cada dia
-    // (existem muitos outros: monthThead, weekday, etc — adicione conforme precisar)
-  }}
-
-  // ===============================
-  // 3) POPOVER (tamanho e wrapper do popover)
-  // ===============================
-  popoverProps={{
-    width: 350,
-    classNames: {
-      dropdown: styles.datePickerDropdown, // controla o .mantine-Popover-dropdown
-    },
+    input: styles.datePickerInput,
+    label: styles.datePickerLabel,
   }}
 />
 
