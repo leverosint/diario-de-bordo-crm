@@ -402,34 +402,60 @@ const statsEtapas = resumoEtapas.map(({ etapa, key, cor }) => {
 
 <Divider style={{ marginTop: 16, marginBottom: 16 }} />
 <Title order={3} mb="sm">Resumo de Contato com Parceiros</Title>
-<Grid style={{ marginBottom: 32 }}>
-  <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
-    <Card shadow="md" padding="lg" radius="lg" withBorder>
-      <Title order={4} style={{ textAlign: 'center' }}>Parceiros Contactados</Title>
-      <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-        {totalContatados}
-      </Text>
-    </Card>
-  </Grid.Col>
+<Group mt="md" mb="xl" grow>
+  <Card
+    shadow="md"
+    padding="lg"
+    radius="lg"
+    withBorder
+    style={{
+      minWidth: 280,
+      maxWidth: 340,
+      textAlign: 'center',
+      margin: 8,
+      boxShadow: '0 2px 16px 0 #00000010',
+      border: 'none'
+    }}
+  >
+    <Title order={4} style={{ marginBottom: 6 }}>Parceiros Contactados</Title>
+    <Text size="xl" fw={700}>{totalContatados}</Text>
+  </Card>
+  <Card
+    shadow="md"
+    padding="lg"
+    radius="lg"
+    withBorder
+    style={{
+      minWidth: 280,
+      maxWidth: 340,
+      textAlign: 'center',
+      margin: 8,
+      boxShadow: '0 2px 16px 0 #00000010',
+      border: 'none'
+    }}
+  >
+    <Title order={4} style={{ marginBottom: 6 }}>Carteira Total</Title>
+    <Text size="xl" fw={700}>{totalCarteira}</Text>
+  </Card>
+  <Card
+    shadow="md"
+    padding="lg"
+    radius="lg"
+    withBorder
+    style={{
+      minWidth: 280,
+      maxWidth: 340,
+      textAlign: 'center',
+      margin: 8,
+      boxShadow: '0 2px 16px 0 #00000010',
+      border: 'none'
+    }}
+  >
+    <Title order={4} style={{ marginBottom: 6 }}>% Contactado</Title>
+    <Text size="xl" fw={700}>{percentualContatado.toFixed(1)}%</Text>
+  </Card>
+</Group>
 
-  <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
-    <Card shadow="md" padding="lg" radius="lg" withBorder>
-      <Title order={4} style={{ textAlign: 'center' }}>Carteira Total</Title>
-      <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-        {totalCarteira}
-      </Text>
-    </Card>
-  </Grid.Col>
-
-  <Grid.Col span={{ base: 12, sm: 6, md: 4 }}>
-    <Card shadow="md" padding="lg" radius="lg" withBorder>
-      <Title order={4} style={{ textAlign: 'center' }}>% Contactado</Title>
-      <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-        {percentualContatado.toFixed(1)}%
-      </Text>
-    </Card>
-  </Grid.Col>
-</Grid>
 
 
 <Title order={3} mb="sm">Distribuição de Status na Carteira Filtrada</Title>
@@ -476,39 +502,34 @@ const statsEtapas = resumoEtapas.map(({ etapa, key, cor }) => {
 
           {/* KPIs - Taxas */}
           <Title order={3} mb="sm">Taxas de Conversão por Etapa</Title>
-<Group mt="md" mb="xl" grow>
-  {[
-    { title: 'Taxa Interação > Oportunidade', cor: '#005A64' },
-    { title: 'Taxa Oportunidade > Orçamento', cor: '#22b8cf' },
-    { title: 'Taxa Orçamento > Pedido', cor: '#13862A' },
-  ].map(({ title, cor }) => (
+<Grid style={{ marginBottom: 32 }}>
+  ...
+</Grid>
+
+{/* >>>>>>> NOVOS CARDS DE ETAPA <<<<<<< */}
+<Title order={3} mb="sm" mt={24}>Resumo das Etapas Comerciais</Title>
+<Group mt="md" mb="xl" justify="center" grow>
+  {statsEtapas.map(({ etapa, cor, qtd, valor }) => (
     <Card
-      key={title}
+      key={etapa}
       shadow="md"
       padding="lg"
       radius="lg"
       withBorder
-      style={{
-        minWidth: 280,
-        maxWidth: 340,
-        textAlign: 'center',
-        margin: 8,
-        boxShadow: '0 2px 16px 0 #00000010',
-        border: 'none'
-      }}
+      style={{ minWidth: 180, textAlign: 'center', borderBottom: `4px solid ${cor}` }}
     >
-      <Title order={4} style={{ color: cor, fontWeight: 700, marginBottom: 6 }}>
-        {title}
-      </Title>
-      <Text size="xl" fw={700} style={{ color: '#111', marginTop: 8 }}>
-        {kpis.find(k => k.title === title)?.value || '0%'}
+      <Title order={4} style={{ color: cor, marginBottom: 8 }}>{etapa}</Title>
+      <Text size="xl" fw={700} style={{ marginBottom: 2 }}>{qtd}</Text>
+      <Text size="sm" color="dimmed" mb={6}>Qtd.</Text>
+      <Text size="lg" fw={600} style={{ color: cor }}>
+        {valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
       </Text>
+      <Text size="sm" color="dimmed">Valor Total</Text>
     </Card>
   ))}
 </Group>
+<Divider style={{ marginTop: 24, marginBottom: 24 }} />
 
-
-          <Divider style={{ marginTop: 24, marginBottom: 24 }} />
 
           <Title order={3} mb="sm" mt={24}>Resumo das Etapas Comerciais</Title>
 <Group mt="md" mb="xl" grow>
