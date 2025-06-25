@@ -40,6 +40,7 @@ export default function TabelaOportunidadesPage() {
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [valorEdit, setValorEdit] = useState<string>('');
   const [observacaoEdit, setObservacaoEdit] = useState<string>('');
+  const [numeroPedidoEdit, setNumeroPedidoEdit] = useState<string>('');
 
   const [popupAberto, setPopupAberto] = useState(false);
   
@@ -519,6 +520,7 @@ const dadosFiltrados = useMemo(() => {
     setEditandoId(o.id);
     setValorEdit(String(o.valor));
     setObservacaoEdit(o.observacao || '');
+    setNumeroPedidoEdit(o.numero_pedido || ''); // <-- aqui
   };
 
   const salvarEdicao = async (id: number) => {
@@ -526,6 +528,7 @@ const dadosFiltrados = useMemo(() => {
       await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
         valor: parseFloat(valorEdit.replace(',', '.')) || 0,
         observacao: observacaoEdit,
+        numero_pedido: numeroPedidoEdit, // <-- aqui
       }, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -722,8 +725,16 @@ const dadosFiltrados = useMemo(() => {
               : '-'}
           </td>
           <td className={styles.center}>
-            {o.numero_pedido || '-'}
-          </td>
+  {emEdicao ? (
+    <TextInput
+      value={numeroPedidoEdit}
+      onChange={(e) => setNumeroPedidoEdit(e.currentTarget.value)}
+      size="xs"
+    />
+  ) : (
+    o.numero_pedido || '-'
+  )}
+</td>
           {/* --------- SELECT DE STATUS COM FILTRO DE FLUXO -------- */}
           <td className={styles.center}>
             <Group gap="xs" justify="center">
