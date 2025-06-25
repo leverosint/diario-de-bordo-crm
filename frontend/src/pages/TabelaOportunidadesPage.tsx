@@ -426,7 +426,7 @@ const dadosFiltrados = useMemo(() => {
 {[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
   { label: 'Data fim',    value: dataFim,    onChange: setDataFim }].map((item, idx) => (
   <Box key={idx} style={{ minWidth: 160 }}>
-  <DatePickerInput
+<DatePickerInput
   label={item.label}
   placeholder={`Selecione ${item.label.toLowerCase()}`}
   value={item.value}
@@ -434,11 +434,41 @@ const dadosFiltrados = useMemo(() => {
   locale="pt-br"
   dropdownType="popover"
   clearable
-  rightSection={null}      // esconde o ícone do input
+  rightSection={null}
+
+  /* largura do pop-up */
+  popoverProps={{ width: 320 }}
+
+  /* só o header em flex-row e botões pequenos */
+  styles={{
+    calendarHeader: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '4px 8px',
+    },
+    calendarHeaderLevel: {
+      flex: 1,
+      textAlign: 'center',
+      fontWeight: 600,
+    },
+    calendarHeaderControl: {
+      width: 28,
+      height: 28,
+      borderRadius: 4,
+      border: '1px solid #ccc',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  }}
+
   valueFormat="DD/MM/YYYY"
 />
+
   </Box>
 ))}
+
 
         </Group>
 
