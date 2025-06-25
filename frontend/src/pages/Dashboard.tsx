@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import {
-  Grid,
+ 
   Card,
   Title,
   Text,
@@ -62,6 +62,51 @@ const MESES = [
 ];
 
 const ANOS = ['2024', '2025', '2026'].map(ano => ({ value: ano, label: ano }));
+
+function CardPadrao({
+  titulo,
+  valor,
+  subtitulo,
+  valorSub,
+  children,
+  minWidth = 180,
+  maxWidth = 280,
+  cor = '#0A5A64'
+}: {
+  titulo: string;
+  valor: string | number;
+  subtitulo?: string;
+  valorSub?: string;
+  children?: React.ReactNode;
+  minWidth?: number;
+  maxWidth?: number;
+  cor?: string;
+}) {
+  return (
+    <Card
+      shadow="md"
+      padding="lg"
+      radius="lg"
+      withBorder
+      style={{
+        minWidth,
+        maxWidth,
+        textAlign: 'center',
+        margin: 8,
+        boxShadow: '0 2px 16px 0 #00000010',
+        border: 'none',
+        borderBottom: `4px solid ${cor}`
+      }}
+    >
+      <Title order={4} style={{ color: cor, marginBottom: 6 }}>{titulo}</Title>
+      <Text size="xl" fw={700} style={{ marginBottom: 2 }}>{valor}</Text>
+      {subtitulo && <Text size="sm" color="dimmed" mb={6}>{subtitulo}</Text>}
+      {valorSub && <Text size="lg" fw={600} style={{ color: cor }}>{valorSub}</Text>}
+      {children}
+    </Card>
+  );
+}
+
 
 
 export default function Dashboard() {
@@ -400,112 +445,65 @@ const statsEtapas = resumoEtapas.map(({ etapa, key, cor }) => {
 
 
 
-<Divider style={{ marginTop: 16, marginBottom: 16 }} />
 <Title order={3} mb="sm">Resumo de Contato com Parceiros</Title>
-<Group mt="md" mb="xl" grow>
-  <Card
-    shadow="md"
-    padding="lg"
-    radius="lg"
-    withBorder
-    style={{
-      minWidth: 280,
-      maxWidth: 340,
-      textAlign: 'center',
-      margin: 8,
-      boxShadow: '0 2px 16px 0 #00000010',
-      border: 'none'
-    }}
-  >
-    <Title order={4} style={{ marginBottom: 6 }}>Parceiros Contactados</Title>
-    <Text size="xl" fw={700}>{totalContatados}</Text>
-  </Card>
-  <Card
-    shadow="md"
-    padding="lg"
-    radius="lg"
-    withBorder
-    style={{
-      minWidth: 280,
-      maxWidth: 340,
-      textAlign: 'center',
-      margin: 8,
-      boxShadow: '0 2px 16px 0 #00000010',
-      border: 'none'
-    }}
-  >
-    <Title order={4} style={{ marginBottom: 6 }}>Carteira Total</Title>
-    <Text size="xl" fw={700}>{totalCarteira}</Text>
-  </Card>
-  <Card
-    shadow="md"
-    padding="lg"
-    radius="lg"
-    withBorder
-    style={{
-      minWidth: 280,
-      maxWidth: 340,
-      textAlign: 'center',
-      margin: 8,
-      boxShadow: '0 2px 16px 0 #00000010',
-      border: 'none'
-    }}
-  >
-    <Title order={4} style={{ marginBottom: 6 }}>% Contactado</Title>
-    <Text size="xl" fw={700}>{percentualContatado.toFixed(1)}%</Text>
-  </Card>
+<Group mt="md" mb="xl" justify="center" grow>
+  <CardPadrao titulo="Parceiros Contactados" valor={totalContatados} cor="#0A5A64" minWidth={220} />
+  <CardPadrao titulo="Carteira Total" valor={totalCarteira} cor="#0A5A64" minWidth={220} />
+  <CardPadrao titulo="% Contactado" valor={percentualContatado.toFixed(1) + '%'} cor="#0A5A64" minWidth={220} />
 </Group>
-
-
+<Divider style={{ marginTop: 24, marginBottom: 24 }} />
 
 <Title order={3} mb="sm">Distribuição de Status na Carteira Filtrada</Title>
-<Grid style={{ marginBottom: 32 }}>
+<Group mt="md" mb="xl" justify="center" grow>
   {STATUS_ORDER.map(status => (
-    <Grid.Col span={{ base: 12, sm: 6, md: 2 }} key={`percentual-${status}`}>
-      <Card shadow="md" padding="lg" radius="lg" withBorder style={{ backgroundColor: '#ffffff' }}>
-        <Title order={5} style={{ textAlign: 'center' }}>{STATUS_LABELS[status] || status}</Title>
-        <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-          {(percentualPorStatus[status] ?? 0).toFixed(1)}%
-        </Text>
-        <Text size="sm" style={{ textAlign: 'center', color: 'gray' }}>
-          ({parceirosFiltrados.filter(p => p.status === status).length} de {totalCarteira})
-        </Text>
-      </Card>
-    </Grid.Col>
+    <CardPadrao
+      key={`percentual-${status}`}
+      titulo={STATUS_LABELS[status] || status}
+      valor={(percentualPorStatus[status] ?? 0).toFixed(1) + '%'}
+      cor="#0A5A64"
+      minWidth={180}
+      maxWidth={220}
+    >
+      <Text size="sm" style={{ textAlign: 'center', color: 'gray' }}>
+        ({parceirosFiltrados.filter(p => p.status === status).length} de {totalCarteira})
+      </Text>
+    </CardPadrao>
   ))}
-</Grid>
-
-
-
-
+</Group>
 <Divider style={{ marginTop: 24, marginBottom: 24 }} />
+
 
           
 
           {/* KPIs - Indicadores */}
           <Title order={3} mb="sm">Indicadores de Atividades e Resultados</Title>
-          <Grid style={{ marginBottom: 32 }}>
+<Group mt="md" mb="xl" justify="center" grow>
   {['Interações', 'Oportunidades', 'Valor Gerado'].map(title => (
-    <Grid.Col span={{ base: 12, sm: 6, md: 4 }} key={title}>
-      <Card shadow="md" padding="lg" radius="lg" withBorder>
-        <Title order={4} style={{ textAlign: 'center' }}>{title}</Title>
-        <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-          {kpis.find(k => k.title === title)?.value || 0}
-        </Text>
-      </Card>
-    </Grid.Col>
+    <CardPadrao
+      key={title}
+      titulo={title}
+      valor={kpis.find(k => k.title === title)?.value || 0}
+      cor="#0A5A64"
+      minWidth={220}
+    />
   ))}
-</Grid>
-
-
+</Group>
 <Divider style={{ marginTop: 24, marginBottom: 24 }} />
 
           {/* KPIs - Taxas */}
           <Title order={3} mb="sm">Taxas de Conversão por Etapa</Title>
-<Grid style={{ marginBottom: 32 }}>
-  ...
-</Grid>
-
+<Group mt="md" mb="xl" justify="center" grow>
+  {['Taxa Interação > Oportunidade', 'Taxa Oportunidade > Orçamento', 'Taxa Orçamento > Pedido'].map(title => (
+    <CardPadrao
+      key={title}
+      titulo={title}
+      valor={kpis.find(k => k.title === title)?.value || '0%'}
+      cor="#0A5A64"
+      minWidth={220}
+    />
+  ))}
+</Group>
+<Divider style={{ marginTop: 24, marginBottom: 24 }} />
 {/* >>>>>>> NOVOS CARDS DE ETAPA <<<<<<< */}
 <Title order={3} mb="sm" mt={24}>Resumo das Etapas Comerciais</Title>
 <Group mt="md" mb="xl" justify="center" grow>
@@ -531,38 +529,7 @@ const statsEtapas = resumoEtapas.map(({ etapa, key, cor }) => {
 <Divider style={{ marginTop: 24, marginBottom: 24 }} />
 
 
-          <Title order={3} mb="sm" mt={24}>Resumo das Etapas Comerciais</Title>
-<Group mt="md" mb="xl" grow>
-  {statsEtapas.map(({ etapa, cor, qtd, valor }) => (
-    <Card
-      key={etapa}
-      shadow="md"
-      padding="lg"
-      radius="lg"
-      withBorder
-      style={{
-        minWidth: 280,
-        maxWidth: 340,
-        textAlign: 'center',
-        margin: 8,
-        boxShadow: '0 2px 16px 0 #00000010',
-        border: 'none'
-      }}
-    >
-      <Title order={4} style={{ color: cor, fontWeight: 700, marginBottom: 6 }}>
-        {etapa}
-      </Title>
-      <Text size="xl" fw={700} style={{ color: '#111', marginBottom: 2 }}>{qtd}</Text>
-      <Text size="sm" color="dimmed" mb={6}>Qtd.</Text>
-      <Text size="lg" fw={600} style={{ color: cor }}>
-        {valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-      </Text>
-      <Text size="sm" color="dimmed">Valor Total</Text>
-    </Card>
-  ))}
-</Group>
-
-
+    
 
 
           
