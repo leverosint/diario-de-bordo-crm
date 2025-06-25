@@ -476,23 +476,42 @@ const statsEtapas = resumoEtapas.map(({ etapa, key, cor }) => {
 
           {/* KPIs - Taxas */}
           <Title order={3} mb="sm">Taxas de Conversão por Etapa</Title>
-          <Grid style={{ marginBottom: 32 }}>
-            {['Taxa Interação > Oportunidade', 'Taxa Oportunidade > Orçamento', 'Taxa Orçamento > Pedido'].map(title => (
-              <Grid.Col span={{ base: 12, sm: 6, md: 4 }} key={title}>
-                <Card shadow="md" padding="lg" radius="lg" withBorder>
-                  <Title order={4} style={{ textAlign: 'center' }}>{title}</Title>
-                  <Text size="xl" fw={700} style={{ textAlign: 'center' }}>
-                    {kpis.find(k => k.title === title)?.value || '0%'}
-                  </Text>
-                </Card>
-              </Grid.Col>
-            ))}
-          </Grid>
+<Group mt="md" mb="xl" grow>
+  {[
+    { title: 'Taxa Interação > Oportunidade', cor: '#005A64' },
+    { title: 'Taxa Oportunidade > Orçamento', cor: '#22b8cf' },
+    { title: 'Taxa Orçamento > Pedido', cor: '#13862A' },
+  ].map(({ title, cor }) => (
+    <Card
+      key={title}
+      shadow="md"
+      padding="lg"
+      radius="lg"
+      withBorder
+      style={{
+        minWidth: 280,
+        maxWidth: 340,
+        textAlign: 'center',
+        margin: 8,
+        boxShadow: '0 2px 16px 0 #00000010',
+        border: 'none'
+      }}
+    >
+      <Title order={4} style={{ color: cor, fontWeight: 700, marginBottom: 6 }}>
+        {title}
+      </Title>
+      <Text size="xl" fw={700} style={{ color: '#111', marginTop: 8 }}>
+        {kpis.find(k => k.title === title)?.value || '0%'}
+      </Text>
+    </Card>
+  ))}
+</Group>
+
 
           <Divider style={{ marginTop: 24, marginBottom: 24 }} />
 
           <Title order={3} mb="sm" mt={24}>Resumo das Etapas Comerciais</Title>
-          <Group mt="md" mb="xl" justify="center" grow>
+<Group mt="md" mb="xl" grow>
   {statsEtapas.map(({ etapa, cor, qtd, valor }) => (
     <Card
       key={etapa}
@@ -500,10 +519,19 @@ const statsEtapas = resumoEtapas.map(({ etapa, key, cor }) => {
       padding="lg"
       radius="lg"
       withBorder
-      style={{ minWidth: 180, textAlign: 'center', borderBottom: `4px solid ${cor}` }}
+      style={{
+        minWidth: 280,
+        maxWidth: 340,
+        textAlign: 'center',
+        margin: 8,
+        boxShadow: '0 2px 16px 0 #00000010',
+        border: 'none'
+      }}
     >
-      <Title order={4} style={{ color: cor, marginBottom: 8 }}>{etapa}</Title>
-      <Text size="xl" fw={700} style={{ marginBottom: 2 }}>{qtd}</Text>
+      <Title order={4} style={{ color: cor, fontWeight: 700, marginBottom: 6 }}>
+        {etapa}
+      </Title>
+      <Text size="xl" fw={700} style={{ color: '#111', marginBottom: 2 }}>{qtd}</Text>
       <Text size="sm" color="dimmed" mb={6}>Qtd.</Text>
       <Text size="lg" fw={600} style={{ color: cor }}>
         {valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -512,6 +540,7 @@ const statsEtapas = resumoEtapas.map(({ etapa, key, cor }) => {
     </Card>
   ))}
 </Group>
+
 
 
 
