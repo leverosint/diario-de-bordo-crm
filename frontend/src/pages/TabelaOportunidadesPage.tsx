@@ -28,7 +28,6 @@ interface Oportunidade {
   dias_sem_movimentacao?: number;
 }
 
-
 export default function TabelaOportunidadesPage() {
  
   const [dados, setDados] = useState<Oportunidade[]>([]);
@@ -424,33 +423,37 @@ const dadosFiltrados = useMemo(() => {
             clearable
           />
 {[
-  { label: 'Data início', value: dataInicio, onChange: setDataInicio },
-  { label: 'Data fim',    value: dataFim,    onChange: setDataFim },
-].map((item, idx) => (
-  <Box key={idx} style={{ minWidth: 160 }}>
-    <DatePickerInput
-      label={item.label}
-      placeholder={`Selecione ${item.label.toLowerCase()}`}
-      value={item.value}
-      onChange={item.onChange}
-      locale="pt-br"
-      dropdownType="popover"
-      clearable
-      rightSection={null}              // remove o ícone à direita
-      popoverProps={{ width: 500 }}    // largura do popover em pixels
-      classNames={{
-        input: styles.datePickerInput,  // se quiser estilizar o input
-        label: styles.datePickerLabel,  // se quiser estilizar o label
-      }}
-      valueFormat="DD/MM/YYYY"         // formatação da data
-    />
-  </Box>
-))}
+          { label: 'Data início', value: dataInicio, onChange: setDataInicio },
+          { label: 'Data fim',    value: dataFim,    onChange: setDataFim },
+        ].map((item, idx) => (
+          <Box key={idx} style={{ minWidth: 160 }}>
+            <DatePickerInput
+              label={item.label}
+              placeholder={`Selecione ${item.label.toLowerCase()}`}
+              value={item.value}
+              onChange={item.onChange}
+              locale="pt-br"
+              dropdownType="popover"
+              clearable
 
+              {/* remove o ícone do lado direito */}
+              rightSection={null}
 
+              {/* largura do popover em px */}
+              popoverProps={{ width: 500 }}
 
+              {/* formata a data no input */}
+              valueFormat="DD/MM/YYYY"
 
-        </Group>
+              {/* estilização opcional do input/label */}
+              classNames={{
+                input: styles.datePickerInput,
+                label: styles.datePickerLabel,
+              }}
+            />
+          </Box>
+        ))}
+      </Group>
 
         {carregando ? (
           <Loader />
