@@ -40,7 +40,7 @@ export default function TabelaOportunidadesPage() {
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [valorEdit, setValorEdit] = useState<string>('');
   const [observacaoEdit, setObservacaoEdit] = useState<string>('');
-  const [etapaTemporaria, setEtapaTemporaria] = useState<{ [id: number]: string }>({});
+
   const [popupAberto, setPopupAberto] = useState(false);
   
   const [pendentesMovimentacao, setPendentesMovimentacao] = useState<Oportunidade[]>([]);
@@ -74,14 +74,22 @@ const [numeroPedido, setNumeroPedido] = useState('');
       <li key={o.id} style={{ marginBottom: 24 }}>
         <b>{o.parceiro_nome}</b> (ID: {o.id}) — <span style={{ color: '#e8590c', fontWeight: 600 }}>{o.dias_sem_movimentacao} dias parado</span>
         <Group mt="xs" gap="xs">
-          <Select
-            data={etapaOptions}
-            value={o.etapa}
-            onChange={(novaEtapa) => handleStatusChangePopup(o.id, novaEtapa)}
-            placeholder="Atualizar status"
-            size="xs"
-            style={{ minWidth: 180 }}
-          />
+        <Select
+  value={o.etapa}
+  onChange={(value) => value && handleStatusChange(o.id, value)}
+  data={etapaOptions}
+  size="xs"
+  styles={{
+    input: {
+      backgroundColor: getStatusColor(o.etapa),
+      color: 'white',
+      fontWeight: 600,
+      textAlign: 'center',
+      borderRadius: 6,
+      minWidth: 120,
+    },
+  }}
+/>
         </Group>
       </li>
     ))}
@@ -237,46 +245,7 @@ const handleStatusChange = (id: number, novaEtapa: string | null) => {
 
 
 
-const handleStatusChangePopup = (id: number, novaEtapa: string | null) => {
-  if (!novaEtapa) return;
 
-
-
-
-  if (novaEtapa === 'perdida') {
-    abrirModalPerda(id);
-  } else {
-    const agora = new Date().toISOString();
-    axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
-      etapa: novaEtapa,
-      data_etapa: agora,
-      data_status: agora,
-    }, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(() => {
-      setDados(prev =>
-        prev.map(o =>
-          o.id === id
-            ? { ...o, etapa: novaEtapa, data_status: agora, data_etapa: agora, dias_sem_movimentacao: 0 }
-            : o
-        )
-      );
-
-      setPendentesMovimentacao(prev => {
-        const atualizado = prev.filter(o => o.id !== idMudandoStatus);
-        if (atualizado.length === 0) {
-          setPopupAberto(false);
-        }
-        return atualizado;
-      });
-      
-
-    }).catch(err => {
-      console.error('Erro ao atualizar etapa:', err);
-      alert('Erro ao atualizar etapa');
-    });
-  }
-};
 
 
 
@@ -347,11 +316,7 @@ const confirmarVendaPerdida = async () => {
           )
         );
     
-        setEtapaTemporaria((prev) => {
-          const novo = { ...prev };
-          delete novo[idMudandoStatus!];
-          return novo;
-        });
+       
     
         setModalAberto(false);
         setMotivoPerda('');
@@ -695,20 +660,20 @@ const dadosFiltrados = useMemo(() => {
 
                     <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                       <Table striped highlightOnHover withColumnBorders>
-                        <thead>
-                          <tr>
-                            <th className={styles.center}>ID</th>
-                            <th className={styles.left}>Parceiro</th>
-                            <th className={styles.center}>Valor</th>
-                            <th className={styles.center}>Data Criação</th>
-                            <th className={styles.center}>Data Etapa</th>
-                            <th className={styles.center}>Gatilho</th>
-                            <th className={styles.left}>Observação</th>
-                            <th className={styles.center}>Sem Movimentação</th>
-                            <th>Nº Pedido</th>
-                            <th className={styles.center}>Status</th>
-                                                      </tr>
-                        </thead>
+                      <thead>
+  <tr>
+    <th className={styles.center}>ID</th>
+    <th className={styles.left}>Parceiro</th>
+    <th className={styles.center}>Valor</th>
+    <th className={styles.center}>Data Criação</th>
+    <th className={styles.center}>Data Etapa</th>
+    <th className={styles.center}>Gatilho</th>
+    <th className={styles.left}>Observação</th>
+    <th className={styles.center}>Sem Movimentação</th>
+    <th className={styles.center}>Nº Pedido</th>
+    <th className={styles.center}>Status</th>
+  </tr>
+</thead>
                         <tbody>
   {lista.map((o) => {
     const emEdicao = editandoId === o.id;
@@ -716,10 +681,8 @@ const dadosFiltrados = useMemo(() => {
       <tr key={o.id}>
         {/* ID */}
         <td className={styles.center}>{o.id}</td>
-
         {/* Parceiro */}
         <td className={styles.left}>{o.parceiro_nome}</td>
-
         {/* Valor (editável) */}
         <td className={styles.center}>
           {emEdicao ? (
@@ -732,25 +695,16 @@ const dadosFiltrados = useMemo(() => {
             <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
           )}
         </td>
-
         {/* Data Criação */}
         <td className={styles.center}>
           {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
         </td>
-
         {/* Data Etapa */}
         <td className={styles.center}>
-          {o.data_etapa
-            ? new Date(o.data_etapa).toLocaleDateString('pt-BR')
-            : '-'}
+          {o.data_etapa ? new Date(o.data_etapa).toLocaleDateString('pt-BR') : '-'}
         </td>
-
         {/* Gatilho */}
-        <td className={styles.center}>
-          {o.gatilho_extra || '-'}
-        </td>
-
-
+        <td className={styles.center}>{o.gatilho_extra || '-'}</td>
         {/* Observação (editável) */}
         <td className={styles.left}>
           {emEdicao ? (
@@ -763,33 +717,35 @@ const dadosFiltrados = useMemo(() => {
             o.observacao || '-'
           )}
         </td>
-
         {/* Sem Movimentação */}
         <td className={styles.center}>
           {typeof o.dias_sem_movimentacao === 'number'
             ? `${o.dias_sem_movimentacao} dia${o.dias_sem_movimentacao === 1 ? '' : 's'}`
             : '-'}
         </td>
-
+        {/* Nº Pedido */}
+        <td className={styles.center}>
+          {o.numero_pedido || '-'}
+        </td>
         {/* Status + botões de editar/salvar */}
         <td className={styles.center}>
           <Group gap="xs" justify="center">
-            <Select
-              value={etapaTemporaria[o.id] || o.etapa}
-              onChange={(value) => handleStatusChange(o.id, value)}
-              data={etapaOptions}
-              size="xs"
-              styles={{
-                input: {
-                  backgroundColor: getStatusColor(o.etapa),
-                  color: 'white',
-                  fontWeight: 600,
-                  textAlign: 'center',
-                  borderRadius: 6,
-                  minWidth: 120,
-                },
-              }}
-            />
+          <Select
+  value={o.etapa}
+  onChange={(value) => value && handleStatusChange(o.id, value)}
+  data={etapaOptions}
+  size="xs"
+  styles={{
+    input: {
+      backgroundColor: getStatusColor(o.etapa),
+      color: 'white',
+      fontWeight: 600,
+      textAlign: 'center',
+      borderRadius: 6,
+      minWidth: 120,
+    },
+  }}
+/>
             {emEdicao ? (
               <>
                 <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
