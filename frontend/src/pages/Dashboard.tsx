@@ -43,6 +43,12 @@ const STATUS_LABELS: { [key: string]: string } = {
 };
 
 
+const resumoEtapas = [
+  { etapa: 'Oportunidade', key: 'oportunidade', cor: '#0A5A64' },
+  { etapa: 'Orçamento', key: 'orcamento', cor: '#2CA5A9' },
+  { etapa: 'Pedido', key: 'pedido', cor: '#13862A' },
+];
+
 
 
 
@@ -258,6 +264,23 @@ STATUS_ORDER.forEach(status => {
   });
 
 
+  // Adicione dentro do componente Dashboard, DEPOIS de const parceirosFiltrados...
+const statsEtapas = resumoEtapas.map(({ etapa, key, cor }) => {
+  // Se a sua lista correta é tabelaParceiros, pode usar ela mesmo. Se for outro array, troque aqui!
+  const oportunidades = (tabelaParceiros || []).filter((item) => {
+    // Se precisar, troque o campo para o nome correto, ex: item.status
+    return (item.etapa || '').toLowerCase() === key;
+  });
+  return {
+    etapa,
+    cor,
+    qtd: oportunidades.length,
+    valor: oportunidades.reduce((soma, item) => soma + (Number(item.valor) || 0), 0),
+  };
+});
+
+
+
 
 
 
@@ -467,6 +490,30 @@ STATUS_ORDER.forEach(status => {
           </Grid>
 
           <Divider style={{ marginTop: 24, marginBottom: 24 }} />
+
+          <Title order={3} mb="sm" mt={24}>Resumo das Etapas Comerciais</Title>
+          <Group mt="md" mb="xl" justify="center" grow>
+  {statsEtapas.map(({ etapa, cor, qtd, valor }) => (
+    <Card
+      key={etapa}
+      shadow="md"
+      padding="lg"
+      radius="lg"
+      withBorder
+      style={{ minWidth: 180, textAlign: 'center', borderBottom: `4px solid ${cor}` }}
+    >
+      <Title order={4} style={{ color: cor, marginBottom: 8 }}>{etapa}</Title>
+      <Text size="xl" fw={700} style={{ marginBottom: 2 }}>{qtd}</Text>
+      <Text size="sm" color="dimmed" mb={6}>Qtd.</Text>
+      <Text size="lg" fw={600} style={{ color: cor }}>
+        {valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+      </Text>
+      <Text size="sm" color="dimmed">Valor Total</Text>
+    </Card>
+  ))}
+</Group>
+
+
 
           
 
