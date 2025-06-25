@@ -163,3 +163,78 @@ body {
   width: 14px;
   height: 14px;
 }
+
+/* === Layout personalizado do calendário === */
+.customCalendar {
+  /* largura do popover */
+  width: 320px;
+}
+
+.customCalendarHeader {
+  /* header em linha só */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+}
+
+.customCalendarLevel {
+  /* mês/ano centralizado */
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+}
+
+.customCalendarControl {
+  /* botão de navegação (“<” / “>”) */
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.customCalendarControl svg {
+  /* ícone menor */
+  width: 16px;
+  height: 16px;
+}
+
+/* === Força largura maior no popover do DatePicker === */
+:global(.mantine-Popover-dropdown) {
+  width: 320px !important; /* ajuste para o valor que quiser */
+}
+
+/* === Header do calendário numa única linha === */
+:global(.mantine-Calendar-header) {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+/* === Mês/Ano centralizado entre as setas === */
+:global(.mantine-Calendar-level) {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* === Botões de navegação (“<” e “>”) === */
+:global(.mantine-Calendar-calendarHeaderControl) {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* === Ícones menores dentro dos botões === */
+:global(.mantine-Calendar-calendarHeaderControl svg) {
+  width: 16px;
+  height: 16px;
+}

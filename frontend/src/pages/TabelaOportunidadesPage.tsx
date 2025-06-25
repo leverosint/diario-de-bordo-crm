@@ -426,7 +426,7 @@ const dadosFiltrados = useMemo(() => {
 {[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
   { label: 'Data fim',    value: dataFim,    onChange: setDataFim }].map((item, idx) => (
   <Box key={idx} style={{ minWidth: 160 }}>
-    <DatePickerInput
+  <DatePickerInput
   label={item.label}
   placeholder={`Selecione ${item.label.toLowerCase()}`}
   value={item.value}
@@ -434,12 +434,9 @@ const dadosFiltrados = useMemo(() => {
   locale="pt-br"
   dropdownType="popover"
   clearable
-  rightSection={null}    // esconde o ícone grande do input
-  classNames={{          // mapeia o slot interno para sua classe
-    calendarHeaderControl: styles.datePickerHeaderControl,
-  }}
+  rightSection={null}      // esconde o ícone do input
   valueFormat="DD/MM/YYYY"
-    />
+/>
   </Box>
 ))}
 
