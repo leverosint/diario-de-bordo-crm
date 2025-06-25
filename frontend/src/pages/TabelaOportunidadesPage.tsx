@@ -423,30 +423,27 @@ const dadosFiltrados = useMemo(() => {
             data={etapaOptions}
             clearable
           />
-{[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
-  { label: 'Data fim',    value: dataFim,    onChange: setDataFim }].map((item, idx) => (
+{[
+  { label: 'Data início', value: dataInicio, onChange: setDataInicio },
+  { label: 'Data fim',    value: dataFim,    onChange: setDataFim },
+].map((item, idx) => (
   <Box key={idx} style={{ minWidth: 160 }}>
-<DatePickerInput
-  label={item.label}
-  placeholder={`Selecione ${item.label.toLowerCase()}`}
-  value={item.value}
-  onChange={item.onChange}
-  locale="pt-br"
-  dropdownType="popover"
-  clearable
-  rightSection={null}
-  valueFormat="DD/MM/YYYY"
-
-  // Só o popover (tamanho)
-  popoverProps={{ width: 350 }}
-
-  // Se quiser estilizar só o input/label, ainda cabe aqui:
-  classNames={{
-    input: styles.datePickerInput,
-    label: styles.datePickerLabel,
-  }}
-/>
-
+    <DatePickerInput
+      label={item.label}
+      placeholder={`Selecione ${item.label.toLowerCase()}`}
+      value={item.value}
+      onChange={item.onChange}
+      locale="pt-br"
+      dropdownType="popover"
+      clearable
+      rightSection={null}              // remove o ícone à direita
+      popoverProps={{ width: 500 }}    // largura do popover em pixels
+      classNames={{
+        input: styles.datePickerInput,  // se quiser estilizar o input
+        label: styles.datePickerLabel,  // se quiser estilizar o label
+      }}
+      valueFormat="DD/MM/YYYY"         // formatação da data
+    />
   </Box>
 ))}
 
