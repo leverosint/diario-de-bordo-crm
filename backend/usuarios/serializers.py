@@ -40,7 +40,7 @@ class InteracaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Interacao
         fields = [
-            'id', 'parceiro', 'parceiro_nome', 'usuario', 'usuario_nome',
+            'id','codigo', 'parceiro', 'parceiro_nome', 'usuario', 'usuario_nome',
             'tipo', 'data_interacao', 'entrou_em_contato', 'status', 'gatilho_extra'
         ]
         read_only_fields = ['data_interacao', 'usuario', 'status']
@@ -51,7 +51,7 @@ class InteracaoPendentesSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Parceiro
-        fields = ['id', 'parceiro', 'unidade', 'classificacao', 'status']
+        fields = ['id', 'codigo' 'parceiro', 'unidade', 'classificacao', 'status']
 
     def get_parceiro(self, obj):
         return obj.parceiro
@@ -68,7 +68,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Oportunidade
         fields = [
-            'id', 'parceiro', 'parceiro_nome', 'usuario', 'usuario_nome',
+            'id', 'codigo', 'parceiro', 'parceiro_nome', 'usuario', 'usuario_nome',
             'valor', 'observacao', 'motivo_venda_perdida', 'etapa',
             'data_criacao', 'data_status', 'data_etapa',
             'dias_sem_movimentacao', 'gatilho_extra'
