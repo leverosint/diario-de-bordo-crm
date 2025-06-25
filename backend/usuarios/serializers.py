@@ -1,3 +1,5 @@
+# serializers.py
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra
@@ -112,11 +114,19 @@ class ReportParceiroSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Parceiro
         fields = [
-            'id', 'codigo', 'parceiro',
-            'consultor_id', 'consultor_nome',
-            'unidade', 'cidade', 'uf',
-            'canal_venda', 'status',
-            'primeiro_fat', 'ultimo_fat', 'atualizado_em',
+            'id',
+            'codigo',           # <–– agora incluído
+            'parceiro',
+            'consultor_id',
+            'consultor_nome',
+            'unidade',
+            'cidade',
+            'uf',
+            'canal_venda',
+            'status',
+            'primeiro_fat',
+            'ultimo_fat',
+            'atualizado_em',
         ]
 
     def get_consultor_id(self, obj):
