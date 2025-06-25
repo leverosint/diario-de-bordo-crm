@@ -22,6 +22,7 @@ interface Oportunidade {
   etapa: string;
   data_criacao: string;
   data_status: string | null;
+  numero_pedido?: string; // ✅ isso precisa estar aqui
   data_etapa: string | null; // <-- 🔥 Adiciona isso
   gatilho_extra?: string;
   observacao?: string;
@@ -39,13 +40,17 @@ export default function TabelaOportunidadesPage() {
   const [editandoId, setEditandoId] = useState<number | null>(null);
   const [valorEdit, setValorEdit] = useState<string>('');
   const [observacaoEdit, setObservacaoEdit] = useState<string>('');
-  const [modalAberto, setModalAberto] = useState(false);
-  const [idMudandoStatus, setIdMudandoStatus] = useState<number | null>(null);
+  const [etapaTemporaria, setEtapaTemporaria] = useState<{ [id: number]: string }>({});
+  
   const [popupAberto, setPopupAberto] = useState(false);
   const [pendentesMovimentacao, setPendentesMovimentacao] = useState<Oportunidade[]>([]);
-  const [motivoPerda, setMotivoPerda] = useState('');
+  
   const [filtroGatilho, setFiltroGatilho] = useState<string>('');
-
+  
+  const [idMudandoStatus, setIdMudandoStatus] = useState<number | null>(null);
+const [modalAberto, setModalAberto] = useState(false);
+const [motivoPerda, setMotivoPerda] = useState('');
+const [numeroPedido, setNumeroPedido] = useState('');
 
 
   const abrirModalPerda = (id: number) => {
@@ -55,6 +60,7 @@ export default function TabelaOportunidadesPage() {
   };
 
   
+  const [etapaParaAtualizar, setEtapaParaAtualizar] = useState<string | null>(null);
 
   // extrai todas as strings de gatilho que realmente existem na lista
   const gatilhoOptions = useMemo(() => {
@@ -133,36 +139,64 @@ useEffect(() => {
 const handleStatusChange = (id: number, novaEtapa: string | null) => {
   if (!novaEtapa) return;
 
+  const oportunidade = dados.find((item) => item.id === id);
+  const etapaAtual = oportunidade?.etapa || '';
+
   if (novaEtapa === 'perdida') {
-    abrirModalPerda(id);
-  } else {
-    const agora = new Date().toISOString();
-    axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
-      etapa: novaEtapa,
-      data_etapa: new Date().toISOString(), // 🔥 Atualiza data_etapa
-      data_status: new Date().toISOString(), // 🔥 Atualiza data_status
-    }, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(() => {
-      setDados(prev =>
-        prev.map(o =>
-          o.id === id
-            ? { ...o, etapa: novaEtapa, data_status: agora }
-            : o
-        )
-      );
-    }).catch(err => {
-      console.error('Erro ao atualizar etapa:', err);
-      alert('Erro ao atualizar etapa');
-    });
+    setEtapaTemporaria((prev) => ({ ...prev, [id]: etapaAtual }));
+    setIdMudandoStatus(id);
+    setMotivoPerda('');
+    setEtapaParaAtualizar(novaEtapa);
+    setModalAberto(true);
+    return;
   }
+
+  if (novaEtapa === 'aguardando') {
+    setEtapaTemporaria((prev) => ({ ...prev, [id]: etapaAtual }));
+    setIdMudandoStatus(id);
+    setNumeroPedido('');
+    setEtapaParaAtualizar(novaEtapa);
+    setModalAberto(true);
+    return;
+  }
+
+  atualizarEtapaDireta(id, novaEtapa);
 };
+
+
+
+const atualizarEtapaDireta = (id: number, novaEtapa: string) => {
+  const agora = new Date().toISOString();
+
+  axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
+    etapa: novaEtapa,
+    data_etapa: agora,
+    data_status: agora,
+  }, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(() => {
+    setDados(prev =>
+      prev.map(o =>
+        o.id === id
+          ? { ...o, etapa: novaEtapa, data_etapa: agora, data_status: agora, dias_sem_movimentacao: 0 }
+          : o
+      )
+    );
+  }).catch(err => {
+    console.error('Erro ao atualizar etapa:', err);
+    alert('Erro ao atualizar etapa');
+  });
+};
+
+
 
 
 
 
 const handleStatusChangePopup = (id: number, novaEtapa: string | null) => {
   if (!novaEtapa) return;
+
+
 
   if (novaEtapa === 'perdida') {
     abrirModalPerda(id);
@@ -228,6 +262,66 @@ const confirmarVendaPerdida = async () => {
       }
     );
 
+
+
+
+    // confirmar numero pedido
+    const confirmarNumeroPedido = async () => {
+      if (!idMudandoStatus || numeroPedido.trim() === '') {
+        alert('Por favor, preencha o número do pedido.');
+        return;
+      }
+    
+      const agora = new Date().toISOString();
+    
+      try {
+        await axios.patch(
+          `${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`,
+          {
+            etapa: 'aguardando',
+            numero_pedido: numeroPedido,
+            data_etapa: agora,
+            data_status: agora,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+    
+        setDados(prev =>
+          prev.map(o =>
+            o.id === idMudandoStatus
+              ? {
+                  ...o,
+                  etapa: 'aguardando',
+                  numero_pedido: numeroPedido,
+                  data_etapa: agora,
+                  data_status: agora,
+                  dias_sem_movimentacao: 0,
+                }
+              : o
+          )
+        );
+    
+        setEtapaTemporaria((prev) => {
+          const novo = { ...prev };
+          delete novo[idMudandoStatus!];
+          return novo;
+        });
+    
+        setModalAberto(false);
+        setNumeroPedido('');
+        setEtapaParaAtualizar(null);
+        setIdMudandoStatus(null);
+      } catch (err) {
+        console.error('Erro ao salvar número do pedido:', err);
+        alert('Erro ao atualizar etapa.');
+      }
+    };
+    
+    
+    
+
     // Reflete no front-end em `dados`
     setDados(prev =>
       prev.map(o =>
@@ -253,6 +347,73 @@ const confirmarVendaPerdida = async () => {
       }
       return atualizado;
     });
+
+
+
+    // MODAL ADICIONAR PEDIDO AGUARDANDO PAGAMETNO
+
+<Modal
+  opened={modalAberto}
+  onClose={() => setModalAberto(false)}
+  title={
+    etapaParaAtualizar === 'perdida'
+      ? 'Motivo da Venda Perdida'
+      : etapaParaAtualizar === 'aguardando'
+      ? 'Informar Número do Pedido'
+      : ''
+  }
+  centered
+  radius="md"
+  withinPortal={false}
+>
+  {etapaParaAtualizar === 'perdida' && (
+    <>
+      <TextInput
+        label="Motivo da perda"
+        value={motivoPerda}
+        onChange={(e) => setMotivoPerda(e.currentTarget.value)}
+      />
+      <Group mt="md" justify="center">
+        <Button onClick={() => setModalAberto(false)}>Cancelar</Button>
+        <Button color="green" onClick={confirmarVendaPerdida}>Confirmar</Button>
+      </Group>
+    </>
+  )}
+
+  {etapaParaAtualizar === 'aguardando' && (
+    <>
+      <TextInput
+        label="Número do Pedido"
+        value={numeroPedido}
+        onChange={(e) => setNumeroPedido(e.currentTarget.value)}
+      />
+      <Group mt="md" justify="center">
+        <Button onClick={() => setModalAberto(false)}>Cancelar</Button>
+        <Button color="green" onClick={confirmarNumeroPedido}>Confirmar</Button>
+      </Group>
+    </>
+  )}
+
+  {etapaParaAtualizar === 'aguardando' && (
+    <>
+      <TextInput
+        label="Número do Pedido"
+        placeholder="Digite o número do pedido"
+        value={numeroPedido}
+        onChange={(e) => setNumeroPedido(e.currentTarget.value)}
+        required
+      />
+      <Group justify="center" mt="md">
+        <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
+          Cancelar
+        </Button>
+        <Button color="green" onClick={confirmarNumeroPedido}>
+          Confirmar
+        </Button>
+      </Group>
+    </>
+  )}
+</Modal>
 
     // Fecha modal e limpa estado
     setModalAberto(false);
@@ -581,8 +742,8 @@ const dadosFiltrados = useMemo(() => {
         <td className={styles.center}>
           <Group gap="xs" justify="center">
             <Select
-              value={o.etapa}
-              onChange={(value) => value && handleStatusChange(o.id, value)}
+              value={etapaTemporaria[o.id] || o.etapa}
+              onChange={(value) => handleStatusChange(o.id, value)}
               data={etapaOptions}
               size="xs"
               styles={{
