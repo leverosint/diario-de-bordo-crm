@@ -426,29 +426,26 @@ const dadosFiltrados = useMemo(() => {
 {[{ label: 'Data início', value: dataInicio, onChange: setDataInicio },
   { label: 'Data fim',    value: dataFim,    onChange: setDataFim }].map((item, idx) => (
   <Box key={idx} style={{ minWidth: 160 }}>
-<DatePickerInput
-  label={item.label}
-  placeholder={`Selecione ${item.label.toLowerCase()}`}
-  value={item.value}
-  onChange={item.onChange}
-  locale="pt-br"
-  dropdownType="popover"
-  clearable
-  rightSection={null}
+    <DatePickerInput
+      label={item.label}
+      placeholder={`Selecione ${item.label.toLowerCase()}`}
+      value={item.value}
+      onChange={item.onChange}
+      locale="pt-br"
+      dropdownType="popover"
+      clearable
+      rightSection={null}
 
-  // 1) força o width do pop-over
-  popoverProps={{ width: 350 }}
+      // somente largura do popover — essa prop existe no PopoverProps
+      popoverProps={{ width: 350 }}
 
-  // 2) injeta classes personalizadas
-
-
-  valueFormat="DD/MM/YYYY"
-
-
-/>
-
+      // formata o texto no input
+      valueFormat="DD/MM/YYYY"
+    />
   </Box>
 ))}
+
+
 
 
         </Group>

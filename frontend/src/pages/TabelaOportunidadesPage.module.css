@@ -90,59 +90,28 @@ body {
   text-align: center;
 }
 
-/* === DatePicker personalizado via CSS Modules === */
+/* define o tamanho do dropdown inteiro */
 .datePickerDropdown {
-  width: 350px !important;
+  width: 350px;
 }
 
+/* cabeçalho do calendário (mês + setas) */
 .datePickerHeader {
-  display: flex !important;
+  display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
 }
 
+/* o título do mês */
 .datePickerLevel {
-  flex: 1 !important;
-  text-align: center !important;
-  font-weight: 600 !important;
-}
-
-.datePickerControl {
-  width: 30px !important;
-  height: 30px !important;
-  border-radius: 4px !important;
-  border: 1px solid #ccc !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-/* Ícones menores dentro das setas */
-.datePickerControl svg {
-  width: 16px !important;
-  height: 16px !important;
-}
-
-/* === Overrides globais do Mantine Calendar (caso ainda queira reforçar) === */
-:global(.mantine-Popover-dropdown) {
-  width: 350px !important;
-}
-
-:global(.mantine-Calendar-header) {
-  display: flex !important;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-}
-
-:global(.mantine-Calendar-level) {
   flex: 1;
   text-align: center;
   font-weight: 600;
 }
 
-:global(.mantine-Calendar-calendarHeaderControl) {
+/* botão de avanço/retrocesso */
+.datePickerControl {
   width: 30px;
   height: 30px;
   border-radius: 4px;
@@ -152,11 +121,8 @@ body {
   justify-content: center;
 }
 
-:global(.mantine-Calendar-calendarHeaderControl svg) {
+/* tamanho do ícone dentro do botão */
+.datePickerControl svg {
   width: 16px;
   height: 16px;
-}
-
-:global(.mantine-Calendar-months) {
-  width: 100% !important;
 }
