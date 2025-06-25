@@ -137,3 +137,75 @@ tbody tr:nth-child(odd) {
   background-color: transparent;
 }
 
+/* =========================== */
+/* Mantine DatePicker Overrides */
+/* =========================== */
+
+/* Popover que envolve o calendário */
+.mantine-Popover-dropdown {
+  width: 350px !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+/* Cabeçalho do calendário (mês + navegação) */
+.mantine-Calendar-header {
+  background-color: #f7f9fa;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Título do mês */
+.mantine-Calendar-level {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-transform: capitalize;
+}
+
+/* Botões ‹ › */
+.mantine-Calendar-calendarHeaderControl {
+  width: 30px;
+  height: 30px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Remove o ícone SVG das setas */
+.mantine-Calendar-calendarHeaderControl svg {
+  display: none !important;
+}
+
+/* Cabeçalhos de dia da semana */
+.mantine-Calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  color: #555;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Células de cada dia */
+.mantine-Calendar-day {
+  border-radius: 4px;
+  padding: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+/* Remove o ícone de calendário do input */
+.mantine-DatePickerInput-icon,
+.mantine-DatePickerInput-rightSection {
+  display: none !important;
+}
+
+/* Ajuste de padding no input após remover o ícone */
+.mantine-DatePickerInput-input {
+  padding-right: 0.5rem !important;
+}
