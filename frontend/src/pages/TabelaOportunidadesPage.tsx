@@ -199,61 +199,39 @@ useEffect(() => {
   }
 }, [dadosComDias]);
 
-
-// 1) primeiro defina esta função acima de handleStatusChange:
-const atualizarEtapaDireta = (id: number, novaEtapa: string) => {
-  const agora = new Date().toISOString();
-
-  axios
-    .patch(
-      `${import.meta.env.VITE_API_URL}/oportunidades/${id}/`,
-      {
-        etapa: novaEtapa,
-        data_etapa: agora,
-        data_status: agora,
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    .then(() => {
-      setDados((prev) =>
-        prev.map((o) =>
-          o.id === id
-            ? { ...o, etapa: novaEtapa, data_etapa: agora, data_status: agora, dias_sem_movimentacao: 0 }
-            : o
-        )
-      );
-    })
-    .catch((err) => {
-      console.error('Erro ao atualizar etapa:', err);
-      alert('Erro ao atualizar etapa');
-    });
-};
-
 // 2) depois o seu handleStatusChange, chamando atualizarEtapaDireta:
 const handleStatusChange = (id: number, novaEtapa: string | null) => {
   if (!novaEtapa) return;
 
-  const oportunidade = dados.find((item) => item.id === id);
-  const etapaAtual = oportunidade?.etapa ?? '';
-  setEtapaTemporaria((prev) => ({ ...prev, [id]: etapaAtual }));
-
   if (novaEtapa === 'perdida') {
-    setIdMudandoStatus(id);
+    abrirModalPerda(id);
     setEtapaParaAtualizar('perdida');
-    setMotivoPerda('');
-    setModalAberto(true);
-    return;
-  }
-
-  if (novaEtapa === 'aguardando') {
+  } else if (novaEtapa === 'aguardando') {
     setIdMudandoStatus(id);
     setEtapaParaAtualizar('aguardando');
     setNumeroPedido('');
     setModalAberto(true);
-    return;
+  } else {
+    const agora = new Date().toISOString();
+    axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
+      etapa: novaEtapa,
+      data_etapa: agora,
+      data_status: agora,
+    }, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(() => {
+      setDados(prev =>
+        prev.map(o =>
+          o.id === id
+            ? { ...o, etapa: novaEtapa, data_status: agora, data_etapa: agora }
+            : o
+        )
+      );
+    }).catch(err => {
+      console.error('Erro ao atualizar etapa:', err);
+      alert('Erro ao atualizar etapa');
+    });
   }
-
-  atualizarEtapaDireta(id, novaEtapa);
 };
 
 
@@ -851,7 +829,7 @@ const dadosFiltrados = useMemo(() => {
   <Modal
     opened={modalAberto}
     onClose={() => setModalAberto(false)}
-    title="Marcar como Venda Perdida"
+    title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
     centered
     radius="md"
     withinPortal={false}
@@ -861,35 +839,42 @@ const dadosFiltrados = useMemo(() => {
     }}
   >
     <div className={styles.centralizado}>
-      <Select
-        label="Motivo da Venda Perdida"
-        placeholder="Selecione"
-        data={[
-          { value: 'preco', label: 'Preço' },
-          { value: 'prazo', label: 'Prazo' },
-          { value: 'concorrente', label: 'Fechou com concorrente' },
-          { value: 'fora_perfil', label: 'Fora de perfil' },
-          { value: 'nao_responde', label: 'Cliente não respondeu' },
-          { value: 'outro', label: 'Outro' },
-        ]}
-        value={motivoPerda}
-        onChange={(value) => setMotivoPerda(value ?? '')}
-        required
-        clearable
-      />
+      {etapaParaAtualizar === 'perdida' ? (
+        <Select
+          label="Motivo da Venda Perdida"
+          placeholder="Selecione"
+          data={[
+            { value: 'preco', label: 'Preço' },
+            { value: 'prazo', label: 'Prazo' },
+            { value: 'concorrente', label: 'Fechou com concorrente' },
+            { value: 'fora_perfil', label: 'Fora de perfil' },
+            { value: 'nao_responde', label: 'Cliente não respondeu' },
+            { value: 'outro', label: 'Outro' },
+          ]}
+          value={motivoPerda}
+          onChange={(value) => setMotivoPerda(value ?? '')}
+          required
+          clearable
+        />
+      ) : (
+        <TextInput
+          label="Número do Pedido"
+          value={numeroPedido}
+          onChange={(e) => setNumeroPedido(e.currentTarget.value)}
+          required
+        />
+      )}
     </div>
-  
     <Group justify="center" mt="md">
       <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
         Cancelar
       </Button>
-      <Button color="green" onClick={confirmarVendaPerdida}>
+      <Button color="green" onClick={etapaParaAtualizar === 'perdida' ? confirmarVendaPerdida : confirmarNumeroPedido}>
         Confirmar
       </Button>
     </Group>
   </Modal>
 )}
-
    
 
 
