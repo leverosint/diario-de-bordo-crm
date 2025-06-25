@@ -436,16 +436,16 @@ const dadosFiltrados = useMemo(() => {
               dropdownType="popover"
               clearable
 
-              {/* remove o ícone do lado direito */}
+              /* remove o ícone do lado direito */
               rightSection={null}
 
-              {/* largura do popover em px */}
+              /* largura do popover em px */
               popoverProps={{ width: 500 }}
 
-              {/* formata a data no input */}
+              /* formata a data no input */
               valueFormat="DD/MM/YYYY"
 
-              {/* estilização opcional do input/label */}
+              /* estilização opcional do input/label */
               classNames={{
                 input: styles.datePickerInput,
                 label: styles.datePickerLabel,
