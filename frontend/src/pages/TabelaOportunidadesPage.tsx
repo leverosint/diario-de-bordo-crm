@@ -668,103 +668,80 @@ const dadosFiltrados = useMemo(() => {
                     </Group>
 
                     <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-<div style={{ maxHeight: 320, overflowY: 'auto', marginTop: 16 }}>
+                    <div style={{ maxHeight: 320, overflowY: 'auto' }}>
   <Table
     striped
     highlightOnHover
     withColumnBorders
-    style={{
-      minWidth: 1200,
-      fontSize: 15,
-      background: '#fff',
-      borderRadius: 14,
-      border: '1px solid #ececec',
-      overflow: 'hidden',
-      tableLayout: 'fixed',
-      boxShadow: '0 3px 18px #00000010',
-    }}
+    style={{ minWidth: 1200, fontSize: 15, tableLayout: 'fixed' }}
   >
     <thead>
       <tr>
-        <th style={{ width: 60, textAlign: 'center', padding: '12px 4px', background: '#fafbfc', fontWeight: 700, fontSize: 15 }}>ID</th>
-        <th style={{ width: 180, textAlign: 'left', padding: '12px 8px', background: '#fafbfc', fontWeight: 700 }}>Parceiro</th>
-        <th style={{ width: 130, textAlign: 'right', padding: '12px 8px', background: '#fafbfc', fontWeight: 700 }}>Valor</th>
-        <th style={{ width: 110, textAlign: 'center', padding: '12px 8px', background: '#fafbfc', fontWeight: 700 }}>Criação</th>
-        <th style={{ width: 110, textAlign: 'center', padding: '12px 8px', background: '#fafbfc', fontWeight: 700 }}>Etapa</th>
-        <th style={{ width: 120, textAlign: 'center', padding: '12px 8px', background: '#fafbfc', fontWeight: 700 }}>Gatilho</th>
-        <th style={{ width: 220, textAlign: 'left', padding: '12px 8px', background: '#fafbfc', fontWeight: 700 }}>Observação</th>
-        <th style={{ width: 80, textAlign: 'center', padding: '12px 8px', background: '#fafbfc', fontWeight: 700 }}>Sem Mov.</th>
-        <th style={{ width: 130, textAlign: 'center', padding: '12px 8px', background: '#fafbfc', fontWeight: 700 }}>Nº Pedido</th>
-        <th style={{ width: 200, textAlign: 'center', padding: '12px 8px', background: '#fafbfc', fontWeight: 700 }}>Status</th>
+        <th style={{ width: 60, textAlign: 'center', padding: '8px 4px' }}>ID</th>
+        <th style={{ width: 160, textAlign: 'left', padding: '8px 8px' }}>Parceiro</th>
+        <th style={{ width: 120, textAlign: 'right', padding: '8px 8px' }}>Valor</th>
+        <th style={{ width: 110, textAlign: 'center', padding: '8px 8px' }}>Data Criação</th>
+        <th style={{ width: 110, textAlign: 'center', padding: '8px 8px' }}>Data Etapa</th>
+        <th style={{ width: 120, textAlign: 'center', padding: '8px 8px' }}>Gatilho</th>
+        <th style={{ width: 180, textAlign: 'left', padding: '8px 8px' }}>Observação</th>
+        <th style={{ width: 80, textAlign: 'center', padding: '8px 8px' }}>Sem Mov.</th>
+        <th style={{ width: 130, textAlign: 'center', padding: '8px 8px' }}>Nº Pedido</th>
+        <th style={{ width: 200, textAlign: 'center', padding: '8px 8px' }}>Status</th>
       </tr>
     </thead>
     <tbody>
       {lista.map((o) => {
         const emEdicao = editandoId === o.id;
         return (
-          <tr key={o.id} style={{ height: 54 }}>
-            <td style={{ textAlign: 'center', padding: '8px 4px', background: '#fff' }}>{o.id}</td>
-            <td style={{ textAlign: 'left', padding: '8px 8px', background: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>
-              {o.parceiro_nome}
-            </td>
-            <td style={{ textAlign: 'right', padding: '8px 8px', background: '#fff' }}>
+          <tr key={o.id} style={{ height: 50 }}>
+            <td style={{ textAlign: 'center', padding: '6px 4px' }}>{o.id}</td>
+            <td style={{ textAlign: 'left', padding: '6px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>{o.parceiro_nome}</td>
+            <td style={{ textAlign: 'right', padding: '6px 8px' }}>
               {emEdicao ? (
                 <TextInput
                   value={valorEdit}
                   onChange={(e) => setValorEdit(e.currentTarget.value)}
                   size="xs"
-                  style={{ minWidth: 70 }}
                 />
               ) : (
                 <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
               )}
             </td>
-            <td style={{ textAlign: 'center', padding: '8px 8px', background: '#fff' }}>
+            <td style={{ textAlign: 'center', padding: '6px 8px' }}>
               {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
             </td>
-            <td style={{ textAlign: 'center', padding: '8px 8px', background: '#fff' }}>
+            <td style={{ textAlign: 'center', padding: '6px 8px' }}>
               {o.data_etapa ? new Date(o.data_etapa).toLocaleDateString('pt-BR') : '-'}
             </td>
-            <td style={{ textAlign: 'center', padding: '8px 8px', background: '#fff' }}>{o.gatilho_extra || '-'}</td>
-            <td style={{
-              textAlign: 'left',
-              padding: '8px 8px',
-              background: '#fff',
-              maxWidth: 200,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              fontSize: 14
-            }}>
+            <td style={{ textAlign: 'center', padding: '6px 8px' }}>{o.gatilho_extra || '-'}</td>
+            <td style={{ textAlign: 'left', padding: '6px 8px', maxWidth: 180, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {emEdicao ? (
                 <TextInput
                   value={observacaoEdit}
                   onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
                   size="xs"
-                  style={{ minWidth: 80 }}
                 />
               ) : (
                 o.observacao || '-'
               )}
             </td>
-            <td style={{ textAlign: 'center', padding: '8px 8px', background: '#fff' }}>
+            <td style={{ textAlign: 'center', padding: '6px 8px' }}>
               {typeof o.dias_sem_movimentacao === 'number'
                 ? `${o.dias_sem_movimentacao} dia${o.dias_sem_movimentacao === 1 ? '' : 's'}`
                 : '-'}
             </td>
-            <td style={{ textAlign: 'center', padding: '8px 8px', background: '#fff' }}>
+            <td style={{ textAlign: 'center', padding: '6px 8px' }}>
               {emEdicao ? (
                 <TextInput
                   value={numeroPedidoEdit}
                   onChange={(e) => setNumeroPedidoEdit(e.currentTarget.value)}
                   size="xs"
-                  style={{ minWidth: 80 }}
                 />
               ) : (
                 o.numero_pedido || '-'
               )}
             </td>
-            <td style={{ textAlign: 'center', padding: '8px 8px', background: '#fff' }}>
+            <td style={{ textAlign: 'center', padding: '6px 8px' }}>
               <Group gap="xs" justify="center" style={{ flexWrap: 'nowrap' }}>
                 <Select
                   value={o.etapa}
@@ -807,7 +784,6 @@ const dadosFiltrados = useMemo(() => {
     </tbody>
   </Table>
 </div>
-
 
                     </div>
                   </Card>
