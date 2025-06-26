@@ -668,122 +668,133 @@ const dadosFiltrados = useMemo(() => {
                     </Group>
 
                     <div style={{ maxHeight: 300, overflowY: 'auto' }}>
-                    <div style={{ maxHeight: 320, overflowY: 'auto' }}>
-  <Table
-    striped
-    highlightOnHover
-    withColumnBorders
-    style={{ minWidth: 1200, fontSize: 15, tableLayout: 'fixed' }}
-  >
-    <thead>
-      <tr>
-        <th style={{ width: 60, textAlign: 'center', padding: '8px 4px' }}>ID</th>
-        <th style={{ width: 160, textAlign: 'left', padding: '8px 8px' }}>Parceiro</th>
-        <th style={{ width: 120, textAlign: 'right', padding: '8px 8px' }}>Valor</th>
-        <th style={{ width: 110, textAlign: 'center', padding: '8px 8px' }}>Data Criação</th>
-        <th style={{ width: 110, textAlign: 'center', padding: '8px 8px' }}>Data Etapa</th>
-        <th style={{ width: 120, textAlign: 'center', padding: '8px 8px' }}>Gatilho</th>
-        <th style={{ width: 180, textAlign: 'left', padding: '8px 8px' }}>Observação</th>
-        <th style={{ width: 80, textAlign: 'center', padding: '8px 8px' }}>Sem Mov.</th>
-        <th style={{ width: 130, textAlign: 'center', padding: '8px 8px' }}>Nº Pedido</th>
-        <th style={{ width: 200, textAlign: 'center', padding: '8px 8px' }}>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {lista.map((o) => {
-        const emEdicao = editandoId === o.id;
-        return (
-          <tr key={o.id} style={{ height: 50 }}>
-            <td style={{ textAlign: 'center', padding: '6px 4px' }}>{o.id}</td>
-            <td style={{ textAlign: 'left', padding: '6px 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 140 }}>{o.parceiro_nome}</td>
-            <td style={{ textAlign: 'right', padding: '6px 8px' }}>
-              {emEdicao ? (
-                <TextInput
-                  value={valorEdit}
-                  onChange={(e) => setValorEdit(e.currentTarget.value)}
-                  size="xs"
-                />
-              ) : (
-                <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
-              )}
-            </td>
-            <td style={{ textAlign: 'center', padding: '6px 8px' }}>
-              {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
-            </td>
-            <td style={{ textAlign: 'center', padding: '6px 8px' }}>
-              {o.data_etapa ? new Date(o.data_etapa).toLocaleDateString('pt-BR') : '-'}
-            </td>
-            <td style={{ textAlign: 'center', padding: '6px 8px' }}>{o.gatilho_extra || '-'}</td>
-            <td style={{ textAlign: 'left', padding: '6px 8px', maxWidth: 180, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {emEdicao ? (
-                <TextInput
-                  value={observacaoEdit}
-                  onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
-                  size="xs"
-                />
-              ) : (
-                o.observacao || '-'
-              )}
-            </td>
-            <td style={{ textAlign: 'center', padding: '6px 8px' }}>
-              {typeof o.dias_sem_movimentacao === 'number'
-                ? `${o.dias_sem_movimentacao} dia${o.dias_sem_movimentacao === 1 ? '' : 's'}`
-                : '-'}
-            </td>
-            <td style={{ textAlign: 'center', padding: '6px 8px' }}>
-              {emEdicao ? (
-                <TextInput
-                  value={numeroPedidoEdit}
-                  onChange={(e) => setNumeroPedidoEdit(e.currentTarget.value)}
-                  size="xs"
-                />
-              ) : (
-                o.numero_pedido || '-'
-              )}
-            </td>
-            <td style={{ textAlign: 'center', padding: '6px 8px' }}>
-              <Group gap="xs" justify="center" style={{ flexWrap: 'nowrap' }}>
-                <Select
-                  value={o.etapa}
-                  onChange={(value) => value && handleStatusChange(o.id, value)}
-                  data={etapaOptions.filter(opt =>
-                    opt.value === o.etapa ||
-                    transicoesPermitidas[o.etapa]?.includes(opt.value)
-                  )}
-                  size="xs"
-                  styles={{
-                    input: {
-                      backgroundColor: getStatusColor(o.etapa),
-                      color: 'white',
-                      fontWeight: 600,
-                      textAlign: 'center',
-                      borderRadius: 6,
-                      minWidth: 120,
-                    },
-                  }}
-                />
-                {emEdicao ? (
-                  <>
-                    <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)}>
-                      <Save size={16} />
-                    </Button>
-                    <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao}>
-                      <X size={16} />
-                    </Button>
-                  </>
-                ) : (
-                  <Button size="xs" variant="outline" onClick={() => iniciarEdicao(o)}>
-                    <Pencil size={16} />
-                  </Button>
+                    <div style={{ maxHeight: 320, overflowY: 'auto', marginTop: 16 }}>
+                    <Table
+  striped
+  highlightOnHover
+  withColumnBorders
+  style={{ minWidth: 1200, fontSize: 15, tableLayout: 'fixed' }}
+>
+  <thead>
+    <tr>
+      <th style={{ width: 60, textAlign: 'center' }}>ID Parceiro</th>
+      <th style={{ width: 150, textAlign: 'left' }}>Parceiro</th>
+      <th style={{ width: 120, textAlign: 'right' }}>Valor</th>
+      <th style={{ width: 110, textAlign: 'center' }}>Data Criação</th>
+      <th style={{ width: 110, textAlign: 'center' }}>Data Etapa</th>
+      <th style={{ width: 120, textAlign: 'center' }}>Gatilho</th>
+      <th style={{ width: 180, textAlign: 'left' }}>Observação</th>
+      <th style={{ width: 90, textAlign: 'center' }}>Sem Mov.</th>
+      <th style={{ width: 130, textAlign: 'center' }}>Nº Pedido</th>
+      <th style={{ width: 230, textAlign: 'center' }}>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {lista.map((o) => {
+      const emEdicao = editandoId === o.id;
+      return (
+        <tr key={o.id} style={{ height: 54, verticalAlign: 'middle' }}>
+          <td style={{ textAlign: 'center', padding: '0 4px' }}>{o.id}</td>
+          <td style={{ textAlign: 'left', padding: '0 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {o.parceiro_nome}
+          </td>
+          <td style={{ textAlign: 'right', padding: '0 8px' }}>
+            {emEdicao ? (
+              <TextInput
+                value={valorEdit}
+                onChange={(e) => setValorEdit(e.currentTarget.value)}
+                size="xs"
+                style={{ width: '100%', minWidth: 100, height: 34 }}
+              />
+            ) : (
+              <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
+            )}
+          </td>
+          <td style={{ textAlign: 'center', padding: '0 8px' }}>
+            {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
+          </td>
+          <td style={{ textAlign: 'center', padding: '0 8px' }}>
+            {o.data_etapa ? new Date(o.data_etapa).toLocaleDateString('pt-BR') : '-'}
+          </td>
+          <td style={{ textAlign: 'center', padding: '0 8px' }}>{o.gatilho_extra || '-'}</td>
+          <td style={{ textAlign: 'left', padding: '0 8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {emEdicao ? (
+              <TextInput
+                value={observacaoEdit}
+                onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
+                size="xs"
+                style={{ width: '100%', minWidth: 120, height: 34 }}
+              />
+            ) : (
+              o.observacao || '-'
+            )}
+          </td>
+          <td style={{ textAlign: 'center', padding: '0 8px' }}>
+            {typeof o.dias_sem_movimentacao === 'number'
+              ? `${o.dias_sem_movimentacao} dia${o.dias_sem_movimentacao === 1 ? '' : 's'}`
+              : '-'}
+          </td>
+          <td style={{ textAlign: 'center', padding: '0 8px' }}>
+            {emEdicao ? (
+              <TextInput
+                value={numeroPedidoEdit}
+                onChange={(e) => setNumeroPedidoEdit(e.currentTarget.value)}
+                size="xs"
+                style={{ width: '100%', minWidth: 100, height: 34 }}
+              />
+            ) : (
+              o.numero_pedido || '-'
+            )}
+          </td>
+          <td style={{ textAlign: 'center', padding: '0 8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+              <Select
+                value={o.etapa}
+                onChange={(value) => value && handleStatusChange(o.id, value)}
+                data={etapaOptions.filter(opt =>
+                  opt.value === o.etapa ||
+                  transicoesPermitidas[o.etapa]?.includes(opt.value)
                 )}
-              </Group>
-            </td>
-          </tr>
-        );
-      })}
-    </tbody>
-  </Table>
+                size="xs"
+                styles={{
+                  input: {
+                    backgroundColor: getStatusColor(o.etapa),
+                    color: 'white',
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    borderRadius: 6,
+                    minWidth: 140,
+                    maxWidth: 160,
+                    height: 34,
+                    fontSize: 15
+                  },
+                }}
+                style={{ width: 160, minWidth: 120 }}
+              />
+              {emEdicao ? (
+                <>
+                  <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)} style={{ minWidth: 36, height: 34 }}>
+                    <Save size={16} />
+                  </Button>
+                  <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao} style={{ minWidth: 36, height: 34 }}>
+                    <X size={16} />
+                  </Button>
+                </>
+              ) : (
+                <Button size="xs" variant="outline" onClick={() => iniciarEdicao(o)} style={{ minWidth: 36, height: 34 }}>
+                  <Pencil size={16} />
+                </Button>
+              )}
+            </div>
+          </td>
+        </tr>
+      );
+    })}
+  </tbody>
+</Table>
+
 </div>
+
 
                     </div>
                   </Card>
