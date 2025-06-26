@@ -670,52 +670,48 @@ const dadosFiltrados = useMemo(() => {
                     <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                     <div style={{ maxHeight: 320, overflowY: 'auto' }}>
                     <Table
+  className={styles.tableCard}
   striped
   highlightOnHover
   withColumnBorders
-  style={{ width: '100%', tableLayout: 'fixed', fontSize: 15 }}
 >
   <thead>
     <tr>
-      <th style={{ width: '5%', textAlign: 'center', verticalAlign: 'middle' }}>ID</th>
-      <th style={{ width: '13%', textAlign: 'left', verticalAlign: 'middle' }}>Parceiro</th>
-      <th style={{ width: '10%', textAlign: 'right', verticalAlign: 'middle' }}>Valor</th>
-      <th style={{ width: '9%', textAlign: 'center', verticalAlign: 'middle' }}>Data Criação</th>
-      <th style={{ width: '9%', textAlign: 'center', verticalAlign: 'middle' }}>Data Etapa</th>
-      <th style={{ width: '10%', textAlign: 'center', verticalAlign: 'middle' }}>Gatilho</th>
-      <th style={{ width: '16%', textAlign: 'left', verticalAlign: 'middle' }}>Observação</th>
-      <th style={{ width: '8%', textAlign: 'center', verticalAlign: 'middle' }}>Sem Mov.</th>
-      <th style={{ width: '11%', textAlign: 'center', verticalAlign: 'middle' }}>Nº Pedido</th>
-      <th style={{ width: '9%', textAlign: 'center', verticalAlign: 'middle' }}>Status</th>
+      <th style={{ width: '4%' }}>ID</th>
+      <th className={styles.parceiro} style={{ width: '13%' }}>Parceiro</th>
+      <th style={{ width: '8%' }}>Valor</th>
+      <th style={{ width: '8%' }}>Data Criação</th>
+      <th style={{ width: '8%' }}>Data Etapa</th>
+      <th style={{ width: '8%' }}>Gatilho</th>
+      <th className={styles.observacao} style={{ width: '19%' }}>Observação</th>
+      <th style={{ width: '8%' }}>Sem Mov.</th>
+      <th style={{ width: '9%' }}>Nº Pedido</th>
+      <th className={styles.status} style={{ width: '15%' }}>Status</th>
     </tr>
   </thead>
   <tbody>
     {lista.map((o) => {
       const emEdicao = editandoId === o.id;
       return (
-        <tr key={o.id} style={{ height: 48 }}>
-          <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{o.id}</td>
-          <td style={{ textAlign: 'left', verticalAlign: 'middle' }}>{o.parceiro_nome}</td>
-          <td style={{ textAlign: 'right', verticalAlign: 'middle' }}>
+        <tr key={o.id} style={{ height: 44 }}>
+          <td>{o.id}</td>
+          <td className={styles.parceiro}>{o.parceiro_nome}</td>
+          <td style={{ textAlign: 'right' }}>
             {emEdicao ? (
               <TextInput
                 value={valorEdit}
                 onChange={(e) => setValorEdit(e.currentTarget.value)}
                 size="xs"
-                style={{ width: '100%' }}
+                style={{ width: 90 }}
               />
             ) : (
               <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
             )}
           </td>
-          <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-            {new Date(o.data_criacao).toLocaleDateString('pt-BR')}
-          </td>
-          <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-            {o.data_etapa ? new Date(o.data_etapa).toLocaleDateString('pt-BR') : '-'}
-          </td>
-          <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>{o.gatilho_extra || '-'}</td>
-          <td style={{ textAlign: 'left', verticalAlign: 'middle' }}>
+          <td>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
+          <td>{o.data_etapa ? new Date(o.data_etapa).toLocaleDateString('pt-BR') : '-'}</td>
+          <td>{o.gatilho_extra || '-'}</td>
+          <td className={styles.observacao}>
             {emEdicao ? (
               <TextInput
                 value={observacaoEdit}
@@ -725,29 +721,29 @@ const dadosFiltrados = useMemo(() => {
               />
             ) : (
               <Tooltip label={o.observacao} multiline disabled={!o.observacao}>
-                <span className="ellipsis">{o.observacao || '-'}</span>
+                <span className={styles.ellipsis}>{o.observacao || '-'}</span>
               </Tooltip>
             )}
           </td>
-          <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+          <td>
             {typeof o.dias_sem_movimentacao === 'number'
               ? `${o.dias_sem_movimentacao} dia${o.dias_sem_movimentacao === 1 ? '' : 's'}`
               : '-'}
           </td>
-          <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+          <td>
             {emEdicao ? (
               <TextInput
                 value={numeroPedidoEdit}
                 onChange={(e) => setNumeroPedidoEdit(e.currentTarget.value)}
                 size="xs"
-                style={{ width: '100%' }}
+                style={{ width: 110 }}
               />
             ) : (
               o.numero_pedido || '-'
             )}
           </td>
-          <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <td className={styles.status}>
+            <div className={styles['botoes-status']}>
               <Select
                 value={o.etapa}
                 onChange={(value) => value && handleStatusChange(o.id, value)}
@@ -763,25 +759,27 @@ const dadosFiltrados = useMemo(() => {
                     fontWeight: 600,
                     textAlign: 'center',
                     borderRadius: 6,
-                    minWidth: 120,
-                    maxWidth: 140,
-                    height: 34
+                    minWidth: 90,
+                    maxWidth: 120,
+                    height: 32,
+                    paddingRight: 20,
                   },
                 }}
                 style={{ width: 120 }}
+                rightSectionWidth={28}
               />
               {emEdicao ? (
                 <>
-                  <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)} style={{ minWidth: 32, height: 34 }}>
-                    <Save size={16} />
+                  <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)} style={{ minWidth: 30, height: 32, padding: 2 }}>
+                    <Save size={14} />
                   </Button>
-                  <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao} style={{ minWidth: 32, height: 34 }}>
-                    <X size={16} />
+                  <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao} style={{ minWidth: 30, height: 32, padding: 2 }}>
+                    <X size={14} />
                   </Button>
                 </>
               ) : (
-                <Button size="xs" variant="outline" onClick={() => iniciarEdicao(o)} style={{ minWidth: 32, height: 34 }}>
-                  <Pencil size={16} />
+                <Button size="xs" variant="outline" onClick={() => iniciarEdicao(o)} style={{ minWidth: 30, height: 32, padding: 2 }}>
+                  <Pencil size={14} />
                 </Button>
               )}
             </div>
@@ -791,6 +789,7 @@ const dadosFiltrados = useMemo(() => {
     })}
   </tbody>
 </Table>
+
 
 
 </div>

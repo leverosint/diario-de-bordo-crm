@@ -148,3 +148,64 @@ body {
   display: none !important; /* esconde ícone do input */
 }
 
+/* === Tabela fixa/organizada - Diário de Bordo === */
+.tableCard {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+  background: transparent;
+}
+
+.tableCard th,
+.tableCard td {
+  padding: 8px 4px;
+  text-align: center;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tableCard th.observacao, .tableCard td.observacao {
+  text-align: left;
+  max-width: 180px;
+  min-width: 110px;
+}
+
+.tableCard th.parceiro, .tableCard td.parceiro {
+  text-align: left;
+  max-width: 140px;
+}
+
+.tableCard th.status, .tableCard td.status {
+  min-width: 140px;
+  max-width: 160px;
+}
+
+.ellipsis {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+}
+
+.botoes-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: center;
+}
+
+/* Responsividade extra - diminuir fonte em telas menores */
+@media (max-width: 1500px) {
+  .tableCard {
+    font-size: 13px;
+  }
+  .tableCard th.observacao, .tableCard td.observacao {
+    max-width: 120px;
+  }
+}
