@@ -148,7 +148,3 @@ body {
   display: none !important; /* esconde ícone do input */
 }
 
-
-th, td {
-  vertical-align: middle !important;
-}
