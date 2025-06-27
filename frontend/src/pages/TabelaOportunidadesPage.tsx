@@ -68,42 +68,6 @@ const [numeroPedido, setNumeroPedido] = useState('');
   };
 
   
-
-<Modal
-  opened={popupAberto}
-  onClose={() => {}} // Impede fechar manualmente
-  withCloseButton={false}
-  title="Oportunidades sem movimentação"
-  centered
->
-  <p>Você tem oportunidades sem movimentação há mais de 10 dias.<br />Atualize o status para continuar!</p>
-  <ul style={{ listStyle: 'none', padding: 0 }}>
-    {pendentesMovimentacao.map((o) => (
-      <li key={o.id} style={{ marginBottom: 24 }}>
-        <b>{o.parceiro_nome}</b> (ID: {o.id}) — <span style={{ color: '#e8590c', fontWeight: 600 }}>{o.dias_sem_movimentacao} dias parado</span>
-        <Group mt="xs" gap="xs">
-        <Select
-  value={o.etapa}
-  onChange={(value) => value && handleStatusChange(o.id, value)}
-  data={etapaOptions}
-  size="xs"
-  styles={{
-    input: {
-      backgroundColor: getStatusColor(o.etapa),
-      color: 'white',
-      fontWeight: 600,
-      textAlign: 'center',
-      borderRadius: 6,
-      minWidth: 120,
-    },
-  }}
-/>
-        </Group>
-      </li>
-    ))}
-  </ul>
-</Modal>
-
   
   const [etapaParaAtualizar, setEtapaParaAtualizar] = useState<string | null>(null);
 
@@ -876,6 +840,46 @@ const dadosFiltrados = useMemo(() => {
 
       
 
+      <Modal
+      opened={popupAberto}
+      onClose={() => {}} // Impede fechar manualmente
+      withCloseButton={false}
+      title="Oportunidades sem movimentação"
+      centered
+    >
+      <p>
+        Você tem oportunidades sem movimentação há mais de 10 dias.<br />
+        Atualize o status para continuar!
+      </p>
+      <ul style={{ listStyle: 'none', padding: 0 }}>
+        {pendentesMovimentacao.map((o) => (
+          <li key={o.id} style={{ marginBottom: 24 }}>
+            <b>{o.parceiro_nome}</b> (ID: {o.id}) —{" "}
+            <span style={{ color: "#e8590c", fontWeight: 600 }}>
+              {o.dias_sem_movimentacao} dias parado
+            </span>
+            <Group mt="xs" gap="xs">
+              <Select
+                value={o.etapa}
+                onChange={(value) => value && handleStatusChange(o.id, value)}
+                data={etapaOptions}
+                size="xs"
+                styles={{
+                  input: {
+                    backgroundColor: getStatusColor(o.etapa),
+                    color: "white",
+                    fontWeight: 600,
+                    textAlign: "center",
+                    borderRadius: 6,
+                    minWidth: 120,
+                  },
+                }}
+              />
+            </Group>
+          </li>
+        ))}
+      </ul>
+    </Modal>
 
 
       {modalAberto && idMudandoStatus !== null && (
