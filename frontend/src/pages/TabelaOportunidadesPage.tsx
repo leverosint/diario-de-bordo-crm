@@ -63,6 +63,17 @@ const [modalAberto, setModalAberto] = useState(false);
 const [motivoPerda, setMotivoPerda] = useState('');
 const [numeroPedido, setNumeroPedido] = useState('');
 
+const dadosComDias: Oportunidade[] = useMemo(() => {
+  return dados.map((o) => ({
+    ...o,
+    dias_sem_movimentacao: o.data_etapa
+      ? Math.floor(
+          (new Date().getTime() - new Date(o.data_etapa).getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      : undefined,
+  }));
+}, [dados]);
 
   const abrirModalPerda = (id: number) => {
     setIdMudandoStatus(id);
@@ -227,38 +238,17 @@ useEffect(() => {
 }, [token, filtroVendedor, filtroUnidade]);
 
 useEffect(() => {
-  // Vendedores
-  axios.get(`${import.meta.env.VITE_API_URL}/usuarios/report/`, {
-    headers: { Authorization: `Bearer ${token}` },
-  }).then(res => {
-    setOpcoesVendedores(res.data.map((u: any) => ({
-      value: u.username, // ou u.id_vendedor, veja o campo correto conforme seu backend!
-      label: u.nome || u.username,
-    })));
-  });
-
-  // Unidades
-  axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
-    headers: { Authorization: `Bearer ${token}` },
-  }).then(res => {
-    setOpcoesUnidades(res.data.map((c: any) => ({
+  if (tipoUser === 'GESTOR' || tipoUser === 'ADMIN') {
+    // Canais vinculados ao usuário atual (sem carregar todos)
+    const canais = (usuario.canais_venda || []);
+    setOpcoesUnidades(canais.map((c: any) => ({
       value: c.id.toString(),
       label: c.nome,
     })));
-  });
-}, [token]);
+  }
+}, [usuario, tipoUser]);
 
-const dadosComDias: Oportunidade[] = useMemo(() => {
-  return dados.map((o) => ({
-    ...o,
-    dias_sem_movimentacao: o.data_etapa
-      ? Math.floor(
-          (new Date().getTime() - new Date(o.data_etapa).getTime()) /
-            (1000 * 60 * 60 * 24)
-        )
-      : undefined,
-  }));
-}, [dados]);
+
 
 
 
