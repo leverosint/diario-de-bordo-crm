@@ -24,7 +24,6 @@ import SidebarGestor from '../components/SidebarGestor';
 import { Select } from '@mantine/core'; // ✅ Mantém aqui no topo
 
 
-
 const STATUS_ORDER = [
   'Sem Faturamento',
   'Base Ativa',
@@ -116,13 +115,13 @@ export default function Dashboard() {
   const [consultorSelecionado, setConsultorSelecionado] = useState<string | null>(null);
   const [tipoUser, setTipoUser] = useState<string | null>(null);
   const [kpis, setKpis] = useState<any[]>([]);
+
   const [tabelaParceiros, setTabelaParceiros] = useState<any[]>([]);
   const [dadosFiltrados, setDadosFiltrados] = useState<any[]>([]);
 
-
   const [loading, setLoading] = useState(true);
-
-
+  const [parceirosContatadosStatus, setParceirosContatadosStatus] = useState<Record<string, number>>({}); // ✅ ADICIONE AQUI
+  const [interacoesPorStatus, setInteracoesPorStatus] = useState<Record<string, number>>({});
 
   
 
@@ -138,25 +137,28 @@ export default function Dashboard() {
 
   
   const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      const headers = { Authorization: `Bearer ${token}` };
-      const mes = mesSelecionado || String(new Date().getMonth() + 1);
-      const ano = anoSelecionado || String(new Date().getFullYear());
-  
-      const [kpiRes] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/dashboard/kpis/?mes=${mes}&ano=${ano}`, { headers }),
-      ]);
-      
-      setKpis(kpiRes.data.kpis);
-      setTabelaParceiros(kpiRes.data.parceiros || []);
-      setDadosFiltrados(kpiRes.data.parceiros || []);
-    } catch (error) {
-      console.error('Erro ao buscar dados do dashboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        setLoading(true);
+        const headers = { Authorization: `Bearer ${token}` };
+        const mes = mesSelecionado || String(new Date().getMonth() + 1);
+        const ano = anoSelecionado || String(new Date().getFullYear());
+    
+        const [kpiRes] = await Promise.all([
+          axios.get(`${import.meta.env.VITE_API_URL}/dashboard/kpis/?mes=${mes}&ano=${ano}`, { headers }),
+        ]);
+        
+        setKpis(kpiRes.data.kpis);
+        setParceirosContatadosStatus(kpiRes.data.parceiros_contatados_status || {});
+        setInteracoesPorStatus(kpiRes.data.interacoes_status || {});
+        setTabelaParceiros(kpiRes.data.parceiros || []);
+        setDadosFiltrados(kpiRes.data.parceiros || []);
+      } catch (error) {
+        console.error('Erro ao buscar dados do dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
 
   const fetchHistoricoInteracoes = async (parceiroId: number) => {
     try {
@@ -168,22 +170,6 @@ export default function Dashboard() {
       return [];
     }
   };
-
-
-  
-
-  useEffect(() => {
-    if (consultorSelecionado) {
-      setDadosFiltrados(
-        tabelaParceiros.filter(
-          (p) => String(p.consultor_id) === String(consultorSelecionado)
-        )
-      );
-    } else {
-      setDadosFiltrados(tabelaParceiros);
-    }
-  }, [consultorSelecionado, tabelaParceiros]);
-  
 
   useEffect(() => {
     if (!token) {
@@ -218,7 +204,6 @@ if (usuario.tipo_user === 'GESTOR' || usuario.tipo_user === 'ADMIN') {
 
 
 
-
       fetchDashboardData();
     } catch (error) {
       console.error('Erro ao carregar usuário:', error);
@@ -238,7 +223,10 @@ if (usuario.tipo_user === 'GESTOR' || usuario.tipo_user === 'ADMIN') {
     );
   }
 
-  const parceirosFiltrados = dadosFiltrados;
+  const parceirosFiltrados = consultorSelecionado
+  ? dadosFiltrados.filter(p => String(p.consultor_id) === String(consultorSelecionado))
+  : dadosFiltrados;
+
   
 
     
@@ -258,8 +246,7 @@ for (const parceiro of parceirosFiltrados) {
   
   // 📊 Cálculo de KPIs de Contato
   const totalCarteira = parceirosFiltrados.length;
-  const totalContatados = Object.values(parceirosContatadosStatusFiltrado).reduce((sum, val) => sum + val, 0);
-
+  const totalContatados = Object.values(parceirosContatadosStatus).reduce((sum, val) => sum + val, 0);
   const percentualContatado = totalCarteira > 0 ? (totalContatados / totalCarteira) * 100 : 0;
   const percentualPorStatus: Record<string, number> = {};
 STATUS_ORDER.forEach(status => {
@@ -314,7 +301,7 @@ STATUS_ORDER.forEach(status => {
 
 
   const statusDataCompleto = STATUS_ORDER.map(status => {
-    const parceirosDoStatus = parceirosFiltrados.filter(p => p.status === status);
+    const parceirosDoStatus = tabelaParceiros.filter(p => p.status === status);
     return {
       status: STATUS_LABELS[status] || status,
       parceiros: parceirosDoStatus.length,
@@ -324,8 +311,8 @@ STATUS_ORDER.forEach(status => {
 
   // Adicione dentro do componente Dashboard, DEPOIS de const parceirosFiltrados...
 const statsEtapas = resumoEtapas.map(({ etapa, key, cor }) => {
-  // Se a sua lista correta é parceirosFiltrados, pode usar ela mesmo. Se for outro array, troque aqui!
-  const oportunidades = (parceirosFiltrados || []).filter((item) => {
+  // Se a sua lista correta é tabelaParceiros, pode usar ela mesmo. Se for outro array, troque aqui!
+  const oportunidades = (tabelaParceiros || []).filter((item) => {
     // Se precisar, troque o campo para o nome correto, ex: item.status
     return (item.etapa || '').toLowerCase() === key;
   });
@@ -419,29 +406,31 @@ const statsEtapas = resumoEtapas.map(({ etapa, key, cor }) => {
 {/* Interações por Status */}
 <Title order={3} mb="sm">Interações por Status</Title>
 <ResponsiveContainer width="100%" height={300}>
-  <BarChart data={STATUS_ORDER.map(status => ({
+<BarChart
+  data={STATUS_ORDER.map(status => ({
     status: STATUS_LABELS[status] || status,
-    interacoes: interacoesStatusFiltrado[status] || 0, // <--- CORRETO!
-  }))}>
-    <XAxis dataKey="status" />
-    <YAxis />
-    <RechartsTooltip />
-    <Bar dataKey="interacoes" fill="#40c057">
-      <LabelList dataKey="interacoes" position="insideTop" fill="#fff" />
-    </Bar>
-  </BarChart>
+    interacoes: interacoesPorStatus[status] || 0,
+  }))}
+>
+  <XAxis dataKey="status" />
+  <YAxis />
+  <RechartsTooltip />
+  <Bar dataKey="interacoes" fill="#40c057">
+    <LabelList dataKey="interacoes" position="insideTop" fill="#fff" />
+  </Bar>
+</BarChart>
 </ResponsiveContainer>
 
 
 
 
-{/* Parceiros Contatados por Status */}
+
 <Divider style={{ marginTop: 16, marginBottom: 16 }} />
 <Title order={3} mb="sm">Parceiros Contatados por Status</Title>
 <ResponsiveContainer width="100%" height={300}>
   <BarChart data={STATUS_ORDER.map(status => ({
     status: STATUS_LABELS[status] || status,
-    contatados: parceirosContatadosStatusFiltrado[status] || 0,  // <-- FILTRADO!
+    contatados: parceirosContatadosStatus[status] || 0,
   }))}>
     <XAxis dataKey="status" />
     <YAxis />

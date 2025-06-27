@@ -1,6 +1,8 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra
+from .models import ResumoParceirosMensal
+
 
 User = get_user_model()
 
@@ -32,6 +34,12 @@ class ParceiroSerializer(serializers.ModelSerializer):
             'primeiro_fat', 'ultimo_fat', 'atualizado_em',
         ]
 
+
+
+class ResumoParceirosMensalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ResumoParceirosMensal
+        fields = '__all__'
 
 class InteracaoSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)

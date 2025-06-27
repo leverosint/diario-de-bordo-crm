@@ -152,6 +152,15 @@ class Interacao(models.Model):
 
     def __str__(self):
         return f"{self.parceiro.parceiro} - {self.usuario.username} ({self.tipo})"
+    
+    
+    
+    #Nova Tabela de Resumo Parceiro Mensal
+    
+    
+    
+    
+    
 
 # Modelo de Oportunidade
 
@@ -208,3 +217,31 @@ class GatilhoExtra(models.Model):
 
     def __str__(self):
         return f'{self.parceiro.parceiro} - {self.usuario.username} ({self.descricao})'
+
+# Modelo de leitura para a tabela resumo_parceiros_mensal (NÃO rodar migrations para isso)
+class ResumoParceirosMensal(models.Model):
+    parceiro_id = models.IntegerField(primary_key=True)
+    codigo = models.CharField(max_length=50)
+    parceiro = models.CharField(max_length=255)
+    consultor = models.CharField(max_length=100)
+    unidade = models.CharField(max_length=100)
+    status_parceiro = models.CharField(max_length=50)
+    data_ref = models.DateField()
+    total_interacoes = models.IntegerField()
+    interacoes_whatsapp = models.IntegerField()
+    interacoes_ligacao = models.IntegerField()
+    interacoes_email = models.IntegerField()
+    total_oportunidades = models.IntegerField()
+    valor_total_oportunidades = models.DecimalField(max_digits=14, decimal_places=2)
+    oportunidades_pedido = models.IntegerField()
+    oportunidades_perdida = models.IntegerField()
+    oportunidades_oportunidade = models.IntegerField()
+    oportunidades_orcamento = models.IntegerField()
+    oportunidades_aguardando = models.IntegerField()
+
+    class Meta:
+        managed = False  # NÃO GERENCIA/MIGRA ESSA TABELA
+        db_table = 'resumo_parceiros_mensal'
+
+    def __str__(self):
+        return f'{self.parceiro} - {self.consultor} ({self.data_ref})'

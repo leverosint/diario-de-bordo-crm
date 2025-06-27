@@ -29,6 +29,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import generics
 from rest_framework import generics
 from .serializers import ReportParceiroSerializer
+from .models import ResumoParceirosMensal
+from .serializers import ResumoParceirosMensalSerializer
 
 
 
@@ -753,6 +755,27 @@ class DashboardOportunidadesMensaisView(APIView):
             }
             for dado in dados
         ])
+        
+        # ===== Resumo Parceiros Mensal (Materialized) =====
+class ResumoParceirosMensalListView(generics.ListAPIView):
+    serializer_class = ResumoParceirosMensalSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        qs = ResumoParceirosMensal.objects.all()
+        mes = self.request.query_params.get('mes')
+        ano = self.request.query_params.get('ano')
+        consultor = self.request.query_params.get('consultor')
+        
+        if mes and ano:
+            qs = qs.filter(data_ref__month=int(mes), data_ref__year=int(ano))
+        if consultor:
+            qs = qs.filter(consultor=consultor)
+        return qs
+        
+        
+        
+        
 
 # ===== Upload Gatilhos Extras (Excel) =====
 class UploadGatilhosExtrasView(viewsets.ViewSet):

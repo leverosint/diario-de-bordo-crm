@@ -1,6 +1,7 @@
 # urls.py
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from .views import ResumoParceirosMensalListView
 from .views import (
     ParceiroReportView,
     UsuarioReportView,
@@ -68,6 +69,9 @@ urlpatterns = [
     path('usuarios/report/', UsuarioReportView.as_view(), name='usuarios-report'),
     path('relatorios/usuarios/', UsuarioReportView.as_view(), name='relatorio-usuarios'),
     path('relatorios/parceiros/', ParceiroReportView.as_view(), name='relatorio-parceiros'),
+    
+    #Rota Resumo Parceiro
+    path('dashboard/resumo-parceiros/', ResumoParceirosMensalListView.as_view(), name='resumo-parceiros-mensal'),
 
     # Finalmente, as rotas do router
     path('', include(router.urls)),
