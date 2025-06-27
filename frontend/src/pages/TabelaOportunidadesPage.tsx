@@ -634,16 +634,15 @@ const dadosFiltrados = useMemo(() => {
           </Button>
         </Group>
 
-        <Group mt="xs" mb="md" grow align="end">
-  {/* 1) Nome do parceiro */}
+        <Group mt="xs" mb="md" style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
   <TextInput
     label="Nome do parceiro"
     placeholder="Filtrar por nome"
     value={nomeFiltro}
     onChange={(e) => setNomeFiltro(e.currentTarget.value)}
+    style={{ flex: '1 1 200px', minWidth: 180 }}
   />
-
-  {/* 2) Filtro de Gatilho */}
+  
   <Select
     label="Gatilho"
     placeholder="Todos"
@@ -651,9 +650,9 @@ const dadosFiltrados = useMemo(() => {
     value={filtroGatilho}
     onChange={(v) => setFiltroGatilho(v ?? '')}
     clearable
+    style={{ flex: '1 1 150px', minWidth: 150 }}
   />
 
-  {/* 3) Filtro de Etapa */}
   <Select
     label="Etapa"
     placeholder="Todas"
@@ -661,86 +660,76 @@ const dadosFiltrados = useMemo(() => {
     value={etapaFiltro}
     onChange={setEtapaFiltro}
     clearable
+    style={{ flex: '1 1 150px', minWidth: 150 }}
   />
 
-  {/* 4) Filtro de Status do Parceiro */}
   <Select
     label="Status do Parceiro"
     placeholder="Todos"
     data={[
       { value: '', label: 'Todos' },
       { value: 'Sem Faturamento', label: 'Sem Faturamento' },
-      { value: 'Base Ativa',       label: 'Base Ativa' },
-      { value: '30 dias s/ Fat',   label: '30 dias s/ Fat' },
-      { value: '60 dias s/ Fat',   label: '60 dias s/ Fat' },
-      { value: '90 dias s/ Fat',   label: '90 dias s/ Fat' },
-      { value: '120 dias s/ Fat',  label: '120 dias s/ Fat' },
+      { value: 'Base Ativa', label: 'Base Ativa' },
+      { value: '30 dias s/ Fat', label: '30 dias s/ Fat' },
+      { value: '60 dias s/ Fat', label: '60 dias s/ Fat' },
+      { value: '90 dias s/ Fat', label: '90 dias s/ Fat' },
+      { value: '120 dias s/ Fat', label: '120 dias s/ Fat' },
     ]}
     value={statusParceiroFiltro}
     onChange={setStatusParceiroFiltro}
     clearable
+    style={{ flex: '1 1 180px', minWidth: 150 }}
   />
 
- {/* 5) Canal de Venda → Vendedor */}
-{(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
-  <Group gap="md">
-    <Select
-      label="Canal de Venda"
-      placeholder="Selecione um canal"
-      data={opcoesUnidades}
-      value={filtroUnidade}
-      onChange={handleCanalChange}        // ← usa o handler novo
-      clearable
-      style={{ minWidth: 200 }}
-    />
-    <Select
-      label="Vendedor"
-      placeholder="Selecione um vendedor"
-      data={opcoesVendedores}            // ← só os do canal selecionado
-      value={filtroVendedor}
-      onChange={v => setFiltroVendedor(v || '')}
-      clearable
-      disabled={!filtroUnidade}
-      style={{ minWidth: 200 }}
-    />
-  </Group>
-)}
-  {/* 6) Data início / Data fim */}
-  <Box style={{ minWidth: 160 }}>
-    <DatePickerInput
-      label="Data início"
-      placeholder="Selecione data início"
-      value={dataInicio}
-      onChange={setDataInicio}
-      locale="pt-br"
-      dropdownType="popover"
-      clearable
-      popoverProps={{ width: 370 }}
-      valueFormat="DD/MM/YYYY"
-      classNames={{
-        input: styles.datePickerInput,
-        label: styles.datePickerLabel,
-      }}
-    />
-  </Box>
+  {(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
+    <>
+      <Select
+        label="Canal de Venda"
+        placeholder="Selecione um canal"
+        data={opcoesUnidades}
+        value={filtroUnidade}
+        onChange={handleCanalChange}
+        clearable
+        style={{ flex: '1 1 180px', minWidth: 150 }}
+      />
+      <Select
+        label="Vendedor"
+        placeholder="Selecione um vendedor"
+        data={opcoesVendedores}
+        value={filtroVendedor}
+        onChange={v => setFiltroVendedor(v || '')}
+        clearable
+        disabled={!filtroUnidade}
+        style={{ flex: '1 1 180px', minWidth: 150 }}
+      />
+    </>
+  )}
 
-  <Box style={{ minWidth: 160 }}>
-    <DatePickerInput
-      label="Data fim"
-      placeholder="Selecione data fim"
-      value={dataFim}
-      onChange={setDataFim}
-      locale="pt-br"
-      dropdownType="popover"
-      clearable
-      popoverProps={{ width: 370 }}
-      valueFormat="DD/MM/YYYY"
-      classNames={{
-        input: styles.datePickerInput,
-        label: styles.datePickerLabel,
-      }}
-    />
-  </Box>
+  <DatePickerInput
+    label="Data início"
+    placeholder="Selecione data início"
+    value={dataInicio}
+    onChange={setDataInicio}
+    locale="pt-br"
+    dropdownType="popover"
+    clearable
+    popoverProps={{ width: 370 }}
+    valueFormat="DD/MM/YYYY"
+    style={{ flex: '1 1 160px', minWidth: 160 }}
+  />
+
+  <DatePickerInput
+    label="Data fim"
+    placeholder="Selecione data fim"
+    value={dataFim}
+    onChange={setDataFim}
+    locale="pt-br"
+    dropdownType="popover"
+    clearable
+    popoverProps={{ width: 370 }}
+    valueFormat="DD/MM/YYYY"
+    style={{ flex: '1 1 160px', minWidth: 160 }}
+  />
 </Group>
 
 
