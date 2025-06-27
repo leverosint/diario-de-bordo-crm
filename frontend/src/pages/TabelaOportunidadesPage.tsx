@@ -52,8 +52,6 @@ export default function TabelaOportunidadesPage() {
 const [modalAberto, setModalAberto] = useState(false);
 const [motivoPerda, setMotivoPerda] = useState('');
 const [numeroPedido, setNumeroPedido] = useState('');
-const [consultores, setConsultores] = useState<{ value: string; label: string }[]>([]);
-const [filtroConsultor, setFiltroConsultor] = useState<string>('');
 
 
   const abrirModalPerda = (id: number) => {
@@ -201,30 +199,6 @@ const dadosComDias: Oportunidade[] = useMemo(() => {
       : undefined,
   }));
 }, [dados]);
-
-
-// FILTRO VENDEDOR
-useEffect(() => {
-  // Só carrega se o usuário for GESTOR ou ADMIN
-  if (tipoUser !== 'GESTOR' && tipoUser !== 'ADMIN') return;
-
-  const fetchConsultores = async () => {
-    try {
-      // Altere a rota para a correta do seu backend!
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios/report/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const lista = res.data.map((c: any) => ({
-        value: String(c.id), // ou c.id_vendedor, depende do backend
-        label: c.nome,
-      }));
-      setConsultores(lista);
-    } catch (err) {
-      console.error('Erro ao buscar consultores:', err);
-    }
-  };
-  fetchConsultores();
-}, [token, tipoUser]);
 
 
 
@@ -495,18 +469,10 @@ const dadosFiltrados = useMemo(() => {
       }
     }
 
-     // --- FILTRO VENDEDOR ---
-     if (
-      filtroConsultor !== '' &&
-      String((o as any).consultor_id ?? (o as any).consultor) !== filtroConsultor
-    ) {
-      return false;
-    }
-
     // caso contrário, mantém no resultado
     return true;
   });
-}, [dadosComDias, nomeFiltro, etapaFiltro, dataInicio, dataFim, filtroGatilho, filtroConsultor]);
+}, [dadosComDias, nomeFiltro, etapaFiltro, dataInicio, dataFim, filtroGatilho,]);
 
 
 
@@ -613,20 +579,6 @@ const dadosFiltrados = useMemo(() => {
   onChange={(v) => setFiltroGatilho(v ?? '')}  // transforma null em ''
   clearable
 />
-
-
-{(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
-  <Select
-    label="Vendedor"
-    placeholder="Todos"
-    data={[{ value: '', label: 'Todos' }, ...consultores]}
-    value={filtroConsultor}
-    onChange={v => setFiltroConsultor(v ?? '')}
-    clearable
-    style={{ minWidth: 180 }}
-  />
-)}
-
 
           <Select
             label="Status"
