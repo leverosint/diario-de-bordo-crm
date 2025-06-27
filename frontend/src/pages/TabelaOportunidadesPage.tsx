@@ -158,13 +158,13 @@ const handleCanalChange = async (canalId: string | null) => {
     { value: 'perdida', label: 'Venda Perdida' },
   ];
 
-  //const transicoesPermitidas: Record<string, string[]> = {
-   // oportunidade: ['orcamento', 'perdida'],
-   // orcamento: ['aguardando', 'perdida'],
-   // aguardando: ['pedido', 'perdida'],
-   // pedido: [],
-   // perdida: [],
- // };
+  const transicoesPermitidas: Record<string, string[]> = {
+    oportunidade: ['orcamento', 'perdida'],
+    orcamento: ['aguardando', 'perdida'],
+    aguardando: ['pedido', 'perdida'],
+    pedido: [],
+   perdida: [],
+  };
 
   const getStatusColor = (etapa: string) => ({
     oportunidade: 'blue',
@@ -859,7 +859,9 @@ const dadosFiltrados = useMemo(() => {
             <Select
   value={o.etapa}
   onChange={(value) => value && handleStatusChange(o.id, value)}
-  data={etapaOptions} // 👈 permite todas as opções sempre
+  data={etapaOptions.filter(opt =>
+    o.etapa === 'oportunidade' || opt.value === o.etapa || transicoesPermitidas[o.etapa]?.includes(opt.value)
+  )}
   size="xs"
   styles={{
     input: {
@@ -936,12 +938,29 @@ const dadosFiltrados = useMemo(() => {
           label="Motivo da Venda Perdida"
           placeholder="Selecione"
           data={[
-            { value: 'preco', label: 'Preço' },
-            { value: 'prazo', label: 'Prazo' },
-            { value: 'concorrente', label: 'Fechou com concorrente' },
-            { value: 'fora_perfil', label: 'Fora de perfil' },
-            { value: 'nao_responde', label: 'Cliente não respondeu' },
-            { value: 'outro', label: 'Outro' },
+            { value: 'analise_credito', label: 'Análise de Crédito Recusou' },
+            { value: 'cliente_desistiu', label: 'Cliente Desistiu' },
+            { value: 'adiou_compra', label: 'Cliente adiou a compra' },
+            { value: 'sem_retorno', label: 'Cliente nao deu retorno mais' },
+            { value: 'nao_responde_pagamento', label: 'Cliente não responde mais o pagamento' },
+            { value: 'outro_fornecedor', label: 'Comprou em outro fornecedor' },
+            { value: 'marketplace', label: 'Comprou no Marketplace' },
+            { value: 'site_leveros', label: 'Comprou no Site Leveros' },
+            { value: 'concorrente', label: 'Comprou no concorrente' },
+            { value: 'parceiro', label: 'Comprou via parceiro' },
+            { value: 'desconto_acima', label: 'Desconto acima do permitido' },
+            { value: 'falta_estoque', label: 'Falta de Estoque' },
+            { value: 'fechado', label: 'Fechado' },
+            { value: 'fechou_concorrente', label: 'Fechou no concorrente' },
+            { value: 'financiamento_negado', label: 'Financiamento Negado' },
+            { value: 'outros', label: 'Outros Motivos não listados' },
+            { value: 'pagamento_nao_realizado', label: 'Pagamento Não Realizado/Não autorizado' },
+            { value: 'parceira_informou', label: 'Parceira informou que cliente fechou com concorrente' },
+            { value: 'prazo_entrega', label: 'Prazo de Entrega' },
+            { value: 'queria_pf', label: 'Queria que faturasse Pessoa Física' },
+            { value: 'reprovado_b2e', label: 'Reprovado na B2E' },
+            { value: 'sem_resposta', label: 'Sem retorno/Não Responde' },
+            { value: 'frete', label: 'Valor do Frete' },
           ]}
           value={motivoPerda}
           onChange={(value) => setMotivoPerda(value ?? '')}
