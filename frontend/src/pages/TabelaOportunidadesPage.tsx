@@ -11,7 +11,7 @@ import SidebarGestor from '../components/SidebarGestor';
 import type { DateValue } from '@mantine/dates';
 import { Pencil, Save, X } from 'lucide-react';
 import styles from './TabelaOportunidadesPage.module.css'; // ✅ CSS
-
+import { Autocomplete } from '@mantine/core';
 
 
 
@@ -33,18 +33,6 @@ interface Oportunidade {
 export default function TabelaOportunidadesPage() {
  
   const [dados, setDados] = useState<Oportunidade[]>([]);
-  // Calcula dias sem movimentação para cada oportunidade
-const dadosComDias: Oportunidade[] = useMemo(() => {
-  return dados.map((o) => ({
-    ...o,
-    dias_sem_movimentacao: o.data_etapa
-      ? Math.floor(
-          (new Date().getTime() - new Date(o.data_etapa).getTime()) /
-            (1000 * 60 * 60 * 24)
-        )
-      : undefined,
-  }));
-}, [dados]);
   const [carregando, setCarregando] = useState(true);
   const [nomeFiltro, setNomeFiltro] = useState('');
   const [etapaFiltro, setEtapaFiltro] = useState<string | null>(null);
@@ -217,83 +205,30 @@ useEffect(() => {
     })));
   });
 
- 
-  
-     // UNIDADES
-  if (tipoUser === 'GESTOR') {
-    // Mostra APENAS os canais do usuario.canais_venda
-    setOpcoesUnidades(
-      (usuario.canais_venda || []).map((c: any) => ({
-        value: String(c.id),
-        label: c.nome,
-      }))
-    );
-  } else {
-    // ADMIN vê todos
-    axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(res => {
-      setOpcoesUnidades(res.data.map((c: any) => ({
-        value: c.id.toString(),
-        label: c.nome,
-      })));
-    });
-  }
+  // Unidades
+  axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(res => {
+    setOpcoesUnidades(res.data.map((c: any) => ({
+      value: c.id.toString(),
+      label: c.nome,
+    })));
+  });
+}, [token]);
 
-  // VENDEDORES
-  if (tipoUser === 'GESTOR') {
-    if (filtroUnidade) {
-      // Só vendedores do canal selecionado
-      axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${filtroUnidade}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then(res => {
-        setOpcoesVendedores(res.data.map((v: any) => ({
-          value: v.username,
-          label: v.nome || v.username,
-        })));
-      });
-    } else {
-      // Vendedores de todos os canais que o gestor tem acesso
-      const canaisIds = (usuario.canais_venda || []).map((c: any) => c.id);
-      if (canaisIds.length === 0) {
-        setOpcoesVendedores([]);
-      } else {
-        Promise.all(
-          canaisIds.map((id: number) =>
-            axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${id}`, {
-              headers: { Authorization: `Bearer ${token}` },
-            })
-          )
-        ).then(respostas => {
-          const todos: any[] = [];
-          respostas.forEach(r => { todos.push(...r.data); });
-          // Remove duplicados por username
-          const unicos: any = {};
-          todos.forEach((v: any) => { unicos[v.username] = v; });
-          setOpcoesVendedores(
-            Object.values(unicos).map((v: any) => ({
-              value: v.username,
-              label: v.nome || v.username,
-              
-            }))
-          );
-        });
-      }
-    }
-  } else if (tipoUser === 'ADMIN') {
-    axios.get(`${import.meta.env.VITE_API_URL}/usuarios/report/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(res => {
-      setOpcoesVendedores(res.data.map((u: any) => ({
-        value: u.username,
-        label: u.nome || u.username,
-      })));
-    });
-  } else {
-    setOpcoesVendedores([]);
-  }
+const dadosComDias: Oportunidade[] = useMemo(() => {
+  return dados.map((o) => ({
+    ...o,
+    dias_sem_movimentacao: o.data_etapa
+      ? Math.floor(
+          (new Date().getTime() - new Date(o.data_etapa).getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      : undefined,
+  }));
+}, [dados]);
 
-}, [token, tipoUser, filtroUnidade, usuario]);
+
 
 
 // 🔥 Verificar se tem oportunidades sem movimentação
@@ -379,6 +314,56 @@ const confirmarVendaPerdida = async () => {
 
 
 
+    const confirmarVendaPerdida = async () => {
+      if (!idMudandoStatus || motivoPerda.trim() === '') {
+        alert('Por favor, preencha o motivo da perda.');
+        return;
+      }
+    
+      const agora = new Date().toISOString();
+    
+      try {
+        await axios.patch(
+          `${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`,
+          {
+            etapa: 'perdida',
+            observacao: motivoPerda,
+            data_etapa: agora,
+            data_status: agora,
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+    
+        setDados(prev =>
+          prev.map(o =>
+            o.id === idMudandoStatus
+              ? {
+                  ...o,
+                  etapa: 'perdida',
+                  observacao: motivoPerda,
+                  data_etapa: agora,
+                  data_status: agora,
+                  dias_sem_movimentacao: 0,
+                }
+              : o
+          )
+        );
+    
+       
+    
+        setModalAberto(false);
+        setMotivoPerda('');
+        setEtapaParaAtualizar(null);
+        setIdMudandoStatus(null);
+      } catch (err) {
+        console.error('Erro ao salvar motivo de perda:', err);
+        alert('Erro ao atualizar etapa.');
+      }
+    };
+    
+    
     
    
 
@@ -608,7 +593,6 @@ const dadosFiltrados = useMemo(() => {
         </Group>
 
         <Group mt="xs" mb="md" grow align="end">
-  {/* 1) Nome do parceiro */}
   <TextInput
     label="Nome do parceiro"
     placeholder="Filtrar por nome"
@@ -616,7 +600,6 @@ const dadosFiltrados = useMemo(() => {
     onChange={(e) => setNomeFiltro(e.currentTarget.value)}
   />
 
-  {/* 2) Filtro de Gatilho */}
   <Select
     label="Gatilho"
     placeholder="Todos"
@@ -626,99 +609,77 @@ const dadosFiltrados = useMemo(() => {
     clearable
   />
 
-  {/* 3) Filtro de Etapa */}
+  {/* Mude "Status" para "Etapa" */}
   <Select
     label="Etapa"
     placeholder="Todas"
-    data={etapaOptions}
     value={etapaFiltro}
     onChange={setEtapaFiltro}
+    data={etapaOptions}
     clearable
   />
 
-  {/* 4) Filtro de Status do Parceiro */}
+  {/* NOVO filtro de status do parceiro */}
   <Select
     label="Status do Parceiro"
     placeholder="Todos"
     data={[
       { value: '', label: 'Todos' },
       { value: 'Sem Faturamento', label: 'Sem Faturamento' },
-      { value: 'Base Ativa',       label: 'Base Ativa' },
-      { value: '30 dias s/ Fat',   label: '30 dias s/ Fat' },
-      { value: '60 dias s/ Fat',   label: '60 dias s/ Fat' },
-      { value: '90 dias s/ Fat',   label: '90 dias s/ Fat' },
-      { value: '120 dias s/ Fat',  label: '120 dias s/ Fat' },
+      { value: 'Base Ativa', label: 'Base Ativa' },
+      { value: '30 dias s/ Fat', label: '30 dias s/ Fat' },
+      { value: '60 dias s/ Fat', label: '60 dias s/ Fat' },
+      { value: '90 dias s/ Fat', label: '90 dias s/ Fat' },
+      { value: '120 dias s/ Fat', label: '120 dias s/ Fat' },
     ]}
     value={statusParceiroFiltro}
     onChange={setStatusParceiroFiltro}
     clearable
   />
 
-  {/* 5) Canal de Venda → Vendedor */}
-  {(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
-    <Group gap="md">
-      <Select
-        label="Canal de Venda"
-        placeholder="Selecione um canal"
-        data={opcoesUnidades}
-        value={filtroUnidade}
-        onChange={(v) => {
-          setFiltroUnidade(v || '');
-          setFiltroVendedor('');
+  {/* Filtros digitáveis para unidade e vendedor */}
+  <Autocomplete
+    label="Unidade"
+    placeholder="Buscar unidade"
+    data={opcoesUnidades}
+    value={filtroUnidade}
+    onChange={setFiltroUnidade}
+    clearable
+  />
+  <Autocomplete
+    label="Vendedor"
+    placeholder="Buscar vendedor"
+    data={opcoesVendedores}
+    value={filtroVendedor}
+    onChange={setFiltroVendedor}
+    clearable
+  />
+
+  {/* Data início/fim igual estava */}
+  {[
+    { label: 'Data início', value: dataInicio, onChange: setDataInicio },
+    { label: 'Data fim', value: dataFim, onChange: setDataFim },
+  ].map((item, idx) => (
+    <Box key={idx} style={{ minWidth: 160 }}>
+      <DatePickerInput
+        label={item.label}
+        placeholder={`Selecione ${item.label.toLowerCase()}`}
+        value={item.value}
+        onChange={item.onChange}
+        locale="pt-br"
+        dropdownType="popover"
+        clearable
+        rightSection={null}
+        popoverProps={{ width: 370 }}
+        valueFormat="DD/MM/YYYY"
+        classNames={{
+          input: styles.datePickerInput,
+          label: styles.datePickerLabel,
         }}
-        clearable
-        style={{ minWidth: 200 }}
       />
-      <Select
-        label="Vendedor"
-        placeholder="Selecione um vendedor"
-        data={opcoesVendedores}
-        value={filtroVendedor}
-        onChange={(v) => setFiltroVendedor(v || '')}
-        clearable
-        disabled={!filtroUnidade}
-        style={{ minWidth: 200 }}
-      />
-    </Group>
-  )}
-
-  {/* 6) Data início / Data fim */}
-  <Box style={{ minWidth: 160 }}>
-    <DatePickerInput
-      label="Data início"
-      placeholder="Selecione data início"
-      value={dataInicio}
-      onChange={setDataInicio}
-      locale="pt-br"
-      dropdownType="popover"
-      clearable
-      popoverProps={{ width: 370 }}
-      valueFormat="DD/MM/YYYY"
-      classNames={{
-        input: styles.datePickerInput,
-        label: styles.datePickerLabel,
-      }}
-    />
-  </Box>
-  <Box style={{ minWidth: 160 }}>
-    <DatePickerInput
-      label="Data fim"
-      placeholder="Selecione data fim"
-      value={dataFim}
-      onChange={setDataFim}
-      locale="pt-br"
-      dropdownType="popover"
-      clearable
-      popoverProps={{ width: 370 }}
-      valueFormat="DD/MM/YYYY"
-      classNames={{
-        input: styles.datePickerInput,
-        label: styles.datePickerLabel,
-      }}
-    />
-  </Box>
+    </Box>
+  ))}
 </Group>
-
 
         {carregando ? (
           <Loader />
