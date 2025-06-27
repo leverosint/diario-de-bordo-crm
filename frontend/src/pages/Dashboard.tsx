@@ -73,9 +73,14 @@ const Dashboard: React.FC = () => {
       }
       setTipoUser(usuarioSalvo.tipo_user ?? 'VENDEDOR');
       if (Array.isArray(usuarioSalvo.canais) && usuarioSalvo.canais.length > 0) {
-        setCanalVenda(usuarioSalvo.canais?.[0] ?? null);
+        if (Array.isArray(usuarioSalvo.canais) && usuarioSalvo.canais.length > 0) {
+          setCanalVenda(typeof usuarioSalvo.canais[0] === 'string' ? usuarioSalvo.canais[0] : null);
+        } else {
+          setCanalVenda(null);
+        }
+        
       }
-      if (usuarioSalvo.consultor) setConsultor(usuarioSalvo.consultor);
+      setConsultor(typeof usuarioSalvo.consultor === 'string' ? usuarioSalvo.consultor : null);
     }, []);
 
 
