@@ -575,20 +575,26 @@ class OportunidadeViewSet(viewsets.ModelViewSet):
 
         canal_id = self.request.query_params.get('canal_id')
         consultor = self.request.query_params.get('consultor')
-        gatilho   = self.request.query_params.get('gatilho')  # ← novo
+        etapa     = self.request.query_params.get('etapa')  # <- agora chama "etapa"
+        status_parceiro = self.request.query_params.get('status_parceiro')  # <- novo filtro!
+        gatilho   = self.request.query_params.get('gatilho')
 
         if canal_id:
             queryset = queryset.filter(parceiro__canal_venda_id=canal_id)
         if consultor:
             queryset = queryset.filter(parceiro__consultor=consultor)
+        if etapa:
+            queryset = queryset.filter(etapa=etapa)
+        if status_parceiro:
+            queryset = queryset.filter(parceiro__status=status_parceiro)
         if gatilho:
             queryset = queryset.filter(gatilho_extra__iexact=gatilho)
 
         return queryset
-    
 
     def perform_create(self, serializer):
         serializer.save(usuario=self.request.user)
+
 
 # ... 🛑 o código é muito grande para caber aqui, quer que eu continue com o Dashboard KPIs, Funil, Oportunidades Mensais e o endpoint usuarios_por_canal em mais uma sequência?
 # ===== Dashboard KPIs + Parceiros =====
