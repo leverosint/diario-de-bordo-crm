@@ -259,7 +259,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from .models import Parceiro, GatilhoExtra
-
 class InteracoesPendentesView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -308,7 +307,12 @@ class InteracoesPendentesView(APIView):
             )
 
             # verifica gatilho manual
-            gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
+            if usuario.tipo_user == 'GESTOR':
+                # Gestor vê QUALQUER gatilho extra do parceiro (não só os dele)
+                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro).first()
+            else:
+                # Vendedor só vê os próprios
+                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
 
             # filtro opcional de gatilho
             if gatilho_p and gatilho_p.lower() != 'todos':
@@ -327,6 +331,7 @@ class InteracoesPendentesView(APIView):
                     'data_interacao': '',
                     'entrou_em_contato': False,
                     'gatilho_extra': gatilho.descricao,
+                    'criador_gatilho': gatilho.usuario.username if usuario.tipo_user == 'GESTOR' else None,  # opcional, para frontend
                 })
 
             # marca como interagidos se fez contato hoje
@@ -341,6 +346,7 @@ class InteracoesPendentesView(APIView):
                     'data_interacao': ultima.data_interacao,
                     'entrou_em_contato': ultima.entrou_em_contato,
                     'gatilho_extra': gatilho.descricao if gatilho else None,
+                    'criador_gatilho': gatilho.usuario.username if (gatilho and usuario.tipo_user == 'GESTOR') else None,
                 })
 
             # repõe em pendentes se:
@@ -368,11 +374,18 @@ class InteracoesPendentesView(APIView):
 
         # montar filtros dinâmicos
         status_unicos = sorted({item['status'] for item in pendentes})
-        gatilhos_ativos = (
-            GatilhoExtra.objects.filter(usuario=usuario)
-            .values_list('descricao', flat=True)
-            .distinct()
-        )
+        if usuario.tipo_user == 'GESTOR':
+            gatilhos_ativos = (
+                GatilhoExtra.objects.filter(
+                    parceiro__canal_venda__in=usuario.canais_venda.all()
+                ).values_list('descricao', flat=True).distinct()
+            )
+        else:
+            gatilhos_ativos = (
+                GatilhoExtra.objects.filter(usuario=usuario)
+                .values_list('descricao', flat=True)
+                .distinct()
+            )
 
         tipo_lista = request.query_params.get('tipo', 'pendentes')
         if tipo_lista == 'interagidos':
