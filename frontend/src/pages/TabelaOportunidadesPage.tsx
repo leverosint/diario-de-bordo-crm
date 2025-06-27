@@ -11,7 +11,7 @@ import SidebarGestor from '../components/SidebarGestor';
 import type { DateValue } from '@mantine/dates';
 import { Pencil, Save, X } from 'lucide-react';
 import styles from './TabelaOportunidadesPage.module.css'; // ✅ CSS
-import { Autocomplete } from '@mantine/core';
+
 
 
 
@@ -608,6 +608,7 @@ const dadosFiltrados = useMemo(() => {
         </Group>
 
         <Group mt="xs" mb="md" grow align="end">
+  {/* 1) Nome do parceiro */}
   <TextInput
     label="Nome do parceiro"
     placeholder="Filtrar por nome"
@@ -615,6 +616,7 @@ const dadosFiltrados = useMemo(() => {
     onChange={(e) => setNomeFiltro(e.currentTarget.value)}
   />
 
+  {/* 2) Filtro de Gatilho */}
   <Select
     label="Gatilho"
     placeholder="Todos"
@@ -624,85 +626,99 @@ const dadosFiltrados = useMemo(() => {
     clearable
   />
 
-  {/* Mude "Status" para "Etapa" */}
+  {/* 3) Filtro de Etapa */}
   <Select
     label="Etapa"
     placeholder="Todas"
+    data={etapaOptions}
     value={etapaFiltro}
     onChange={setEtapaFiltro}
-    data={etapaOptions}
     clearable
   />
 
-  {/* NOVO filtro de status do parceiro */}
+  {/* 4) Filtro de Status do Parceiro */}
   <Select
     label="Status do Parceiro"
     placeholder="Todos"
     data={[
       { value: '', label: 'Todos' },
       { value: 'Sem Faturamento', label: 'Sem Faturamento' },
-      { value: 'Base Ativa', label: 'Base Ativa' },
-      { value: '30 dias s/ Fat', label: '30 dias s/ Fat' },
-      { value: '60 dias s/ Fat', label: '60 dias s/ Fat' },
-      { value: '90 dias s/ Fat', label: '90 dias s/ Fat' },
-      { value: '120 dias s/ Fat', label: '120 dias s/ Fat' },
+      { value: 'Base Ativa',       label: 'Base Ativa' },
+      { value: '30 dias s/ Fat',   label: '30 dias s/ Fat' },
+      { value: '60 dias s/ Fat',   label: '60 dias s/ Fat' },
+      { value: '90 dias s/ Fat',   label: '90 dias s/ Fat' },
+      { value: '120 dias s/ Fat',  label: '120 dias s/ Fat' },
     ]}
     value={statusParceiroFiltro}
     onChange={setStatusParceiroFiltro}
     clearable
   />
-{/* Filtro de Unidade/Vendedor só aparece para GESTOR ou ADMIN */}
-{(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
-  <>
-    <Autocomplete
-      label="Unidade"
-      placeholder="Buscar unidade"
-      data={opcoesUnidades}
-      value={filtroUnidade}
-      onChange={v => {
-        setFiltroUnidade(v || '');
-        setFiltroVendedor('');
-      }}
-      clearable
-    />
-    <Autocomplete
-      label="Vendedor"
-      placeholder="Buscar vendedor"
-      data={opcoesVendedores}
-      value={filtroVendedor}
-      onChange={setFiltroVendedor}
-      clearable
-      disabled={!filtroUnidade}
-    />
-  </>
-)}
 
-
-  {/* Data início/fim igual estava */}
-  {[
-    { label: 'Data início', value: dataInicio, onChange: setDataInicio },
-    { label: 'Data fim', value: dataFim, onChange: setDataFim },
-  ].map((item, idx) => (
-    <Box key={idx} style={{ minWidth: 160 }}>
-      <DatePickerInput
-        label={item.label}
-        placeholder={`Selecione ${item.label.toLowerCase()}`}
-        value={item.value}
-        onChange={item.onChange}
-        locale="pt-br"
-        dropdownType="popover"
-        clearable
-        rightSection={null}
-        popoverProps={{ width: 370 }}
-        valueFormat="DD/MM/YYYY"
-        classNames={{
-          input: styles.datePickerInput,
-          label: styles.datePickerLabel,
+  {/* 5) Canal de Venda → Vendedor */}
+  {(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
+    <Group gap="md">
+      <Select
+        label="Canal de Venda"
+        placeholder="Selecione um canal"
+        data={opcoesUnidades}
+        value={filtroUnidade}
+        onChange={(v) => {
+          setFiltroUnidade(v || '');
+          setFiltroVendedor('');
         }}
+        clearable
+        style={{ minWidth: 200 }}
       />
-    </Box>
-  ))}
+      <Select
+        label="Vendedor"
+        placeholder="Selecione um vendedor"
+        data={opcoesVendedores}
+        value={filtroVendedor}
+        onChange={(v) => setFiltroVendedor(v || '')}
+        clearable
+        disabled={!filtroUnidade}
+        style={{ minWidth: 200 }}
+      />
+    </Group>
+  )}
+
+  {/* 6) Data início / Data fim */}
+  <Box style={{ minWidth: 160 }}>
+    <DatePickerInput
+      label="Data início"
+      placeholder="Selecione data início"
+      value={dataInicio}
+      onChange={setDataInicio}
+      locale="pt-br"
+      dropdownType="popover"
+      clearable
+      popoverProps={{ width: 370 }}
+      valueFormat="DD/MM/YYYY"
+      classNames={{
+        input: styles.datePickerInput,
+        label: styles.datePickerLabel,
+      }}
+    />
+  </Box>
+  <Box style={{ minWidth: 160 }}>
+    <DatePickerInput
+      label="Data fim"
+      placeholder="Selecione data fim"
+      value={dataFim}
+      onChange={setDataFim}
+      locale="pt-br"
+      dropdownType="popover"
+      clearable
+      popoverProps={{ width: 370 }}
+      valueFormat="DD/MM/YYYY"
+      classNames={{
+        input: styles.datePickerInput,
+        label: styles.datePickerLabel,
+      }}
+    />
+  </Box>
 </Group>
+
 
         {carregando ? (
           <Loader />
