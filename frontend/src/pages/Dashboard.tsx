@@ -88,6 +88,7 @@ const Dashboard: React.FC = () => {
       setActivePage(1);
     });
   }, [mes, ano, unidade, consultor, canalVenda]);
+  
 
   // Prepara opções de filtro (únicos no resultado)
   const unidades = useMemo(
