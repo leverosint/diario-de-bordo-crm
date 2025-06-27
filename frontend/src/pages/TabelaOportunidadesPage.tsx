@@ -33,6 +33,18 @@ interface Oportunidade {
 export default function TabelaOportunidadesPage() {
  
   const [dados, setDados] = useState<Oportunidade[]>([]);
+  // Calcula dias sem movimentação para cada oportunidade
+const dadosComDias: Oportunidade[] = useMemo(() => {
+  return dados.map((o) => ({
+    ...o,
+    dias_sem_movimentacao: o.data_etapa
+      ? Math.floor(
+          (new Date().getTime() - new Date(o.data_etapa).getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      : undefined,
+  }));
+}, [dados]);
   const [carregando, setCarregando] = useState(true);
   const [nomeFiltro, setNomeFiltro] = useState('');
   const [etapaFiltro, setEtapaFiltro] = useState<string | null>(null);
@@ -68,6 +80,42 @@ const [numeroPedido, setNumeroPedido] = useState('');
   };
 
   
+
+<Modal
+  opened={popupAberto}
+  onClose={() => {}} // Impede fechar manualmente
+  withCloseButton={false}
+  title="Oportunidades sem movimentação"
+  centered
+>
+  <p>Você tem oportunidades sem movimentação há mais de 10 dias.<br />Atualize o status para continuar!</p>
+  <ul style={{ listStyle: 'none', padding: 0 }}>
+    {pendentesMovimentacao.map((o) => (
+      <li key={o.id} style={{ marginBottom: 24 }}>
+        <b>{o.parceiro_nome}</b> (ID: {o.id}) — <span style={{ color: '#e8590c', fontWeight: 600 }}>{o.dias_sem_movimentacao} dias parado</span>
+        <Group mt="xs" gap="xs">
+        <Select
+  value={o.etapa}
+  onChange={(value) => value && handleStatusChange(o.id, value)}
+  data={etapaOptions}
+  size="xs"
+  styles={{
+    input: {
+      backgroundColor: getStatusColor(o.etapa),
+      color: 'white',
+      fontWeight: 600,
+      textAlign: 'center',
+      borderRadius: 6,
+      minWidth: 120,
+    },
+  }}
+/>
+        </Group>
+      </li>
+    ))}
+  </ul>
+</Modal>
+
   
   const [etapaParaAtualizar, setEtapaParaAtualizar] = useState<string | null>(null);
 
@@ -144,14 +192,38 @@ const [numeroPedido, setNumeroPedido] = useState('');
 
 // 🔗 Carregar dados da API (mantém igual)
 useEffect(() => {
-  // Pegue os canais permitidos do usuário logado (para GESTOR)
-  const canaisPermitidos = (usuario?.canais_venda || []) as { id: number; nome: string }[];
+  setCarregando(true);
+  const params: any = {};
+  if (filtroVendedor) params.consultor = filtroVendedor;
+  if (filtroUnidade)  params.canal_id = filtroUnidade;
 
-  // --- UNIDADES ---
-  axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
+  axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  })
+    .then(res => setDados(res.data))
+    .catch(() => setDados([]))
+    .finally(() => setCarregando(false));
+}, [token, filtroVendedor, filtroUnidade]);
+
+useEffect(() => {
+  // Vendedores
+  axios.get(`${import.meta.env.VITE_API_URL}/usuarios/report/`, {
     headers: { Authorization: `Bearer ${token}` },
   }).then(res => {
-    // Só mantém as unidades do gestor
+    setOpcoesVendedores(res.data.map((u: any) => ({
+      value: u.username, // ou u.id_vendedor, veja o campo correto conforme seu backend!
+      label: u.nome || u.username,
+    })));
+  });
+
+  const canaisPermitidos = (usuario?.canais_venda || []) as { id: number; nome: string }[];
+  
+   // --- UNIDADES ---
+   axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(res => {
+    // Só mantém as unidades do gestor (se for GESTOR)
     const filtradas = tipoUser === 'GESTOR'
       ? res.data.filter((c: any) => canaisPermitidos.some(cp => cp.id === c.id))
       : res.data;
@@ -162,13 +234,13 @@ useEffect(() => {
   });
 
   // --- VENDEDORES ---
-  // Para gestor: se escolher uma unidade, busca vendedores daquele canal
-  if (tipoUser === 'GESTOR' && filtroUnidade) {
+  if ((tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && filtroUnidade) {
+    // Busca só os vendedores daquela unidade/canal selecionado
     axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${filtroUnidade}`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => {
       setOpcoesVendedores(res.data.map((v: any) => ({
-        value: v.username, // ou v.id_vendedor conforme seu backend
+        value: v.username, // ou v.id_vendedor conforme o backend
         label: v.nome || v.username,
       })));
     });
@@ -187,24 +259,9 @@ useEffect(() => {
 }, [token, tipoUser, filtroUnidade, usuario]);
 
 
-const dadosComDias: Oportunidade[] = useMemo(() => {
-  return dados.map((o) => ({
-    ...o,
-    dias_sem_movimentacao: o.data_etapa
-      ? Math.floor(
-          (new Date().getTime() - new Date(o.data_etapa).getTime()) /
-            (1000 * 60 * 60 * 24)
-        )
-      : undefined,
-  }));
-}, [dados]);
-
-
-
 
 // 🔥 Verificar se tem oportunidades sem movimentação
 useEffect(() => {
-  setCarregando(true);
   const oportunidadesPendentes = dadosComDias.filter(
     (o) => (o.dias_sem_movimentacao ?? 0) >= 10
   );
@@ -608,27 +665,32 @@ const dadosFiltrados = useMemo(() => {
     onChange={setStatusParceiroFiltro}
     clearable
   />
+{/* Filtro de Unidade/Vendedor só aparece para GESTOR ou ADMIN */}
+{(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
+  <>
+    <Autocomplete
+      label="Unidade"
+      placeholder="Buscar unidade"
+      data={opcoesUnidades}
+      value={filtroUnidade}
+      onChange={v => {
+        setFiltroUnidade(v || '');
+        setFiltroVendedor('');
+      }}
+      clearable
+    />
+    <Autocomplete
+      label="Vendedor"
+      placeholder="Buscar vendedor"
+      data={opcoesVendedores}
+      value={filtroVendedor}
+      onChange={setFiltroVendedor}
+      clearable
+      disabled={!filtroUnidade}
+    />
+  </>
+)}
 
-  {/* Filtros digitáveis para unidade e vendedor */}
-  <Autocomplete
-  label="Unidade"
-  placeholder="Buscar unidade"
-  data={opcoesUnidades}
-  value={filtroUnidade}
-  onChange={v => {
-    setFiltroUnidade(v || '');
-    setFiltroVendedor('');
-  }}
-  clearable
-/>
-  <Autocomplete
-    label="Vendedor"
-    placeholder="Buscar vendedor"
-    data={opcoesVendedores}
-    value={filtroVendedor}
-    onChange={setFiltroVendedor}
-    clearable
-  />
 
   {/* Data início/fim igual estava */}
   {[
@@ -840,46 +902,6 @@ const dadosFiltrados = useMemo(() => {
 
       
 
-      <Modal
-      opened={popupAberto}
-      onClose={() => {}} // Impede fechar manualmente
-      withCloseButton={false}
-      title="Oportunidades sem movimentação"
-      centered
-    >
-      <p>
-        Você tem oportunidades sem movimentação há mais de 10 dias.<br />
-        Atualize o status para continuar!
-      </p>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {pendentesMovimentacao.map((o) => (
-          <li key={o.id} style={{ marginBottom: 24 }}>
-            <b>{o.parceiro_nome}</b> (ID: {o.id}) —{" "}
-            <span style={{ color: "#e8590c", fontWeight: 600 }}>
-              {o.dias_sem_movimentacao} dias parado
-            </span>
-            <Group mt="xs" gap="xs">
-              <Select
-                value={o.etapa}
-                onChange={(value) => value && handleStatusChange(o.id, value)}
-                data={etapaOptions}
-                size="xs"
-                styles={{
-                  input: {
-                    backgroundColor: getStatusColor(o.etapa),
-                    color: "white",
-                    fontWeight: 600,
-                    textAlign: "center",
-                    borderRadius: 6,
-                    minWidth: 120,
-                  },
-                }}
-              />
-            </Group>
-          </li>
-        ))}
-      </ul>
-    </Modal>
 
 
       {modalAberto && idMudandoStatus !== null && (
