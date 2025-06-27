@@ -8,33 +8,36 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip, B
 import SidebarGestor from '../components/SidebarGestor';
 import dayjs from 'dayjs';
 
+// Status possíveis conforme seu CSV
 const STATUS_LABELS: Record<string, string> = {
-  'ATIVO': 'Ativo',
-  '60 DIAS S/FAT': '60 dias s/ Fat',
-  'BASE INATIVA S/FAT': 'Base Inativa s/ Fat',
-  'BASE ATIVA S/FAT': 'Base Ativa s/ Fat',
-  'PERDIDO': 'Perdido',
-  // ...adicione outros conforme necessário
+  '60 dias s/ Fat': '60 dias s/ Fat',
+  '30 dias s/ Fat': '30 dias s/ Fat',
+  'Base Ativa': 'Base Ativa',
+  '90 dias s/ Fat': '90 dias s/ Fat',
+  '120 dias s/ Fat': '120 dias s/ Fat',
+  'Sem Faturamento': 'Sem Faturamento',
 };
 
-const COLORS = ['#005A64', '#43AA8B', '#FAA613', '#F44708', '#BEBEBE', '#7B7B7B', '#174C4F', '#2E8BC0', '#FF6F61'];
+const COLORS = ['#005A64', '#43AA8B', '#FAA613', '#F44708', '#BEBEBE', '#7B7B7B'];
 
 interface ResumoParceiro {
+  parceiro_id: number;
+  codigo: string;
   parceiro: string;
   consultor: string;
   unidade: string;
   status_parceiro: string;
+  data_ref: string;
   total_interacoes: number;
+  interacoes_whatsapp: number;
+  interacoes_ligacao: number;
+  interacoes_email: number;
   total_oportunidades: number;
-  valor_total: number;
-  oportunidades_orcamento: number;
   oportunidades_pedido: number;
   oportunidades_perdida: number;
   oportunidades_oportunidade: number;
-  ultima_interacao: string | null;
-  canal_venda: string;
-  data_ref: string;
-  // ...adicione outros campos conforme seu backend
+  oportunidades_orcamento: number;
+  oportunidades_aguardando: number;
 }
 
 interface User {
@@ -48,46 +51,32 @@ const Dashboard: React.FC = () => {
   const [data, setData] = useState<ResumoParceiro[]>([]);
   const [loading, setLoading] = useState(true);
   const [tipoUser, setTipoUser] = useState<User['tipo_user']>('VENDEDOR');
- 
 
   // Filtros
   const [mes, setMes] = useState<string>(String(dayjs().month() + 1).padStart(2, '0'));
   const [ano, setAno] = useState<string>(String(dayjs().year()));
   const [unidade, setUnidade] = useState<string | null>(null);
   const [consultor, setConsultor] = useState<string | null>(null);
-  const [canalVenda, setCanalVenda] = useState<string | null>(null);
 
   // Paginação tabela
   const [activePage, setActivePage] = useState(1);
   const pageSize = 20;
 
-
-    // Buscar do contexto/autenticação real
-    useEffect(() => {
-      const usuarioRaw = localStorage.getItem('user');
-      let usuarioSalvo: Partial<User> = {};
-      if (usuarioRaw) {
-        try {
-          usuarioSalvo = JSON.parse(usuarioRaw);
-        } catch { usuarioSalvo = {}; }
-      }
-      setTipoUser(usuarioSalvo.tipo_user ?? 'VENDEDOR');
-    
-      // Sempre string OU null
-      setCanalVenda(
-        Array.isArray(usuarioSalvo.canais)
-          ? (usuarioSalvo.canais.find((c) => typeof c === 'string' && c.length > 0) ?? null)
-          : null
-      );
-    
-      setConsultor(
-        typeof usuarioSalvo.consultor === 'string' && usuarioSalvo.consultor.length > 0
-          ? usuarioSalvo.consultor
-          : null
-      );
-    }, []);
-    
-
+  // Carrega usuário do localStorage
+  useEffect(() => {
+    const usuarioRaw = localStorage.getItem('user');
+    let usuarioSalvo: Partial<User> = {};
+    if (usuarioRaw) {
+      try {
+        usuarioSalvo = JSON.parse(usuarioRaw);
+      } catch { usuarioSalvo = {}; }
+    }
+    setTipoUser(usuarioSalvo.tipo_user ?? 'VENDEDOR');
+    setConsultor(typeof usuarioSalvo.consultor === 'string' && usuarioSalvo.consultor.length > 0
+      ? usuarioSalvo.consultor
+      : null
+    );
+  }, []);
 
   // Carrega dados
   useEffect(() => {
@@ -97,16 +86,14 @@ const Dashboard: React.FC = () => {
         mes,
         ano,
         unidade: unidade || '',
-        consultor: consultor || '',
-        canal_venda: canalVenda || ''
+        consultor: consultor || ''
       }
     }).then(res => {
       setData(res.data);
       setLoading(false);
       setActivePage(1);
     });
-  }, [mes, ano, unidade, consultor, canalVenda]);
-
+  }, [mes, ano, unidade, consultor]);
 
   // Prepara opções de filtro (únicos no resultado)
   const unidades = useMemo(
@@ -117,20 +104,15 @@ const Dashboard: React.FC = () => {
     () => Array.from(new Set(data.map(d => d.consultor))).filter(Boolean),
     [data]
   );
-  const canais = useMemo(
-    () => Array.from(new Set(data.map(d => d.canal_venda))).filter(Boolean),
-    [data]
-  );
 
   // Filtro aplicado
   const filtered = useMemo(() => {
     return data
       .filter(d => !unidade || d.unidade === unidade)
       .filter(d => !consultor || d.consultor === consultor)
-      .filter(d => !canalVenda || d.canal_venda === canalVenda)
       .filter(d => !mes || (d.data_ref && d.data_ref.slice(5, 7) === mes))
       .filter(d => !ano || (d.data_ref && d.data_ref.slice(0, 4) === ano));
-  }, [data, unidade, consultor, canalVenda, mes, ano]);
+  }, [data, unidade, consultor, mes, ano]);
 
   // KPIs
   const totalParceiros = filtered.length;
@@ -138,9 +120,8 @@ const Dashboard: React.FC = () => {
   const totalContatados = filtered.filter(d => d.total_interacoes > 0).length;
   const totalNuncaContatados = filtered.filter(d => (d.total_interacoes || 0) === 0).length;
   const totalOportunidades = filtered.reduce((a, b) => a + (b.total_oportunidades || 0), 0);
-  const valorTotal = filtered.reduce((a, b) => a + (b.valor_total || 0), 0);
 
-  // Gráfico: Parceiros sem faturamento por status
+  // Gráfico: Parceiros por status
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     filtered.forEach(d => {
@@ -174,53 +155,45 @@ const Dashboard: React.FC = () => {
 
         {/* === Filtros === */}
         <Group gap="md" mb="lg" wrap="wrap">
-  <Select
-    label="Mês"
-    value={mes}
-    onChange={(value) => setMes(value || '')}
-    data={Array.from({ length: 12 }, (_, i) => ({
-      value: String(i + 1).padStart(2, '0'),
-      label: dayjs().month(i).format('MMMM').replace(/^./, str => str.toUpperCase())
-    }))}
-    style={{ minWidth: 120 }}
-  />
-  <Select
-    label="Ano"
-    value={ano}
-    onChange={(value) => setAno(value || '')}
-    data={Array.from({ length: 3 }, (_, i) => {
-      const year = dayjs().year() - i;
-      return { value: String(year), label: String(year) };
-    })}
-    style={{ minWidth: 100 }}
-  />
-  <Select
-    label="Unidade"
-    value={unidade}
-    onChange={(value) => setUnidade(value ?? null)}
-    data={unidades.map(u => ({ value: u, label: u }))}
-    clearable
-    style={{ minWidth: 160 }}
-  />
-  {tipoUser !== 'VENDEDOR' && (
-    <Select
-      label="Consultor"
-      value={consultor}
-      onChange={(value) => setConsultor(value)}
-      data={consultores.map(c => ({ value: c, label: c }))}
-      clearable
-      style={{ minWidth: 160 }}
-    />
-  )}
-  <Select
-    label="Canal de Venda"
-    value={canalVenda}
-    onChange={(value) => setCanalVenda(value)}
-    data={canais.map(c => ({ value: c, label: c }))}
-    clearable
-    style={{ minWidth: 180 }}
-  />
-</Group>
+          <Select
+            label="Mês"
+            value={mes}
+            onChange={(value) => setMes(value || '')}
+            data={Array.from({ length: 12 }, (_, i) => ({
+              value: String(i + 1).padStart(2, '0'),
+              label: dayjs().month(i).format('MMMM').replace(/^./, str => str.toUpperCase())
+            }))}
+            style={{ minWidth: 120 }}
+          />
+          <Select
+            label="Ano"
+            value={ano}
+            onChange={(value) => setAno(value || '')}
+            data={Array.from({ length: 3 }, (_, i) => {
+              const year = dayjs().year() - i;
+              return { value: String(year), label: String(year) };
+            })}
+            style={{ minWidth: 100 }}
+          />
+          <Select
+            label="Unidade"
+            value={unidade}
+            onChange={(value) => setUnidade(value ?? null)}
+            data={unidades.map(u => ({ value: u, label: u }))}
+            clearable
+            style={{ minWidth: 160 }}
+          />
+          {tipoUser !== 'VENDEDOR' && (
+            <Select
+              label="Consultor"
+              value={consultor}
+              onChange={(value) => setConsultor(value)}
+              data={consultores.map(c => ({ value: c, label: c }))}
+              clearable
+              style={{ minWidth: 160 }}
+            />
+          )}
+        </Group>
 
         {loading ? <Loader size="xl" /> : (
           <>
@@ -246,17 +219,13 @@ const Dashboard: React.FC = () => {
                 <Text fw={700} size="xl">{totalOportunidades}</Text>
                 <Text size="sm" c="dimmed">Total de Oportunidades</Text>
               </Card>
-              <Card shadow="md" padding="lg" radius="md" withBorder style={{ minWidth: 160 }}>
-                <Text fw={700} size="xl">{valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Text>
-                <Text size="sm" c="dimmed">Valor Total</Text>
-              </Card>
             </Group>
 
             {/* === GRÁFICOS === */}
             <Flex gap="md" mb="md" align="flex-start" wrap="wrap">
-              {/* 1. Parceiros sem faturamento por status */}
+              {/* 1. Parceiros por status */}
               <Paper shadow="xs" p="md" radius="md" style={{ flex: 1, minWidth: 280 }}>
-                <Title order={4} c="#005A64" mb={10}>Parceiros Sem Faturamento por Status</Title>
+                <Title order={4} c="#005A64" mb={10}>Parceiros por Status</Title>
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
                     <Pie
@@ -326,39 +295,14 @@ const Dashboard: React.FC = () => {
               </Paper>
             </Flex>
 
-            {/* 4. Distribuição de Status na Carteira */}
-            <Paper shadow="xs" p="md" radius="md" mb="md">
-              <Title order={4} c="#005A64" mb={10}>Distribuição de Status na Carteira</Title>
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={Object.entries(statusCounts).map(([status, value]) => ({
-                      name: STATUS_LABELS[status] || status,
-                      value
-                    }))}
-                    dataKey="value"
-                    cx="50%" cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                  >
-                    {Object.entries(statusCounts).map((_, idx) => (
-                      <Cell key={idx} fill={COLORS[idx % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </Paper>
-
-            {/* 5. Taxas de Conversão por Etapa */}
+            {/* 4. Taxas de Conversão por Etapa */}
             <Paper shadow="xs" p="md" radius="md" mb="md">
               <Title order={4} c="#005A64" mb={10}>Taxas de Conversão por Etapa</Title>
               <Text>Orçamento → Pedido: {orcamentoToPedido.toFixed(1)}%</Text>
               <Text>Oportunidade → Pedido: {oportunidadeToPedido.toFixed(1)}%</Text>
             </Paper>
 
-            {/* 6. Resumo das Etapas Comerciais */}
+            {/* 5. Resumo das Etapas Comerciais */}
             <Paper shadow="xs" p="md" radius="md" mb="md">
               <Title order={4} c="#005A64" mb={10}>Resumo das Etapas Comerciais</Title>
               <Group gap="md">
@@ -375,33 +319,31 @@ const Dashboard: React.FC = () => {
               <Table>
                 <thead>
                   <tr>
+                    <th>Código</th>
                     <th>Parceiro</th>
                     <th>Consultor</th>
                     <th>Unidade</th>
                     <th>Status</th>
                     <th>Total Interações</th>
                     <th>Total Oportunidades</th>
-                    <th>Valor Total</th>
                     <th>Orçamentos</th>
                     <th>Pedidos</th>
                     <th>Perdidas</th>
-                    <th>Última Interação</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginated.map((row, i) => (
                     <tr key={i}>
+                      <td>{row.codigo}</td>
                       <td>{row.parceiro}</td>
                       <td>{row.consultor}</td>
                       <td>{row.unidade}</td>
                       <td>{STATUS_LABELS[row.status_parceiro] || row.status_parceiro}</td>
                       <td>{row.total_interacoes}</td>
                       <td>{row.total_oportunidades}</td>
-                      <td>{row.valor_total?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
                       <td>{row.oportunidades_orcamento}</td>
                       <td>{row.oportunidades_pedido}</td>
                       <td>{row.oportunidades_perdida}</td>
-                      <td>{row.ultima_interacao ? dayjs(row.ultima_interacao).format('DD/MM/YYYY') : '-'}</td>
                     </tr>
                   ))}
                 </tbody>
