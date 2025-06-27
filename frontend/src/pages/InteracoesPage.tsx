@@ -79,6 +79,8 @@ export default function InteracoesPage() {
   const [valorInteracaoManual, setValorInteracaoManual] = useState<string>('');
   const [obsInteracaoManual, setObsInteracaoManual] = useState('');
   const [parceiroFilter, setParceiroFilter] = useState<string | null>(null);
+  const [unidadeSelecionada, setUnidadeSelecionada] = useState('');
+  const [unidades, setUnidades] = useState<{ value: string; label: string }[]>([]);
 
 
 
@@ -109,10 +111,12 @@ export default function InteracoesPage() {
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
       if (statusSelecionado)   params.append('status', statusSelecionado);
       if (temGatilho)          params.append('gatilho_extra', temGatilho);
+      if (unidadeSelecionada) params.append('unidade', unidadeSelecionada);
   
       const canalNome = (id: number) => {
-        const c = usuario.canais_venda?.find((x: any) => x.id === id);
-        return c ? c.nome : '';
+        const canais = (usuario.canais_venda || []) as CanalVenda[];
+        const canal = canais.find((c: CanalVenda) => c.id === id); // Tipado aqui!
+        return canal ? canal.nome : '';
       };
   
       const [
@@ -170,8 +174,22 @@ export default function InteracoesPage() {
       setParceiros(resParceiros.data);
   
       if (tipoUser === 'GESTOR') {
-        const canais = usuario.canais_venda || [];
-        setCanaisVenda(canais.map((c: any) => ({ id: c.id, nome: c.nome })));
+        const canais = (usuario.canais_venda || []) as CanalVenda[];
+        setCanaisVenda(canais.map((c: CanalVenda) => ({ id: c.id, nome: c.nome })));
+  
+        // Carrega as unidades via API
+        try {
+          const resUnidades = await axios.get(
+            `${import.meta.env.VITE_API_URL}/unidades-por-canais/?canais=${canais.map((c: CanalVenda) => c.id).join(',')}`,
+            { headers }
+          );
+          setUnidades(resUnidades.data.map((u: any) => ({
+            value: u.nome,
+            label: u.nome,
+          })));
+        } catch {
+          setUnidades([]);
+        }
       }
     } catch (err) {
       console.error('Erro ao carregar interações:', err);
@@ -180,6 +198,9 @@ export default function InteracoesPage() {
       setCarregando(false);
     }
   };
+  
+
+  
   
   
   const handleCanalChange = async (value: string | null) => {
@@ -540,6 +561,17 @@ pageInter * itemsPerPage
         clearable
         style={{ minWidth: 200, marginRight: 16 }}
       />
+        <Select
+    label="Filtrar por Unidade"
+    placeholder="Selecione uma unidade"
+    value={unidadeSelecionada}
+    onChange={v => setUnidadeSelecionada(v || '')}
+    data={unidades}
+    clearable
+    searchable
+    style={{ minWidth: 200, marginRight: 16 }}
+  />
+
       <Select
         label="Filtrar por Vendedor"
         placeholder="Selecione um vendedor"
