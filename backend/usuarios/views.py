@@ -849,11 +849,10 @@ def usuarios_por_canal(request):
 def criar_gatilho_manual(request):
     parceiro_id = request.data.get('parceiro')
     descricao = request.data.get('descricao')
-    usuario = request.user
 
     if not parceiro_id or not descricao:
         return Response(
-            {'erro': 'Parâmetros "parceiro" e "descricao" são obrigatórios.'},
+            {'erro': 'Parâmetros \"parceiro\" e \"descricao\" são obrigatórios.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -865,7 +864,12 @@ def criar_gatilho_manual(request):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    # 🔥 Cria ou atualiza o gatilho extra
+    # ✅ Buscar o vendedor do parceiro
+    usuario = CustomUser.objects.filter(id_vendedor=parceiro.consultor).first()
+    if not usuario:
+        return Response({'erro': 'Consultor (vendedor) não encontrado para este parceiro.'}, status=400)
+
+    # ✅ Criar o gatilho extra vinculado ao vendedor
     gatilho, _ = GatilhoExtra.objects.update_or_create(
         parceiro=parceiro,
         usuario=usuario,
@@ -873,10 +877,13 @@ def criar_gatilho_manual(request):
     )
 
     return Response(
-        {'mensagem': 'Gatilho criado com sucesso.'},
+        {'mensagem': 'Gatilho criado com sucesso e vinculado ao vendedor responsável.'},
         status=status.HTTP_201_CREATED
     )
-
+    
+    
+    
+    
 
 class AlterarSenhaView(APIView):
     permission_classes = [IsAuthenticated]
