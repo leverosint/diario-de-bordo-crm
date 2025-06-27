@@ -411,6 +411,7 @@ pageInter * itemsPerPage
           { value: 'whatsapp', label: 'WhatsApp' },
           { value: 'email',    label: 'E-mail' },
           { value: 'ligacao',  label: 'Ligação' },
+          { value: 'visita',  label: 'Visita Presencial' },
         ]}
         value={tipoInteracaoManual}
         onChange={setTipoInteracaoManual}
@@ -633,6 +634,7 @@ pageInter * itemsPerPage
                       { value: 'whatsapp', label: 'WhatsApp' },
                       { value: 'email',    label: 'E-mail' },
                       { value: 'ligacao',  label: 'Ligação' },
+                      { value: 'visita',  label: 'Visita Presencial' },
                     ]}
                     clearable={false}
                   />
