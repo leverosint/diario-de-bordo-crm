@@ -64,12 +64,21 @@ const Dashboard: React.FC = () => {
   // Carrega usuário (mock - troque para seu contexto real de autenticação)
   useEffect(() => {
     // Buscar do contexto/autenticação real
-    const usuarioSalvo = JSON.parse(localStorage.getItem('user') || '{}');
- 
-    setTipoUser(usuarioSalvo.tipo_user || 'VENDEDOR');
-    if (usuarioSalvo.canais?.length > 0) setCanalVenda(usuarioSalvo.canais[0]);
-    if (usuarioSalvo.consultor) setConsultor(usuarioSalvo.consultor);
-  }, []);
+    useEffect(() => {
+      const usuarioRaw = localStorage.getItem('user');
+      let usuarioSalvo: Partial<User> = {};
+      if (usuarioRaw) {
+        try {
+          usuarioSalvo = JSON.parse(usuarioRaw);
+        } catch { usuarioSalvo = {}; }
+      }
+      setTipoUser(usuarioSalvo.tipo_user ?? 'VENDEDOR');
+      if (Array.isArray(usuarioSalvo.canais) && usuarioSalvo.canais.length > 0) {
+        setCanalVenda(usuarioSalvo.canais[0]);
+      }
+      if (usuarioSalvo.consultor) setConsultor(usuarioSalvo.consultor);
+    }, []);
+
 
   // Carrega dados
   useEffect(() => {
@@ -88,7 +97,7 @@ const Dashboard: React.FC = () => {
       setActivePage(1);
     });
   }, [mes, ano, unidade, consultor, canalVenda]);
-  
+
 
   // Prepara opções de filtro (únicos no resultado)
   const unidades = useMemo(
