@@ -154,7 +154,7 @@ export default function Dashboard() {
           axios.get(`${import.meta.env.VITE_API_URL}/dashboard/resumo-parceiros/?mes=${mes}&ano=${ano}`, { headers }),
         ]);
         
-        setKpis(kpiRes.data.kpis);
+      
         setParceirosContatadosStatus(kpiRes.data.parceiros_contatados_status || {});
         setInteracoesPorStatus(kpiRes.data.interacoes_status || {});
         setTabelaParceiros(kpiRes.data.parceiros || []);
