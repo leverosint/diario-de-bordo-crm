@@ -158,13 +158,13 @@ const handleCanalChange = async (canalId: string | null) => {
     { value: 'perdida', label: 'Venda Perdida' },
   ];
 
-  const transicoesPermitidas: Record<string, string[]> = {
-    oportunidade: ['orcamento', 'perdida'],
-    orcamento: ['aguardando', 'perdida'],
-    aguardando: ['pedido', 'perdida'],
-    pedido: [],
-    perdida: [],
-  };
+  //const transicoesPermitidas: Record<string, string[]> = {
+   // oportunidade: ['orcamento', 'perdida'],
+   // orcamento: ['aguardando', 'perdida'],
+   // aguardando: ['pedido', 'perdida'],
+   // pedido: [],
+   // perdida: [],
+ // };
 
   const getStatusColor = (etapa: string) => ({
     oportunidade: 'blue',
@@ -856,30 +856,28 @@ const dadosFiltrados = useMemo(() => {
           </td>
           <td className={styles.status}>
             <div className={styles['botoes-status']}>
-              <Select
-                value={o.etapa}
-                onChange={(value) => value && handleStatusChange(o.id, value)}
-                data={etapaOptions.filter(opt =>
-                  opt.value === o.etapa ||
-                  transicoesPermitidas[o.etapa]?.includes(opt.value)
-                )}
-                size="xs"
-                styles={{
-                  input: {
-                    backgroundColor: getStatusColor(o.etapa),
-                    color: 'white',
-                    fontWeight: 600,
-                    textAlign: 'center',
-                    borderRadius: 6,
-                    minWidth: 90,
-                    maxWidth: 120,
-                    height: 32,
-                    paddingRight: 20,
-                  },
-                }}
-                style={{ width: 120 }}
-                rightSectionWidth={28}
-              />
+            <Select
+  value={o.etapa}
+  onChange={(value) => value && handleStatusChange(o.id, value)}
+  data={etapaOptions} // 👈 permite todas as opções sempre
+  size="xs"
+  styles={{
+    input: {
+      backgroundColor: getStatusColor(o.etapa),
+      color: 'white',
+      fontWeight: 600,
+      textAlign: 'center',
+      borderRadius: 6,
+      minWidth: 90,
+      maxWidth: 120,
+      height: 32,
+      paddingRight: 20,
+    },
+  }}
+  style={{ width: 120 }}
+  rightSectionWidth={28}
+/>
+
               {emEdicao ? (
                 <>
                   <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)} style={{ minWidth: 30, height: 32, padding: 2 }}>
