@@ -79,8 +79,6 @@ export default function InteracoesPage() {
   const [valorInteracaoManual, setValorInteracaoManual] = useState<string>('');
   const [obsInteracaoManual, setObsInteracaoManual] = useState('');
   const [parceiroFilter, setParceiroFilter] = useState<string | null>(null);
-  const [unidadeSelecionada, setUnidadeSelecionada] = useState('');
-  const [unidades, setUnidades] = useState<{ value: string; label: string }[]>([]);
 
 
 
@@ -111,7 +109,7 @@ export default function InteracoesPage() {
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
       if (statusSelecionado)   params.append('status', statusSelecionado);
       if (temGatilho)          params.append('gatilho_extra', temGatilho);
-      if (unidadeSelecionada) params.append('unidade', unidadeSelecionada);
+   
   
       const canalNome = (id: number) => {
         const canais = (usuario.canais_venda || []) as CanalVenda[];
@@ -177,19 +175,7 @@ export default function InteracoesPage() {
         const canais = (usuario.canais_venda || []) as CanalVenda[];
         setCanaisVenda(canais.map((c: CanalVenda) => ({ id: c.id, nome: c.nome })));
   
-        // Carrega as unidades via API
-        try {
-          const resUnidades = await axios.get(
-            `${import.meta.env.VITE_API_URL}/unidades-por-canais/?canais=${canais.map((c: CanalVenda) => c.id).join(',')}`,
-            { headers }
-          );
-          setUnidades(resUnidades.data.map((u: any) => ({
-            value: u.nome,
-            label: u.nome,
-          })));
-        } catch {
-          setUnidades([]);
-        }
+      
       }
     } catch (err) {
       console.error('Erro ao carregar interações:', err);
@@ -319,18 +305,18 @@ export default function InteracoesPage() {
 
   useEffect(() => {
     carregarDados();
-  }, [canalSelecionado, vendedorSelecionado, parceiroFilter, statusSelecionado, temGatilho, unidadeSelecionada]);
+  }, [canalSelecionado, vendedorSelecionado, parceiroFilter, statusSelecionado, temGatilho]);
   
   
   // 3) Calcule quais itens aparecem em cada tabela, conforme a página atual
  // 3a) primeiro, aplique o filtro de parceiro—se parceiroFilter estiver setado
  const pendentesFiltrados = pendentes
   .filter(item => !parceiroFilter || String(item.id) === parceiroFilter)
-  .filter(item => !unidadeSelecionada || (item.unidade || '').toLowerCase() === unidadeSelecionada.toLowerCase());
+ 
 
 const interagidosFiltrados = interagidos
   .filter(item => !parceiroFilter || String(item.id) === parceiroFilter)
-  .filter(item => !unidadeSelecionada || (item.unidade || '').toLowerCase() === unidadeSelecionada.toLowerCase());
+
 // 3b) agora sim, pagine sobre o array já filtrado
 const pendentesExibidos = pendentesFiltrados.slice(
 (pagePend - 1) * itemsPerPage,
@@ -560,16 +546,7 @@ pageInter * itemsPerPage
         clearable
         style={{ minWidth: 200, marginRight: 16 }}
       />
-        <Select
-    label="Filtrar por Unidade"
-    placeholder="Selecione uma unidade"
-    value={unidadeSelecionada}
-    onChange={v => setUnidadeSelecionada(v || '')}
-    data={unidades}
-    clearable
-    searchable
-    style={{ minWidth: 200, marginRight: 16 }}
-  />
+       
 
       <Select
         label="Filtrar por Vendedor"
