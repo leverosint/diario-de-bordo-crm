@@ -274,6 +274,7 @@ useEffect(() => {
             Object.values(unicos).map((v: any) => ({
               value: v.username,
               label: v.nome || v.username,
+              
             }))
           );
         });
