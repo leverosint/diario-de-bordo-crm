@@ -61,8 +61,7 @@ const Dashboard: React.FC = () => {
   const [activePage, setActivePage] = useState(1);
   const pageSize = 20;
 
-  // Carrega usuário (mock - troque para seu contexto real de autenticação)
-  useEffect(() => {
+
     // Buscar do contexto/autenticação real
     useEffect(() => {
       const usuarioRaw = localStorage.getItem('user');
@@ -74,7 +73,7 @@ const Dashboard: React.FC = () => {
       }
       setTipoUser(usuarioSalvo.tipo_user ?? 'VENDEDOR');
       if (Array.isArray(usuarioSalvo.canais) && usuarioSalvo.canais.length > 0) {
-        setCanalVenda(usuarioSalvo.canais[0]);
+        setCanalVenda(usuarioSalvo.canais?.[0] ?? null);
       }
       if (usuarioSalvo.consultor) setConsultor(usuarioSalvo.consultor);
     }, []);
@@ -188,7 +187,7 @@ const Dashboard: React.FC = () => {
   <Select
     label="Unidade"
     value={unidade}
-    onChange={(value) => setUnidade(value)}
+    onChange={(value) => setUnidade(value ?? null)}
     data={unidades.map(u => ({ value: u, label: u }))}
     clearable
     style={{ minWidth: 160 }}
