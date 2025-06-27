@@ -180,41 +180,48 @@ const [numeroPedido, setNumeroPedido] = useState('');
 
 // 🔗 Carregar dados da API (mantém igual)
 useEffect(() => {
-  setCarregando(true);
-  const params: any = {};
-  if (filtroVendedor) params.consultor = filtroVendedor;
-  if (filtroUnidade)  params.canal_id = filtroUnidade;
+  // Pegue os canais permitidos do usuário logado (para GESTOR)
+  const canaisPermitidos = (usuario?.canais_venda || []) as { id: number; nome: string }[];
 
-  axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
-    headers: { Authorization: `Bearer ${token}` },
-    params,
-  })
-    .then(res => setDados(res.data))
-    .catch(() => setDados([]))
-    .finally(() => setCarregando(false));
-}, [token, filtroVendedor, filtroUnidade]);
-
-useEffect(() => {
-  // Vendedores
-  axios.get(`${import.meta.env.VITE_API_URL}/usuarios/report/`, {
-    headers: { Authorization: `Bearer ${token}` },
-  }).then(res => {
-    setOpcoesVendedores(res.data.map((u: any) => ({
-      value: u.username, // ou u.id_vendedor, veja o campo correto conforme seu backend!
-      label: u.nome || u.username,
-    })));
-  });
-
-  // Unidades
+  // --- UNIDADES ---
   axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
     headers: { Authorization: `Bearer ${token}` },
   }).then(res => {
-    setOpcoesUnidades(res.data.map((c: any) => ({
+    // Só mantém as unidades do gestor
+    const filtradas = tipoUser === 'GESTOR'
+      ? res.data.filter((c: any) => canaisPermitidos.some(cp => cp.id === c.id))
+      : res.data;
+    setOpcoesUnidades(filtradas.map((c: any) => ({
       value: c.id.toString(),
       label: c.nome,
     })));
   });
-}, [token]);
+
+  // --- VENDEDORES ---
+  // Para gestor: se escolher uma unidade, busca vendedores daquele canal
+  if (tipoUser === 'GESTOR' && filtroUnidade) {
+    axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${filtroUnidade}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(res => {
+      setOpcoesVendedores(res.data.map((v: any) => ({
+        value: v.username, // ou v.id_vendedor conforme seu backend
+        label: v.nome || v.username,
+      })));
+    });
+  } else if (tipoUser === 'ADMIN') {
+    axios.get(`${import.meta.env.VITE_API_URL}/usuarios/report/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(res => {
+      setOpcoesVendedores(res.data.map((u: any) => ({
+        value: u.username,
+        label: u.nome || u.username,
+      })));
+    });
+  } else {
+    setOpcoesVendedores([]); // VENDEDOR não vê filtro
+  }
+}, [token, tipoUser, filtroUnidade, usuario]);
+
 
 const dadosComDias: Oportunidade[] = useMemo(() => {
   return dados.map((o) => ({
@@ -233,6 +240,7 @@ const dadosComDias: Oportunidade[] = useMemo(() => {
 
 // 🔥 Verificar se tem oportunidades sem movimentação
 useEffect(() => {
+  setCarregando(true);
   const oportunidadesPendentes = dadosComDias.filter(
     (o) => (o.dias_sem_movimentacao ?? 0) >= 10
   );
@@ -639,13 +647,16 @@ const dadosFiltrados = useMemo(() => {
 
   {/* Filtros digitáveis para unidade e vendedor */}
   <Autocomplete
-    label="Unidade"
-    placeholder="Buscar unidade"
-    data={opcoesUnidades}
-    value={filtroUnidade}
-    onChange={setFiltroUnidade}
-    clearable
-  />
+  label="Unidade"
+  placeholder="Buscar unidade"
+  data={opcoesUnidades}
+  value={filtroUnidade}
+  onChange={v => {
+    setFiltroUnidade(v || '');
+    setFiltroVendedor('');
+  }}
+  clearable
+/>
   <Autocomplete
     label="Vendedor"
     placeholder="Buscar vendedor"
