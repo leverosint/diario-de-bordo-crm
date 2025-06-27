@@ -84,6 +84,57 @@ function CardPadrao({
 }
 
 
+import * as XLSX from 'xlsx';
+
+
+const exportToExcel = async (data: any[], fileName: string, exportarHistorico = false) => {
+  const wb = XLSX.utils.book_new();
+
+  // Aba principal
+  const sheetData = data.map((p) => ({
+    Parceiro: p.parceiro,
+    Consultor: p.consultor,
+    Unidade: p.unidade,
+    Status: p.status_parceiro,
+    'Total Interações': p.total_interacoes,
+    'Total Oportunidades': p.total_oportunidades,
+    'Valor Total Oportunidades': p.valor_total_oportunidades,
+    'Orçamentos': p.oportunidades_orcamento,
+    'Pedidos': p.oportunidades_pedido,
+  }));
+  const ws = XLSX.utils.json_to_sheet(sheetData);
+  XLSX.utils.book_append_sheet(wb, ws, 'Resumo Mensal');
+
+  // Se quiser exportar o histórico detalhado de interações
+  if (exportarHistorico) {
+    let historicoData: any[] = [];
+    for (const p of data) {
+      try {
+        const token = localStorage.getItem('token');
+        // Ajuste o endpoint se necessário!
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/interacoes/historico/?parceiro_id=${p.parceiro_id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const interacoesFormatadas = response.data.map((i: any) => ({
+          Parceiro: p.parceiro,
+          Tipo: i.tipo,
+          'Data da Interação': i.data_interacao,
+          'Entrou em Contato': i.entrou_em_contato ? 'Sim' : 'Não',
+        }));
+        historicoData = historicoData.concat(interacoesFormatadas);
+      } catch (error) {
+        // Se falhar em algum, só ignora esse parceiro
+      }
+    }
+    if (historicoData.length > 0) {
+      const wsHistorico = XLSX.utils.json_to_sheet(historicoData);
+      XLSX.utils.book_append_sheet(wb, wsHistorico, 'Histórico Interações');
+    }
+  }
+
+  XLSX.writeFile(wb, `${fileName}.xlsx`);
+};
 
 
 
@@ -102,7 +153,6 @@ export default function Dashboard() {
   const [pageMap, setPageMap] = useState<{ [key: string]: number }>({});
   const recordsPerPage = 5;
   const token = localStorage.getItem('token');
-    const exportToExcel = async (data: any[], fileName: string, exportarHistorico = false) => {
 
   // ============== BUSCAS ==============
   const fetchResumoDashboard = async () => {
