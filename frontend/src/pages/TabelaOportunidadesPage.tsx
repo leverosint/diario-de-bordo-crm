@@ -232,21 +232,31 @@ useEffect(() => {
     headers: { Authorization: `Bearer ${token}` },
   }).then(res => {
     setOpcoesVendedores(res.data.map((u: any) => ({
-      value: u.username, // ou u.id_vendedor, veja o campo correto conforme seu backend!
+      value: u.username,
       label: u.nome || u.username,
     })));
   });
 
-  // Unidades
-  axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
-    headers: { Authorization: `Bearer ${token}` },
-  }).then(res => {
-    setOpcoesUnidades(res.data.map((c: any) => ({
+  // Unidades (aqui está a alteração principal!)
+  if (tipoUser === 'GESTOR') {
+    // 👇 Carrega diretamente dos canais do usuário logado
+    const canaisUsuario = usuario.canais_venda || [];
+    setOpcoesUnidades(canaisUsuario.map((c: any) => ({
       value: c.id.toString(),
       label: c.nome,
     })));
-  });
-}, [token]);
+  } else {
+    // Para ADMIN ou outros tipos, mantém a busca original
+    axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(res => {
+      setOpcoesUnidades(res.data.map((c: any) => ({
+        value: c.id.toString(),
+        label: c.nome,
+      })));
+    });
+  }
+}, [token, tipoUser]);
 
 const dadosComDias: Oportunidade[] = useMemo(() => {
   return dados.map((o) => ({
