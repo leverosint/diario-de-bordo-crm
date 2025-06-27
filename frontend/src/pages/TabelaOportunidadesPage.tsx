@@ -30,6 +30,9 @@ interface Oportunidade {
   dias_sem_movimentacao?: number;
 }
 
+
+
+
 export default function TabelaOportunidadesPage() {
  
   const [dados, setDados] = useState<Oportunidade[]>([]);
@@ -116,7 +119,36 @@ const [numeroPedido, setNumeroPedido] = useState('');
 
   const token = localStorage.getItem('token') ?? '';
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
+
+
+
+
   const tipoUser = usuario?.tipo_user ?? '';
+
+const handleCanalChange = async (canalId: string | null) => {
+  setFiltroUnidade(canalId || '');
+  setFiltroVendedor('');
+  if (!canalId) {
+    setOpcoesVendedores([]);
+    return;
+  }
+  try {
+    const headers = { Authorization: `Bearer ${token}` };
+    const res = await axios.get(
+      `${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${canalId}`,
+      { headers }
+    );
+    setOpcoesVendedores(
+      res.data.map((v: any) => ({ value: v.username, label: v.nome || v.username }))
+    );
+  } catch (err) {
+    console.error('Erro ao carregar vendedores por canal:', err);
+    setOpcoesVendedores([]);
+  }
+};
+
+
+
 
   const etapaOptions = [
     { value: 'oportunidade', label: 'Oportunidade' },
@@ -639,34 +671,30 @@ const dadosFiltrados = useMemo(() => {
     clearable
   />
 
-  {/* 5) Canal de Venda → Vendedor */}
-  {(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
-    <Group gap="md">
-      <Select
-        label="Canal de Venda"
-        placeholder="Selecione um canal"
-        data={opcoesUnidades}
-        value={filtroUnidade}
-        onChange={(v) => {
-          setFiltroUnidade(v || '');
-          setFiltroVendedor(''); // limpa vendedor ao trocar canal
-        }}
-        clearable
-        style={{ minWidth: 200 }}
-      />
-      <Select
-        label="Vendedor"
-        placeholder="Selecione um vendedor"
-        data={opcoesVendedores}
-        value={filtroVendedor}
-        onChange={(v) => setFiltroVendedor(v || '')}
-        clearable
-        disabled={!filtroUnidade}
-        style={{ minWidth: 200 }}
-      />
-    </Group>
-  )}
-
+ {/* 5) Canal de Venda → Vendedor */}
+{(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
+  <Group gap="md">
+    <Select
+      label="Canal de Venda"
+      placeholder="Selecione um canal"
+      data={opcoesUnidades}
+      value={filtroUnidade}
+      onChange={handleCanalChange}        // ← usa o handler novo
+      clearable
+      style={{ minWidth: 200 }}
+    />
+    <Select
+      label="Vendedor"
+      placeholder="Selecione um vendedor"
+      data={opcoesVendedores}            // ← só os do canal selecionado
+      value={filtroVendedor}
+      onChange={v => setFiltroVendedor(v || '')}
+      clearable
+      disabled={!filtroUnidade}
+      style={{ minWidth: 200 }}
+    />
+  </Group>
+)}
   {/* 6) Data início / Data fim */}
   <Box style={{ minWidth: 160 }}>
     <DatePickerInput
