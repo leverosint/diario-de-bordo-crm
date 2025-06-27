@@ -547,35 +547,27 @@ class HistoricoInteracoesView(generics.ListAPIView):
 
 
 # ===== Oportunidades =====
-class OportunidadeViewSet(viewsets.ModelViewSet):
-    serializer_class = OportunidadeSerializer
+class OportunidadeListView(APIView):
     permission_classes = [IsAuthenticated]
-        
-    def get_queryset(self):
-        user = self.request.user
-        queryset = Oportunidade.objects.all()
 
-        if user.tipo_user == 'GESTOR':
-            queryset = queryset.filter(parceiro__canal_venda__in=user.canais_venda.all())
-        elif user.tipo_user == 'VENDEDOR':
-            queryset = queryset.filter(parceiro__consultor=user.id_vendedor)
+    def get(self, request):
+        user = request.user
+        consultor_id = request.query_params.get("consultor")  # vindo da URL
 
-        canal_id = self.request.query_params.get('canal_id')
-        consultor = self.request.query_params.get('consultor')
-        gatilho   = self.request.query_params.get('gatilho')  # ← novo
+        # Se for vendedor, filtra pelas oportunidades dele
+        if user.tipo_user == "VENDEDOR":
+            oportunidades = Oportunidade.objects.filter(parceiro__consultor=user.id_vendedor)
 
-        if canal_id:
-            queryset = queryset.filter(parceiro__canal_venda_id=canal_id)
-        if consultor:
-            queryset = queryset.filter(parceiro__consultor=consultor)
-        if gatilho:
-            queryset = queryset.filter(gatilho_extra__iexact=gatilho)
+        # Se for gestor/admin e usou o filtro, aplica
+        elif user.tipo_user in ["GESTOR", "ADMIN"] and consultor_id:
+            oportunidades = Oportunidade.objects.filter(parceiro__consultor=consultor_id)
 
-        return queryset
-    
+        # Se for gestor/admin sem filtro, mostra tudo
+        else:
+            oportunidades = Oportunidade.objects.all()
 
-    def perform_create(self, serializer):
-        serializer.save(usuario=self.request.user)
+        serializer = OportunidadeSerializer(oportunidades, many=True)
+        return Response(serializer.data)
 
 # ... 🛑 o código é muito grande para caber aqui, quer que eu continue com o Dashboard KPIs, Funil, Oportunidades Mensais e o endpoint usuarios_por_canal em mais uma sequência?
 # ===== Dashboard KPIs + Parceiros =====
@@ -986,3 +978,7 @@ class ParceiroReportView(generics.ListAPIView):
         elif user.tipo_user == 'VENDEDOR':
             return Parceiro.objects.filter(consultor=user.id_vendedor)
         return Parceiro.objects.none()
+    
+    
+    
+    
