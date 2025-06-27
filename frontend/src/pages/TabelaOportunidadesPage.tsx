@@ -217,33 +217,68 @@ useEffect(() => {
     })));
   });
 
-  const canaisPermitidos = (usuario?.canais_venda || []) as { id: number; nome: string }[];
+ 
   
-   // --- UNIDADES ---
-   axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
-    headers: { Authorization: `Bearer ${token}` },
-  }).then(res => {
-    // Só mantém as unidades do gestor (se for GESTOR)
-    const filtradas = tipoUser === 'GESTOR'
-      ? res.data.filter((c: any) => canaisPermitidos.some(cp => cp.id === c.id))
-      : res.data;
-    setOpcoesUnidades(filtradas.map((c: any) => ({
-      value: c.id.toString(),
-      label: c.nome,
-    })));
-  });
-
-  // --- VENDEDORES ---
-  if ((tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && filtroUnidade) {
-    // Busca só os vendedores daquela unidade/canal selecionado
-    axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${filtroUnidade}`, {
+     // UNIDADES
+  if (tipoUser === 'GESTOR') {
+    // Mostra APENAS os canais do usuario.canais_venda
+    setOpcoesUnidades(
+      (usuario.canais_venda || []).map((c: any) => ({
+        value: String(c.id),
+        label: c.nome,
+      }))
+    );
+  } else {
+    // ADMIN vê todos
+    axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => {
-      setOpcoesVendedores(res.data.map((v: any) => ({
-        value: v.username, // ou v.id_vendedor conforme o backend
-        label: v.nome || v.username,
+      setOpcoesUnidades(res.data.map((c: any) => ({
+        value: c.id.toString(),
+        label: c.nome,
       })));
     });
+  }
+
+  // VENDEDORES
+  if (tipoUser === 'GESTOR') {
+    if (filtroUnidade) {
+      // Só vendedores do canal selecionado
+      axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${filtroUnidade}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then(res => {
+        setOpcoesVendedores(res.data.map((v: any) => ({
+          value: v.username,
+          label: v.nome || v.username,
+        })));
+      });
+    } else {
+      // Vendedores de todos os canais que o gestor tem acesso
+      const canaisIds = (usuario.canais_venda || []).map((c: any) => c.id);
+      if (canaisIds.length === 0) {
+        setOpcoesVendedores([]);
+      } else {
+        Promise.all(
+          canaisIds.map((id: number) =>
+            axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          )
+        ).then(respostas => {
+          const todos: any[] = [];
+          respostas.forEach(r => { todos.push(...r.data); });
+          // Remove duplicados por username
+          const unicos: any = {};
+          todos.forEach((v: any) => { unicos[v.username] = v; });
+          setOpcoesVendedores(
+            Object.values(unicos).map((v: any) => ({
+              value: v.username,
+              label: v.nome || v.username,
+            }))
+          );
+        });
+      }
+    }
   } else if (tipoUser === 'ADMIN') {
     axios.get(`${import.meta.env.VITE_API_URL}/usuarios/report/`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -254,10 +289,10 @@ useEffect(() => {
       })));
     });
   } else {
-    setOpcoesVendedores([]); // VENDEDOR não vê filtro
+    setOpcoesVendedores([]);
   }
-}, [token, tipoUser, filtroUnidade, usuario]);
 
+}, [token, tipoUser, filtroUnidade, usuario]);
 
 
 // 🔥 Verificar se tem oportunidades sem movimentação
@@ -343,56 +378,6 @@ const confirmarVendaPerdida = async () => {
 
 
 
-    const confirmarVendaPerdida = async () => {
-      if (!idMudandoStatus || motivoPerda.trim() === '') {
-        alert('Por favor, preencha o motivo da perda.');
-        return;
-      }
-    
-      const agora = new Date().toISOString();
-    
-      try {
-        await axios.patch(
-          `${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`,
-          {
-            etapa: 'perdida',
-            observacao: motivoPerda,
-            data_etapa: agora,
-            data_status: agora,
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-    
-        setDados(prev =>
-          prev.map(o =>
-            o.id === idMudandoStatus
-              ? {
-                  ...o,
-                  etapa: 'perdida',
-                  observacao: motivoPerda,
-                  data_etapa: agora,
-                  data_status: agora,
-                  dias_sem_movimentacao: 0,
-                }
-              : o
-          )
-        );
-    
-       
-    
-        setModalAberto(false);
-        setMotivoPerda('');
-        setEtapaParaAtualizar(null);
-        setIdMudandoStatus(null);
-      } catch (err) {
-        console.error('Erro ao salvar motivo de perda:', err);
-        alert('Erro ao atualizar etapa.');
-      }
-    };
-    
-    
     
    
 
