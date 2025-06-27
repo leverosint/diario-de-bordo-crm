@@ -319,19 +319,18 @@ export default function InteracoesPage() {
 
   useEffect(() => {
     carregarDados();
-  }, [canalSelecionado, vendedorSelecionado, parceiroFilter, statusSelecionado, temGatilho]);
+  }, [canalSelecionado, vendedorSelecionado, parceiroFilter, statusSelecionado, temGatilho, unidadeSelecionada]);
   
   
   // 3) Calcule quais itens aparecem em cada tabela, conforme a página atual
  // 3a) primeiro, aplique o filtro de parceiro—se parceiroFilter estiver setado
  const pendentesFiltrados = pendentes
- .filter(item => !parceiroFilter || String(item.id) === parceiroFilter)
- .filter(item => !unidadeSelecionada || item.unidade === unidadeSelecionada);
+  .filter(item => !parceiroFilter || String(item.id) === parceiroFilter)
+  .filter(item => !unidadeSelecionada || (item.unidade || '').toLowerCase() === unidadeSelecionada.toLowerCase());
 
 const interagidosFiltrados = interagidos
- .filter(item => !parceiroFilter || String(item.id) === parceiroFilter)
- .filter(item => !unidadeSelecionada || item.unidade === unidadeSelecionada);
-
+  .filter(item => !parceiroFilter || String(item.id) === parceiroFilter)
+  .filter(item => !unidadeSelecionada || (item.unidade || '').toLowerCase() === unidadeSelecionada.toLowerCase());
 // 3b) agora sim, pagine sobre o array já filtrado
 const pendentesExibidos = pendentesFiltrados.slice(
 (pagePend - 1) * itemsPerPage,
