@@ -324,13 +324,13 @@ export default function InteracoesPage() {
   
   // 3) Calcule quais itens aparecem em cada tabela, conforme a página atual
  // 3a) primeiro, aplique o filtro de parceiro—se parceiroFilter estiver setado
-const pendentesFiltrados = parceiroFilter
-? pendentes.filter(item => String(item.id) === parceiroFilter)
-: pendentes;
+ const pendentesFiltrados = pendentes
+ .filter(item => !parceiroFilter || String(item.id) === parceiroFilter)
+ .filter(item => !unidadeSelecionada || item.unidade === unidadeSelecionada);
 
-const interagidosFiltrados = parceiroFilter
-? interagidos.filter(item => String(item.id) === parceiroFilter)
-: interagidos;
+const interagidosFiltrados = interagidos
+ .filter(item => !parceiroFilter || String(item.id) === parceiroFilter)
+ .filter(item => !unidadeSelecionada || item.unidade === unidadeSelecionada);
 
 // 3b) agora sim, pagine sobre o array já filtrado
 const pendentesExibidos = pendentesFiltrados.slice(
