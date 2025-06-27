@@ -41,6 +41,11 @@ export default function TabelaOportunidadesPage() {
   const [valorEdit, setValorEdit] = useState<string>('');
   const [observacaoEdit, setObservacaoEdit] = useState<string>('');
   const [numeroPedidoEdit, setNumeroPedidoEdit] = useState<string>('');
+  const [filtroVendedor, setFiltroVendedor] = useState<string>('');      // ID do consultor
+const [filtroUnidade, setFiltroUnidade] = useState<string>('');        // ID do canal_venda
+
+const [opcoesVendedores, setOpcoesVendedores] = useState<{value:string, label:string}[]>([]);
+const [opcoesUnidades, setOpcoesUnidades] = useState<{value:string, label:string}[]>([]);
 
   const [popupAberto, setPopupAberto] = useState(false);
   
@@ -173,19 +178,40 @@ const [numeroPedido, setNumeroPedido] = useState('');
 
 // 🔗 Carregar dados da API (mantém igual)
 useEffect(() => {
-  const fetchDados = async () => {
-    try {
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setDados(res.data);
-    } catch (err) {
-      console.error('Erro ao buscar oportunidades:', err);
-    } finally {
-      setCarregando(false);
-    }
-  };
-  fetchDados();
+  setCarregando(true);
+  const params: any = {};
+  if (filtroVendedor) params.consultor = filtroVendedor;
+  if (filtroUnidade)  params.canal_id = filtroUnidade;
+
+  axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params,
+  })
+    .then(res => setDados(res.data))
+    .catch(() => setDados([]))
+    .finally(() => setCarregando(false));
+}, [token, filtroVendedor, filtroUnidade]);
+
+useEffect(() => {
+  // Vendedores
+  axios.get(`${import.meta.env.VITE_API_URL}/usuarios/report/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(res => {
+    setOpcoesVendedores(res.data.map((u: any) => ({
+      value: u.username, // ou u.id_vendedor, veja o campo correto conforme seu backend!
+      label: u.nome || u.username,
+    })));
+  });
+
+  // Unidades
+  axios.get(`${import.meta.env.VITE_API_URL}/canais-venda/`, {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(res => {
+    setOpcoesUnidades(res.data.map((c: any) => ({
+      value: c.id.toString(),
+      label: c.nome,
+    })));
+  });
 }, [token]);
 
 const dadosComDias: Oportunidade[] = useMemo(() => {
@@ -588,6 +614,27 @@ const dadosFiltrados = useMemo(() => {
             data={etapaOptions}
             clearable
           />
+          
+
+          <Select
+  label="Unidade"
+  placeholder="Todas"
+  data={[{ value: '', label: 'Todas' }, ...opcoesUnidades]}
+  value={filtroUnidade}
+  onChange={(v) => setFiltroUnidade(v ?? '')}
+  clearable
+  style={{ minWidth: 140 }}
+/>
+<Select
+  label="Vendedor"
+  placeholder="Todos"
+  data={[{ value: '', label: 'Todos' }, ...opcoesVendedores]}
+  value={filtroVendedor}
+  onChange={(v) => setFiltroVendedor(v ?? '')}
+  clearable
+  style={{ minWidth: 140 }}
+/>
+
 {[
           { label: 'Data início', value: dataInicio, onChange: setDataInicio },
           { label: 'Data fim',    value: dataFim,    onChange: setDataFim },
