@@ -20,6 +20,8 @@ import ResetarSenhaPage from './pages/ResetarSenhaPage';
 import './index.css';
 import { customTheme } from './styles/theme';
 
+const user = JSON.parse(localStorage.getItem('user') || '{}');
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <MantineProvider
@@ -30,7 +32,7 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LoginPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard user={user} />} />
           <Route path="/cadastro-parceiro" element={<CadastroParceiroPage />} />
           <Route path="/cadastro-usuarios" element={<CadastroUsuariosPage />} />
           <Route path="/interacoes" element={<InteracoesPage />} />
