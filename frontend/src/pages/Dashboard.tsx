@@ -72,16 +72,18 @@ const Dashboard: React.FC = () => {
         } catch { usuarioSalvo = {}; }
       }
       setTipoUser(usuarioSalvo.tipo_user ?? 'VENDEDOR');
-      if (Array.isArray(usuarioSalvo.canais) && usuarioSalvo.canais.length > 0) {
-        if (Array.isArray(usuarioSalvo.canais) && usuarioSalvo.canais.length > 0) {
-          setCanalVenda(typeof usuarioSalvo.canais[0] === 'string' ? usuarioSalvo.canais[0] : null);
-        } else {
-          setCanalVenda(null);
-        }
-        
-      }
-      setConsultor(typeof usuarioSalvo.consultor === 'string' ? usuarioSalvo.consultor : null);
+    
+      const canal = Array.isArray(usuarioSalvo.canais)
+        ? usuarioSalvo.canais.find((c) => typeof c === 'string' && c.length > 0) || null
+        : null;
+      setCanalVenda(canal);
+    
+      setConsultor(typeof usuarioSalvo.consultor === 'string' && usuarioSalvo.consultor.length > 0
+        ? usuarioSalvo.consultor
+        : null
+      );
     }, []);
+    
 
 
   // Carrega dados
