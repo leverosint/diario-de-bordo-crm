@@ -526,9 +526,9 @@ const fetchResumoParceiros = async () => {
     </tr>
   </thead>
   <tbody>
-    {getPaginatedData('Todos os Parceiros', parceirosFiltrados).map((p, idx) => (
-      <tr key={idx}>
-        <td>{p.parceiro}</td>
+  {getPaginatedData('Todos os Parceiros', parceirosFiltrados).map((p, idx) => (
+    <tr key={idx}>
+      <td>{p.parceiro}</td>
         <td>{p.status}</td>
         <td style={{ textAlign: 'center' }}>
           R$ {Number(p.total || p.total_faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
