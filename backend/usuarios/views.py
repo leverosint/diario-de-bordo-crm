@@ -684,25 +684,21 @@ class DashboardKPIView(APIView):
             status = interacao.status or 'Sem Status'
             parceiros_contatados_status[status] += 1
 
-        ids_com_interacao = interacoes.values_list('parceiro_id', flat=True).distinct()
-        sem_interacao = parceiros_vivos.exclude(id__in=ids_com_interacao)
+        # IDs com interação no período
+        ids_com_interacao = set(interacoes.values_list('parceiro_id', flat=True).distinct())
 
-        sem_interacao_por_status = (
-            sem_interacao.values('status')
-            .annotate(total=Count('id'))
-        )
-        parceiros_sem_fat_status = {
-            item['status'] or 'Sem Status': item['total']
-            for item in sem_interacao_por_status
-        }
-
-        parceiros_serializados = ParceiroSerializer(parceiros_vivos, many=True).data
+        # Lista de parceiros com flag tem_interacao
+        parceiros_serializados = []
+        for parceiro in parceiros_vivos:
+            tem_interacao = parceiro.id in ids_com_interacao
+            parceiro_data = ParceiroSerializer(parceiro).data
+            parceiro_data['tem_interacao'] = tem_interacao
+            parceiros_serializados.append(parceiro_data)
 
         return Response({
             "kpis": kpis,
             "interacoes_status": interacoes_status_dict,
             "parceiros_contatados_status": parceiros_contatados_status,
-            "parceiros_sem_fat_status": parceiros_sem_fat_status,
             "parceiros": parceiros_serializados
         })
 
