@@ -131,6 +131,8 @@ export default function Dashboard() {
   const [dados, setDados] = useState<any[]>([]);
   const [kpis, setKpis] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [oportunidades, setOportunidades] = useState<any[]>([]);
+const [loadingOportunidades, setLoadingOportunidades] = useState(true);
 
   const [mesSelecionado, setMesSelecionado] = useState<string | null>('6');
   const [anoSelecionado, setAnoSelecionado] = useState<string | null>('2025');
@@ -194,10 +196,13 @@ export default function Dashboard() {
     }
 
     fetchDashboardData();
-  }, [token, navigate]);
+    fetchOportunidades(); // <--- Adicione esta linha
+    // eslint-disable-next-line
+  }, [token, navigate, mesSelecionado, anoSelecionado, consultorSelecionado]);
+  
 
   if (!token || !tipoUser) return null;
-  if (loading) {
+  if (loading || loadingOportunidades) {
     return (
       <SidebarGestor tipoUser={tipoUser}>
         <div style={{ padding: 20 }}>
@@ -206,6 +211,31 @@ export default function Dashboard() {
       </SidebarGestor>
     );
   }
+  
+
+  
+  const fetchOportunidades = async () => {
+    try {
+      setLoadingOportunidades(true);
+      const headers = { Authorization: `Bearer ${token}` };
+      const params = [
+        mesSelecionado ? `mes=${mesSelecionado}` : '',
+        anoSelecionado ? `ano=${anoSelecionado}` : '',
+        consultorSelecionado ? `consultor=${consultorSelecionado}` : ''
+      ].filter(Boolean).join('&');
+      const url = `${import.meta.env.VITE_API_URL}/oportunidades/?${params}`;
+  
+      const res = await axios.get(url, { headers });
+      setOportunidades(res.data.results || res.data); // depende do seu backend (se paginado ou não)
+    } catch (err) {
+      console.error('Erro ao buscar oportunidades:', err);
+      setOportunidades([]);
+    } finally {
+      setLoadingOportunidades(false);
+    }
+  };
+
+  
 
   const parceirosFiltrados = dados;
 
@@ -241,16 +271,15 @@ export default function Dashboard() {
   }, {} as Record<string, number>);
 
   const statsEtapas = resumoEtapas.map(({ etapa, key, cor }) => {
-    const oportunidades = parceirosFiltrados.filter(
-      (item) => (item.etapa || '').toLowerCase() === key
-    );
+    const itens = oportunidades.filter((item) => (item.etapa || '').toLowerCase() === key);
     return {
       etapa,
       cor,
-      qtd: oportunidades.length,
-      valor: oportunidades.reduce((soma, item) => soma + (Number(item.valor) || 0), 0),
+      qtd: itens.length,
+      valor: itens.reduce((soma, item) => soma + (Number(item.valor) || 0), 0),
     };
   });
+  
 
   const getPaginatedData = (key: string, data: any[]) => {
     const page = pageMap[key] || 1;
