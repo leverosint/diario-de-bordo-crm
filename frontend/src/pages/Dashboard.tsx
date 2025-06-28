@@ -133,8 +133,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [oportunidades, setOportunidades] = useState<any[]>([]);
 const [loadingOportunidades, setLoadingOportunidades] = useState(true);
-const [resumoParceiros, setResumoParceiros] = useState<any[]>([]);
-const [loadingResumoParceiros, setLoadingResumoParceiros] = useState(true);
+
+
 
   const [mesSelecionado, setMesSelecionado] = useState<string | null>('6');
   const [anoSelecionado, setAnoSelecionado] = useState<string | null>('2025');
@@ -192,24 +192,6 @@ const fetchOportunidades = async () => {
 
 
 
-const fetchResumoParceiros = async () => {
-  try {
-    setLoadingResumoParceiros(true);
-    const headers = { Authorization: `Bearer ${token}` };
-    const params = [
-      mesSelecionado ? `mes=${mesSelecionado}` : '',
-      anoSelecionado ? `ano=${anoSelecionado}` : '',
-      consultorSelecionado ? `consultor=${consultorSelecionado}` : ''
-    ].filter(Boolean).join('&');
-    const url = `${import.meta.env.VITE_API_URL}/dashboard/resumo-parceiros/?${params}`;
-    const res = await axios.get(url, { headers });
-    setResumoParceiros(res.data.results || res.data); // paginado ou não
-  } catch (err) {
-    setResumoParceiros([]);
-  } finally {
-    setLoadingResumoParceiros(false);
-  }
-};
 
 
   useEffect(() => {
@@ -247,11 +229,11 @@ const fetchResumoParceiros = async () => {
 
     fetchDashboardData();
   fetchOportunidades();
-  fetchResumoParceiros(); // <-- ADICIONE AQUI
+
 }, [token, navigate, mesSelecionado, anoSelecionado, consultorSelecionado]);
 
   if (!token || !tipoUser) return null;
-  if (loading || loadingOportunidades || loadingResumoParceiros) {
+  if (loading || loadingOportunidades) {
     return (
       <SidebarGestor tipoUser={tipoUser}>
         <div style={{ padding: 20 }}>
@@ -549,9 +531,11 @@ const fetchResumoParceiros = async () => {
   <Pagination
   value={pageMap['Todos os Parceiros'] || 1}
   onChange={(page) => handlePageChange('Todos os Parceiros', page)}
-  total={Math.ceil(resumoParceiros.length / recordsPerPage)}
+  total={Math.ceil(parceirosFiltrados.length / recordsPerPage)}
   size="sm"
+
 />
+
   </div>
 </Card>
 
