@@ -146,11 +146,11 @@ export default function Dashboard() {
       const headers = { Authorization: `Bearer ${token}` };
       const mes = mesSelecionado || String(new Date().getMonth() + 1);
       const ano = anoSelecionado || String(new Date().getFullYear());
-
-      const [res] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/dashboard/kpis/?mes=${mes}&ano=${ano}`, { headers }),
-      ]);
-
+      const consultorParam = consultorSelecionado ? `&consultor=${consultorSelecionado}` : '';
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/dashboard/kpis/?mes=${mes}&ano=${ano}${consultorParam}`,
+  { headers }
+);
+  
       setKpis(res.data.kpis);
       setDados(res.data.parceiros || []);
     } catch (error) {
@@ -207,9 +207,8 @@ export default function Dashboard() {
     );
   }
 
-  const parceirosFiltrados = consultorSelecionado
-    ? dados.filter((p) => String(p.consultor_id) === String(consultorSelecionado))
-    : dados;
+  const parceirosFiltrados = dados;
+
 
   const totalCarteira = parceirosFiltrados.length;
   const totalContatados = parceirosFiltrados.filter((p) => p.tem_interacao).length;

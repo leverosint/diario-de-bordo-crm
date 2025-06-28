@@ -605,6 +605,7 @@ class DashboardKPIView(APIView):
         user = request.user
         mes = int(request.query_params.get('mes', now().month))
         ano = int(request.query_params.get('ano', now().year))
+        consultor = request.query_params.get('consultor')  # ✅ Novo parâmetro
 
         # Data do mês filtrado
         data_inicio = make_aware(datetime(ano, mes, 1))
@@ -613,27 +614,22 @@ class DashboardKPIView(APIView):
         else:
             data_fim = make_aware(datetime(ano, mes + 1, 1))
 
-        # ========= 1. FILTROS POR TIPO DE USUÁRIO ========= #
-        if user.tipo_user == 'ADMIN':
-            parceiros_vivos = Parceiro.objects.all()
-            interacoes = Interacao.objects.filter(data_interacao__range=(data_inicio, data_fim))
-            oportunidades = Oportunidade.objects.filter(data_criacao__range=(data_inicio, data_fim))
-        elif user.tipo_user == 'GESTOR':
-            parceiros_vivos = Parceiro.objects.filter(canal_venda__in=user.canais_venda.all())
-            interacoes = Interacao.objects.filter(
-                parceiro__canal_venda__in=user.canais_venda.all(),
-                data_interacao__range=(data_inicio, data_fim)
-            )
-            oportunidades = Oportunidade.objects.filter(
-                parceiro__canal_venda__in=user.canais_venda.all(),
-                data_criacao__range=(data_inicio, data_fim)
-            )
-        else:  # VENDEDOR
-            parceiros_vivos = Parceiro.objects.filter(consultor=user.id_vendedor)
-            interacoes = Interacao.objects.filter(usuario=user, data_interacao__range=(data_inicio, data_fim))
-            oportunidades = Oportunidade.objects.filter(usuario=user, data_criacao__range=(data_inicio, data_fim))
+        # ========= 1. Filtrar parceiros ========= #
+        parceiros_vivos = Parceiro.objects.all()
 
-        # ========= 2. KPIs VIVOS (status atual dos parceiros) ========= #
+        if user.tipo_user == 'GESTOR':
+            parceiros_vivos = parceiros_vivos.filter(canal_venda__in=user.canais_venda.all())
+        elif user.tipo_user == 'VENDEDOR':
+            parceiros_vivos = parceiros_vivos.filter(consultor=user.id_vendedor)
+
+        # ✅ Filtro adicional por consultor
+        if consultor:
+            parceiros_vivos = parceiros_vivos.filter(consultor=consultor)
+
+        interacoes = Interacao.objects.filter(parceiro__in=parceiros_vivos, data_interacao__range=(data_inicio, data_fim))
+        oportunidades = Oportunidade.objects.filter(parceiro__in=parceiros_vivos, data_criacao__range=(data_inicio, data_fim))
+
+        # ========= Status counts ========= #
         status_counts = {
             'Sem Faturamento': parceiros_vivos.filter(status='Sem Faturamento').count(),
             'Base Ativa': parceiros_vivos.filter(status='Base Ativa').count(),
@@ -643,7 +639,6 @@ class DashboardKPIView(APIView):
             '120 dias s/ Fat': parceiros_vivos.filter(status='120 dias s/ Fat').count(),
         }
 
-        # ========= 3. KPIs numéricos de interações/oportunidades ========= #
         total_interacoes = interacoes.count()
         total_oportunidades = oportunidades.count()
         total_orcamentos = oportunidades.filter(etapa='orcamento').count()
@@ -671,7 +666,6 @@ class DashboardKPIView(APIView):
             {"title": "Ticket Médio", "value": f"R$ {ticket_medio:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')},
         ]
 
-                # ========= 4. Interações por Status (agrupado por status da interação no mês) ========= #
         interacoes_por_status = (
             interacoes.values('status')
             .annotate(total=Count('id'))
@@ -681,7 +675,6 @@ class DashboardKPIView(APIView):
             for item in interacoes_por_status
         }
 
-        # ========= 5. Parceiros contatados por status (primeira interação do mês) ========= #
         primeiras_interacoes = (
             interacoes.order_by('parceiro_id', 'data_interacao')
             .distinct('parceiro_id')
@@ -691,7 +684,6 @@ class DashboardKPIView(APIView):
             status = interacao.status or 'Sem Status'
             parceiros_contatados_status[status] += 1
 
-        # ========= 6. Parceiros sem nenhuma interação no mês, agrupado por status ========= #
         ids_com_interacao = interacoes.values_list('parceiro_id', flat=True).distinct()
         sem_interacao = parceiros_vivos.exclude(id__in=ids_com_interacao)
 
@@ -704,20 +696,15 @@ class DashboardKPIView(APIView):
             for item in sem_interacao_por_status
         }
 
-        # Serialize os parceiros_vivos
         parceiros_serializados = ParceiroSerializer(parceiros_vivos, many=True).data
 
         return Response({
-    "kpis": kpis,
-    "interacoes_status": interacoes_status_dict,
-    "parceiros_contatados_status": parceiros_contatados_status,
-    "parceiros_sem_fat_status": parceiros_sem_fat_status,
-    "parceiros": parceiros_serializados  # ✅ ESSENCIAL para o dashboard funcionar corretamente
-})
-
-
-
-
+            "kpis": kpis,
+            "interacoes_status": interacoes_status_dict,
+            "parceiros_contatados_status": parceiros_contatados_status,
+            "parceiros_sem_fat_status": parceiros_sem_fat_status,
+            "parceiros": parceiros_serializados
+        })
 
       
 
