@@ -515,34 +515,35 @@ const fetchResumoParceiros = async () => {
     </Button>
   </Group>
   <ScrollArea>
-    <Table striped highlightOnHover withColumnBorders>
-      <thead style={{ backgroundColor: '#f1f3f5' }}>
-        <tr>
-          <th>Parceiro</th>
-          <th>Status</th>
-          <th style={{ textAlign: 'center' }}>Faturamento Total</th>
-          <th style={{ textAlign: 'center' }}>Última Interação</th>
-          <th style={{ textAlign: 'center' }}>Dias sem Interação</th>
-        </tr>
-      </thead>
-      <tbody>
-      {getPaginatedData('Todos os Parceiros', resumoParceiros).map((p, idx) => (
-          <tr key={idx}>
-            <td>{p.parceiro}</td>
-            <td>{p.status}</td>
-            <td style={{ textAlign: 'center' }}>
-              R$ {Number(p.total || p.total_faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </td>
-            <td style={{ textAlign: 'center' }}>
-              {p.ultima_interacao || '-'}
-            </td>
-            <td style={{ textAlign: 'center' }}>
-              {p.dias_sem_interacao !== undefined ? `${p.dias_sem_interacao} dias` : '-'}
-            </td>
-          </tr>
-        ))}
-      </tbody>
-    </Table>
+  <Table striped highlightOnHover withColumnBorders>
+  <thead>
+    <tr>
+      <th>Parceiro</th>
+      <th>Status</th>
+      <th style={{ textAlign: 'center' }}>Faturamento Total</th>
+      <th style={{ textAlign: 'center' }}>Última Interação</th>
+      <th style={{ textAlign: 'center' }}>Dias sem Interação</th>
+    </tr>
+  </thead>
+  <tbody>
+    {getPaginatedData('Todos os Parceiros', parceirosFiltrados).map((p, idx) => (
+      <tr key={idx}>
+        <td>{p.parceiro}</td>
+        <td>{p.status}</td>
+        <td style={{ textAlign: 'center' }}>
+          R$ {Number(p.total || p.total_faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+        </td>
+        <td style={{ textAlign: 'center' }}>
+          {p.ultima_interacao || '-'}
+        </td>
+        <td style={{ textAlign: 'center' }}>
+          {p.dias_sem_interacao !== undefined ? `${p.dias_sem_interacao} dias` : '-'}
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</Table>
+
   </ScrollArea>
   <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
   <Pagination
