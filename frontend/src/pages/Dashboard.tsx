@@ -128,7 +128,7 @@ export default function Dashboard() {
   const [consultores, setConsultores] = useState<{ value: string; label: string }[]>([]);
   const [consultorSelecionado, setConsultorSelecionado] = useState<string | null>(null);
   const [tipoUser, setTipoUser] = useState<string | null>(null);
-
+  const [dados, setDados] = useState<any[]>([]);
   const [kpis, setKpis] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [oportunidades, setOportunidades] = useState<any[]>([]);
@@ -156,7 +156,7 @@ const [loadingResumoParceiros, setLoadingResumoParceiros] = useState(true);
 );
   
       setKpis(res.data.kpis);
-    
+      setDados(res.data.parceiros || []);
     } catch (error) {
       console.error('Erro ao buscar dados do dashboard:', error);
     } finally {
@@ -266,7 +266,7 @@ const fetchResumoParceiros = async () => {
 
   
 
-  const parceirosFiltrados = resumoParceiros;
+  const parceirosFiltrados = dados;
 
 
   const totalCarteira = parceirosFiltrados.length;
@@ -499,7 +499,7 @@ const fetchResumoParceiros = async () => {
       size="xs"
       onClick={() => {
         const wb = XLSX.utils.book_new();
-        const sheetData = parceirosFiltrados.map((p) => ({
+        const sheetData = resumoParceiros.map((p) => ({
           Parceiro: p.parceiro,
           Status: p.status,
           'Faturamento Total': p.total || p.total_faturamento,
@@ -526,7 +526,7 @@ const fetchResumoParceiros = async () => {
         </tr>
       </thead>
       <tbody>
-        {getPaginatedData('Todos os Parceiros', parceirosFiltrados).map((p: any, idx: number) => (
+      {getPaginatedData('Todos os Parceiros', resumoParceiros).map((p, idx) => (
           <tr key={idx}>
             <td>{p.parceiro}</td>
             <td>{p.status}</td>
@@ -545,12 +545,12 @@ const fetchResumoParceiros = async () => {
     </Table>
   </ScrollArea>
   <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
-    <Pagination
-      value={pageMap['Todos os Parceiros'] || 1}
-      onChange={(page) => handlePageChange('Todos os Parceiros', page)}
-      total={Math.ceil(parceirosFiltrados.length / recordsPerPage)}
-      size="sm"
-    />
+  <Pagination
+  value={pageMap['Todos os Parceiros'] || 1}
+  onChange={(page) => handlePageChange('Todos os Parceiros', page)}
+  total={Math.ceil(resumoParceiros.length / recordsPerPage)}
+  size="sm"
+/>
   </div>
 </Card>
 
