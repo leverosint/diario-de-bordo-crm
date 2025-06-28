@@ -499,7 +499,7 @@ const fetchResumoParceiros = async () => {
       size="xs"
       onClick={() => {
         const wb = XLSX.utils.book_new();
-        const sheetData = resumoParceiros.map((p) => ({
+        const sheetData = parceirosFiltrados.map((p) => ({
           Parceiro: p.parceiro,
           Status: p.status,
           'Faturamento Total': p.total || p.total_faturamento,
