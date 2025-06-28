@@ -128,11 +128,13 @@ export default function Dashboard() {
   const [consultores, setConsultores] = useState<{ value: string; label: string }[]>([]);
   const [consultorSelecionado, setConsultorSelecionado] = useState<string | null>(null);
   const [tipoUser, setTipoUser] = useState<string | null>(null);
-  const [dados, setDados] = useState<any[]>([]);
+
   const [kpis, setKpis] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [oportunidades, setOportunidades] = useState<any[]>([]);
 const [loadingOportunidades, setLoadingOportunidades] = useState(true);
+const [resumoParceiros, setResumoParceiros] = useState<any[]>([]);
+const [loadingResumoParceiros, setLoadingResumoParceiros] = useState(true);
 
   const [mesSelecionado, setMesSelecionado] = useState<string | null>('6');
   const [anoSelecionado, setAnoSelecionado] = useState<string | null>('2025');
@@ -154,7 +156,7 @@ const [loadingOportunidades, setLoadingOportunidades] = useState(true);
 );
   
       setKpis(res.data.kpis);
-      setDados(res.data.parceiros || []);
+    
     } catch (error) {
       console.error('Erro ao buscar dados do dashboard:', error);
     } finally {
@@ -186,6 +188,28 @@ const fetchOportunidades = async () => {
 };
 
 
+
+
+
+
+const fetchResumoParceiros = async () => {
+  try {
+    setLoadingResumoParceiros(true);
+    const headers = { Authorization: `Bearer ${token}` };
+    const params = [
+      mesSelecionado ? `mes=${mesSelecionado}` : '',
+      anoSelecionado ? `ano=${anoSelecionado}` : '',
+      consultorSelecionado ? `consultor=${consultorSelecionado}` : ''
+    ].filter(Boolean).join('&');
+    const url = `${import.meta.env.VITE_API_URL}/dashboard/resumo-parceiros/?${params}`;
+    const res = await axios.get(url, { headers });
+    setResumoParceiros(res.data.results || res.data); // paginado ou não
+  } catch (err) {
+    setResumoParceiros([]);
+  } finally {
+    setLoadingResumoParceiros(false);
+  }
+};
 
 
   useEffect(() => {
@@ -222,13 +246,12 @@ const fetchOportunidades = async () => {
     }
 
     fetchDashboardData();
-    fetchOportunidades(); // <--- Adicione esta linha
-    // eslint-disable-next-line
-  }, [token, navigate, mesSelecionado, anoSelecionado, consultorSelecionado]);
-  
+  fetchOportunidades();
+  fetchResumoParceiros(); // <-- ADICIONE AQUI
+}, [token, navigate, mesSelecionado, anoSelecionado, consultorSelecionado]);
 
   if (!token || !tipoUser) return null;
-  if (loading || loadingOportunidades) {
+  if (loading || loadingOportunidades || loadingResumoParceiros) {
     return (
       <SidebarGestor tipoUser={tipoUser}>
         <div style={{ padding: 20 }}>
@@ -243,7 +266,7 @@ const fetchOportunidades = async () => {
 
   
 
-  const parceirosFiltrados = dados;
+  const parceirosFiltrados = resumoParceiros;
 
 
   const totalCarteira = parceirosFiltrados.length;
@@ -479,8 +502,9 @@ const fetchOportunidades = async () => {
         const sheetData = parceirosFiltrados.map((p) => ({
           Parceiro: p.parceiro,
           Status: p.status,
-          'Faturamento Total': p.total,
+          'Faturamento Total': p.total || p.total_faturamento,
           'Última Interação': p.ultima_interacao || '-',
+          'Dias sem Interação': p.dias_sem_interacao !== undefined ? `${p.dias_sem_interacao} dias` : '-',
         }));
         const ws = XLSX.utils.json_to_sheet(sheetData);
         XLSX.utils.book_append_sheet(wb, ws, 'Resumo Parceiros');
@@ -498,6 +522,7 @@ const fetchOportunidades = async () => {
           <th>Status</th>
           <th style={{ textAlign: 'center' }}>Faturamento Total</th>
           <th style={{ textAlign: 'center' }}>Última Interação</th>
+          <th style={{ textAlign: 'center' }}>Dias sem Interação</th>
         </tr>
       </thead>
       <tbody>
@@ -506,13 +531,13 @@ const fetchOportunidades = async () => {
             <td>{p.parceiro}</td>
             <td>{p.status}</td>
             <td style={{ textAlign: 'center' }}>
-              R${' '}
-              {Number(p.total || 0).toLocaleString('pt-BR', {
-                minimumFractionDigits: 2,
-              })}
+              R$ {Number(p.total || p.total_faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </td>
             <td style={{ textAlign: 'center' }}>
               {p.ultima_interacao || '-'}
+            </td>
+            <td style={{ textAlign: 'center' }}>
+              {p.dias_sem_interacao !== undefined ? `${p.dias_sem_interacao} dias` : '-'}
             </td>
           </tr>
         ))}
