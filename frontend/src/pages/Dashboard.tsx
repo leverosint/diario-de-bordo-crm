@@ -162,6 +162,32 @@ const [loadingOportunidades, setLoadingOportunidades] = useState(true);
     }
   };
 
+
+  
+const fetchOportunidades = async () => {
+  try {
+    setLoadingOportunidades(true);
+    const headers = { Authorization: `Bearer ${token}` };
+    const params = [
+      mesSelecionado ? `mes=${mesSelecionado}` : '',
+      anoSelecionado ? `ano=${anoSelecionado}` : '',
+      consultorSelecionado ? `consultor=${consultorSelecionado}` : ''
+    ].filter(Boolean).join('&');
+    const url = `${import.meta.env.VITE_API_URL}/oportunidades/?${params}`;
+
+    const res = await axios.get(url, { headers });
+    setOportunidades(res.data.results || res.data); // depende do seu backend (se paginado ou não)
+  } catch (err) {
+    console.error('Erro ao buscar oportunidades:', err);
+    setOportunidades([]);
+  } finally {
+    setLoadingOportunidades(false);
+  }
+};
+
+
+
+
   useEffect(() => {
     if (!token) {
       navigate('/');
@@ -214,26 +240,6 @@ const [loadingOportunidades, setLoadingOportunidades] = useState(true);
   
 
   
-  const fetchOportunidades = async () => {
-    try {
-      setLoadingOportunidades(true);
-      const headers = { Authorization: `Bearer ${token}` };
-      const params = [
-        mesSelecionado ? `mes=${mesSelecionado}` : '',
-        anoSelecionado ? `ano=${anoSelecionado}` : '',
-        consultorSelecionado ? `consultor=${consultorSelecionado}` : ''
-      ].filter(Boolean).join('&');
-      const url = `${import.meta.env.VITE_API_URL}/oportunidades/?${params}`;
-  
-      const res = await axios.get(url, { headers });
-      setOportunidades(res.data.results || res.data); // depende do seu backend (se paginado ou não)
-    } catch (err) {
-      console.error('Erro ao buscar oportunidades:', err);
-      setOportunidades([]);
-    } finally {
-      setLoadingOportunidades(false);
-    }
-  };
 
   
 
