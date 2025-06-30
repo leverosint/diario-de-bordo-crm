@@ -301,10 +301,13 @@ class InteracoesPendentesView(APIView):
                 and limite_data < ultima.data_interacao.date() < hoje
             )
 
+            # 🔥 Checa explicitamente se existe gatilho atualizado
             if usuario.tipo_user == 'GESTOR':
-                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro).first()
+                tem_gatilho = GatilhoExtra.objects.filter(parceiro=parceiro).exists()
+                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro).first() if tem_gatilho else None
             else:
-                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
+                tem_gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).exists()
+                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first() if tem_gatilho else None
 
             # filtro opcional de gatilho
             if gatilho_p and gatilho_p.lower() != 'todos':
@@ -312,7 +315,7 @@ class InteracoesPendentesView(APIView):
                     continue
 
             # sempre mostra se existir gatilho ativo
-            if gatilho:
+            if tem_gatilho:
                 pendentes.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -322,10 +325,10 @@ class InteracoesPendentesView(APIView):
                     'tipo': '',
                     'data_interacao': '',
                     'entrou_em_contato': False,
-                    'gatilho_extra': gatilho.descricao,
-                    'criador_gatilho': gatilho.usuario.username if usuario.tipo_user == 'GESTOR' else None,
+                    'gatilho_extra': gatilho.descricao if gatilho else '',
+                    'criador_gatilho': gatilho.usuario.username if (gatilho and usuario.tipo_user == 'GESTOR') else None,
                 })
-                continue  # 🔥 Aqui impede que o parceiro caia nas outras lógicas abaixo
+                continue
 
             if interagido_hoje:
                 interagidos.append({
@@ -342,7 +345,7 @@ class InteracoesPendentesView(APIView):
                 })
 
             if (
-                not gatilho
+                not tem_gatilho
                 and not interagido_hoje
                 and not bloqueado
                 and parceiro.status != 'Base Ativa'
