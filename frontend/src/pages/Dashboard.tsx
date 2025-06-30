@@ -241,7 +241,7 @@ useEffect(() => {
   // Carrega canais de venda do usuário logado
   if (usuario?.canais_venda && usuario.canais_venda.length > 0) {
     setCanais(usuario.canais_venda.map((c: any) => ({
-      value: c.id,
+      value: String(c.id), // transforma para string
       label: c.nome
     })));
     if (!canalSelecionado) {
