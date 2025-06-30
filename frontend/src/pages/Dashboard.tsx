@@ -144,6 +144,39 @@ const [loadingOportunidades, setLoadingOportunidades] = useState(true);
 
   const token = localStorage.getItem('token');
 
+
+
+  const fetchConsultoresGestor = async (usuario: any) => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      const canaisIds = usuario.canais_venda?.map((canal: { id: string }) => canal.id) || [];
+      let listaConsultores: { value: string; label: string }[] = [];
+  
+      for (const canalId of canaisIds) {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${canalId}`,
+          { headers }
+        );
+        listaConsultores = [
+          ...listaConsultores,
+          ...res.data.map((u: any) => ({
+            value: u.id_vendedor,
+            label: `${u.username} (${u.id_vendedor})`,
+          })),
+        ];
+      }
+  
+      // Remove duplicados pelo id_vendedor
+      const consultoresUnicos = Array.from(
+        new Map(listaConsultores.map((c) => [c.value, c])).values()
+      );
+      setConsultores(consultoresUnicos);
+    } catch (e) {
+      setConsultores([]);
+    }
+  };
+  
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
@@ -209,22 +242,7 @@ const fetchOportunidades = async () => {
     setTipoUser(usuario.tipo_user);
 
     if (usuario.tipo_user === 'GESTOR' || usuario.tipo_user === 'ADMIN') {
-      const canalId = usuario.canais_venda?.[0]?.id;
-
-      if (canalId) {
-        axios
-          .get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${canalId}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          .then((res) => {
-            const lista = res.data.map((u: any) => ({
-              value: u.id_vendedor,
-              label: `${u.username} (${u.id_vendedor})`,
-            }));
-            setConsultores(lista);
-          })
-          .catch(console.error);
-      }
+      fetchConsultoresGestor(usuario);
     }
 
     fetchDashboardData();
