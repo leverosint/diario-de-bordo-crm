@@ -40,7 +40,7 @@ export default function Interacoes() {
       navigate('/');
       return;
     }
-
+  
     async function fetchData() {
       try {
         const headers = { Authorization: `Bearer ${token}` };
@@ -48,7 +48,9 @@ export default function Interacoes() {
           axios.get('/api/interacoes/pendentes/', { headers }),
           axios.get('/api/interacoes/hoje/', { headers }),
         ]);
-        setPendentes(pend.data || []);
+  
+        // ✅ Corrigido aqui
+        setPendentes(pend.data.dados || []);
         setInteragidos(inter.data || []);
       } catch (err) {
         console.error('Erro ao buscar dados:', err);
@@ -57,7 +59,7 @@ export default function Interacoes() {
         setLoading(false);
       }
     }
-
+  
     fetchData();
   }, [token, navigate]);
 
