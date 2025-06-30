@@ -242,11 +242,6 @@ export default function InteracoesPage() {
     valor?: number,
     observacao?: string
   ) => {
-    if (!tipo) {
-      alert('Selecione o tipo de interação');
-      return;
-    }
-  
     try {
       const headers = { Authorization: `Bearer ${token}` };
   
@@ -263,7 +258,7 @@ export default function InteracoesPage() {
           tipo,
           valor,
           observacao,
-          gatilho_extra: gatilhoExtra,
+          gatilho_extra: gatilhoExtra, // 🔥 Envia o gatilho_extra
         }, { headers });
       } else {
         // ✅ Só interação
@@ -271,24 +266,23 @@ export default function InteracoesPage() {
           parceiro: parceiroId,
           tipo,
           observacao,
-          gatilho_extra: gatilhoExtra,
+          gatilho_extra: gatilhoExtra, // 🔥 Envia o gatilho_extra
         }, { headers });
       }
   
-      // ✅ Reset dos estados locais antes de recarregar
       setExpandirId(null);
       setValorOportunidade('');
       setObservacaoOportunidade('');
-      setTipoSelecionado({});
-  
-      // ✅ Recarrega dados atualizados
       await carregarDados();
     } catch (err) {
       console.error('Erro ao registrar interação ou oportunidade:', err);
       alert('Erro ao registrar interação ou oportunidade. Tente novamente.');
     }
+    if (!tipo) {
+      alert('Selecione o tipo de interação');
+      return;
+    }
   };
-  
   
   
 
