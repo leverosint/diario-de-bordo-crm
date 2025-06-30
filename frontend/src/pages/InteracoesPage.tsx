@@ -706,7 +706,7 @@ pageInter * itemsPerPage
         </tbody>
       </Table>
 
-      {/* Paginação “A Interagir” */}
+      {/* Paginação de  “A Interagir” */}
       <Pagination
   value={pagePend}
   onChange={setPagePend}
