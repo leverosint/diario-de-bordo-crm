@@ -143,38 +143,33 @@ const [loadingOportunidades, setLoadingOportunidades] = useState(true);
   const recordsPerPage = 5;
 
   const token = localStorage.getItem('token');
+  const [canalSelecionado, setCanalSelecionado] = useState<string | null>(null);
+  const [canais, setCanais] = useState<{ value: string; label: string }[]>([]);
 
 
 
-  const fetchConsultoresGestor = async (usuario: any) => {
+  const fetchConsultoresGestor = async (usuario: any, canalId?: string) => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const canaisIds = usuario.canais_venda?.map((canal: { id: string }) => canal.id) || [];
-      let listaConsultores: { value: string; label: string }[] = [];
-  
-      for (const canalId of canaisIds) {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${canalId}`,
-          { headers }
-        );
-        listaConsultores = [
-          ...listaConsultores,
-          ...res.data.map((u: any) => ({
-            value: u.id_vendedor,
-            label: `${u.username} (${u.id_vendedor})`,
-          })),
-        ];
+      const canalParaBuscar = canalId || usuario.canais_venda?.[0]?.id;
+      if (!canalParaBuscar) {
+        setConsultores([]);
+        return;
       }
-  
-      // Remove duplicados pelo id_vendedor
-      const consultoresUnicos = Array.from(
-        new Map(listaConsultores.map((c) => [c.value, c])).values()
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${canalParaBuscar}`,
+        { headers }
       );
-      setConsultores(consultoresUnicos);
+      const listaConsultores = res.data.map((u: any) => ({
+        value: u.id_vendedor,
+        label: `${u.username} (${u.id_vendedor})`,
+      }));
+      setConsultores(listaConsultores);
     } catch (e) {
       setConsultores([]);
     }
   };
+
   
 
   const fetchDashboardData = async () => {
@@ -183,11 +178,13 @@ const [loadingOportunidades, setLoadingOportunidades] = useState(true);
       const headers = { Authorization: `Bearer ${token}` };
       const mes = mesSelecionado || String(new Date().getMonth() + 1);
       const ano = anoSelecionado || String(new Date().getFullYear());
+      const canalParam = canalSelecionado ? `&canal_id=${canalSelecionado}` : '';
       const consultorParam = consultorSelecionado ? `&consultor=${consultorSelecionado}` : '';
-      const res = await axios.get(`${import.meta.env.VITE_API_URL}/dashboard/kpis/?mes=${mes}&ano=${ano}${consultorParam}`,
-  { headers }
-);
-  
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/dashboard/kpis/?mes=${mes}&ano=${ano}${canalParam}${consultorParam}`,
+        { headers }
+      );
+
       setKpis(res.data.kpis);
       setDados(res.data.parceiros || []);
     } catch (error) {
@@ -227,28 +224,41 @@ const fetchOportunidades = async () => {
 
 
 
-  useEffect(() => {
-    if (!token) {
-      navigate('/');
-      return;
+useEffect(() => {
+  if (!token) {
+    navigate('/');
+    return;
+  }
+
+  const usuario = JSON.parse(localStorage.getItem('usuario') || '');
+  if (!usuario?.tipo_user) {
+    navigate('/');
+    return;
+  }
+
+  setTipoUser(usuario.tipo_user);
+
+  // Carrega canais de venda do usuário logado
+  if (usuario?.canais_venda && usuario.canais_venda.length > 0) {
+    setCanais(usuario.canais_venda.map((c: any) => ({
+      value: c.id,
+      label: c.nome
+    })));
+    if (!canalSelecionado) {
+      setCanalSelecionado(usuario.canais_venda[0].id.toString());
     }
+  }
 
-    const usuario = JSON.parse(localStorage.getItem('usuario') || '');
-    if (!usuario?.tipo_user) {
-      navigate('/');
-      return;
-    }
+  if ((usuario.tipo_user === 'GESTOR' || usuario.tipo_user === 'ADMIN') && canalSelecionado) {
+    fetchConsultoresGestor(usuario, canalSelecionado);
+  }
 
-    setTipoUser(usuario.tipo_user);
-
-    if (usuario.tipo_user === 'GESTOR' || usuario.tipo_user === 'ADMIN') {
-      fetchConsultoresGestor(usuario);
-    }
-
-    fetchDashboardData();
+  fetchDashboardData();
   fetchOportunidades();
 
-}, [token, navigate, mesSelecionado, anoSelecionado, consultorSelecionado]);
+}, [token, navigate, mesSelecionado, anoSelecionado, consultorSelecionado, canalSelecionado]);
+
+
 
   if (!token || !tipoUser) return null;
   if (loading || loadingOportunidades) {
@@ -332,21 +342,31 @@ const fetchOportunidades = async () => {
 
           {/* Filtros */}
           <Group grow style={{ marginBottom: 32 }}>
-            <Select data={MESES} label="Mês" value={mesSelecionado} onChange={setMesSelecionado} />
-            <Select data={ANOS} label="Ano" value={anoSelecionado} onChange={setAnoSelecionado} />
-            {['GESTOR', 'ADMIN'].includes(tipoUser || '') && (
-              <Select
-                data={consultores}
-                label="Consultor"
-                value={consultorSelecionado}
-                onChange={setConsultorSelecionado}
-                searchable
-              />
-            )}
-            <Button color="teal" onClick={fetchDashboardData}>
-              Aplicar Filtro
-            </Button>
-          </Group>
+  <Select data={MESES} label="Mês" value={mesSelecionado} onChange={setMesSelecionado} />
+  <Select data={ANOS} label="Ano" value={anoSelecionado} onChange={setAnoSelecionado} />
+  {['GESTOR', 'ADMIN'].includes(tipoUser || '') && (
+    <>
+      <Select
+        data={canais}
+        label="Canal de Venda"
+        value={canalSelecionado}
+        onChange={setCanalSelecionado}
+        searchable
+      />
+      <Select
+        data={consultores}
+        label="Consultor"
+        value={consultorSelecionado}
+        onChange={setConsultorSelecionado}
+        searchable
+      />
+    </>
+  )}
+  <Button color="teal" onClick={fetchDashboardData}>
+    Aplicar Filtro
+  </Button>
+</Group>
+
 
           {/* KPIs - Status */}
 <Title order={3} mb="sm">Parceiros Sem Faturamento por Status</Title>
