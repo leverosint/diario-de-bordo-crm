@@ -449,7 +449,6 @@ class RegistrarInteracaoView(APIView):
             )
 
             if gatilho:
-                gatilho.delete()
                 gatilho.gatilho_utilizado = True
                 gatilho.save()
 
@@ -515,7 +514,6 @@ class RegistrarOportunidadeView(APIView):
             )
 
             if gatilho:
-                gatilho.delete()
                 gatilho.gatilho_utilizado = True
                 gatilho.save()
 
