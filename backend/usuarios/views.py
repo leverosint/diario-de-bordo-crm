@@ -431,12 +431,21 @@ class RegistrarInteracaoView(APIView):
 
             parceiro = Parceiro.objects.get(id=parceiro_id)
 
-            # Se não vier do request, tenta buscar no banco
+            # Se não vier do request, busca o primeiro gatilho não utilizado
             if not gatilho_extra:
-                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user).first()
+                gatilho = GatilhoExtra.objects.filter(
+                    parceiro=parceiro,
+                    usuario=request.user,
+                    gatilho_utilizado=False
+                ).first()
                 gatilho_extra = gatilho.descricao if gatilho else None
             else:
-                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user, descricao=gatilho_extra).first()
+                gatilho = GatilhoExtra.objects.filter(
+                    parceiro=parceiro,
+                    usuario=request.user,
+                    descricao=gatilho_extra,
+                    gatilho_utilizado=False
+                ).first()
 
             # Cria interação
             interacao = Interacao.objects.create(
@@ -486,12 +495,21 @@ class RegistrarOportunidadeView(APIView):
 
             parceiro = Parceiro.objects.get(id=parceiro_id)
 
-            # Se não vier do request, tenta buscar no banco
+            # Se não vier do request, busca apenas gatilhos não utilizados
             if not gatilho_extra:
-                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user).first()
+                gatilho = GatilhoExtra.objects.filter(
+                    parceiro=parceiro,
+                    usuario=request.user,
+                    gatilho_utilizado=False
+                ).first()
                 gatilho_extra = gatilho.descricao if gatilho else None
             else:
-                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=request.user, descricao=gatilho_extra).first()
+                gatilho = GatilhoExtra.objects.filter(
+                    parceiro=parceiro,
+                    usuario=request.user,
+                    descricao=gatilho_extra,
+                    gatilho_utilizado=False
+                ).first()
 
             # 🔥 Cria Interação
             interacao = Interacao.objects.create(
