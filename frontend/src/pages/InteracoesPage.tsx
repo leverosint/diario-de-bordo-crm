@@ -63,9 +63,8 @@ export default function InteracoesPage() {
   const [metaTotal, setMetaTotal] = useState(6);
   const [tipoSelecionado, setTipoSelecionado] = useState<{ [key: number]: string }>({});
   const [expandirId, setExpandirId] = useState<number | null>(null);
-  const [inputsPorItem, setInputsPorItem] = useState<{ [key: number]: { valor: string; obs: string } }>({});
-  /*const [valorOportunidade, setValorOportunidade] = useState('');*/
-  /*const [observacaoOportunidade, setObservacaoOportunidade] = useState('');*/
+  /*const [valorOportunidade, setValorOportunidade] = useState('');
+  const [observacaoOportunidade, setObservacaoOportunidade] = useState('');*/
   const [mostrarInteracaoManual, setMostrarInteracaoManual] = useState(false);
   const [mostrarGatilhoManual, setMostrarGatilhoManual] = useState(false);
   const [parceiroInteracaoManual, setParceiroInteracaoManual] = useState<string | null>(null);
@@ -76,7 +75,9 @@ export default function InteracoesPage() {
   const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
   const [descricaoGatilho, setDescricaoGatilho] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
-
+  const [itemExpandido, setItemExpandido] = useState<Interacao | null>(null);
+  const [valorExpandido, setValorExpandido] = useState('');
+  const [obsExpandido, setObsExpandido] = useState('');
   const [parceiroFilter, setParceiroFilter] = useState<string | null>(null);
   const [canalSelecionado, setCanalSelecionado] = useState<string>('');
   const [vendedorSelecionado, setVendedorSelecionado] = useState<string>('');
@@ -113,11 +114,9 @@ export default function InteracoesPage() {
       }
   
       setExpandirId(null);
-      setInputsPorItem(prev => {
-        const updated = { ...prev };
-        delete updated[parceiroId];
-        return updated;
-      });
+      setValorExpandido('');
+      setObsExpandido('');
+      setValorInteracaoManual('');
       setObsInteracaoManual('');
       await carregarDados();
     } catch (err) {
@@ -506,114 +505,83 @@ export default function InteracoesPage() {
                             </td>
                             <td>
                             <Button
-  size="xs"
-  onClick={() => {
-    setExpandirId(item.id);
-    // Inicializa os inputs se ainda não existirem
-    setInputsPorItem(prev => ({
-      ...prev,
-      [item.id]: {
-        valor: prev[item.id]?.valor || '',
-        obs: prev[item.id]?.obs || ''
-      }
-    }));
+                             size="xs"
+                             onClick={() => {
+                             setItemExpandido(item);
+                             setValorExpandido('');
+                             setObsExpandido('');
+                             setExpandirId(null);
+                               }}
+                            >
+                            Marcar como interagido
+                            </Button>
+              </td>
+            </tr>
+          </tbody>
+        </Table>
+      </div>
+    );
   }}
->
-  Marcar como interagido
-</Button>
-                            </td>
-                          </tr>
+</List>
 
-                          {expandirId === item.id && (
-                            <tr>
-                              <td colSpan={7}>
-                                <Group grow style={{ marginTop: 10 }}>
-                                  <TextInput
-                                    label="Valor da Oportunidade (R$)"
-                                    placeholder="5000"
-                                    value={inputsPorItem[item.id]?.valor || ''}
-                                    onChange={e => {
-                                      const value = e.currentTarget.value;
-setInputsPorItem(prev => ({
-  ...prev,
-  [item.id]: {
-    valor: value,
-    obs: prev[item.id]?.obs || ''
-  }
-}));
-                                    }}
-                                  />
-                                  
-                                  <Textarea
-                                    label="Observação"
-                                    placeholder="Detalhes adicionais..."
-                                    value={inputsPorItem[item.id]?.obs || ''}
-                                    onChange={e => {
-                                      const value = e.currentTarget.value;
-setInputsPorItem(prev => ({
-  ...prev,
-  [item.id]: {
-    valor: value,
-    obs: prev[item.id]?.obs || ''
-  }
-}));
-                                    }}
-                                  />
-                                </Group>
-                                <Group style={{ marginTop: 16 }} justify="flex-end">
-
-                                <Button
-  color="blue"
-  onClick={() => registrarInteracao(
-    item.id,
-    tipoSelecionado[item.id] || '',
-    true,
-    parseFloat((inputsPorItem[item.id]?.valor || '').replace(',', '.')),
-    inputsPorItem[item.id]?.obs || ''
-  )}
->
-  Salvar e Criar Oportunidade
-</Button>
-
-<Button
-  color="gray"
-  onClick={() => registrarInteracao(
-    item.id,
-    tipoSelecionado[item.id] || '',
-    false,
-    undefined,
-    inputsPorItem[item.id]?.obs || ''
-  )}
->
-  Só Interagir
-</Button>
-
-<Button
-  color="red"
-  variant="outline"
-  onClick={() => {
-    setExpandirId(null);
-    setInputsPorItem(prev => {
-      const updated = { ...prev };
-      delete updated[item.id];
-      return updated;
-    });
-  }}
->
-  Cancelar
-</Button>
-
-                                </Group>
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </Table>
-                    </div>
-                  );
-                }}
-              </List>
-
+{itemExpandido && (
+  <Card shadow="sm" padding="lg" mb="md" mt="md">
+    <Title order={4}>Interação com: {itemExpandido.parceiro}</Title>
+    <Group grow style={{ marginTop: 10 }}>
+      <TextInput
+        label="Valor da Oportunidade (R$)"
+        placeholder="5000"
+        value={valorExpandido}
+        onChange={(e) => setValorExpandido(e.currentTarget.value)}
+      />
+      <Textarea
+        label="Observação"
+        placeholder="Detalhes adicionais..."
+        value={obsExpandido}
+        onChange={(e) => setObsExpandido(e.currentTarget.value)}
+      />
+    </Group>
+    <Group style={{ marginTop: 16 }} justify="flex-end">
+      <Button
+        color="blue"
+        onClick={() => {
+          registrarInteracao(
+            itemExpandido.id,
+            tipoSelecionado[itemExpandido.id] || '',
+            true,
+            parseFloat(valorExpandido.replace(',', '.')),
+            obsExpandido
+          );
+          setItemExpandido(null);
+        }}
+      >
+        Salvar e Criar Oportunidade
+      </Button>
+      <Button
+        color="gray"
+        onClick={() => {
+          registrarInteracao(
+            itemExpandido.id,
+            tipoSelecionado[itemExpandido.id] || '',
+            false,
+            undefined,
+            obsExpandido
+          );
+          setItemExpandido(null);
+        }}
+      >
+        Só Interagir
+      </Button>
+      <Button
+        color="red"
+        variant="outline"
+        onClick={() => setItemExpandido(null)}
+      >
+        Cancelar
+      </Button>
+    </Group>
+  </Card>
+)}
               <Pagination
                 value={pagePend}
                 onChange={setPagePend}
