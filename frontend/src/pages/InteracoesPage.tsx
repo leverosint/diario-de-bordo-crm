@@ -20,6 +20,7 @@ import {
 import { FixedSizeList as List } from 'react-window';
 import SidebarGestor from '../components/SidebarGestor';
 import styles from './InteracoesPage.module.css';
+import { Modal } from '@mantine/core';
 
 interface Interacao {
   id: number;
@@ -75,9 +76,9 @@ export default function InteracoesPage() {
   const [parceiroSelecionado, setParceiroSelecionado] = useState<string | null>(null);
   const [descricaoGatilho, setDescricaoGatilho] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
-  const [itemExpandido, setItemExpandido] = useState<Interacao | null>(null);
+  /*const [itemExpandido, setItemExpandido] = useState<Interacao | null>(null);
   const [valorExpandido, setValorExpandido] = useState('');
-  const [obsExpandido, setObsExpandido] = useState('');
+  const [obsExpandido, setObsExpandido] = useState('');*/
   const [parceiroFilter, setParceiroFilter] = useState<string | null>(null);
   const [canalSelecionado, setCanalSelecionado] = useState<string>('');
   const [vendedorSelecionado, setVendedorSelecionado] = useState<string>('');
@@ -87,6 +88,13 @@ export default function InteracoesPage() {
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const [statusDisponiveis, setStatusDisponiveis] = useState<string[]>([]);
   const [gatilhosDisponiveis, setGatilhosDisponiveis] = useState<string[]>([]);
+  const [modalAberto, setModalAberto] = useState(false);
+  const [itemSelecionado, setItemSelecionado] = useState<Interacao | null>(null);
+  const [valorModal, setValorModal] = useState('');
+  const [obsModal, setObsModal] = useState('');
+  const [tipoModal, setTipoModal] = useState('');
+
+
 
   const registrarInteracao = async (
     parceiroId: number,
@@ -114,8 +122,9 @@ export default function InteracoesPage() {
       }
   
       setExpandirId(null);
-      setValorExpandido('');
-      setObsExpandido('');
+      setValorModal('');
+      setObsModal('');
+      setTipoModal('');
       setValorInteracaoManual('');
       setObsInteracaoManual('');
       await carregarDados();
@@ -505,23 +514,22 @@ export default function InteracoesPage() {
                             </td>
                             <td>
                             <Button
-                             size="xs"
-                             onClick={() => {
-                              setItemExpandido(item);
-                              setValorExpandido('');
-                              setObsExpandido('');
-                              console.log('Item expandido:', item);
-                            
-                               }}
-                            >
-                            Marcar como interagido
-                            </Button>
+  size="xs"
+  onClick={() => {
+    setItemSelecionado(item);
+    setValorModal('');
+    setObsModal('');
+    setModalAberto(true);
+  }}
+>
+  Marcar como interagido
+</Button>
               </td>
             </tr>
           </tbody>
         </Table>
 
-        {itemExpandido && (
+        {/*{itemExpandido && (
   <Card shadow="sm" padding="lg" mb="md" mt="md">
     <Title order={4}>Interação com: {itemExpandido.parceiro}</Title>
     <Group grow style={{ marginTop: 10 }}>
@@ -578,13 +586,121 @@ export default function InteracoesPage() {
       </Button>
     </Group>
   </Card>
-)}
+      )}*/}
       </div>
     );
   }}
 </List>
 
+<Modal
+  opened={modalAberto}
+  onClose={() => setModalAberto(false)}
+  title={`Interagir com: ${itemSelecionado?.parceiro}`}
+  size="lg"
+>
+  {itemSelecionado && (
+    <>
+      <Table striped withTableBorder mb="md">
+        <tbody>
+          <tr>
+            <td><b>Unidade:</b></td>
+            <td>{itemSelecionado.unidade}</td>
+          </tr>
+          <tr>
+            <td><b>Classificação:</b></td>
+            <td>{itemSelecionado.classificacao}</td>
+          </tr>
+          <tr>
+            <td><b>Status:</b></td>
+            <td>{itemSelecionado.status}</td>
+          </tr>
+          <tr>
+            <td><b>Gatilho Extra:</b></td>
+            <td>{itemSelecionado.gatilho_extra || '-'}</td>
+          </tr>
+        </tbody>
+      </Table>
 
+      <Select
+        label="Tipo de Interação"
+        placeholder="Selecione"
+        data={[
+          { value: 'whatsapp', label: 'WhatsApp' },
+          { value: 'email', label: 'E-mail' },
+          { value: 'ligacao', label: 'Ligação' },
+          { value: 'visita', label: 'Visita Presencial' },
+        ]}
+        value={tipoModal}
+        onChange={(v) => setTipoModal(v || '')}
+        mb="md"
+      />
+
+      <Group grow>
+        <TextInput
+          label="Valor da Oportunidade (R$)"
+          placeholder="5000"
+          value={valorModal}
+          onChange={(e) => setValorModal(e.currentTarget.value)}
+        />
+        <Textarea
+          label="Observação"
+          placeholder="Detalhes adicionais..."
+          value={obsModal}
+          onChange={(e) => setObsModal(e.currentTarget.value)}
+        />
+      </Group>
+
+      <Group style={{ marginTop: 16 }} justify="flex-end">
+        <Button
+          color="blue"
+          onClick={() => {
+            registrarInteracao(
+              itemSelecionado.id,
+              tipoModal || '',
+              true,
+              parseFloat(valorModal.replace(',', '.')),
+              obsModal
+            );
+            setModalAberto(false);
+          }}
+          disabled={!tipoModal}
+        >
+          Salvar e Criar Oportunidade
+        </Button>
+        <Button
+          color="gray"
+          onClick={() => {
+            registrarInteracao(
+              itemSelecionado.id,
+              tipoModal || '',
+              false,
+              undefined,
+              obsModal
+            );
+            setModalAberto(false);
+          }}
+          disabled={!tipoModal}
+        >
+          Só Interagir
+        </Button>
+        <Button
+          color="red"
+          variant="outline"
+          onClick={() => setModalAberto(false)}
+        >
+          Cancelar
+        </Button>
+      </Group>
+    </>
+  )}
+</Modal>
+
+<Pagination
+  value={pagePend}
+  onChange={setPagePend}
+  total={Math.ceil(pendentes.length / itemsPerPage)}
+  mt="md"
+/>
               <Pagination
                 value={pagePend}
                 onChange={setPagePend}
