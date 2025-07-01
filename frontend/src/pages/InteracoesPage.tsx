@@ -1,4 +1,5 @@
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState } from 'react';
+import LinhaTabela from './LinhaTabela';
 import axios from 'axios';
 import {
   Table,
@@ -19,6 +20,7 @@ import {
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import styles from './InteracoesPage.module.css';
+
 
 
 interface Interacao {
@@ -610,99 +612,23 @@ pageInter * itemsPerPage
           </tr>
         </thead>
         <tbody>
-          {pendentesExibidos.map((item) => (
-            <Fragment key={item.id}>
-              <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
-                <td>{item.parceiro}</td>
-                <td>{item.unidade}</td>
-                <td>{item.classificacao}</td>
-                <td>{item.status}</td>
-                <td>
-                  {item.gatilho_extra
-                    ? <Badge color="red" size="sm">{item.gatilho_extra}</Badge>
-                    : "-"}
-                </td>
-                <td>
-                  <Select
-                    placeholder="Tipo"
-                    className={styles.select}
-                    value={tipoSelecionado[item.id] || ''}
-                    onChange={(v) => {
-                      if (v) setTipoSelecionado(prev => ({ ...prev, [item.id]: v }));
-                    }}
-                    data={[
-                      { value: 'whatsapp', label: 'WhatsApp' },
-                      { value: 'email',    label: 'E-mail' },
-                      { value: 'ligacao',  label: 'Ligação' },
-                      { value: 'visita',  label: 'Visita Presencial' },
-                    ]}
-                    clearable={false}
-                  />
-                </td>
-                <td>
-                  <Button size="xs" onClick={() => setExpandirId(item.id)}>
-                    Marcar como interagido
-                  </Button>
-                </td>
-              </tr>
-
-              {expandirId === item.id && (
-                <tr>
-                  <td colSpan={7}>
-                    <Group grow style={{ marginTop: 10 }}>
-                      <TextInput
-                        label="Valor da Oportunidade (R$)"
-                        placeholder="5000"
-                        value={valorOportunidade}
-                        onChange={e => setValorOportunidade(e.currentTarget.value)}
-                      />
-                      <Textarea
-                        label="Observação"
-                        placeholder="Detalhes adicionais..."
-                        value={observacaoOportunidade}
-                        onChange={e => setObservacaoOportunidade(e.currentTarget.value)}
-                      />
-                    </Group>
-                    <Group style={{ marginTop: 16 }} justify="flex-end">
-                      <Button
-                        color="blue"
-                        onClick={() => registrarInteracao(
-                          item.id,
-                          tipoSelecionado[item.id] || '',
-                          true,
-                          parseFloat(valorOportunidade.replace(',', '.')),
-                          observacaoOportunidade
-                        )}
-                      >
-                        Salvar e Criar Oportunidade
-                      </Button>
-                      <Button
-                        color="gray"
-                        onClick={() => registrarInteracao(
-                          item.id,
-                          tipoSelecionado[item.id] || '',
-                          false
-                        )}
-                      >
-                        Só Interagir
-                      </Button>
-                      <Button
-                        color="red"
-                        variant="outline"
-                        onClick={() => {
-                          setExpandirId(null);
-                          setValorOportunidade('');
-                          setObservacaoOportunidade('');
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                    </Group>
-                  </td>
-                </tr>
-              )}
-            </Fragment>
-          ))}
+        {pendentesExibidos.map((item) => (
+    <LinhaTabela
+      key={item.id}
+      item={item}
+      tipoSelecionado={tipoSelecionado}
+      onTipoChange={(id, value) =>
+        setTipoSelecionado((prev) => ({ ...prev, [id]: value }))
+      }
+      expandirId={expandirId}
+      setExpandirId={setExpandirId}
+      valorOportunidade={valorOportunidade}
+      setValorOportunidade={setValorOportunidade}
+      observacaoOportunidade={observacaoOportunidade}
+      setObservacaoOportunidade={setObservacaoOportunidade}
+      registrarInteracao={registrarInteracao}
+    />
+  ))}
         </tbody>
       </Table>
 
