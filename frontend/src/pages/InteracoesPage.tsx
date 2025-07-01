@@ -744,7 +744,7 @@ pageInter * itemsPerPage
         </tbody>
       </Table>
 
-      {/* Paginação “Interagidos Hoje” */}
+      {/* Paginação “Interagidos Hoje-” */}
       <Pagination
   value={pageInter}
   onChange={setPageInter}
