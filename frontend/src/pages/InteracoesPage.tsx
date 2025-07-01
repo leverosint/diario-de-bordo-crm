@@ -350,12 +350,15 @@ export default function InteracoesPage() {
                 placeholder="5000"
                 value={valorInteracaoManual}
                 onChange={e => setValorInteracaoManual(e.currentTarget.value)}
+                autoFocus
               />
               <Textarea
                 label="Observação"
                 placeholder="Detalhes adicionais..."
                 value={obsInteracaoManual}
                 onChange={e => setObsInteracaoManual(e.currentTarget.value)}
+                autoFocus={false}
+
               />
             </Group>
             <Group justify="flex-end" mt="md">
