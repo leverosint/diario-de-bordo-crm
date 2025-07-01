@@ -840,7 +840,7 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
                     parceiro = Parceiro.objects.get(id=int(parceiro_id))
                     usuario = User.objects.get(id=int(usuario_id))
 
-                    GatilhoExtra.objects.update_or_create(
+                    GatilhoExtra.objects.create(
                         parceiro=parceiro,
                         usuario=usuario,
                         defaults={'descricao': descricao}
@@ -902,7 +902,7 @@ def criar_gatilho_manual(request):
         return Response({'erro': 'Consultor (vendedor) não encontrado para este parceiro.'}, status=400)
 
     # ✅ Criar o gatilho extra vinculado ao vendedor
-    gatilho, _ = GatilhoExtra.objects.update_or_create(
+    gatilho, _ = GatilhoExtra.objects.create(
         parceiro=parceiro,
         usuario=usuario,
         defaults={'descricao': descricao}
