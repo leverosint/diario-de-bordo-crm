@@ -242,7 +242,7 @@ class InteracaoViewSet(viewsets.ModelViewSet):
         status_no_momento = parceiro.status
         serializer.save(usuario=self.request.user, status=status_no_momento)
 
-from .serializers import InteragidosHojeSerializer
+
 class InteracoesHojeView(generics.ListAPIView):
     serializer_class = InteracaoSerializer
     permission_classes = [IsAuthenticated]
@@ -266,16 +266,19 @@ class InteracoesPendentesView(APIView):
         usuario = request.user
         hoje = now().date()
 
+        # intervalo de espera em dias
         dias_espera = 7
         limite_data = hoje - timedelta(days=dias_espera)
 
+        # filtra parceiros de acordo com o tipo de usuário
         if usuario.tipo_user == 'VENDEDOR':
             parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
         elif usuario.tipo_user == 'GESTOR':
             parceiros = Parceiro.objects.filter(canal_venda__in=usuario.canais_venda.all())
-        else:
+        else:  # ADMIN
             parceiros = Parceiro.objects.all()
 
+        # filtros via query params
         canal_id   = request.query_params.get('canal_id')
         consultor  = request.query_params.get('consultor')
         status_p   = request.query_params.get('status')
@@ -292,27 +295,46 @@ class InteracoesPendentesView(APIView):
         interagidos = []
 
         for parceiro in parceiros:
+            # pega a última interação registrada
             ultima = parceiro.interacoes.order_by('-data_interacao').first()
             interagido_hoje = ultima and ultima.data_interacao.date() == hoje
 
+            # se houver contato e estiver dentro dos últimos 7 dias, bloqueia
             bloqueado = (
                 ultima
                 and ultima.entrou_em_contato
                 and limite_data < ultima.data_interacao.date() < hoje
             )
 
-            # Buscar gatilho extra atualizado
+            # verifica gatilho manual
             if usuario.tipo_user == 'GESTOR':
+                # Gestor vê QUALQUER gatilho extra do parceiro (não só os dele)
                 gatilho = GatilhoExtra.objects.filter(parceiro=parceiro).first()
             else:
+                # Vendedor só vê os próprios
                 gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
 
-            # Se não houver gatilho mais, não adiciona
+            # filtro opcional de gatilho
             if gatilho_p and gatilho_p.lower() != 'todos':
                 if not gatilho or gatilho.descricao.lower() != gatilho_p.lower():
                     continue
 
-            # Marca como interagido
+            # sempre mostra se existir gatilho ativo
+            if gatilho:
+                pendentes.append({
+                    'id': parceiro.id,
+                    'parceiro': parceiro.parceiro,
+                    'unidade': parceiro.unidade,
+                    'classificacao': parceiro.classificacao,
+                    'status': parceiro.status,
+                    'tipo': '',
+                    'data_interacao': '',
+                    'entrou_em_contato': False,
+                    'gatilho_extra': gatilho.descricao,
+                    'criador_gatilho': gatilho.usuario.username if usuario.tipo_user == 'GESTOR' else None,  # opcional, para frontend
+                })
+
+            # marca como interagidos se fez contato hoje
             if interagido_hoje:
                 interagidos.append({
                     'id': parceiro.id,
@@ -326,27 +348,15 @@ class InteracoesPendentesView(APIView):
                     'gatilho_extra': gatilho.descricao if gatilho else None,
                     'criador_gatilho': gatilho.usuario.username if (gatilho and usuario.tipo_user == 'GESTOR') else None,
                 })
-                continue
 
-            # Se ainda tiver gatilho, adiciona no pendentes
-            if gatilho:
-                pendentes.append({
-                    'id': parceiro.id,
-                    'parceiro': parceiro.parceiro,
-                    'unidade': parceiro.unidade,
-                    'classificacao': parceiro.classificacao,
-                    'status': parceiro.status,
-                    'tipo': '',
-                    'data_interacao': '',
-                    'entrou_em_contato': False,
-                    'gatilho_extra': gatilho.descricao,
-                    'criador_gatilho': gatilho.usuario.username if usuario.tipo_user == 'GESTOR' else None,
-                })
-                continue
-
-            # Se não tiver gatilho, mas também não interagiu hoje, nem bloqueado
+            # repõe em pendentes se:
+            # • sem gatilho
+            # • não interagiu hoje
+            # • não bloqueado (<7 dias)
+            # • status diferente de 'Base Ativa'
             if (
-                not interagido_hoje
+                not gatilho
+                and not interagido_hoje
                 and not bloqueado
                 and parceiro.status != 'Base Ativa'
             ):
@@ -362,16 +372,19 @@ class InteracoesPendentesView(APIView):
                     'gatilho_extra': None,
                 })
 
+        # montar filtros dinâmicos
         status_unicos = sorted({item['status'] for item in pendentes})
         if usuario.tipo_user == 'GESTOR':
             gatilhos_ativos = (
-                GatilhoExtra.objects.filter(parceiro__canal_venda__in=usuario.canais_venda.all())
-                .values_list('descricao', flat=True).distinct()
+                GatilhoExtra.objects.filter(
+                    parceiro__canal_venda__in=usuario.canais_venda.all()
+                ).values_list('descricao', flat=True).distinct()
             )
         else:
             gatilhos_ativos = (
                 GatilhoExtra.objects.filter(usuario=usuario)
-                .values_list('descricao', flat=True).distinct()
+                .values_list('descricao', flat=True)
+                .distinct()
             )
 
         tipo_lista = request.query_params.get('tipo', 'pendentes')
@@ -387,7 +400,6 @@ class InteracoesPendentesView(APIView):
             'status_disponiveis': status_unicos,
             'gatilhos_disponiveis': list(gatilhos_ativos),
         })
-
 
 
 ######REGISTRARINTERACAOVIEWS)############

@@ -149,11 +149,11 @@ export default function InteracoesPage() {
         }))
       );
   
-      // Interagidos Hoje-
+      // Interagidos Hoje
       setInteragidos(
         resInteragidosHoje.data.map((i: any) => ({
           id:               i.id,
-          parceiro:         i.parceiro,    // ✅ antes era i.parceiro_nome (não existe)
+          parceiro:         i.parceiro_nome,
           unidade:          i.unidade,
           classificacao:    i.classificacao,
           status:           i.status,
@@ -706,7 +706,7 @@ pageInter * itemsPerPage
         </tbody>
       </Table>
 
-      {/* Paginação de  “A Interagir” */}
+      {/* Paginação “A Interagir” */}
       <Pagination
   value={pagePend}
   onChange={setPagePend}
