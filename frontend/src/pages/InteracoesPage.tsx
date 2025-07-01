@@ -63,7 +63,7 @@ export default function InteracoesPage() {
   const [metaTotal, setMetaTotal] = useState(6);
   const [tipoSelecionado, setTipoSelecionado] = useState<{ [key: number]: string }>({});
   const [expandirId, setExpandirId] = useState<number | null>(null);
-  /*const [valorOportunidade, setValorOportunidade] = useState('');
+  /*const- [valorOportunidade, setValorOportunidade] = useState('');
   const [observacaoOportunidade, setObservacaoOportunidade] = useState('');*/
   const [mostrarInteracaoManual, setMostrarInteracaoManual] = useState(false);
   const [mostrarGatilhoManual, setMostrarGatilhoManual] = useState(false);
