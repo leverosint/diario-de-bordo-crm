@@ -44,12 +44,15 @@ class ResumoParceirosMensalSerializer(serializers.ModelSerializer):
 class InteracaoSerializer(serializers.ModelSerializer):
     parceiro_nome = serializers.CharField(source='parceiro.parceiro', read_only=True)
     codigo = serializers.CharField(source='parceiro.codigo', read_only=True)
+    unidade = serializers.CharField(source='parceiro.unidade', read_only=True)
+    classificacao = serializers.CharField(source='parceiro.classificacao', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
 
     class Meta:
         model = Interacao
         fields = [
             'id', 'parceiro', 'codigo', 'parceiro_nome',
+            'unidade', 'classificacao',  # 👈 novos campos adicionados
             'usuario', 'usuario_nome',
             'tipo', 'data_interacao', 'entrou_em_contato', 'status', 'gatilho_extra'
         ]
