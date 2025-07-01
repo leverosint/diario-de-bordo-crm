@@ -144,7 +144,6 @@ class Interacao(models.Model):
     entrou_em_contato = models.BooleanField(default=False)
     # 🔥 Adicionar isso
     gatilho_extra = models.CharField(max_length=255, null=True, blank=True)  # ✅
-    gatilho_extra_id = models.IntegerField(null=True, blank=True)  # ✅ NOVO
 
 
     
@@ -215,8 +214,6 @@ class GatilhoExtra(models.Model):
     parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='gatilhos_extras')
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='gatilhos_extras')
     descricao = models.CharField(max_length=255)
-    gatilho_utilizado = models.BooleanField(default=False)
-
 
     def __str__(self):
         return f'{self.parceiro.parceiro} - {self.usuario.username} ({self.descricao})'
