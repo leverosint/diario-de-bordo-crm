@@ -34,8 +34,8 @@
   background-color: #f3f4f6;
   font-weight: 600;
   font-size: 14px;
-  position: sticky;
-  top: 0;
+ /* position: sticky; */
+ /* top: 0; */
   z-index: 5;
   border-bottom: 2px solid #e5e7eb;
 }
