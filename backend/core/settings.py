@@ -124,7 +124,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://diario-de-bordo-crm-1.onrender.com",
 ]
 
-# E-mail
+# E-mail elastic
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.elasticemail.com'
 EMAIL_PORT = 587
