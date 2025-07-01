@@ -14,6 +14,8 @@
   width: 100%;
   border-collapse: collapse;
   min-width: 900px;
+  table-layout: fixed;
+
 }
 
 .table th,
@@ -92,3 +94,12 @@
     min-width: 600px;
   }
 }
+
+/* (Opcional) Se quiser fixar larguras por coluna, descomente e ajuste */
+.table th:nth-child(1) { width: 160px; }
+.table th:nth-child(2) { width: 120px; }
+.table th:nth-child(3) { width: 120px; }
+.table th:nth-child(4) { width: 120px; }
+.table th:nth-child(5) { width: 150px; }
+.table th:nth-child(6) { width: 140px; }
+.table th:nth-child(7) { width: 160px; }
