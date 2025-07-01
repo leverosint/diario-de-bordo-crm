@@ -520,12 +520,8 @@ export default function InteracoesPage() {
             </tr>
           </tbody>
         </Table>
-      </div>
-    );
-  }}
-</List>
 
-{itemExpandido && (
+        {itemExpandido && (
   <Card shadow="sm" padding="lg" mb="md" mt="md">
     <Title order={4}>Interação com: {itemExpandido.parceiro}</Title>
     <Group grow style={{ marginTop: 10 }}>
@@ -583,6 +579,12 @@ export default function InteracoesPage() {
     </Group>
   </Card>
 )}
+      </div>
+    );
+  }}
+</List>
+
+
               <Pagination
                 value={pagePend}
                 onChange={setPagePend}
