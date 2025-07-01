@@ -507,10 +507,11 @@ export default function InteracoesPage() {
                             <Button
                              size="xs"
                              onClick={() => {
-                             setItemExpandido(item);
-                             setValorExpandido('');
-                             setObsExpandido('');
-                             setExpandirId(null);
+                              setItemExpandido(item);
+                              setValorExpandido('');
+                              setObsExpandido('');
+                              console.log('Item expandido:', item);
+                            
                                }}
                             >
                             Marcar como interagido
