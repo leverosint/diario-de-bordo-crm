@@ -103,3 +103,17 @@
 .table th:nth-child(5) { width: 150px; }
 .table th:nth-child(6) { width: 140px; }
 .table th:nth-child(7) { width: 160px; }
+
+/* Ajustes para Modal Mantine sempre aparecer no topo */
+.mantine-Modal-root {
+  z-index: 9999 !important;
+}
+
+.mantine-Modal-overlay {
+  z-index: 9998 !important;
+}
+
+.pageContainer, .tableWrapper {
+  overflow: visible !important;
+}
+
