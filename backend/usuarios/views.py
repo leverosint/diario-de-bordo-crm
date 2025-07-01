@@ -298,6 +298,8 @@ class InteracoesPendentesView(APIView):
             # pega a última interação registrada
             ultima = parceiro.interacoes.order_by('-data_interacao').first()
             interagido_hoje = ultima and ultima.data_interacao.date() == hoje
+            tinha_gatilho = bool(ultima and ultima.gatilho_extra)
+
 
             # se houver contato e estiver dentro dos últimos 7 dias, bloqueia
             bloqueado = (
@@ -313,6 +315,8 @@ class InteracoesPendentesView(APIView):
             else:
                 # Vendedor só vê os próprios
                 gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
+                
+                
 
             # filtro opcional de gatilho
             if gatilho_p and gatilho_p.lower() != 'todos':
@@ -359,6 +363,8 @@ class InteracoesPendentesView(APIView):
                 and not interagido_hoje
                 and not bloqueado
                 and parceiro.status != 'Base Ativa'
+                    and not (tinha_gatilho and ultima and ultima.data_interacao.date() == hoje)
+
             ):
                 pendentes.append({
                     'id': parceiro.id,
