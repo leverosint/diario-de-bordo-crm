@@ -40,8 +40,19 @@ interface Parceiro {
   parceiro: string;
 }
 
+interface CanalVenda {
+  id: number;
+  nome: string;
+}
+
+interface Vendedor {
+  id: number;
+  username: string;
+  id_vendedor: string;
+}
+
 export default function InteracoesPage() {
-  const itemsPerPage = 10;
+  const itemsPerPage = 7;
   const [pagePend, setPagePend] = useState(1);
   const [pageInter, setPageInter] = useState(1);
   const [pendentes, setPendentes] = useState<Interacao[]>([]);
@@ -65,6 +76,37 @@ export default function InteracoesPage() {
   const [descricaoGatilho, setDescricaoGatilho] = useState('');
   const [arquivoGatilho, setArquivoGatilho] = useState<File | null>(null);
 
+  const [parceiroFilter, setParceiroFilter] = useState<string | null>(null);
+  const [canalSelecionado, setCanalSelecionado] = useState<string>('');
+  const [vendedorSelecionado, setVendedorSelecionado] = useState<string>('');
+  const [statusSelecionado, setStatusSelecionado] = useState('');
+  const [temGatilho, setTemGatilho] = useState('');
+  const [canaisVenda, setCanaisVenda] = useState<CanalVenda[]>([]);
+  const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+  const [statusDisponiveis, setStatusDisponiveis] = useState<string[]>([]);
+  const [gatilhosDisponiveis, setGatilhosDisponiveis] = useState<string[]>([]);
+
+  const handleCanalChange = async (value: string | null) => {
+    setCanalSelecionado(value || '');
+    setVendedorSelecionado('');
+    if (!value) {
+      setVendedores([]);
+    } else {
+      try {
+        const headers = { Authorization: `Bearer ${token}` };
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${value}`, { headers });
+        setVendedores(res.data);
+      } catch (error) {
+        console.error('Erro ao carregar vendedores:', error);
+      }
+    }
+  };
+
+  const handleVendedorChange = (value: string | null) => {
+    setVendedorSelecionado(value || '');
+  };
+
+
   const usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
   const tipoUser = usuario?.tipo_user;
   const token = localStorage.getItem('token');
@@ -86,6 +128,12 @@ export default function InteracoesPage() {
       setMetaAtual(resMeta.data.interacoes_realizadas);
       setMetaTotal(resMeta.data.meta_diaria);
       setParceiros(resParceiros.data);
+      setStatusDisponiveis(resPendentes.data.status_disponiveis || []);
+      setGatilhosDisponiveis(resPendentes.data.gatilhos_disponiveis || []);
+      if (tipoUser === 'GESTOR' || tipoUser === 'ADMIN') {
+        const canais = (usuario.canais_venda || []) as CanalVenda[];
+        setCanaisVenda(canais.map(c => ({ id: c.id, nome: c.nome })));
+      }
     } catch (err) {
       console.error('Erro ao carregar interações:', err);
       setErro('Erro ao carregar interações.');
@@ -145,6 +193,86 @@ export default function InteracoesPage() {
             </Button>
           </Group>
         </Group>
+        <Divider style={{ marginBottom: 8 }} label="Filtros" />
+        
+        {(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
+  <Group gap="sm" mb="md">
+    <FileButton onChange={setArquivoGatilho} accept=".xlsx">
+      {(props) => <Button {...props}>Selecionar Arquivo</Button>}
+    </FileButton>
+
+    <Button
+      color="blue"
+      onClick={handleUploadGatilho}
+      disabled={!arquivoGatilho}
+    >
+      Enviar Gatilho
+    </Button>
+  </Group>
+)}
+
+
+<Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+  {/* 1) Parceiro: todo mundo vê */}
+  <Select
+    label="Filtrar por Parceiro"
+    placeholder="Selecione um parceiro"
+    data={parceiros.map(p => ({ value: String(p.id), label: p.parceiro }))}
+    value={parceiroFilter}
+    onChange={setParceiroFilter}
+    searchable
+    clearable
+    style={{ minWidth: 200, marginRight: 16 }}
+  />
+
+  {/* 2) Canal e Vendedor: só ADMIN ou GESTOR */}
+  {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
+    <>
+      <Select
+        label="Filtrar por Canal"
+        placeholder="Selecione um canal"
+        data={canaisVenda.map(c => ({ value: String(c.id), label: c.nome }))}
+        value={canalSelecionado}
+        onChange={handleCanalChange}
+        clearable
+        style={{ minWidth: 200, marginRight: 16 }}
+      />
+
+      <Select
+        label="Filtrar por Vendedor"
+        placeholder="Selecione um vendedor"
+        data={vendedores.map(v => ({ value: v.id_vendedor, label: v.username }))}
+        value={vendedorSelecionado}
+        onChange={handleVendedorChange}
+        disabled={!canalSelecionado}
+        clearable
+        style={{ minWidth: 200, marginRight: 16 }}
+      />
+    </>
+  )}
+
+  {/* 3) Status: todo mundo vê */}
+  <Select
+    label="Filtrar por Status"
+    placeholder="Selecione um status"
+    data={statusDisponiveis.map(s => ({ value: s, label: s }))}
+    value={statusSelecionado}
+    onChange={(v) => setStatusSelecionado(v || '')}
+    clearable
+    style={{ minWidth: 200, marginRight: 16 }}
+  />
+
+  {/* 4) Gatilho: todo mundo vê */}
+  <Select
+    label="Filtrar por Gatilho"
+    placeholder="Selecione"
+    data={gatilhosDisponiveis.map(g => ({ value: g, label: g }))}
+    value={temGatilho}
+    onChange={(v) => setTemGatilho(v || '')}
+    clearable
+    style={{ minWidth: 200 }}
+  />
+</Group>
 
         {mostrarInteracaoManual && (
           <Card shadow="sm" padding="lg" mb="md">
