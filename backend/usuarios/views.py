@@ -242,7 +242,7 @@ class InteracaoViewSet(viewsets.ModelViewSet):
         status_no_momento = parceiro.status
         serializer.save(usuario=self.request.user, status=status_no_momento)
 
-
+from .serializers import InteragidosHojeSerializer
 class InteracoesHojeView(generics.ListAPIView):
     serializer_class = InteracaoSerializer
     permission_classes = [IsAuthenticated]

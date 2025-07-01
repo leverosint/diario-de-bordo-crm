@@ -144,3 +144,16 @@ class ReportParceiroSerializer(serializers.ModelSerializer):
             return user.id
         except User.DoesNotExist:
             return None
+
+class InteragidosHojeSerializer(serializers.ModelSerializer):
+    parceiro = serializers.CharField(source='parceiro.parceiro', read_only=True)
+    unidade = serializers.CharField(source='parceiro.unidade', read_only=True)
+    classificacao = serializers.CharField(source='parceiro.classificacao', read_only=True)
+    canal_venda_id = serializers.IntegerField(source='parceiro.canal_venda.id', required=False)
+
+    class Meta:
+        model = Interacao
+        fields = [
+            'id', 'parceiro', 'unidade', 'classificacao', 'status', 
+            'data_interacao', 'tipo', 'gatilho_extra', 'canal_venda_id'
+        ]
