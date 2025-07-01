@@ -517,6 +517,7 @@ export default function InteracoesPage() {
                             <Button
   size="xs"
   onClick={() => {
+    console.log('Clicou em:', item);
     setItemSelecionado(item);
     setValorModal('');
     setObsModal('');
