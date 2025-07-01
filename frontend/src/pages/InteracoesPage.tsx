@@ -242,7 +242,7 @@ export default function InteracoesPage() {
         </Group>
         <Divider style={{ marginBottom: 8 }} label="Filtros" />
         
-  {/* Arquivo de Gatilho */}
+  {/* Arquivo de Gatilho- */}
         {(tipoUser === 'GESTOR' || tipoUser === 'ADMIN') && (
   <Group gap="sm" mb="md">
     <FileButton onChange={setArquivoGatilho} accept=".xlsx">
