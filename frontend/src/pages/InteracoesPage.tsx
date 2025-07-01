@@ -400,12 +400,30 @@ export default function InteracoesPage() {
                 value={descricaoGatilho}
                 onChange={(e) => setDescricaoGatilho(e.currentTarget.value)}
               />
-              <FileButton onChange={setArquivoGatilho} accept=".xlsx">
-                {(props) => <Button {...props}>Selecionar Arquivo XLSX</Button>}
-              </FileButton>
-              <Button color="blue" onClick={handleUploadGatilho} disabled={!arquivoGatilho}>
-                Enviar Gatilho
-              </Button>
+                     <Button
+        color="blue"
+        onClick={async () => {
+          try {
+            const headers = { Authorization: `Bearer ${token}` };
+            await axios.post(`${import.meta.env.VITE_API_URL}/criar-gatilho-manual/`, {
+              parceiro: parceiroSelecionado,
+              usuario: usuario.id,
+              descricao: descricaoGatilho,
+            }, { headers });
+            alert('Gatilho manual criado com sucesso!');
+            setDescricaoGatilho('');
+            setParceiroSelecionado(null);
+            setMostrarGatilhoManual(false);
+            carregarDados();
+          } catch (err) {
+            console.error('Erro ao criar gatilho manual:', err);
+            alert('Erro ao criar gatilho manual.');
+          }
+        }}
+        disabled={!parceiroSelecionado || !descricaoGatilho}
+      >
+        Salvar Gatilho Manual
+      </Button>
             </Group>
           </Card>
         )}
