@@ -127,7 +127,7 @@ CORS_ALLOWED_ORIGINS = [
 # E-mail elastic
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.elasticemail.com'
-EMAIL_PORT = 587
+EMAIL_PORT = 2525
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
