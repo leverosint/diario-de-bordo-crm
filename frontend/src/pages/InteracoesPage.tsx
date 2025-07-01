@@ -149,7 +149,7 @@ export default function InteracoesPage() {
         }))
       );
   
-      // Interagidos Hoje
+      // Interagidos Hoje-
       setInteragidos(
         resInteragidosHoje.data.map((i: any) => ({
           id:               i.id,
