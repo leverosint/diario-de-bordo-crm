@@ -144,6 +144,7 @@ class Interacao(models.Model):
     entrou_em_contato = models.BooleanField(default=False)
     # 🔥 Adicionar isso
     gatilho_extra = models.CharField(max_length=255, null=True, blank=True)  # ✅
+    gatilho_extra_id = models.IntegerField(null=True, blank=True)  # ✅ NOVO
 
 
     
