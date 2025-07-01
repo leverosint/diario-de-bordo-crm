@@ -173,6 +173,7 @@ export default function Interacoes() {
           onClose={() => setModalAberto(false)}
           title={`Histórico - ${parceiroSelecionado}`}
           size="lg"
+          lockScroll={false}
         >
           <Table striped highlightOnHover withTableBorder style={{ minWidth: '600px', width: '100%' }}>
             <thead>
