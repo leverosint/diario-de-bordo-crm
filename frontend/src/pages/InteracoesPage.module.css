@@ -104,16 +104,38 @@
 .table th:nth-child(6) { width: 140px; }
 .table th:nth-child(7) { width: 160px; }
 
-/* Ajustes para Modal Mantine sempre aparecer no topo */
-.mantine-Modal-root {
+
+/* === Modal (Mantine) === */
+.mantine-Modal-overlay {
+  backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.4) !important;
   z-index: 9999 !important;
 }
 
-.mantine-Modal-overlay {
-  z-index: 9998 !important;
+.mantine-Modal-inner {
+  z-index: 10000 !important;
 }
 
-.pageContainer, .tableWrapper {
-  overflow: visible !important;
+.mantine-Modal-content {
+  border-radius: 12px;
+  padding: 24px;
+  background-color: #fff;
+  z-index: 10001 !important;
 }
 
+.mantine-Modal-header {
+  border-bottom: 1px solid #eaeaea;
+  margin-bottom: 16px;
+}
+
+.mantine-Modal-title {
+  font-weight: 600;
+  font-size: 20px;
+  color: #333;
+}
+
+.mantine-Modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
