@@ -86,6 +86,46 @@ export default function InteracoesPage() {
   const [statusDisponiveis, setStatusDisponiveis] = useState<string[]>([]);
   const [gatilhosDisponiveis, setGatilhosDisponiveis] = useState<string[]>([]);
 
+  const registrarInteracao = async (
+    parceiroId: number,
+    tipo: string,
+    oportunidade: boolean,
+    valor?: number,
+    observacao?: string
+  ) => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+  
+      if (oportunidade) {
+        await axios.post(`${import.meta.env.VITE_API_URL}/oportunidades/registrar/`, {
+          parceiro: parceiroId,
+          tipo,
+          valor,
+          observacao,
+        }, { headers });
+      } else {
+        await axios.post(`${import.meta.env.VITE_API_URL}/interacoes/registrar/`, {
+          parceiro: parceiroId,
+          tipo,
+          observacao,
+        }, { headers });
+      }
+  
+      setExpandirId(null);
+      setValorOportunidade('');
+      setObservacaoOportunidade('');
+      setValorInteracaoManual('');
+      setObsInteracaoManual('');
+      await carregarDados();
+    } catch (err) {
+      console.error('Erro ao registrar interação:', err);
+      alert('Erro ao registrar interação ou oportunidade.');
+    }
+  };
+
+
+
+
   const handleCanalChange = async (value: string | null) => {
     setCanalSelecionado(value || '');
     setVendedorSelecionado('');
@@ -312,7 +352,33 @@ export default function InteracoesPage() {
               />
             </Group>
             <Group justify="flex-end" mt="md">
-              <Button>Salvar Interação</Button>
+            <Button
+  color="blue"
+  onClick={() => registrarInteracao(
+    Number(parceiroInteracaoManual),
+    tipoInteracaoManual || '',
+    true,
+    parseFloat(valorInteracaoManual.replace(',', '.')),
+    obsInteracaoManual
+  )}
+  disabled={!parceiroInteracaoManual || !tipoInteracaoManual}
+>
+  Salvar e Criar Oportunidade
+</Button>
+
+<Button
+  color="gray"
+  onClick={() => registrarInteracao(
+    Number(parceiroInteracaoManual),
+    tipoInteracaoManual || '',
+    false,
+    undefined,
+    obsInteracaoManual
+  )}
+  disabled={!parceiroInteracaoManual || !tipoInteracaoManual}
+>
+  Só Interagir
+</Button>
             </Group>
           </Card>
         )}
@@ -432,19 +498,45 @@ export default function InteracoesPage() {
                                   />
                                 </Group>
                                 <Group style={{ marginTop: 16 }} justify="flex-end">
-                                  <Button color="blue">Salvar e Criar Oportunidade</Button>
-                                  <Button color="gray">Só Interagir</Button>
-                                  <Button
-                                    color="red"
-                                    variant="outline"
-                                    onClick={() => {
-                                      setExpandirId(null);
-                                      setValorOportunidade('');
-                                      setObservacaoOportunidade('');
-                                    }}
-                                  >
-                                    Cancelar
-                                  </Button>
+
+                                <Button
+  color="blue"
+  onClick={() => registrarInteracao(
+    item.id,
+    tipoSelecionado[item.id] || '',
+    true,
+    parseFloat(valorOportunidade.replace(',', '.')),
+    observacaoOportunidade
+  )}
+>
+  Salvar e Criar Oportunidade
+</Button>
+
+<Button
+  color="gray"
+  onClick={() => registrarInteracao(
+    item.id,
+    tipoSelecionado[item.id] || '',
+    false,
+    undefined,
+    observacaoOportunidade
+  )}
+>
+  Só Interagir
+</Button>
+
+<Button
+  color="red"
+  variant="outline"
+  onClick={() => {
+    setExpandirId(null);
+    setValorOportunidade('');
+    setObservacaoOportunidade('');
+  }}
+>
+  Cancelar
+</Button>
+
                                 </Group>
                               </td>
                             </tr>
