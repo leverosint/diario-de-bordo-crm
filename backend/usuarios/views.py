@@ -311,12 +311,12 @@ class InteracoesPendentesView(APIView):
             # verifica gatilho manual
             if usuario.tipo_user == 'GESTOR':
                 # Gestor vê QUALQUER gatilho extra do parceiro (não só os dele)
-                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro).first()
+                # --gatilho = GatilhoExtra.objects.filter(parceiro=parceiro).first()
                 gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, gatilho_utilizado=False).first()
 
             else:
                 # Vendedor só vê os próprios
-                gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
+                # --gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
                 gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario, gatilho_utilizado=False).first()
 
                 
