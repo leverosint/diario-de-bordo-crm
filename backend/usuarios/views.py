@@ -266,19 +266,18 @@ class InteracoesPendentesView(APIView):
         usuario = request.user
         hoje = now().date()
 
-        # intervalo de espera em dias
         dias_espera = 7
         limite_data = hoje - timedelta(days=dias_espera)
 
-        # filtra parceiros de acordo com o tipo de usuário
+        # Filtra parceiros conforme o tipo de usuário
         if usuario.tipo_user == 'VENDEDOR':
             parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
         elif usuario.tipo_user == 'GESTOR':
             parceiros = Parceiro.objects.filter(canal_venda__in=usuario.canais_venda.all())
-        else:  # ADMIN
+        else:
             parceiros = Parceiro.objects.all()
 
-        # filtros via query params
+        # Filtros adicionais
         canal_id   = request.query_params.get('canal_id')
         consultor  = request.query_params.get('consultor')
         status_p   = request.query_params.get('status')
@@ -295,39 +294,28 @@ class InteracoesPendentesView(APIView):
         interagidos = []
 
         for parceiro in parceiros:
-            # pega a última interação registrada
             ultima = parceiro.interacoes.order_by('-data_interacao').first()
             interagido_hoje = ultima and ultima.data_interacao.date() == hoje
             tinha_gatilho = bool(ultima and ultima.gatilho_extra)
 
-
-            # se houver contato e estiver dentro dos últimos 7 dias, bloqueia
             bloqueado = (
                 ultima
                 and ultima.entrou_em_contato
                 and limite_data < ultima.data_interacao.date() < hoje
             )
 
-            # verifica gatilho manual
+            # Filtrar gatilho extra não utilizado
             if usuario.tipo_user == 'GESTOR':
-                # Gestor vê QUALQUER gatilho extra do parceiro (não só os dele)
-                # --gatilho = GatilhoExtra.objects.filter(parceiro=parceiro).first()
                 gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, gatilho_utilizado=False).first()
-
             else:
-                # Vendedor só vê os próprios
-                # --gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
                 gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario, gatilho_utilizado=False).first()
 
-                
-                
-
-            # filtro opcional de gatilho
+            # Aplicar filtro opcional de descrição
             if gatilho_p and gatilho_p.lower() != 'todos':
                 if not gatilho or gatilho.descricao.lower() != gatilho_p.lower():
                     continue
 
-            # sempre mostra se existir gatilho ativo
+            # Se existir gatilho não utilizado → exibe em pendentes
             if gatilho:
                 pendentes.append({
                     'id': parceiro.id,
@@ -339,10 +327,10 @@ class InteracoesPendentesView(APIView):
                     'data_interacao': '',
                     'entrou_em_contato': False,
                     'gatilho_extra': gatilho.descricao,
-                    'criador_gatilho': gatilho.usuario.username if usuario.tipo_user == 'GESTOR' else None,  # opcional, para frontend
+                    'criador_gatilho': gatilho.usuario.username if usuario.tipo_user == 'GESTOR' else None,
                 })
 
-            # marca como interagidos se fez contato hoje
+            # Marcar como interagido se interagiu hoje
             if interagido_hoje:
                 interagidos.append({
                     'id': parceiro.id,
@@ -353,22 +341,17 @@ class InteracoesPendentesView(APIView):
                     'tipo': ultima.tipo,
                     'data_interacao': ultima.data_interacao,
                     'entrou_em_contato': ultima.entrou_em_contato,
-                    'gatilho_extra': gatilho.descricao if gatilho else None,
+                    'gatilho_extra': ultima.gatilho_extra,
                     'criador_gatilho': gatilho.usuario.username if (gatilho and usuario.tipo_user == 'GESTOR') else None,
                 })
 
-            # repõe em pendentes se:
-            # • sem gatilho
-            # • não interagiu hoje
-            # • não bloqueado (<7 dias)
-            # • status diferente de 'Base Ativa'
+            # Repõe em pendentes se não tiver gatilho
             if (
                 not gatilho
                 and not interagido_hoje
                 and not bloqueado
                 and parceiro.status != 'Base Ativa'
-                    and not (tinha_gatilho and ultima and ultima.data_interacao.date() == hoje)
-
+                and not (tinha_gatilho and ultima and ultima.data_interacao.date() == hoje)
             ):
                 pendentes.append({
                     'id': parceiro.id,
@@ -382,17 +365,18 @@ class InteracoesPendentesView(APIView):
                     'gatilho_extra': None,
                 })
 
-        # montar filtros dinâmicos
+        # Filtros dinâmicos
         status_unicos = sorted({item['status'] for item in pendentes})
         if usuario.tipo_user == 'GESTOR':
             gatilhos_ativos = (
                 GatilhoExtra.objects.filter(
-                    parceiro__canal_venda__in=usuario.canais_venda.all()
+                    parceiro__canal_venda__in=usuario.canais_venda.all(),
+                    gatilho_utilizado=False
                 ).values_list('descricao', flat=True).distinct()
             )
         else:
             gatilhos_ativos = (
-                GatilhoExtra.objects.filter(usuario=usuario)
+                GatilhoExtra.objects.filter(usuario=usuario, gatilho_utilizado=False)
                 .values_list('descricao', flat=True)
                 .distinct()
             )
@@ -431,21 +415,15 @@ class RegistrarInteracaoView(APIView):
 
             parceiro = Parceiro.objects.get(id=parceiro_id)
 
-            # Se não vier do request, busca o primeiro gatilho não utilizado
-            if not gatilho_extra:
-                gatilho = GatilhoExtra.objects.filter(
-                    parceiro=parceiro,
-                    usuario=request.user,
-                    gatilho_utilizado=False
-                ).first()
-                gatilho_extra = gatilho.descricao if gatilho else None
-            else:
-                gatilho = GatilhoExtra.objects.filter(
-                    parceiro=parceiro,
-                    usuario=request.user,
-                    descricao=gatilho_extra,
-                    gatilho_utilizado=False
-                ).first()
+            # Busca o gatilho não utilizado, se houver
+            gatilho = GatilhoExtra.objects.filter(
+                parceiro=parceiro,
+                usuario=request.user,
+                gatilho_utilizado=False
+            ).first()
+
+            if not gatilho_extra and gatilho:
+                gatilho_extra = gatilho.descricao
 
             # Cria interação
             interacao = Interacao.objects.create(
@@ -457,6 +435,7 @@ class RegistrarInteracaoView(APIView):
                 gatilho_extra=gatilho_extra
             )
 
+            # Marca gatilho como utilizado
             if gatilho:
                 gatilho.gatilho_utilizado = True
                 gatilho.save()
@@ -495,23 +474,17 @@ class RegistrarOportunidadeView(APIView):
 
             parceiro = Parceiro.objects.get(id=parceiro_id)
 
-            # Se não vier do request, busca apenas gatilhos não utilizados
-            if not gatilho_extra:
-                gatilho = GatilhoExtra.objects.filter(
-                    parceiro=parceiro,
-                    usuario=request.user,
-                    gatilho_utilizado=False
-                ).first()
-                gatilho_extra = gatilho.descricao if gatilho else None
-            else:
-                gatilho = GatilhoExtra.objects.filter(
-                    parceiro=parceiro,
-                    usuario=request.user,
-                    descricao=gatilho_extra,
-                    gatilho_utilizado=False
-                ).first()
+            # Busca o gatilho não utilizado, se houver
+            gatilho = GatilhoExtra.objects.filter(
+                parceiro=parceiro,
+                usuario=request.user,
+                gatilho_utilizado=False
+            ).first()
 
-            # 🔥 Cria Interação
+            if not gatilho_extra and gatilho:
+                gatilho_extra = gatilho.descricao
+
+            # Cria interação
             interacao = Interacao.objects.create(
                 parceiro=parceiro,
                 usuario=request.user,
@@ -521,7 +494,7 @@ class RegistrarOportunidadeView(APIView):
                 gatilho_extra=gatilho_extra
             )
 
-            # 🔥 Cria Oportunidade
+            # Cria oportunidade
             oportunidade = Oportunidade.objects.create(
                 parceiro=parceiro,
                 usuario=request.user,
@@ -531,6 +504,7 @@ class RegistrarOportunidadeView(APIView):
                 gatilho_extra=gatilho_extra
             )
 
+            # Marca gatilho como utilizado
             if gatilho:
                 gatilho.gatilho_utilizado = True
                 gatilho.save()
@@ -884,7 +858,7 @@ def criar_gatilho_manual(request):
 
     if not parceiro_id or not descricao:
         return Response(
-            {'erro': 'Parâmetros \"parceiro\" e \"descricao\" são obrigatórios.'},
+            {'erro': 'Parâmetros "parceiro" e "descricao" são obrigatórios.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -896,16 +870,29 @@ def criar_gatilho_manual(request):
             status=status.HTTP_404_NOT_FOUND
         )
 
-    # ✅ Buscar o vendedor do parceiro
     usuario = CustomUser.objects.filter(id_vendedor=parceiro.consultor).first()
     if not usuario:
         return Response({'erro': 'Consultor (vendedor) não encontrado para este parceiro.'}, status=400)
 
-    # ✅ Criar o gatilho extra vinculado ao vendedor
-    gatilho, _ = GatilhoExtra.objects.create(
+    # Verifica se já existe um gatilho não utilizado
+    gatilho_existente = GatilhoExtra.objects.filter(
         parceiro=parceiro,
         usuario=usuario,
-        defaults={'descricao': descricao}
+        gatilho_utilizado=False
+    ).first()
+
+    if gatilho_existente:
+        return Response(
+            {'erro': 'Já existe um gatilho ativo para este parceiro. Finalize o anterior antes de criar outro.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Cria um novo gatilho
+    gatilho = GatilhoExtra.objects.create(
+        parceiro=parceiro,
+        usuario=usuario,
+        descricao=descricao,
+        gatilho_utilizado=False  # já vem por padrão, mas explicitado
     )
 
     return Response(
