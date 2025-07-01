@@ -184,7 +184,7 @@ export default function InteracoesPage() {
 
   useEffect(() => {
     carregarDados();
-  }, []);
+  }, [canalSelecionado, vendedorSelecionado, parceiroFilter, statusSelecionado, temGatilho]);
 
   const handleUploadGatilho = async () => {
     if (!arquivoGatilho) return alert('Selecione um arquivo antes de enviar.');
@@ -228,9 +228,16 @@ export default function InteracoesPage() {
             <Button onClick={() => setMostrarInteracaoManual((v) => !v)}>
               {mostrarInteracaoManual ? 'Fechar Interação Manual' : 'Adicionar Interação Manual'}
             </Button>
-            <Button onClick={() => setMostrarGatilhoManual((v) => !v)}>
-              {mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
-            </Button>
+
+            {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
+    <Button
+      color={mostrarGatilhoManual ? 'red' : 'teal'}
+      variant={mostrarGatilhoManual ? 'outline' : 'filled'}
+      onClick={() => setMostrarGatilhoManual((v) => !v)}
+    >
+      {mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
+    </Button>
+  )}
           </Group>
         </Group>
         <Divider style={{ marginBottom: 8 }} label="Filtros" />
