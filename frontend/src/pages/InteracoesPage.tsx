@@ -16,11 +16,12 @@ import {
   FileButton,
   Card,
   Pagination,
+  Modal,
   } from '@mantine/core';
 import { FixedSizeList as List } from 'react-window';
 import SidebarGestor from '../components/SidebarGestor';
 import styles from './InteracoesPage.module.css';
-import { Modal } from '@mantine/core';
+
 
 interface Interacao {
   id: number;
@@ -519,8 +520,9 @@ export default function InteracoesPage() {
     setItemSelecionado(item);
     setValorModal('');
     setObsModal('');
+    setTipoModal('');
     setModalAberto(true);
-  }}
+    }}
 >
   Marcar como interagido
 </Button>
@@ -624,33 +626,34 @@ export default function InteracoesPage() {
       <Select
         label="Tipo de Interação"
         placeholder="Selecione"
+        value={tipoModal}
+        onChange={(v) => setTipoModal(v || '')}
         data={[
           { value: 'whatsapp', label: 'WhatsApp' },
           { value: 'email', label: 'E-mail' },
           { value: 'ligacao', label: 'Ligação' },
           { value: 'visita', label: 'Visita Presencial' },
         ]}
-        value={tipoModal}
-        onChange={(v) => setTipoModal(v || '')}
-        mb="md"
+        required
       />
 
-      <Group grow>
-        <TextInput
-          label="Valor da Oportunidade (R$)"
-          placeholder="5000"
-          value={valorModal}
-          onChange={(e) => setValorModal(e.currentTarget.value)}
-        />
-        <Textarea
-          label="Observação"
-          placeholder="Detalhes adicionais..."
-          value={obsModal}
-          onChange={(e) => setObsModal(e.currentTarget.value)}
-        />
-      </Group>
+      <TextInput
+        label="Valor da Oportunidade (R$)"
+        placeholder="5000"
+        value={valorModal}
+        onChange={(e) => setValorModal(e.currentTarget.value)}
+        mt="sm"
+      />
 
-      <Group style={{ marginTop: 16 }} justify="flex-end">
+      <Textarea
+        label="Observação"
+        placeholder="Detalhes adicionais..."
+        value={obsModal}
+        onChange={(e) => setObsModal(e.currentTarget.value)}
+        mt="sm"
+      />
+
+      <Group justify="flex-end" mt="md">
         <Button
           color="blue"
           onClick={() => {
