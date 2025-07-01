@@ -63,8 +63,9 @@ export default function InteracoesPage() {
   const [metaTotal, setMetaTotal] = useState(6);
   const [tipoSelecionado, setTipoSelecionado] = useState<{ [key: number]: string }>({});
   const [expandirId, setExpandirId] = useState<number | null>(null);
-  const [valorOportunidade, setValorOportunidade] = useState('');
-  const [observacaoOportunidade, setObservacaoOportunidade] = useState('');
+  const [inputsPorItem, setInputsPorItem] = useState<{ [key: number]: { valor: string; obs: string } }>({});
+  /*const [valorOportunidade, setValorOportunidade] = useState('');*/
+  /*const [observacaoOportunidade, setObservacaoOportunidade] = useState('');*/
   const [mostrarInteracaoManual, setMostrarInteracaoManual] = useState(false);
   const [mostrarGatilhoManual, setMostrarGatilhoManual] = useState(false);
   const [parceiroInteracaoManual, setParceiroInteracaoManual] = useState<string | null>(null);
@@ -112,9 +113,11 @@ export default function InteracoesPage() {
       }
   
       setExpandirId(null);
-      setValorOportunidade('');
-      setObservacaoOportunidade('');
-      setValorInteracaoManual('');
+      setInputsPorItem(prev => {
+        const updated = { ...prev };
+        delete updated[parceiroId];
+        return updated;
+      });
       setObsInteracaoManual('');
       await carregarDados();
     } catch (err) {
@@ -502,9 +505,22 @@ export default function InteracoesPage() {
                               />
                             </td>
                             <td>
-                              <Button size="xs" onClick={() => setExpandirId(item.id)}>
-                                Marcar como interagido
-                              </Button>
+                            <Button
+  size="xs"
+  onClick={() => {
+    setExpandirId(item.id);
+    // Inicializa os inputs se ainda não existirem
+    setInputsPorItem(prev => ({
+      ...prev,
+      [item.id]: {
+        valor: prev[item.id]?.valor || '',
+        obs: prev[item.id]?.obs || ''
+      }
+    }));
+  }}
+>
+  Marcar como interagido
+</Button>
                             </td>
                           </tr>
 
@@ -515,14 +531,33 @@ export default function InteracoesPage() {
                                   <TextInput
                                     label="Valor da Oportunidade (R$)"
                                     placeholder="5000"
-                                    value={valorOportunidade}
-                                    onChange={e => setValorOportunidade(e.currentTarget.value)}
+                                    value={inputsPorItem[item.id]?.valor || ''}
+                                    onChange={e => {
+                                      const value = e.currentTarget.value;
+setInputsPorItem(prev => ({
+  ...prev,
+  [item.id]: {
+    valor: value,
+    obs: prev[item.id]?.obs || ''
+  }
+}));
+                                    }}
                                   />
+                                  
                                   <Textarea
                                     label="Observação"
                                     placeholder="Detalhes adicionais..."
-                                    value={observacaoOportunidade}
-                                    onChange={e => setObservacaoOportunidade(e.currentTarget.value)}
+                                    value={inputsPorItem[item.id]?.obs || ''}
+                                    onChange={e => {
+                                      const value = e.currentTarget.value;
+setInputsPorItem(prev => ({
+  ...prev,
+  [item.id]: {
+    valor: value,
+    obs: prev[item.id]?.obs || ''
+  }
+}));
+                                    }}
                                   />
                                 </Group>
                                 <Group style={{ marginTop: 16 }} justify="flex-end">
@@ -533,8 +568,8 @@ export default function InteracoesPage() {
     item.id,
     tipoSelecionado[item.id] || '',
     true,
-    parseFloat(valorOportunidade.replace(',', '.')),
-    observacaoOportunidade
+    parseFloat((inputsPorItem[item.id]?.valor || '').replace(',', '.')),
+    inputsPorItem[item.id]?.obs || ''
   )}
 >
   Salvar e Criar Oportunidade
@@ -547,7 +582,7 @@ export default function InteracoesPage() {
     tipoSelecionado[item.id] || '',
     false,
     undefined,
-    observacaoOportunidade
+    inputsPorItem[item.id]?.obs || ''
   )}
 >
   Só Interagir
@@ -558,8 +593,11 @@ export default function InteracoesPage() {
   variant="outline"
   onClick={() => {
     setExpandirId(null);
-    setValorOportunidade('');
-    setObservacaoOportunidade('');
+    setInputsPorItem(prev => {
+      const updated = { ...prev };
+      delete updated[item.id];
+      return updated;
+    });
   }}
 >
   Cancelar
