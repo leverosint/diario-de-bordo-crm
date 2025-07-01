@@ -83,7 +83,7 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             'id', 'parceiro', 'codigo', 'parceiro_nome',
             'usuario', 'usuario_nome',
             'valor', 'observacao', 'motivo_venda_perdida', 'etapa',
-            'numero_pedido',  # ⬅️ INCLUA AQUI
+            'numero_pedido',  # ⬅️ -INCLUA AQUI
             'data_criacao', 'data_status', 'data_etapa',
             'dias_sem_movimentacao', 'gatilho_extra'
         ]

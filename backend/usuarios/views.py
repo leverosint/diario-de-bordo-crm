@@ -705,7 +705,7 @@ class DashboardKPIView(APIView):
       
 
 
-# ===== Funil de Conversão =====
+# ==== Funil de Conversão =====
 class DashboardFunilView(APIView):
     permission_classes = [IsAuthenticated]
 

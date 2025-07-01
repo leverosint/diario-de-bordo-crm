@@ -63,7 +63,7 @@
   gap: 16px;
 }
 
-/* 🔥 Drawer responsivo e centralizado */
+/* Drawer responsivo e centralizado */
 .drawerContent .mantine-Select-root,
 .drawerContent .mantine-TextInput-root {
   width: 100%;

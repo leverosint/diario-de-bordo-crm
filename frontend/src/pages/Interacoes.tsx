@@ -108,7 +108,7 @@ export default function Interacoes() {
           <Button variant="outline">Exportar Excel</Button>
         </Group>
 
-        {/* TABELA COM OVERFLOW */}
+        {/* TABELA COM OVERFLOW- */}
         <div style={{ width: '100%', overflowX: 'auto' }}>
           <Table striped highlightOnHover withTableBorder style={{ minWidth: '900px', width: '100%' }}>
             <thead>
