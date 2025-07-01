@@ -10,7 +10,7 @@ export default function SolicitarResetPage() {
   const handleSubmit = async () => {
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/solicitar-reset-senha/`, {
-        email: email,
+        email: email.trim(),
       });
       setMensagem('Enviamos um link para seu e-mail!');
       setErro('');
