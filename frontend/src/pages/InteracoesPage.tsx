@@ -598,10 +598,14 @@ export default function InteracoesPage() {
 <Modal
   opened={modalAberto}
   onClose={() => setModalAberto(false)}
-  title={`Interagir com: ${itemSelecionado?.parceiro}`}
+  title={`Interagir com: ${itemSelecionado?.parceiro || ''}`}
   size="lg"
+  overlayProps={{
+    backgroundOpacity: 0.55,
+    blur: 3,
+  }}
 >
-  {itemSelecionado && (
+  {itemSelecionado ? (
     <>
       <Table striped withTableBorder mb="md">
         <tbody>
@@ -627,47 +631,47 @@ export default function InteracoesPage() {
       <Select
         label="Tipo de Interação"
         placeholder="Selecione"
-        value={tipoModal}
-        onChange={(v) => setTipoModal(v || '')}
         data={[
           { value: 'whatsapp', label: 'WhatsApp' },
           { value: 'email', label: 'E-mail' },
           { value: 'ligacao', label: 'Ligação' },
           { value: 'visita', label: 'Visita Presencial' },
         ]}
-        required
+        value={tipoSelecionado[itemSelecionado.id] || ''}
+        onChange={(v) => {
+          if (v) setTipoSelecionado((prev) => ({ ...prev, [itemSelecionado.id]: v }));
+        }}
+        mb="sm"
       />
 
-      <TextInput
-        label="Valor da Oportunidade (R$)"
-        placeholder="5000"
-        value={valorModal}
-        onChange={(e) => setValorModal(e.currentTarget.value)}
-        mt="sm"
-      />
+      <Group grow>
+        <TextInput
+          label="Valor da Oportunidade (R$)"
+          placeholder="5000"
+          value={valorModal}
+          onChange={(e) => setValorModal(e.currentTarget.value)}
+        />
+        <Textarea
+          label="Observação"
+          placeholder="Detalhes adicionais..."
+          value={obsModal}
+          onChange={(e) => setObsModal(e.currentTarget.value)}
+        />
+      </Group>
 
-      <Textarea
-        label="Observação"
-        placeholder="Detalhes adicionais..."
-        value={obsModal}
-        onChange={(e) => setObsModal(e.currentTarget.value)}
-        mt="sm"
-      />
-
-      <Group justify="flex-end" mt="md">
+      <Group style={{ marginTop: 16 }} justify="flex-end">
         <Button
           color="blue"
           onClick={() => {
             registrarInteracao(
               itemSelecionado.id,
-              tipoModal || '',
+              tipoSelecionado[itemSelecionado.id] || '',
               true,
               parseFloat(valorModal.replace(',', '.')),
               obsModal
             );
             setModalAberto(false);
           }}
-          disabled={!tipoModal}
         >
           Salvar e Criar Oportunidade
         </Button>
@@ -676,14 +680,13 @@ export default function InteracoesPage() {
           onClick={() => {
             registrarInteracao(
               itemSelecionado.id,
-              tipoModal || '',
+              tipoSelecionado[itemSelecionado.id] || '',
               false,
               undefined,
               obsModal
             );
             setModalAberto(false);
           }}
-          disabled={!tipoModal}
         >
           Só Interagir
         </Button>
@@ -696,8 +699,11 @@ export default function InteracoesPage() {
         </Button>
       </Group>
     </>
+  ) : (
+    <Center><Loader /></Center>
   )}
 </Modal>
+
 
 <Pagination
   value={pagePend}
