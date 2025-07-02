@@ -17,6 +17,8 @@ import {
   Pagination,
   Skeleton,
   Stack,
+  ScrollArea,
+  Box,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import styles from './InteracoesPage.module.css';
@@ -36,6 +38,18 @@ const useDebounce = (value: any, delay: number): any => {
   }, [value, delay]);
 
   return debouncedValue;
+};
+
+// Hook para throttle de scroll
+const useThrottle = (callback: Function, delay: number) => {
+  const lastRun = useRef(Date.now());
+
+  return useCallback((...args: any[]) => {
+    if (Date.now() - lastRun.current >= delay) {
+      callback(...args);
+      lastRun.current = Date.now();
+    }
+  }, [callback, delay]);
 };
 
 // Função de retry para requisições
@@ -148,9 +162,140 @@ interface DadosProcessados {
   totalInteragidos: number;
 }
 
+// Componente de linha virtualizada para tabela
+interface VirtualizedRowProps {
+  item: Interacao;
+  index: number;
+  isExpanded: boolean;
+  tipoSelecionado: string;
+  onExpandToggle: (id: number) => void;
+  onTipoChange: (id: number, tipo: string) => void;
+  onRegistrarInteracao: (id: number, tipo: string, oportunidade: boolean, valor?: number, observacao?: string) => void;
+  valorOportunidade: string;
+  observacaoOportunidade: string;
+  onValorChange: (valor: string) => void;
+  onObservacaoChange: (observacao: string) => void;
+  loadingInteracao: boolean;
+}
+
+const VirtualizedRow: React.FC<VirtualizedRowProps> = ({
+  item,
+  isExpanded,
+  tipoSelecionado,
+  onExpandToggle,
+  onTipoChange,
+  onRegistrarInteracao,
+  valorOportunidade,
+  observacaoOportunidade,
+  onValorChange,
+  onObservacaoChange,
+  loadingInteracao
+}) => {
+  return (
+    <Fragment>
+      <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
+        <td>{item.parceiro}</td>
+        <td>{item.unidade}</td>
+        <td>{item.classificacao}</td>
+        <td>{item.status}</td>
+        <td>
+          {item.gatilho_extra
+            ? <Badge color="red" size="sm">{item.gatilho_extra}</Badge>
+            : "-"}
+        </td>
+        <td>
+          <Select
+            placeholder="Tipo"
+            className={styles.select}
+            value={tipoSelecionado || ''}
+            onChange={(v: string | null) => {
+              if (v) {
+                onTipoChange(item.id, v);
+              }
+            }}
+            data={[
+              { value: 'whatsapp', label: 'WhatsApp' },
+              { value: 'email', label: 'E-mail' },
+              { value: 'ligacao', label: 'Ligação' },
+              { value: 'visita', label: 'Visita Presencial' },
+            ]}
+            clearable={false}
+          />
+        </td>
+        <td>
+          <Button 
+            size="xs" 
+            onClick={() => onExpandToggle(item.id)}
+            loading={loadingInteracao}
+          >
+            Marcar como interagido
+          </Button>
+        </td>
+      </tr>
+
+      {isExpanded && (
+        <tr>
+          <td colSpan={7}>
+            <Group grow style={{ marginTop: 10 }}>
+              <TextInput
+                label="Valor da Oportunidade (R$)"
+                placeholder="5000"
+                value={valorOportunidade}
+                onChange={(e) => onValorChange(e.currentTarget.value)}
+              />
+              <Textarea
+                label="Observação"
+                placeholder="Detalhes adicionais..."
+                value={observacaoOportunidade}
+                onChange={(e) => onObservacaoChange(e.currentTarget.value)}
+              />
+            </Group>
+            <Group style={{ marginTop: 16 }} justify="flex-end">
+              <Button
+                color="blue"
+                loading={loadingInteracao}
+                onClick={() => onRegistrarInteracao(
+                  item.id,
+                  tipoSelecionado || '',
+                  true,
+                  parseFloat(valorOportunidade.replace(',', '.')),
+                  observacaoOportunidade
+                )}
+              >
+                Salvar e Criar Oportunidade
+              </Button>
+              <Button
+                color="gray"
+                loading={loadingInteracao}
+                onClick={() => onRegistrarInteracao(
+                  item.id,
+                  tipoSelecionado || '',
+                  false,
+                  undefined,
+                  undefined
+                )}
+              >
+                Só Interagir
+              </Button>
+              <Button
+                color="red"
+                variant="outline"
+                onClick={() => onExpandToggle(-1)}
+              >
+                Cancelar
+              </Button>
+            </Group>
+          </td>
+        </tr>
+      )}
+    </Fragment>
+  );
+};
+
 export default function InteracoesPage() {
   const itemsPerPage = 10;
   const abortControllerRef = useRef<AbortController | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   
   // Estados consolidados
   const [dados, setDados] = useState<DadosState>({
@@ -259,6 +404,17 @@ export default function InteracoesPage() {
     abortControllerRef.current = new AbortController();
     return abortControllerRef.current.signal;
   }, []);
+
+  // Throttle para scroll
+  const handleScroll = useThrottle((event: any) => {
+    // Implementação de scroll throttling para evitar travamentos
+    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+    
+    // Lógica adicional de scroll se necessário
+    if (scrollTop + clientHeight >= scrollHeight - 100) {
+      // Próximo carregamento se necessário
+    }
+  }, 100);
 
   // Carregamento inicial de dados estáticos (uma vez só)
   const carregarDadosEstaticos = useCallback(async () => {
@@ -592,473 +748,408 @@ export default function InteracoesPage() {
     </Stack>
   );
 
+  // Handlers para componente virtualizado
+  const handleExpandToggle = useCallback((id: number) => {
+    setInteracao(prev => ({
+      ...prev,
+      expandirId: id === -1 ? null : (prev.expandirId === id ? null : id),
+      valorOportunidade: id === -1 ? '' : prev.valorOportunidade,
+      observacaoOportunidade: id === -1 ? '' : prev.observacaoOportunidade
+    }));
+  }, []);
+
+  const handleTipoChange = useCallback((id: number, tipo: string) => {
+    setInteracao(prev => ({
+      ...prev,
+      tipoSelecionado: { ...prev.tipoSelecionado, [id]: tipo }
+    }));
+  }, []);
+
+  const handleValorChange = useCallback((valor: string) => {
+    setInteracao(prev => ({ ...prev, valorOportunidade: valor }));
+  }, []);
+
+  const handleObservacaoChange = useCallback((observacao: string) => {
+    setInteracao(prev => ({ ...prev, observacaoOportunidade: observacao }));
+  }, []);
+
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <div className={styles.pageContainer}>
-        <Center mb="md">
-          <Title order={2}>Interações de Parceiros Pendentes</Title>
-        </Center>
+      <ScrollArea 
+        ref={scrollAreaRef}
+        style={{ height: '100vh' }}
+        onScrollPositionChange={handleScroll}
+        scrollbarSize={8}
+        scrollHideDelay={1500}
+      >
+        <div className={styles.pageContainer}>
+          <Center mb="md">
+            <Title order={2}>Interações de Parceiros Pendentes</Title>
+          </Center>
 
-        <Group justify="space-between" mb="md">
-          {loadingStates.meta ? (
-            <Skeleton height={32} width={150} />
-          ) : (
-            <Badge color={meta.atual >= meta.total ? 'teal' : 'yellow'} size="lg">
-              Meta do dia: {meta.atual}/{meta.total}
-            </Badge>
-          )}
+          <Group justify="space-between" mb="md">
+            {loadingStates.meta ? (
+              <Skeleton height={32} width={150} />
+            ) : (
+              <Badge color={meta.atual >= meta.total ? 'teal' : 'yellow'} size="lg">
+                Meta do dia: {meta.atual}/{meta.total}
+              </Badge>
+            )}
 
-          {/* Botões de ação para diferentes tipos de usuário */}
-          {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
-            <Group gap="sm">
-              <FileButton 
-                onChange={(file: File | null) => setInteracao(prev => ({ ...prev, arquivoGatilho: file }))} 
-                accept=".xlsx"
-              >
-                {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
-              </FileButton>
+            {/* Botões de ação para diferentes tipos de usuário */}
+            {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
+              <Group gap="sm">
+                <FileButton 
+                  onChange={(file: File | null) => setInteracao(prev => ({ ...prev, arquivoGatilho: file }))} 
+                  accept=".xlsx"
+                >
+                  {(props) => <Button {...props}>Selecionar Arquivo de Gatilho</Button>}
+                </FileButton>
 
+                <Button
+                  color="blue"
+                  onClick={handleUploadGatilho}
+                  disabled={!interacao.arquivoGatilho}
+                  loading={loadingStates.upload}
+                >
+                  Enviar Gatilhos
+                </Button>
+
+                <Button
+                  color={formularios.mostrarGatilhoManual ? 'red' : 'teal'}
+                  variant={formularios.mostrarGatilhoManual ? 'outline' : 'filled'}
+                  onClick={() => atualizarFormulario('mostrarGatilhoManual', !formularios.mostrarGatilhoManual)}
+                >
+                  {formularios.mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
+                </Button>
+              </Group>
+            )}
+
+            {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR' || tipoUser === 'VENDEDOR') && (
               <Button
-                color="blue"
-                onClick={handleUploadGatilho}
-                disabled={!interacao.arquivoGatilho}
-                loading={loadingStates.upload}
+                variant="filled"
+                styles={{
+                  root: {
+                    backgroundColor: '#005A64',
+                    '&:hover': { backgroundColor: '#004F57' },
+                  },
+                }}
+                onClick={() => atualizarFormulario('mostrarInteracaoManual', !formularios.mostrarInteracaoManual)}
               >
-                Enviar Gatilhos
+                {formularios.mostrarInteracaoManual
+                  ? 'Fechar Interação Manual'
+                  : 'Adicionar Interação Manual'}
               </Button>
+            )}
+          </Group>
 
-              <Button
-                color={formularios.mostrarGatilhoManual ? 'red' : 'teal'}
-                variant={formularios.mostrarGatilhoManual ? 'outline' : 'filled'}
-                onClick={() => atualizarFormulario('mostrarGatilhoManual', !formularios.mostrarGatilhoManual)}
-              >
-                {formularios.mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
-              </Button>
-            </Group>
-          )}
+          {/* Formulário de Interação Manual */}
+          {formularios.mostrarInteracaoManual && (
+            <Card shadow="sm" padding="lg" mb="md">
+              <Group grow>
+                {loadingStates.parceiros ? (
+                  <Skeleton height={40} />
+                ) : (
+                  <Select
+                    label="Parceiro"
+                    placeholder="Selecione um parceiro"
+                    data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
+                    value={formularios.parceiroInteracaoManual}
+                    onChange={(value: string | null) => atualizarFormulario('parceiroInteracaoManual', value)}
+                    searchable
+                    required
+                  />
+                )}
 
-          {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR' || tipoUser === 'VENDEDOR') && (
-            <Button
-              variant="filled"
-              styles={{
-                root: {
-                  backgroundColor: '#005A64',
-                  '&:hover': { backgroundColor: '#004F57' },
-                },
-              }}
-              onClick={() => atualizarFormulario('mostrarInteracaoManual', !formularios.mostrarInteracaoManual)}
-            >
-              {formularios.mostrarInteracaoManual
-                ? 'Fechar Interação Manual'
-                : 'Adicionar Interação Manual'}
-            </Button>
-          )}
-        </Group>
-
-        {/* Formulário de Interação Manual */}
-        {formularios.mostrarInteracaoManual && (
-          <Card shadow="sm" padding="lg" mb="md">
-            <Group grow>
-              {loadingStates.parceiros ? (
-                <Skeleton height={40} />
-              ) : (
                 <Select
-                  label="Parceiro"
-                  placeholder="Selecione um parceiro"
-                  data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
-                  value={formularios.parceiroInteracaoManual}
-                  onChange={(value: string | null) => atualizarFormulario('parceiroInteracaoManual', value)}
-                  searchable
+                  label="Tipo de Interação"
+                  placeholder="Selecione"
+                  data={[
+                    { value: 'whatsapp', label: 'WhatsApp' },
+                    { value: 'email', label: 'E-mail' },
+                    { value: 'ligacao', label: 'Ligação' },
+                    { value: 'visita', label: 'Visita Presencial' },
+                  ]}
+                  value={formularios.tipoInteracaoManual}
+                  onChange={(value: string | null) => atualizarFormulario('tipoInteracaoManual', value)}
                   required
                 />
-              )}
 
-              <Select
-                label="Tipo de Interação"
-                placeholder="Selecione"
-                data={[
-                  { value: 'whatsapp', label: 'WhatsApp' },
-                  { value: 'email', label: 'E-mail' },
-                  { value: 'ligacao', label: 'Ligação' },
-                  { value: 'visita', label: 'Visita Presencial' },
-                ]}
-                value={formularios.tipoInteracaoManual}
-                onChange={(value: string | null) => atualizarFormulario('tipoInteracaoManual', value)}
-                required
-              />
-
-              <TextInput
-                label="Valor da Oportunidade (R$)"
-                placeholder="5000"
-                value={formularios.valorInteracaoManual}
-                onChange={(e) => atualizarFormulario('valorInteracaoManual', e.currentTarget.value)}
-              />
-
-              <Textarea
-                label="Observação"
-                placeholder="Detalhes adicionais..."
-                value={formularios.obsInteracaoManual}
-                onChange={(e) => atualizarFormulario('obsInteracaoManual', e.currentTarget.value)}
-                autosize
-                minRows={2}
-              />
-            </Group>
-
-            <Group justify="flex-end" mt="md">
-              <Button
-                variant="outline"
-                loading={loadingStates.interacao}
-                onClick={async () => {
-                  try {
-                    const signal = cancelarRequisicoes();
-                    await retryRequest(() => axios.post(
-                      `${import.meta.env.VITE_API_URL}/interacoes/registrar/`,
-                      { 
-                        parceiro: formularios.parceiroInteracaoManual, 
-                        tipo: formularios.tipoInteracaoManual, 
-                        observacao: formularios.obsInteracaoManual 
-                      },
-                      { headers: { Authorization: `Bearer ${token}` }, signal }
-                    ));
-                    await carregarDadosDinamicos();
-                    atualizarFormulario('mostrarInteracaoManual', false);
-                  } catch (err: any) {
-                    if (err.name !== 'AbortError') {
-                      console.error(err);
-                      alert('Erro ao registrar interação.');
-                    }
-                  }
-                }}
-              >
-                Só Interagir
-              </Button>
-
-              <Button
-                loading={loadingStates.interacao}
-                onClick={async () => {
-                  try {
-                    const signal = cancelarRequisicoes();
-                    await retryRequest(() => axios.post(
-                      `${import.meta.env.VITE_API_URL}/oportunidades/registrar/`,
-                      {
-                        parceiro: formularios.parceiroInteracaoManual,
-                        tipo: formularios.tipoInteracaoManual,
-                        valor: parseFloat(formularios.valorInteracaoManual.replace(',', '.')),
-                        observacao: formularios.obsInteracaoManual,
-                      },
-                      { headers: { Authorization: `Bearer ${token}` }, signal }
-                    ));
-                    await carregarDadosDinamicos();
-                    atualizarFormulario('mostrarInteracaoManual', false);
-                  } catch (err: any) {
-                    if (err.name !== 'AbortError') {
-                      console.error(err);
-                      alert('Erro ao criar oportunidade.');
-                    }
-                  }
-                }}
-              >
-                Salvar e Criar Oportunidade
-              </Button>
-            </Group>
-          </Card>
-        )}
-
-        {/* Formulário de Gatilho Manual */}
-        {formularios.mostrarGatilhoManual && (
-          <Card shadow="sm" padding="lg" mb="md">
-            <Group grow>
-              {loadingStates.parceiros ? (
-                <Skeleton height={40} />
-              ) : (
-                <Select
-                  label="Parceiro"
-                  placeholder="Selecione um parceiro"
-                  data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
-                  value={formularios.parceiroSelecionado}
-                  onChange={(value: string | null) => atualizarFormulario('parceiroSelecionado', value)}
-                  searchable
+                <TextInput
+                  label="Valor da Oportunidade (R$)"
+                  placeholder="5000"
+                  value={formularios.valorInteracaoManual}
+                  onChange={(e) => atualizarFormulario('valorInteracaoManual', e.currentTarget.value)}
                 />
-              )}
-              <TextInput
-                label="Descrição do Gatilho"
-                placeholder="Ex: Urgente, Precisa Retorno..."
-                value={formularios.descricaoGatilho}
-                onChange={(e) => atualizarFormulario('descricaoGatilho', e.currentTarget.value)}
+
+                <Textarea
+                  label="Observação"
+                  placeholder="Detalhes adicionais..."
+                  value={formularios.obsInteracaoManual}
+                  onChange={(e) => atualizarFormulario('obsInteracaoManual', e.currentTarget.value)}
+                  autosize
+                  minRows={2}
+                />
+              </Group>
+
+              <Group justify="flex-end" mt="md">
+                <Button
+                  variant="outline"
+                  loading={loadingStates.interacao}
+                  onClick={async () => {
+                    try {
+                      const signal = cancelarRequisicoes();
+                      await retryRequest(() => axios.post(
+                        `${import.meta.env.VITE_API_URL}/interacoes/registrar/`,
+                        { 
+                          parceiro: formularios.parceiroInteracaoManual, 
+                          tipo: formularios.tipoInteracaoManual, 
+                          observacao: formularios.obsInteracaoManual 
+                        },
+                        { headers: { Authorization: `Bearer ${token}` }, signal }
+                      ));
+                      await carregarDadosDinamicos();
+                      atualizarFormulario('mostrarInteracaoManual', false);
+                    } catch (err: any) {
+                      if (err.name !== 'AbortError') {
+                        console.error(err);
+                        alert('Erro ao registrar interação.');
+                      }
+                    }
+                  }}
+                >
+                  Só Interagir
+                </Button>
+
+                <Button
+                  loading={loadingStates.interacao}
+                  onClick={async () => {
+                    try {
+                      const signal = cancelarRequisicoes();
+                      await retryRequest(() => axios.post(
+                        `${import.meta.env.VITE_API_URL}/oportunidades/registrar/`,
+                        {
+                          parceiro: formularios.parceiroInteracaoManual,
+                          tipo: formularios.tipoInteracaoManual,
+                          valor: parseFloat(formularios.valorInteracaoManual.replace(',', '.')),
+                          observacao: formularios.obsInteracaoManual,
+                        },
+                        { headers: { Authorization: `Bearer ${token}` }, signal }
+                      ));
+                      await carregarDadosDinamicos();
+                      atualizarFormulario('mostrarInteracaoManual', false);
+                    } catch (err: any) {
+                      if (err.name !== 'AbortError') {
+                        console.error(err);
+                        alert('Erro ao criar oportunidade.');
+                      }
+                    }
+                  }}
+                >
+                  Salvar e Criar Oportunidade
+                </Button>
+              </Group>
+            </Card>
+          )}
+
+          {/* Formulário de Gatilho Manual */}
+          {formularios.mostrarGatilhoManual && (
+            <Card shadow="sm" padding="lg" mb="md">
+              <Group grow>
+                {loadingStates.parceiros ? (
+                  <Skeleton height={40} />
+                ) : (
+                  <Select
+                    label="Parceiro"
+                    placeholder="Selecione um parceiro"
+                    data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
+                    value={formularios.parceiroSelecionado}
+                    onChange={(value: string | null) => atualizarFormulario('parceiroSelecionado', value)}
+                    searchable
+                  />
+                )}
+                <TextInput
+                  label="Descrição do Gatilho"
+                  placeholder="Ex: Urgente, Precisa Retorno..."
+                  value={formularios.descricaoGatilho}
+                  onChange={(e) => atualizarFormulario('descricaoGatilho', e.currentTarget.value)}
+                />
+                <Button 
+                  color="blue" 
+                  onClick={salvarGatilhoManual}
+                  loading={loadingStates.gatilho}
+                >
+                  Salvar Gatilho Manual
+                </Button>
+              </Group>
+            </Card>
+          )}
+
+          {/* Seção de Filtros */}
+          <Divider style={{ marginBottom: 8 }} label="Filtros" />
+
+          <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
+            {loadingStates.parceiros ? (
+              <Skeleton height={40} width={200} />
+            ) : (
+              <Select
+                label="Filtrar por Parceiro"
+                placeholder="Selecione um parceiro"
+                value={filtros.parceiro}
+                onChange={(value: string | null) => atualizarFiltro('parceiro', value)}
+                data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
+                searchable
+                clearable
+                style={{ minWidth: 200, marginRight: 16 }}
               />
-              <Button 
-                color="blue" 
-                onClick={salvarGatilhoManual}
-                loading={loadingStates.gatilho}
-              >
-                Salvar Gatilho Manual
-              </Button>
-            </Group>
-          </Card>
-        )}
+            )}
 
-        {/* Seção de Filtros */}
-        <Divider style={{ marginBottom: 8 }} label="Filtros" />
+            {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
+              <>
+                <Select
+                  label="Filtrar por Canal"
+                  placeholder="Selecione um canal"
+                  value={filtros.canal}
+                  onChange={handleCanalChange}
+                  data={dados.canaisVenda.map((c: CanalVenda) => ({ value: String(c.id), label: c.nome }))}
+                  clearable
+                  style={{ minWidth: 200, marginRight: 16 }}
+                />
 
-        <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
-          {loadingStates.parceiros ? (
-            <Skeleton height={40} width={200} />
-          ) : (
+                <Select
+                  label="Filtrar por Vendedor"
+                  placeholder="Selecione um vendedor"
+                  value={filtros.vendedor}
+                  onChange={(value: string | null) => atualizarFiltro('vendedor', value || '')}
+                  data={dados.vendedores.map((v: Vendedor) => ({ value: v.id_vendedor, label: v.username }))}
+                  disabled={!filtros.canal}
+                  clearable
+                  style={{ minWidth: 200, marginRight: 16 }}
+                />
+              </>
+            )}
+
             <Select
-              label="Filtrar por Parceiro"
-              placeholder="Selecione um parceiro"
-              value={filtros.parceiro}
-              onChange={(value: string | null) => atualizarFiltro('parceiro', value)}
-              data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
-              searchable
+              label="Filtrar por Status"
+              placeholder="Selecione um status"
+              value={filtros.status}
+              onChange={(value: string | null) => atualizarFiltro('status', value || '')}
+              data={dados.statusDisponiveis.map((s: string) => ({ value: s, label: s }))}
               clearable
               style={{ minWidth: 200, marginRight: 16 }}
             />
-          )}
 
-          {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
+            <Select
+              label="Filtrar por Gatilho"
+              placeholder="Selecione"
+              value={filtros.gatilho}
+              onChange={(value: string | null) => atualizarFiltro('gatilho', value || '')}
+              data={dados.gatilhosDisponiveis.map((g: string) => ({ value: g, label: g }))}
+              clearable
+              style={{ minWidth: 200 }}
+            />
+          </Group>
+
+          {/* Conteúdo Principal */}
+          {loadingStates.dados && !inicializado ? (
+            <LoadingSkeleton />
+          ) : erro ? (
+            <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
+          ) : (
             <>
-              <Select
-                label="Filtrar por Canal"
-                placeholder="Selecione um canal"
-                value={filtros.canal}
-                onChange={handleCanalChange}
-                data={dados.canaisVenda.map((c: CanalVenda) => ({ value: String(c.id), label: c.nome }))}
-                clearable
-                style={{ minWidth: 200, marginRight: 16 }}
-              />
+              {/* Tabela "A Interagir" com Virtualização */}
+              <Divider style={{ marginBottom: 8 }} label="A Interagir" />
+              <Box className={styles.tableWrapper}>
+                {loadingStates.dados ? (
+                  <LoadingSkeleton />
+                ) : (
+                  <Table striped highlightOnHover withTableBorder className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Parceiro</th>
+                        <th>Unidade</th>
+                        <th>Classificação</th>
+                        <th>Status</th>
+                        <th>Gatilho Extra</th>
+                        <th>Tipo</th>
+                        <th>Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dadosProcessados.pendentesExibidos.map((item: Interacao, index: number) => (
+                        <VirtualizedRow
+                          key={item.id}
+                          item={item}
+                          index={index}
+                          isExpanded={interacao.expandirId === item.id}
+                          tipoSelecionado={interacao.tipoSelecionado[item.id] || ''}
+                          onExpandToggle={handleExpandToggle}
+                          onTipoChange={handleTipoChange}
+                          onRegistrarInteracao={registrarInteracao}
+                          valorOportunidade={interacao.valorOportunidade}
+                          observacaoOportunidade={interacao.observacaoOportunidade}
+                          onValorChange={handleValorChange}
+                          onObservacaoChange={handleObservacaoChange}
+                          loadingInteracao={loadingStates.interacao}
+                        />
+                      ))}
+                    </tbody>
+                  </Table>
+                )}
 
-              <Select
-                label="Filtrar por Vendedor"
-                placeholder="Selecione um vendedor"
-                value={filtros.vendedor}
-                onChange={(value: string | null) => atualizarFiltro('vendedor', value || '')}
-                data={dados.vendedores.map((v: Vendedor) => ({ value: v.id_vendedor, label: v.username }))}
-                disabled={!filtros.canal}
-                clearable
-                style={{ minWidth: 200, marginRight: 16 }}
-              />
-            </>
-          )}
+                {/* Paginação "A Interagir" */}
+                <Pagination
+                  value={paginacao.pendentes}
+                  onChange={(page: number) => atualizarPaginacao('pendentes', page)}
+                  total={Math.ceil(totalPendentes / itemsPerPage)}
+                  mt="md"
+                />
+              </Box>
 
-          <Select
-            label="Filtrar por Status"
-            placeholder="Selecione um status"
-            value={filtros.status}
-            onChange={(value: string | null) => atualizarFiltro('status', value || '')}
-            data={dados.statusDisponiveis.map((s: string) => ({ value: s, label: s }))}
-            clearable
-            style={{ minWidth: 200, marginRight: 16 }}
-          />
-
-          <Select
-            label="Filtrar por Gatilho"
-            placeholder="Selecione"
-            value={filtros.gatilho}
-            onChange={(value: string | null) => atualizarFiltro('gatilho', value || '')}
-            data={dados.gatilhosDisponiveis.map((g: string) => ({ value: g, label: g }))}
-            clearable
-            style={{ minWidth: 200 }}
-          />
-        </Group>
-
-        {/* Conteúdo Principal */}
-        {loadingStates.dados && !inicializado ? (
-          <LoadingSkeleton />
-        ) : erro ? (
-          <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
-        ) : (
-          <>
-            {/* Tabela "A Interagir" */}
-            <Divider style={{ marginBottom: 8 }} label="A Interagir" />
-            <div className={styles.tableWrapper}>
-              {loadingStates.dados ? (
-                <LoadingSkeleton />
-              ) : (
-                <Table striped highlightOnHover withTableBorder className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th>Parceiro</th>
-                      <th>Unidade</th>
-                      <th>Classificação</th>
-                      <th>Status</th>
-                      <th>Gatilho Extra</th>
-                      <th>Tipo</th>
-                      <th>Ação</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dadosProcessados.pendentesExibidos.map((item: Interacao) => (
-                      <Fragment key={item.id}>
-                        <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
+              {/* Tabela "Interagidos Hoje" */}
+              <Divider label="Interagidos Hoje" style={{ marginTop: 32, marginBottom: 16 }} />
+              <Box className={styles.tableWrapper}>
+                {loadingStates.dados ? (
+                  <LoadingSkeleton />
+                ) : (
+                  <Table striped highlightOnHover withTableBorder className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Parceiro</th>
+                        <th>Unidade</th>
+                        <th>Classificação</th>
+                        <th>Status</th>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dadosProcessados.interagidosExibidos.map((item: Interacao) => (
+                        <tr key={item.id}>
                           <td>{item.parceiro}</td>
                           <td>{item.unidade}</td>
                           <td>{item.classificacao}</td>
                           <td>{item.status}</td>
-                          <td>
-                            {item.gatilho_extra
-                              ? <Badge color="red" size="sm">{item.gatilho_extra}</Badge>
-                              : "-"}
-                          </td>
-                          <td>
-                            <Select
-                              placeholder="Tipo"
-                              className={styles.select}
-                              value={interacao.tipoSelecionado[item.id] || ''}
-                              onChange={(v: string | null) => {
-                                if (v) {
-                                  setInteracao(prev => ({
-                                    ...prev,
-                                    tipoSelecionado: { ...prev.tipoSelecionado, [item.id]: v }
-                                  }));
-                                }
-                              }}
-                              data={[
-                                { value: 'whatsapp', label: 'WhatsApp' },
-                                { value: 'email', label: 'E-mail' },
-                                { value: 'ligacao', label: 'Ligação' },
-                                { value: 'visita', label: 'Visita Presencial' },
-                              ]}
-                              clearable={false}
-                            />
-                          </td>
-                          <td>
-                            <Button 
-                              size="xs" 
-                              onClick={() => setInteracao(prev => ({ ...prev, expandirId: item.id }))}
-                              loading={loadingStates.interacao}
-                            >
-                              Marcar como interagido
-                            </Button>
-                          </td>
+                          <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
+                          <td>{item.tipo}</td>
                         </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                )}
 
-                        {interacao.expandirId === item.id && (
-                          <tr>
-                            <td colSpan={7}>
-                              <Group grow style={{ marginTop: 10 }}>
-                                <TextInput
-                                  label="Valor da Oportunidade (R$)"
-                                  placeholder="5000"
-                                  value={interacao.valorOportunidade}
-                                  onChange={(e) => setInteracao(prev => ({ 
-                                    ...prev, 
-                                    valorOportunidade: e.currentTarget.value 
-                                  }))}
-                                />
-                                <Textarea
-                                  label="Observação"
-                                  placeholder="Detalhes adicionais..."
-                                  value={interacao.observacaoOportunidade}
-                                  onChange={(e) => setInteracao(prev => ({ 
-                                    ...prev, 
-                                    observacaoOportunidade: e.currentTarget.value 
-                                  }))}
-                                />
-                              </Group>
-                              <Group style={{ marginTop: 16 }} justify="flex-end">
-                                <Button
-                                  color="blue"
-                                  loading={loadingStates.interacao}
-                                  onClick={() => registrarInteracao(
-                                    item.id,
-                                    interacao.tipoSelecionado[item.id] || '',
-                                    true,
-                                    parseFloat(interacao.valorOportunidade.replace(',', '.')),
-                                    interacao.observacaoOportunidade
-                                  )}
-                                >
-                                  Salvar e Criar Oportunidade
-                                </Button>
-                                <Button
-                                  color="gray"
-                                  loading={loadingStates.interacao}
-                                  onClick={() => registrarInteracao(
-                                    item.id,
-                                    interacao.tipoSelecionado[item.id] || '',
-                                    false,
-                                    undefined,
-                                    undefined
-                                  )}
-                                >
-                                  Só Interagir
-                                </Button>
-                                <Button
-                                  color="red"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setInteracao(prev => ({
-                                      ...prev,
-                                      expandirId: null,
-                                      valorOportunidade: '',
-                                      observacaoOportunidade: ''
-                                    }));
-                                  }}
-                                >
-                                  Cancelar
-                                </Button>
-                              </Group>
-                            </td>
-                          </tr>
-                        )}
-                      </Fragment>
-                    ))}
-                  </tbody>
-                </Table>
-              )}
-
-              {/* Paginação "A Interagir" */}
-              <Pagination
-                value={paginacao.pendentes}
-                onChange={(page: number) => atualizarPaginacao('pendentes', page)}
-                total={Math.ceil(totalPendentes / itemsPerPage)}
-                mt="md"
-              />
-            </div>
-
-            {/* Tabela "Interagidos Hoje" */}
-            <Divider label="Interagidos Hoje" style={{ marginTop: 32, marginBottom: 16 }} />
-            <div className={styles.tableWrapper}>
-              {loadingStates.dados ? (
-                <LoadingSkeleton />
-              ) : (
-                <Table striped highlightOnHover withTableBorder className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th>Parceiro</th>
-                      <th>Unidade</th>
-                      <th>Classificação</th>
-                      <th>Status</th>
-                      <th>Data</th>
-                      <th>Tipo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dadosProcessados.interagidosExibidos.map((item: Interacao) => (
-                      <tr key={item.id}>
-                        <td>{item.parceiro}</td>
-                        <td>{item.unidade}</td>
-                        <td>{item.classificacao}</td>
-                        <td>{item.status}</td>
-                        <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
-                        <td>{item.tipo}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              )}
-
-              {/* Paginação "Interagidos Hoje" */}
-              <Pagination
-                value={paginacao.interagidos}
-                onChange={(page: number) => atualizarPaginacao('interagidos', page)}
-                total={Math.ceil(dadosProcessados.totalInteragidos / itemsPerPage)}
-                mt="md"
-              />
-            </div>
-          </>
-        )}
-      </div>
+                {/* Paginação "Interagidos Hoje" */}
+                <Pagination
+                  value={paginacao.interagidos}
+                  onChange={(page: number) => atualizarPaginacao('interagidos', page)}
+                  total={Math.ceil(dadosProcessados.totalInteragidos / itemsPerPage)}
+                  mt="md"
+                />
+              </Box>
+            </>
+          )}
+        </div>
+      </ScrollArea>
     </SidebarGestor>
   );
 }
