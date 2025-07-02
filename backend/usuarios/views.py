@@ -31,6 +31,8 @@ from rest_framework import generics
 from .serializers import ReportParceiroSerializer
 from .models import ResumoParceirosMensal
 from .serializers import ResumoParceirosMensalSerializer
+from rest_framework.pagination import PageNumberPagination
+
 
 
 
@@ -265,12 +267,9 @@ class InteracoesPendentesView(APIView):
     def get(self, request):
         usuario = request.user
         hoje = now().date()
-
-        # intervalo de espera em dias
         dias_espera = 7
         limite_data = hoje - timedelta(days=dias_espera)
 
-        # filtra parceiros de acordo com o tipo de usuário
         if usuario.tipo_user == 'VENDEDOR':
             parceiros = Parceiro.objects.filter(consultor=usuario.id_vendedor)
         elif usuario.tipo_user == 'GESTOR':
@@ -278,11 +277,10 @@ class InteracoesPendentesView(APIView):
         else:  # ADMIN
             parceiros = Parceiro.objects.all()
 
-        # filtros via query params
-        canal_id   = request.query_params.get('canal_id')
-        consultor  = request.query_params.get('consultor')
-        status_p   = request.query_params.get('status')
-        gatilho_p  = request.query_params.get('gatilho_extra')
+        canal_id = request.query_params.get('canal_id')
+        consultor = request.query_params.get('consultor')
+        status_p = request.query_params.get('status')
+        gatilho_p = request.query_params.get('gatilho_extra')
 
         if canal_id:
             parceiros = parceiros.filter(canal_venda_id=canal_id)
@@ -295,31 +293,23 @@ class InteracoesPendentesView(APIView):
         interagidos = []
 
         for parceiro in parceiros:
-            # pega a última interação registrada
             ultima = parceiro.interacoes.order_by('-data_interacao').first()
             interagido_hoje = ultima and ultima.data_interacao.date() == hoje
-
-            # se houver contato e estiver dentro dos últimos 7 dias, bloqueia
             bloqueado = (
                 ultima
                 and ultima.entrou_em_contato
                 and limite_data < ultima.data_interacao.date() < hoje
             )
 
-            # verifica gatilho manual
             if usuario.tipo_user == 'GESTOR':
-                # Gestor vê QUALQUER gatilho extra do parceiro (não só os dele)
                 gatilho = GatilhoExtra.objects.filter(parceiro=parceiro).first()
             else:
-                # Vendedor só vê os próprios
                 gatilho = GatilhoExtra.objects.filter(parceiro=parceiro, usuario=usuario).first()
 
-            # filtro opcional de gatilho
             if gatilho_p and gatilho_p.lower() != 'todos':
                 if not gatilho or gatilho.descricao.lower() != gatilho_p.lower():
                     continue
 
-            # sempre mostra se existir gatilho ativo
             if gatilho:
                 pendentes.append({
                     'id': parceiro.id,
@@ -331,10 +321,9 @@ class InteracoesPendentesView(APIView):
                     'data_interacao': '',
                     'entrou_em_contato': False,
                     'gatilho_extra': gatilho.descricao,
-                    'criador_gatilho': gatilho.usuario.username if usuario.tipo_user == 'GESTOR' else None,  # opcional, para frontend
+                    'criador_gatilho': gatilho.usuario.username if usuario.tipo_user == 'GESTOR' else None,
                 })
 
-            # marca como interagidos se fez contato hoje
             if interagido_hoje:
                 interagidos.append({
                     'id': parceiro.id,
@@ -349,11 +338,6 @@ class InteracoesPendentesView(APIView):
                     'criador_gatilho': gatilho.usuario.username if (gatilho and usuario.tipo_user == 'GESTOR') else None,
                 })
 
-            # repõe em pendentes se:
-            # • sem gatilho
-            # • não interagiu hoje
-            # • não bloqueado (<7 dias)
-            # • status diferente de 'Base Ativa'
             if (
                 not gatilho
                 and not interagido_hoje
@@ -372,13 +356,23 @@ class InteracoesPendentesView(APIView):
                     'gatilho_extra': None,
                 })
 
-        # montar filtros dinâmicos
+        # 🔥 Pega parâmetros de página
+        page = int(request.query_params.get('page', 1))
+        limit = int(request.query_params.get('limit', 10))
+        start = (page - 1) * limit
+        end = start + limit
+
+        # 🔥 Filtra lista
+        pendentes_paginados = pendentes[start:end]
+        total_count = len(pendentes)
+
+        # Monta filtros dinâmicos
         status_unicos = sorted({item['status'] for item in pendentes})
         if usuario.tipo_user == 'GESTOR':
             gatilhos_ativos = (
-                GatilhoExtra.objects.filter(
-                    parceiro__canal_venda__in=usuario.canais_venda.all()
-                ).values_list('descricao', flat=True).distinct()
+                GatilhoExtra.objects.filter(parceiro__canal_venda__in=usuario.canais_venda.all())
+                .values_list('descricao', flat=True)
+                .distinct()
             )
         else:
             gatilhos_ativos = (
@@ -387,16 +381,9 @@ class InteracoesPendentesView(APIView):
                 .distinct()
             )
 
-        tipo_lista = request.query_params.get('tipo', 'pendentes')
-        if tipo_lista == 'interagidos':
-            return Response({
-                'dados': interagidos,
-                'status_disponiveis': status_unicos,
-                'gatilhos_disponiveis': list(gatilhos_ativos),
-            })
-
         return Response({
-            'dados': pendentes,
+            'dados': pendentes_paginados,
+            'total_count': total_count,
             'status_disponiveis': status_unicos,
             'gatilhos_disponiveis': list(gatilhos_ativos),
         })
