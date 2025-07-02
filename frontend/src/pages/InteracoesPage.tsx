@@ -419,17 +419,15 @@ export default function InteracoesPage() {
       const signal = cancelarRequisicoes();
       const headers = { Authorization: `Bearer ${token}` };
 
-      const [resParceiros, resMeta] = await Promise.all([
-        retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/parceiros/`, { headers, signal })),
+      const [resMeta] = await Promise.all([
         retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers, signal })),
       ]);
       
-      
 
-       setDados(prev => ({
-         ...prev,
-         parceiros: resParceiros.data
-      }));
+      // setDados(prev => ({
+       //  ...prev,
+        // parceiros: resParceiros.data
+     // }));
 
       setMeta({
         atual: resMeta.data.interacoes_realizadas,
