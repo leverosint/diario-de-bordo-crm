@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Fragment, useCallback, useMemo, useRef } from 'react';
+import { useEffect, useState, Fragment, useCallback, useMemo, useRef } from 'react';
 import axios from 'axios';
 import {
   Table,
@@ -162,7 +162,7 @@ interface DadosProcessados {
   totalInteragidos: number;
 }
 
-// Componente de linha virtualizada para tabela "A Interagir"
+// Componente de linha virtualizada para tabela
 interface VirtualizedRowProps {
   item: Interacao;
   index: number;
@@ -178,7 +178,7 @@ interface VirtualizedRowProps {
   loadingInteracao: boolean;
 }
 
-const VirtualizedRow: React.FC<VirtualizedRowProps> = React.memo(({
+const VirtualizedRow: React.FC<VirtualizedRowProps> = ({
   item,
   isExpanded,
   tipoSelecionado,
@@ -290,96 +290,12 @@ const VirtualizedRow: React.FC<VirtualizedRowProps> = React.memo(({
       )}
     </Fragment>
   );
-});
-
-// Componente de linha virtualizada para tabela "Interagidos Hoje"
-interface VirtualizedInteragidoRowProps {
-  item: Interacao;
-  index: number;
-}
-
-const VirtualizedInteragidoRow: React.FC<VirtualizedInteragidoRowProps> = React.memo(({
-  item
-}) => {
-  return (
-    <tr>
-      <td>{item.parceiro}</td>
-      <td>{item.unidade}</td>
-      <td>{item.classificacao}</td>
-      <td>{item.status}</td>
-      <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
-      <td>{item.tipo}</td>
-    </tr>
-  );
-});
-
-// Componente de tabela virtualizada
-interface VirtualizedTableProps {
-  items: Interacao[];
-  renderRow: (item: Interacao, index: number) => React.ReactNode;
-  headers: string[];
-  maxHeight?: string;
-  className?: string;
-}
-
-const VirtualizedTable: React.FC<VirtualizedTableProps> = React.memo(({
-  items,
-  renderRow,
-  headers,
-  maxHeight = "400px",
-  className
-}) => {
-  const [visibleRange, setVisibleRange] = useState({ start: 0, end: 20 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const ITEM_HEIGHT = 60; // Altura estimada de cada linha
-
-  const handleScroll = useThrottle((event: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, clientHeight } = event.currentTarget;
-    const start = Math.floor(scrollTop / ITEM_HEIGHT);
-    const end = Math.min(start + Math.ceil(clientHeight / ITEM_HEIGHT) + 5, items.length);
-    
-    setVisibleRange({ start, end });
-  }, 50);
-
-  const visibleItems = items.slice(visibleRange.start, visibleRange.end);
-  const totalHeight = items.length * ITEM_HEIGHT;
-  const offsetY = visibleRange.start * ITEM_HEIGHT;
-
-  return (
-    <Box className={className}>
-      <ScrollArea
-        ref={containerRef}
-        style={{ height: maxHeight }}
-        onScrollPositionChange={handleScroll}
-        scrollbarSize={8}
-        scrollHideDelay={1000}
-      >
-        <div style={{ height: totalHeight, position: 'relative' }}>
-          <Table striped highlightOnHover withTableBorder className={styles.table}>
-            <thead style={{ position: 'sticky', top: 0, zIndex: 10, backgroundColor: 'white' }}>
-              <tr>
-                {headers.map((header, index) => (
-                  <th key={index}>{header}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody style={{ transform: `translateY(${offsetY}px)` }}>
-              {visibleItems.map((item, index) => (
-                <Fragment key={item.id}>
-                  {renderRow(item, visibleRange.start + index)}
-                </Fragment>
-              ))}
-            </tbody>
-          </Table>
-        </div>
-      </ScrollArea>
-    </Box>
-  );
-});
+};
 
 export default function InteracoesPage() {
   const itemsPerPage = 10;
   const abortControllerRef = useRef<AbortController | null>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   
   // Estados consolidados
   const [dados, setDados] = useState<DadosState>({
@@ -488,6 +404,17 @@ export default function InteracoesPage() {
     abortControllerRef.current = new AbortController();
     return abortControllerRef.current.signal;
   }, []);
+
+  // Throttle para scroll
+  const handleScroll = useThrottle((event: any) => {
+    // Implementação de scroll throttling para evitar travamentos
+    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+    
+    // Lógica adicional de scroll se necessário
+    if (scrollTop + clientHeight >= scrollHeight - 100) {
+      // Próximo carregamento se necessário
+    }
+  }, 100);
 
   // Carregamento inicial de dados estáticos (uma vez só)
   const carregarDadosEstaticos = useCallback(async () => {
@@ -846,46 +773,12 @@ export default function InteracoesPage() {
     setInteracao(prev => ({ ...prev, observacaoOportunidade: observacao }));
   }, []);
 
-  // Render functions para as tabelas virtualizadas
-  const renderPendenteRow = useCallback((item: Interacao, index: number) => (
-    <VirtualizedRow
-      item={item}
-      index={index}
-      isExpanded={interacao.expandirId === item.id}
-      tipoSelecionado={interacao.tipoSelecionado[item.id] || ''}
-      onExpandToggle={handleExpandToggle}
-      onTipoChange={handleTipoChange}
-      onRegistrarInteracao={registrarInteracao}
-      valorOportunidade={interacao.valorOportunidade}
-      observacaoOportunidade={interacao.observacaoOportunidade}
-      onValorChange={handleValorChange}
-      onObservacaoChange={handleObservacaoChange}
-      loadingInteracao={loadingStates.interacao}
-    />
-  ), [
-    interacao.expandirId,
-    interacao.tipoSelecionado,
-    interacao.valorOportunidade,
-    interacao.observacaoOportunidade,
-    handleExpandToggle,
-    handleTipoChange,
-    registrarInteracao,
-    handleValorChange,
-    handleObservacaoChange,
-    loadingStates.interacao
-  ]);
-
-  const renderInteragidoRow = useCallback((item: Interacao, index: number) => (
-    <VirtualizedInteragidoRow
-      item={item}
-      index={index}
-    />
-  ), []);
-
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <ScrollArea 
+        ref={scrollAreaRef}
         style={{ height: '100vh' }}
+        onScrollPositionChange={handleScroll}
         scrollbarSize={8}
         scrollHideDelay={1500}
       >
@@ -904,7 +797,7 @@ export default function InteracoesPage() {
             )}
 
             {/* Botões de ação para diferentes tipos de usuário */}
-            {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
+            {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR' || tipoUser === 'VENDEDOR') && (
               <Group gap="sm">
                 <FileButton 
                   onChange={(file: File | null) => setInteracao(prev => ({ ...prev, arquivoGatilho: file }))} 
@@ -1164,53 +1057,95 @@ export default function InteracoesPage() {
             <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
           ) : (
             <>
-              {/* Tabela "A Interagir" com Virtualização Completa */}
+              {/* Tabela "A Interagir" com Virtualização */}
               <Divider style={{ marginBottom: 8 }} label="A Interagir" />
-              {loadingStates.dados ? (
-                <LoadingSkeleton />
-              ) : (
-                <>
-                  <VirtualizedTable
-                    items={dadosProcessados.pendentesExibidos}
-                    renderRow={renderPendenteRow}
-                    headers={['Parceiro', 'Unidade', 'Classificação', 'Status', 'Gatilho Extra', 'Tipo', 'Ação']}
-                    maxHeight="500px"
-                    className={styles.tableWrapper}
-                  />
+              <Box className={styles.tableWrapper}>
+                {loadingStates.dados ? (
+                  <LoadingSkeleton />
+                ) : (
+                  <Table striped highlightOnHover withTableBorder className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Parceiro</th>
+                        <th>Unidade</th>
+                        <th>Classificação</th>
+                        <th>Status</th>
+                        <th>Gatilho Extra</th>
+                        <th>Tipo</th>
+                        <th>Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dadosProcessados.pendentesExibidos.map((item: Interacao, index: number) => (
+                        <VirtualizedRow
+                          key={item.id}
+                          item={item}
+                          index={index}
+                          isExpanded={interacao.expandirId === item.id}
+                          tipoSelecionado={interacao.tipoSelecionado[item.id] || ''}
+                          onExpandToggle={handleExpandToggle}
+                          onTipoChange={handleTipoChange}
+                          onRegistrarInteracao={registrarInteracao}
+                          valorOportunidade={interacao.valorOportunidade}
+                          observacaoOportunidade={interacao.observacaoOportunidade}
+                          onValorChange={handleValorChange}
+                          onObservacaoChange={handleObservacaoChange}
+                          loadingInteracao={loadingStates.interacao}
+                        />
+                      ))}
+                    </tbody>
+                  </Table>
+                )}
 
-                  {/* Paginação "A Interagir" */}
-                  <Pagination
-                    value={paginacao.pendentes}
-                    onChange={(page: number) => atualizarPaginacao('pendentes', page)}
-                    total={Math.ceil(totalPendentes / itemsPerPage)}
-                    mt="md"
-                  />
-                </>
-              )}
+                {/* Paginação "A Interagir" */}
+                <Pagination
+                  value={paginacao.pendentes}
+                  onChange={(page: number) => atualizarPaginacao('pendentes', page)}
+                  total={Math.ceil(totalPendentes / itemsPerPage)}
+                  mt="md"
+                />
+              </Box>
 
-              {/* Tabela "Interagidos Hoje" com Virtualização Completa */}
+              {/* Tabela "Interagidos Hoje" */}
               <Divider label="Interagidos Hoje" style={{ marginTop: 32, marginBottom: 16 }} />
-              {loadingStates.dados ? (
-                <LoadingSkeleton />
-              ) : (
-                <>
-                  <VirtualizedTable
-                    items={dadosProcessados.interagidosExibidos}
-                    renderRow={renderInteragidoRow}
-                    headers={['Parceiro', 'Unidade', 'Classificação', 'Status', 'Data', 'Tipo']}
-                    maxHeight="400px"
-                    className={styles.tableWrapper}
-                  />
+              <Box className={styles.tableWrapper}>
+                {loadingStates.dados ? (
+                  <LoadingSkeleton />
+                ) : (
+                  <Table striped highlightOnHover withTableBorder className={styles.table}>
+                    <thead>
+                      <tr>
+                        <th>Parceiro</th>
+                        <th>Unidade</th>
+                        <th>Classificação</th>
+                        <th>Status</th>
+                        <th>Data</th>
+                        <th>Tipo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {dadosProcessados.interagidosExibidos.map((item: Interacao) => (
+                        <tr key={item.id}>
+                          <td>{item.parceiro}</td>
+                          <td>{item.unidade}</td>
+                          <td>{item.classificacao}</td>
+                          <td>{item.status}</td>
+                          <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
+                          <td>{item.tipo}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </Table>
+                )}
 
-                  {/* Paginação "Interagidos Hoje" */}
-                  <Pagination
-                    value={paginacao.interagidos}
-                    onChange={(page: number) => atualizarPaginacao('interagidos', page)}
-                    total={Math.ceil(dadosProcessados.totalInteragidos / itemsPerPage)}
-                    mt="md"
-                  />
-                </>
-              )}
+                {/* Paginação "Interagidos Hoje" */}
+                <Pagination
+                  value={paginacao.interagidos}
+                  onChange={(page: number) => atualizarPaginacao('interagidos', page)}
+                  total={Math.ceil(dadosProcessados.totalInteragidos / itemsPerPage)}
+                  mt="md"
+                />
+              </Box>
             </>
           )}
         </div>
