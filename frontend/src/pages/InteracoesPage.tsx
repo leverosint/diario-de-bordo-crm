@@ -16,7 +16,8 @@ import {
   FileButton,
   Card,
   Pagination,
-  Modal,
+  /*Modal*/
+  Popover,
   } from '@mantine/core';
 import { FixedSizeList as List } from 'react-window';
 import SidebarGestor from '../components/SidebarGestor';
@@ -89,11 +90,13 @@ export default function InteracoesPage() {
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
   const [statusDisponiveis, setStatusDisponiveis] = useState<string[]>([]);
   const [gatilhosDisponiveis, setGatilhosDisponiveis] = useState<string[]>([]);
-  const [modalAberto, setModalAberto] = useState(false);
+  /*const [modalAberto, setModalAberto] = useState(false);*/
   const [itemSelecionado, setItemSelecionado] = useState<Interacao | null>(null);
   const [valorModal, setValorModal] = useState('');
   const [obsModal, setObsModal] = useState('');
   const [tipoModal, setTipoModal] = useState('');
+  const [popoverAberto, setPopoverAberto] = useState<number | null>(null);
+
 
 
 
@@ -522,11 +525,9 @@ export default function InteracoesPage() {
     setValorModal('');
     setObsModal('');
     setTipoModal('');
+    setPopoverAberto(item.id);
+
   
-    // Aguardar micro-tick para garantir o set
-    setTimeout(() => {
-      setModalAberto(true);
-    }, 0);
   }}
   
 >
@@ -537,78 +538,31 @@ export default function InteracoesPage() {
           </tbody>
         </Table>
 
-        {/*{itemExpandido && (
-  <Card shadow="sm" padding="lg" mb="md" mt="md">
-    <Title order={4}>Interação com: {itemExpandido.parceiro}</Title>
-    <Group grow style={{ marginTop: 10 }}>
-      <TextInput
-        label="Valor da Oportunidade (R$)"
-        placeholder="5000"
-        value={valorExpandido}
-        onChange={(e) => setValorExpandido(e.currentTarget.value)}
-      />
-      <Textarea
-        label="Observação"
-        placeholder="Detalhes adicionais..."
-        value={obsExpandido}
-        onChange={(e) => setObsExpandido(e.currentTarget.value)}
-      />
-    </Group>
-    <Group style={{ marginTop: 16 }} justify="flex-end">
-      <Button
-        color="blue"
-        onClick={() => {
-          registrarInteracao(
-            itemExpandido.id,
-            tipoSelecionado[itemExpandido.id] || '',
-            true,
-            parseFloat(valorExpandido.replace(',', '.')),
-            obsExpandido
-          );
-          setItemExpandido(null);
-        }}
-      >
-        Salvar e Criar Oportunidade
-      </Button>
-      <Button
-        color="gray"
-        onClick={() => {
-          registrarInteracao(
-            itemExpandido.id,
-            tipoSelecionado[itemExpandido.id] || '',
-            false,
-            undefined,
-            obsExpandido
-          );
-          setItemExpandido(null);
-        }}
-      >
-        Só Interagir
-      </Button>
-      <Button
-        color="red"
-        variant="outline"
-        onClick={() => setItemExpandido(null)}
-      >
-        Cancelar
-      </Button>
-    </Group>
-  </Card>
-      )}*/}
-      </div>
+             </div>
     );
   }}
 </List>
 
-<Modal
-  opened={modalAberto}
-  onClose={() => setModalAberto(false)}
-  title={`Interagir com: ${itemSelecionado?.parceiro || ''}`}
-  size="lg"
->
-  {itemSelecionado ? (
-    <>
-      <Table striped withTableBorder mb="md">
+{itemSelecionado && popoverAberto && (
+  <Popover
+  opened={popoverAberto === itemSelecionado?.id}
+  onChange={(opened) => {
+    if (opened) {
+      setPopoverAberto(itemSelecionado!.id);
+    } else {
+      setPopoverAberto(null);
+    }
+  }}
+    width={300}
+    position="bottom"
+    withArrow
+  >
+    <Popover.Target>
+      <div /> {/* Vazio, só para estruturar */}
+    </Popover.Target>
+
+    <Popover.Dropdown>
+      <Table striped withTableBorder>
         <tbody>
           <tr>
             <td><b>Unidade:</b></td>
@@ -670,7 +624,7 @@ export default function InteracoesPage() {
               parseFloat(valorModal.replace(',', '.')),
               obsModal
             );
-            setModalAberto(false);
+            setPopoverAberto(null);
           }}
           disabled={!tipoModal}
         >
@@ -686,25 +640,18 @@ export default function InteracoesPage() {
               undefined,
               obsModal
             );
-            setModalAberto(false);
+            setPopoverAberto(null);
           }}
           disabled={!tipoModal}
         >
           Só Interagir
         </Button>
-        <Button
-          color="red"
-          variant="outline"
-          onClick={() => setModalAberto(false)}
-        >
-          Cancelar
-        </Button>
       </Group>
-    </>
-  ) : (
-    <Center><Loader /></Center>
-  )}
-</Modal>
+    </Popover.Dropdown>
+  </Popover>
+)}
+
+
 
 
 
