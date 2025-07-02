@@ -797,7 +797,7 @@ export default function InteracoesPage() {
             )}
 
             {/* Botões de ação para diferentes tipos de usuário */}
-            {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR' || tipoUser === 'VENDEDOR') && (
+            {/*{(tipoUser === 'ADMIN' || tipoUser === 'GESTOR' || tipoUser === 'VENDEDOR') && (*/}
               <Group gap="sm">
                 <FileButton 
                   onChange={(file: File | null) => setInteracao(prev => ({ ...prev, arquivoGatilho: file }))} 
@@ -823,9 +823,9 @@ export default function InteracoesPage() {
                   {formularios.mostrarGatilhoManual ? 'Fechar Gatilho Manual' : 'Adicionar Gatilho Manual'}
                 </Button>
               </Group>
-            )}
+            )
 
-            {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR' || tipoUser === 'VENDEDOR') && (
+           {/*} {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR' || tipoUser === 'VENDEDOR') && (*/}
               <Button
                 variant="filled"
                 styles={{
@@ -840,7 +840,7 @@ export default function InteracoesPage() {
                   ? 'Fechar Interação Manual'
                   : 'Adicionar Interação Manual'}
               </Button>
-            )}
+            )
           </Group>
 
           {/* Formulário de Interação Manual */}
