@@ -194,24 +194,38 @@ const VirtualizedRow: React.FC<VirtualizedRowProps> = ({
             : "-"}
         </td>
         <td>
-          <Select
-            placeholder="Tipo"
-            className={styles.select}
-            value={tipoSelecionado || ''}
-            onChange={(v: string | null) => {
-              if (v) {
-                onTipoChange(item.id, v);
-              }
-            }}
-            data={[
-              { value: 'whatsapp', label: 'WhatsApp' },
-              { value: 'email', label: 'E-mail' },
-              { value: 'ligacao', label: 'Ligação' },
-              { value: 'visita', label: 'Visita Presencial' },
-            ]}
-            clearable={false}
-          />
-        </td>
+  {isExpanded ? (
+    <Select
+      placeholder="Tipo"
+      className={styles.select}
+      value={tipoSelecionado || ''}
+      onChange={(v: string | null) => {
+        if (v) {
+          onTipoChange(item.id, v);
+        }
+      }}
+      data={[
+        { value: 'whatsapp', label: 'WhatsApp' },
+        { value: 'email', label: 'E-mail' },
+        { value: 'ligacao', label: 'Ligação' },
+        { value: 'visita', label: 'Visita Presencial' },
+      ]}
+      clearable={false}
+    />
+  ) : (
+    <span>
+      {tipoSelecionado
+        ? ({
+            whatsapp: 'WhatsApp',
+            email: 'E-mail',
+            ligacao: 'Ligação',
+            visita: 'Visita Presencial'
+          } as any)[tipoSelecionado]
+        : '-'}
+    </span>
+  )}
+</td>
+
         <td>
           <Button 
             size="xs" 
