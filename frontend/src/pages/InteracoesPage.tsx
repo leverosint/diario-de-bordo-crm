@@ -405,26 +405,25 @@ export default function InteracoesPage() {
       const signal = cancelarRequisicoes();
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Carrega dados que não mudam frequentemente
-      const [resParceiros, resMeta] = await Promise.all([
-        retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers, signal })),
+      const [resMeta] = await Promise.all([
         retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers, signal })),
       ]);
+      
 
-      setDados(prev => ({
-        ...prev,
-        parceiros: resParceiros.data
-      }));
+      // setDados(prev => ({
+       //  ...prev,
+        // parceiros: resParceiros.data
+     // }));
 
       setMeta({
         atual: resMeta.data.interacoes_realizadas,
         total: resMeta.data.meta_diaria
       });
 
-      if (tipoUser === 'GESTOR') {
-        const canais = (usuario.canais_venda || []) as CanalVenda[];
+     if (tipoUser === 'GESTOR') {
+       const canais = (usuario.canais_venda || []) as CanalVenda[];
         setDados(prev => ({
-          ...prev,
+        ...prev,
           canaisVenda: canais.map((c: CanalVenda) => ({ id: c.id, nome: c.nome }))
         }));
       }
