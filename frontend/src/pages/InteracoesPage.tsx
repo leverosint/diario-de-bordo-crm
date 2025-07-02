@@ -21,6 +21,7 @@ import SidebarGestor from '../components/SidebarGestor';
 import styles from './InteracoesPage.module.css';
 
 
+
 interface Interacao {
   id: number;
   parceiro: string;
