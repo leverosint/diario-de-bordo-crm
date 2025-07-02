@@ -1,8 +1,7 @@
-import { useEffect, useState, Fragment, useCallback, useMemo } from 'react';
+import { useEffect, useState, Fragment, useCallback, useMemo, useRef } from 'react';
 import axios from 'axios';
 import {
   Table,
-  Loader,
   Center,
   Alert,
   Button,
@@ -16,6 +15,8 @@ import {
   FileButton,
   Card,
   Pagination,
+  Skeleton,
+  Stack,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import styles from './InteracoesPage.module.css';
@@ -112,6 +113,8 @@ interface LoadingStatesType {
   interacao: boolean;
   gatilho: boolean;
   upload: boolean;
+  parceiros: boolean;
+  meta: boolean;
 }
 
 interface FormulariosState {
@@ -147,6 +150,7 @@ interface DadosProcessados {
 
 export default function InteracoesPage() {
   const itemsPerPage = 10;
+  const abortControllerRef = useRef<AbortController | null>(null);
   
   // Estados consolidados
   const [dados, setDados] = useState<DadosState>({
@@ -176,7 +180,9 @@ export default function InteracoesPage() {
     dados: false,
     interacao: false,
     gatilho: false,
-    upload: false
+    upload: false,
+    parceiros: false,
+    meta: false,
   });
 
   const [formularios, setFormularios] = useState<FormulariosState>({
@@ -205,6 +211,7 @@ export default function InteracoesPage() {
 
   const [totalPendentes, setTotalPendentes] = useState<number>(0);
   const [erro, setErro] = useState<string | null>(null);
+  const [inicializado, setInicializado] = useState<boolean>(false);
 
   // Debounce para filtros
   const debouncedFiltros = {
@@ -244,42 +251,92 @@ export default function InteracoesPage() {
     setFormularios(prev => ({ ...prev, [campo]: valor }));
   }, []);
 
-  // Função principal de carregamento de dados - MEMOIZADA
-  const carregarDados = useCallback(async () => {
+  // Função para cancelar requisições pendentes
+  const cancelarRequisicoes = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+    return abortControllerRef.current.signal;
+  }, []);
+
+  // Carregamento inicial de dados estáticos (uma vez só)
+  const carregarDadosEstaticos = useCallback(async () => {
+    if (inicializado) return;
+    
+    setLoading('parceiros', true);
+    setLoading('meta', true);
+    
+    try {
+      const signal = cancelarRequisicoes();
+      const headers = { Authorization: `Bearer ${token}` };
+
+      // Carrega dados que não mudam frequentemente
+      const [resParceiros, resMeta] = await Promise.all([
+        retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers, signal })),
+        retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers, signal })),
+      ]);
+
+      setDados(prev => ({
+        ...prev,
+        parceiros: resParceiros.data
+      }));
+
+      setMeta({
+        atual: resMeta.data.interacoes_realizadas,
+        total: resMeta.data.meta_diaria
+      });
+
+      if (tipoUser === 'GESTOR') {
+        const canais = (usuario.canais_venda || []) as CanalVenda[];
+        setDados(prev => ({
+          ...prev,
+          canaisVenda: canais.map((c: CanalVenda) => ({ id: c.id, nome: c.nome }))
+        }));
+      }
+
+      setInicializado(true);
+
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('Erro ao carregar dados estáticos:', err);
+        setErro('Erro ao carregar dados iniciais. Verifique sua conexão.');
+      }
+    } finally {
+      setLoading('parceiros', false);
+      setLoading('meta', false);
+    }
+  }, [inicializado, token, tipoUser, usuario, cancelarRequisicoes, setLoading]);
+
+  // Função principal de carregamento de dados dinâmicos - OTIMIZADA
+  const carregarDadosDinamicos = useCallback(async () => {
+    if (!inicializado) return;
+    
     setLoading('dados', true);
     setErro(null);
     
     try {
-      const resultado = await retryRequest(async () => {
-        const headers = { Authorization: `Bearer ${token}` };
-        const params = new URLSearchParams();
-        
-        params.append('page', String(paginacao.pendentes));
-        params.append('limit', String(itemsPerPage));
-        
-        if (debouncedFiltros.parceiro) params.append('parceiro', debouncedFiltros.parceiro);
-        if (filtros.canal) params.append('canal_id', filtros.canal);
-        if (filtros.vendedor) params.append('consultor', filtros.vendedor);
-        if (debouncedFiltros.status) params.append('status', debouncedFiltros.status);
-        if (debouncedFiltros.gatilho) params.append('gatilho_extra', debouncedFiltros.gatilho);
+      const signal = cancelarRequisicoes();
+      const headers = { Authorization: `Bearer ${token}` };
+      const params = new URLSearchParams();
+      
+      params.append('page', String(paginacao.pendentes));
+      params.append('limit', String(itemsPerPage));
+      
+      if (debouncedFiltros.parceiro) params.append('parceiro', debouncedFiltros.parceiro);
+      if (filtros.canal) params.append('canal_id', filtros.canal);
+      if (filtros.vendedor) params.append('consultor', filtros.vendedor);
+      if (debouncedFiltros.status) params.append('status', debouncedFiltros.status);
+      if (debouncedFiltros.gatilho) params.append('gatilho_extra', debouncedFiltros.gatilho);
 
-        const [resPendentes, resInteragidosHoje, resMeta, resParceiros] = await Promise.all([
-          axios.get(
-            `${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes&${params.toString()}`,
-            { headers }
-          ),
-          axios.get(`${import.meta.env.VITE_API_URL}/interacoes/hoje/`, { headers }),
-          axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers }),
-          axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers }),
-        ]);
-
-        return {
-          pendentes: resPendentes.data,
-          interagidosHoje: resInteragidosHoje.data,
-          meta: resMeta.data,
-          parceiros: resParceiros.data
-        };
-      });
+      // Carrega apenas dados que mudam frequentemente
+      const [resPendentes, resInteragidosHoje] = await Promise.all([
+        retryRequest(() => axios.get(
+          `${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes&${params.toString()}`,
+          { headers, signal }
+        )),
+        retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/interacoes/hoje/`, { headers, signal })),
+      ]);
 
       // Função para obter nome do canal
       const obterNomeCanal = (id: number): string => {
@@ -291,11 +348,11 @@ export default function InteracoesPage() {
       // Atualizar estados com os dados recebidos
       setDados(prev => ({
         ...prev,
-        pendentes: resultado.pendentes.dados.map((p: any): Interacao => ({
+        pendentes: resPendentes.data.dados.map((p: any): Interacao => ({
           ...p,
           canal_venda_nome: obterNomeCanal(p.canal_venda_id),
         })),
-        interagidos: resultado.interagidosHoje.map((i: any): Interacao => ({
+        interagidos: resInteragidosHoje.data.map((i: any): Interacao => ({
           id: i.id,
           parceiro: i.parceiro_nome,
           unidade: i.unidade,
@@ -306,32 +363,22 @@ export default function InteracoesPage() {
           gatilho_extra: i.gatilho_extra,
           canal_venda_nome: obterNomeCanal(i.canal_venda_id),
         })),
-        parceiros: resultado.parceiros,
-        statusDisponiveis: resultado.pendentes.status_disponiveis,
-        gatilhosDisponiveis: resultado.pendentes.gatilhos_disponiveis
+        statusDisponiveis: resPendentes.data.status_disponiveis || [],
+        gatilhosDisponiveis: resPendentes.data.gatilhos_disponiveis || []
       }));
 
-      setTotalPendentes(resultado.pendentes.total_count);
-      setMeta({
-        atual: resultado.meta.interacoes_realizadas,
-        total: resultado.meta.meta_diaria
-      });
+      setTotalPendentes(resPendentes.data.total_count || 0);
 
-      if (tipoUser === 'GESTOR') {
-        const canais = (usuario.canais_venda || []) as CanalVenda[];
-        setDados(prev => ({
-          ...prev,
-          canaisVenda: canais.map((c: CanalVenda) => ({ id: c.id, nome: c.nome }))
-        }));
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('Erro ao carregar interações:', err);
+        setErro('Erro ao carregar interações. Verifique sua conexão ou login.');
       }
-
-    } catch (err) {
-      console.error('Erro ao carregar interações:', err);
-      setErro('Erro ao carregar interações. Verifique sua conexão ou login.');
     } finally {
       setLoading('dados', false);
     }
   }, [
+    inicializado,
     paginacao.pendentes,
     debouncedFiltros.parceiro,
     filtros.canal,
@@ -340,11 +387,12 @@ export default function InteracoesPage() {
     debouncedFiltros.gatilho,
     token,
     usuario,
-    tipoUser,
-    itemsPerPage
+    itemsPerPage,
+    cancelarRequisicoes,
+    setLoading
   ]);
 
-  // Função para carregar vendedores por canal - MEMOIZADA
+  // Função para carregar vendedores por canal - OTIMIZADA
   const handleCanalChange = useCallback(async (value: string | null) => {
     atualizarFiltro('canal', value || '');
     atualizarFiltro('vendedor', '');
@@ -353,17 +401,20 @@ export default function InteracoesPage() {
       setDados(prev => ({ ...prev, vendedores: [] }));
     } else {
       try {
+        const signal = cancelarRequisicoes();
         const headers = { Authorization: `Bearer ${token}` };
-        const res = await axios.get(
+        const res = await retryRequest(() => axios.get(
           `${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${value}`,
-          { headers }
-        );
+          { headers, signal }
+        ));
         setDados(prev => ({ ...prev, vendedores: res.data }));
-      } catch (error) {
-        console.error('Erro ao carregar vendedores:', error);
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          console.error('Erro ao carregar vendedores:', error);
+        }
       }
     }
-  }, [atualizarFiltro, token]);
+  }, [atualizarFiltro, token, cancelarRequisicoes]);
 
   // Função para registrar interação - OTIMIZADA
   const registrarInteracao = useCallback(async (
@@ -381,6 +432,7 @@ export default function InteracoesPage() {
     setLoading('interacao', true);
 
     try {
+      const signal = cancelarRequisicoes();
       const headers = { Authorization: `Bearer ${token}` };
       const parceiro = dados.pendentes.find((p: Interacao) => p.id === parceiroId);
       const gatilhoExtra = parceiro?.gatilho_extra || null;
@@ -397,7 +449,7 @@ export default function InteracoesPage() {
         ...(oportunidade && { valor })
       };
 
-      await axios.post(endpoint, payload, { headers });
+      await retryRequest(() => axios.post(endpoint, payload, { headers, signal }));
 
       // Limpar formulário
       setInteracao(prev => ({
@@ -407,16 +459,18 @@ export default function InteracoesPage() {
         observacaoOportunidade: ''
       }));
 
-      // Recarregar dados
-      await carregarDados();
+      // Recarregar apenas dados dinâmicos
+      await carregarDadosDinamicos();
 
-    } catch (err) {
-      console.error('Erro ao registrar interação:', err);
-      alert('Erro ao registrar interação. Tente novamente.');
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('Erro ao registrar interação:', err);
+        alert('Erro ao registrar interação. Tente novamente.');
+      }
     } finally {
       setLoading('interacao', false);
     }
-  }, [token, dados.pendentes, carregarDados]);
+  }, [token, dados.pendentes, carregarDadosDinamicos, cancelarRequisicoes, setLoading]);
 
   // Função para salvar gatilho manual - OTIMIZADA
   const salvarGatilhoManual = useCallback(async () => {
@@ -428,12 +482,13 @@ export default function InteracoesPage() {
     setLoading('gatilho', true);
 
     try {
+      const signal = cancelarRequisicoes();
       const headers = { Authorization: `Bearer ${token}` };
-      await axios.post(`${import.meta.env.VITE_API_URL}/criar-gatilho-manual/`, {
+      await retryRequest(() => axios.post(`${import.meta.env.VITE_API_URL}/criar-gatilho-manual/`, {
         parceiro: formularios.parceiroSelecionado,
         usuario: usuario.id,
         descricao: formularios.descricaoGatilho,
-      }, { headers });
+      }, { headers, signal }));
 
       alert('Gatilho manual criado com sucesso!');
       
@@ -442,15 +497,17 @@ export default function InteracoesPage() {
       atualizarFormulario('parceiroSelecionado', null);
       atualizarFormulario('mostrarGatilhoManual', false);
       
-      await carregarDados();
+      await carregarDadosDinamicos();
 
-    } catch (err) {
-      console.error('Erro ao criar gatilho manual:', err);
-      alert('Erro ao criar gatilho manual');
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('Erro ao criar gatilho manual:', err);
+        alert('Erro ao criar gatilho manual');
+      }
     } finally {
       setLoading('gatilho', false);
     }
-  }, [formularios.parceiroSelecionado, formularios.descricaoGatilho, token, usuario.id, atualizarFormulario, carregarDados]);
+  }, [formularios.parceiroSelecionado, formularios.descricaoGatilho, token, usuario.id, atualizarFormulario, carregarDadosDinamicos, cancelarRequisicoes, setLoading]);
 
   // Função para upload de gatilhos - OTIMIZADA
   const handleUploadGatilho = useCallback(async () => {
@@ -462,28 +519,45 @@ export default function InteracoesPage() {
     setLoading('upload', true);
 
     try {
+      const signal = cancelarRequisicoes();
       const formData = new FormData();
       formData.append('file', interacao.arquivoGatilho);
       const headers = { Authorization: `Bearer ${token}` };
       
-      await axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, { headers });
+      await retryRequest(() => axios.post(`${import.meta.env.VITE_API_URL}/upload-gatilhos/`, formData, { headers, signal }));
       
       alert('Gatilhos extras enviados com sucesso!');
       setInteracao(prev => ({ ...prev, arquivoGatilho: null }));
-      await carregarDados();
+      await carregarDadosDinamicos();
 
-    } catch (err) {
-      console.error('Erro ao enviar arquivo:', err);
-      alert('Erro ao enviar arquivo de gatilhos extras. Verifique o formato.');
+    } catch (err: any) {
+      if (err.name !== 'AbortError') {
+        console.error('Erro ao enviar arquivo:', err);
+        alert('Erro ao enviar arquivo de gatilhos extras. Verifique o formato.');
+      }
     } finally {
       setLoading('upload', false);
     }
-  }, [interacao.arquivoGatilho, token, carregarDados]);
+  }, [interacao.arquivoGatilho, token, carregarDadosDinamicos, cancelarRequisicoes, setLoading]);
 
-  // useEffect principal - CORRIGIDO
+  // useEffect para carregamento inicial
   useEffect(() => {
-    carregarDados();
-  }, [carregarDados]);
+    carregarDadosEstaticos();
+  }, [carregarDadosEstaticos]);
+
+  // useEffect para carregamento de dados dinâmicos
+  useEffect(() => {
+    carregarDadosDinamicos();
+  }, [carregarDadosDinamicos]);
+
+  // Cleanup ao desmontar componente
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Dados filtrados e paginados - MEMOIZADOS COM TIPO EXPLÍCITO
   const dadosProcessados: DadosProcessados = useMemo(() => {
@@ -507,6 +581,17 @@ export default function InteracoesPage() {
     };
   }, [dados.pendentes, dados.interagidos, debouncedFiltros.parceiro, paginacao.interagidos, itemsPerPage]);
 
+  // Componente de Loading Skeleton
+  const LoadingSkeleton = () => (
+    <Stack>
+      <Skeleton height={50} />
+      <Skeleton height={40} />
+      <Skeleton height={40} />
+      <Skeleton height={40} />
+      <Skeleton height={40} />
+    </Stack>
+  );
+
   return (
     <SidebarGestor tipoUser={tipoUser}>
       <div className={styles.pageContainer}>
@@ -515,9 +600,13 @@ export default function InteracoesPage() {
         </Center>
 
         <Group justify="space-between" mb="md">
-          <Badge color={meta.atual >= meta.total ? 'teal' : 'yellow'} size="lg">
-            Meta do dia: {meta.atual}/{meta.total}
-          </Badge>
+          {loadingStates.meta ? (
+            <Skeleton height={32} width={150} />
+          ) : (
+            <Badge color={meta.atual >= meta.total ? 'teal' : 'yellow'} size="lg">
+              Meta do dia: {meta.atual}/{meta.total}
+            </Badge>
+          )}
 
           {/* Botões de ação para diferentes tipos de usuário */}
           {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
@@ -570,15 +659,19 @@ export default function InteracoesPage() {
         {formularios.mostrarInteracaoManual && (
           <Card shadow="sm" padding="lg" mb="md">
             <Group grow>
-              <Select
-                label="Parceiro"
-                placeholder="Selecione um parceiro"
-                data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
-                value={formularios.parceiroInteracaoManual}
-                onChange={(value: string | null) => atualizarFormulario('parceiroInteracaoManual', value)}
-                searchable
-                required
-              />
+              {loadingStates.parceiros ? (
+                <Skeleton height={40} />
+              ) : (
+                <Select
+                  label="Parceiro"
+                  placeholder="Selecione um parceiro"
+                  data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
+                  value={formularios.parceiroInteracaoManual}
+                  onChange={(value: string | null) => atualizarFormulario('parceiroInteracaoManual', value)}
+                  searchable
+                  required
+                />
+              )}
 
               <Select
                 label="Tipo de Interação"
@@ -617,20 +710,23 @@ export default function InteracoesPage() {
                 loading={loadingStates.interacao}
                 onClick={async () => {
                   try {
-                    await axios.post(
+                    const signal = cancelarRequisicoes();
+                    await retryRequest(() => axios.post(
                       `${import.meta.env.VITE_API_URL}/interacoes/registrar/`,
                       { 
                         parceiro: formularios.parceiroInteracaoManual, 
                         tipo: formularios.tipoInteracaoManual, 
                         observacao: formularios.obsInteracaoManual 
                       },
-                      { headers: { Authorization: `Bearer ${token}` } }
-                    );
-                    await carregarDados();
+                      { headers: { Authorization: `Bearer ${token}` }, signal }
+                    ));
+                    await carregarDadosDinamicos();
                     atualizarFormulario('mostrarInteracaoManual', false);
-                  } catch (err) {
-                    console.error(err);
-                    alert('Erro ao registrar interação.');
+                  } catch (err: any) {
+                    if (err.name !== 'AbortError') {
+                      console.error(err);
+                      alert('Erro ao registrar interação.');
+                    }
                   }
                 }}
               >
@@ -641,7 +737,8 @@ export default function InteracoesPage() {
                 loading={loadingStates.interacao}
                 onClick={async () => {
                   try {
-                    await axios.post(
+                    const signal = cancelarRequisicoes();
+                    await retryRequest(() => axios.post(
                       `${import.meta.env.VITE_API_URL}/oportunidades/registrar/`,
                       {
                         parceiro: formularios.parceiroInteracaoManual,
@@ -649,13 +746,15 @@ export default function InteracoesPage() {
                         valor: parseFloat(formularios.valorInteracaoManual.replace(',', '.')),
                         observacao: formularios.obsInteracaoManual,
                       },
-                      { headers: { Authorization: `Bearer ${token}` } }
-                    );
-                    await carregarDados();
+                      { headers: { Authorization: `Bearer ${token}` }, signal }
+                    ));
+                    await carregarDadosDinamicos();
                     atualizarFormulario('mostrarInteracaoManual', false);
-                  } catch (err) {
-                    console.error(err);
-                    alert('Erro ao criar oportunidade.');
+                  } catch (err: any) {
+                    if (err.name !== 'AbortError') {
+                      console.error(err);
+                      alert('Erro ao criar oportunidade.');
+                    }
                   }
                 }}
               >
@@ -669,14 +768,18 @@ export default function InteracoesPage() {
         {formularios.mostrarGatilhoManual && (
           <Card shadow="sm" padding="lg" mb="md">
             <Group grow>
-              <Select
-                label="Parceiro"
-                placeholder="Selecione um parceiro"
-                data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
-                value={formularios.parceiroSelecionado}
-                onChange={(value: string | null) => atualizarFormulario('parceiroSelecionado', value)}
-                searchable
-              />
+              {loadingStates.parceiros ? (
+                <Skeleton height={40} />
+              ) : (
+                <Select
+                  label="Parceiro"
+                  placeholder="Selecione um parceiro"
+                  data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
+                  value={formularios.parceiroSelecionado}
+                  onChange={(value: string | null) => atualizarFormulario('parceiroSelecionado', value)}
+                  searchable
+                />
+              )}
               <TextInput
                 label="Descrição do Gatilho"
                 placeholder="Ex: Urgente, Precisa Retorno..."
@@ -698,16 +801,20 @@ export default function InteracoesPage() {
         <Divider style={{ marginBottom: 8 }} label="Filtros" />
 
         <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
-          <Select
-            label="Filtrar por Parceiro"
-            placeholder="Selecione um parceiro"
-            value={filtros.parceiro}
-            onChange={(value: string | null) => atualizarFiltro('parceiro', value)}
-            data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
-            searchable
-            clearable
-            style={{ minWidth: 200, marginRight: 16 }}
-          />
+          {loadingStates.parceiros ? (
+            <Skeleton height={40} width={200} />
+          ) : (
+            <Select
+              label="Filtrar por Parceiro"
+              placeholder="Selecione um parceiro"
+              value={filtros.parceiro}
+              onChange={(value: string | null) => atualizarFiltro('parceiro', value)}
+              data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
+              searchable
+              clearable
+              style={{ minWidth: 200, marginRight: 16 }}
+            />
+          )}
 
           {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
             <>
@@ -756,8 +863,8 @@ export default function InteracoesPage() {
         </Group>
 
         {/* Conteúdo Principal */}
-        {loadingStates.dados ? (
-          <Center><Loader /></Center>
+        {loadingStates.dados && !inicializado ? (
+          <LoadingSkeleton />
         ) : erro ? (
           <Center><Alert color="red" title="Erro">{erro}</Alert></Center>
         ) : (
@@ -765,136 +872,140 @@ export default function InteracoesPage() {
             {/* Tabela "A Interagir" */}
             <Divider style={{ marginBottom: 8 }} label="A Interagir" />
             <div className={styles.tableWrapper}>
-              <Table striped highlightOnHover withTableBorder className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Parceiro</th>
-                    <th>Unidade</th>
-                    <th>Classificação</th>
-                    <th>Status</th>
-                    <th>Gatilho Extra</th>
-                    <th>Tipo</th>
-                    <th>Ação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dadosProcessados.pendentesExibidos.map((item: Interacao) => (
-                    <Fragment key={item.id}>
-                      <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
-                        <td>{item.parceiro}</td>
-                        <td>{item.unidade}</td>
-                        <td>{item.classificacao}</td>
-                        <td>{item.status}</td>
-                        <td>
-                          {item.gatilho_extra
-                            ? <Badge color="red" size="sm">{item.gatilho_extra}</Badge>
-                            : "-"}
-                        </td>
-                        <td>
-                          <Select
-                            placeholder="Tipo"
-                            className={styles.select}
-                            value={interacao.tipoSelecionado[item.id] || ''}
-                            onChange={(v: string | null) => {
-                              if (v) {
-                                setInteracao(prev => ({
-                                  ...prev,
-                                  tipoSelecionado: { ...prev.tipoSelecionado, [item.id]: v }
-                                }));
-                              }
-                            }}
-                            data={[
-                              { value: 'whatsapp', label: 'WhatsApp' },
-                              { value: 'email', label: 'E-mail' },
-                              { value: 'ligacao', label: 'Ligação' },
-                              { value: 'visita', label: 'Visita Presencial' },
-                            ]}
-                            clearable={false}
-                          />
-                        </td>
-                        <td>
-                          <Button 
-                            size="xs" 
-                            onClick={() => setInteracao(prev => ({ ...prev, expandirId: item.id }))}
-                            loading={loadingStates.interacao}
-                          >
-                            Marcar como interagido
-                          </Button>
-                        </td>
-                      </tr>
-
-                      {interacao.expandirId === item.id && (
-                        <tr>
-                          <td colSpan={7}>
-                            <Group grow style={{ marginTop: 10 }}>
-                              <TextInput
-                                label="Valor da Oportunidade (R$)"
-                                placeholder="5000"
-                                value={interacao.valorOportunidade}
-                                onChange={(e) => setInteracao(prev => ({ 
-                                  ...prev, 
-                                  valorOportunidade: e.currentTarget.value 
-                                }))}
-                              />
-                              <Textarea
-                                label="Observação"
-                                placeholder="Detalhes adicionais..."
-                                value={interacao.observacaoOportunidade}
-                                onChange={(e) => setInteracao(prev => ({ 
-                                  ...prev, 
-                                  observacaoOportunidade: e.currentTarget.value 
-                                }))}
-                              />
-                            </Group>
-                            <Group style={{ marginTop: 16 }} justify="flex-end">
-                              <Button
-                                color="blue"
-                                loading={loadingStates.interacao}
-                                onClick={() => registrarInteracao(
-                                  item.id,
-                                  interacao.tipoSelecionado[item.id] || '',
-                                  true,
-                                  parseFloat(interacao.valorOportunidade.replace(',', '.')),
-                                  interacao.observacaoOportunidade
-                                )}
-                              >
-                                Salvar e Criar Oportunidade
-                              </Button>
-                              <Button
-                                color="gray"
-                                loading={loadingStates.interacao}
-                                onClick={() => registrarInteracao(
-                                  item.id,
-                                  interacao.tipoSelecionado[item.id] || '',
-                                  false,
-                                  undefined,
-                                  undefined
-                                )}
-                              >
-                                Só Interagir
-                              </Button>
-                              <Button
-                                color="red"
-                                variant="outline"
-                                onClick={() => {
+              {loadingStates.dados ? (
+                <LoadingSkeleton />
+              ) : (
+                <Table striped highlightOnHover withTableBorder className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Parceiro</th>
+                      <th>Unidade</th>
+                      <th>Classificação</th>
+                      <th>Status</th>
+                      <th>Gatilho Extra</th>
+                      <th>Tipo</th>
+                      <th>Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dadosProcessados.pendentesExibidos.map((item: Interacao) => (
+                      <Fragment key={item.id}>
+                        <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
+                          <td>{item.parceiro}</td>
+                          <td>{item.unidade}</td>
+                          <td>{item.classificacao}</td>
+                          <td>{item.status}</td>
+                          <td>
+                            {item.gatilho_extra
+                              ? <Badge color="red" size="sm">{item.gatilho_extra}</Badge>
+                              : "-"}
+                          </td>
+                          <td>
+                            <Select
+                              placeholder="Tipo"
+                              className={styles.select}
+                              value={interacao.tipoSelecionado[item.id] || ''}
+                              onChange={(v: string | null) => {
+                                if (v) {
                                   setInteracao(prev => ({
                                     ...prev,
-                                    expandirId: null,
-                                    valorOportunidade: '',
-                                    observacaoOportunidade: ''
+                                    tipoSelecionado: { ...prev.tipoSelecionado, [item.id]: v }
                                   }));
-                                }}
-                              >
-                                Cancelar
-                              </Button>
-                            </Group>
+                                }
+                              }}
+                              data={[
+                                { value: 'whatsapp', label: 'WhatsApp' },
+                                { value: 'email', label: 'E-mail' },
+                                { value: 'ligacao', label: 'Ligação' },
+                                { value: 'visita', label: 'Visita Presencial' },
+                              ]}
+                              clearable={false}
+                            />
+                          </td>
+                          <td>
+                            <Button 
+                              size="xs" 
+                              onClick={() => setInteracao(prev => ({ ...prev, expandirId: item.id }))}
+                              loading={loadingStates.interacao}
+                            >
+                              Marcar como interagido
+                            </Button>
                           </td>
                         </tr>
-                      )}
-                    </Fragment>
-                  ))}
-                </tbody>
-              </Table>
+
+                        {interacao.expandirId === item.id && (
+                          <tr>
+                            <td colSpan={7}>
+                              <Group grow style={{ marginTop: 10 }}>
+                                <TextInput
+                                  label="Valor da Oportunidade (R$)"
+                                  placeholder="5000"
+                                  value={interacao.valorOportunidade}
+                                  onChange={(e) => setInteracao(prev => ({ 
+                                    ...prev, 
+                                    valorOportunidade: e.currentTarget.value 
+                                  }))}
+                                />
+                                <Textarea
+                                  label="Observação"
+                                  placeholder="Detalhes adicionais..."
+                                  value={interacao.observacaoOportunidade}
+                                  onChange={(e) => setInteracao(prev => ({ 
+                                    ...prev, 
+                                    observacaoOportunidade: e.currentTarget.value 
+                                  }))}
+                                />
+                              </Group>
+                              <Group style={{ marginTop: 16 }} justify="flex-end">
+                                <Button
+                                  color="blue"
+                                  loading={loadingStates.interacao}
+                                  onClick={() => registrarInteracao(
+                                    item.id,
+                                    interacao.tipoSelecionado[item.id] || '',
+                                    true,
+                                    parseFloat(interacao.valorOportunidade.replace(',', '.')),
+                                    interacao.observacaoOportunidade
+                                  )}
+                                >
+                                  Salvar e Criar Oportunidade
+                                </Button>
+                                <Button
+                                  color="gray"
+                                  loading={loadingStates.interacao}
+                                  onClick={() => registrarInteracao(
+                                    item.id,
+                                    interacao.tipoSelecionado[item.id] || '',
+                                    false,
+                                    undefined,
+                                    undefined
+                                  )}
+                                >
+                                  Só Interagir
+                                </Button>
+                                <Button
+                                  color="red"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setInteracao(prev => ({
+                                      ...prev,
+                                      expandirId: null,
+                                      valorOportunidade: '',
+                                      observacaoOportunidade: ''
+                                    }));
+                                  }}
+                                >
+                                  Cancelar
+                                </Button>
+                              </Group>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
 
               {/* Paginação "A Interagir" */}
               <Pagination
@@ -908,30 +1019,34 @@ export default function InteracoesPage() {
             {/* Tabela "Interagidos Hoje" */}
             <Divider label="Interagidos Hoje" style={{ marginTop: 32, marginBottom: 16 }} />
             <div className={styles.tableWrapper}>
-              <Table striped highlightOnHover withTableBorder className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Parceiro</th>
-                    <th>Unidade</th>
-                    <th>Classificação</th>
-                    <th>Status</th>
-                    <th>Data</th>
-                    <th>Tipo</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dadosProcessados.interagidosExibidos.map((item: Interacao) => (
-                    <tr key={item.id}>
-                      <td>{item.parceiro}</td>
-                      <td>{item.unidade}</td>
-                      <td>{item.classificacao}</td>
-                      <td>{item.status}</td>
-                      <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
-                      <td>{item.tipo}</td>
+              {loadingStates.dados ? (
+                <LoadingSkeleton />
+              ) : (
+                <Table striped highlightOnHover withTableBorder className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>Parceiro</th>
+                      <th>Unidade</th>
+                      <th>Classificação</th>
+                      <th>Status</th>
+                      <th>Data</th>
+                      <th>Tipo</th>
                     </tr>
-                  ))}
-                </tbody>
-              </Table>
+                  </thead>
+                  <tbody>
+                    {dadosProcessados.interagidosExibidos.map((item: Interacao) => (
+                      <tr key={item.id}>
+                        <td>{item.parceiro}</td>
+                        <td>{item.unidade}</td>
+                        <td>{item.classificacao}</td>
+                        <td>{item.status}</td>
+                        <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
+                        <td>{item.tipo}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </Table>
+              )}
 
               {/* Paginação "Interagidos Hoje" */}
               <Pagination
