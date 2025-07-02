@@ -17,7 +17,7 @@ import {
   Pagination,
   Skeleton,
   Stack,
-  ScrollArea,
+  
   Box,
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
@@ -40,17 +40,7 @@ const useDebounce = (value: any, delay: number): any => {
   return debouncedValue;
 };
 
-// Hook para throttle de scroll
-const useThrottle = (callback: Function, delay: number) => {
-  const lastRun = useRef(Date.now());
 
-  return useCallback((...args: any[]) => {
-    if (Date.now() - lastRun.current >= delay) {
-      callback(...args);
-      lastRun.current = Date.now();
-    }
-  }, [callback, delay]);
-};
 
 // Função de retry para requisições
 const retryRequest = async <T,>(fn: () => Promise<T>, maxRetries: number = 3, delay: number = 1000): Promise<T> => {
@@ -295,8 +285,7 @@ const VirtualizedRow: React.FC<VirtualizedRowProps> = ({
 export default function InteracoesPage() {
   const itemsPerPage = 10;
   const abortControllerRef = useRef<AbortController | null>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  
+ 
   // Estados consolidados
   const [dados, setDados] = useState<DadosState>({
     pendentes: [],
@@ -404,17 +393,6 @@ export default function InteracoesPage() {
     abortControllerRef.current = new AbortController();
     return abortControllerRef.current.signal;
   }, []);
-
-  // Throttle para scroll
-  const handleScroll = useThrottle((event: any) => {
-    // Implementação de scroll throttling para evitar travamentos
-    const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
-    
-    // Lógica adicional de scroll se necessário
-    if (scrollTop + clientHeight >= scrollHeight - 100) {
-      // Próximo carregamento se necessário
-    }
-  }, 100);
 
   // Carregamento inicial de dados estáticos (uma vez só)
   const carregarDadosEstaticos = useCallback(async () => {
@@ -775,13 +753,7 @@ export default function InteracoesPage() {
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
-      <ScrollArea 
-        ref={scrollAreaRef}
-        style={{ height: '100vh' }}
-        onScrollPositionChange={handleScroll}
-        scrollbarSize={8}
-        scrollHideDelay={1500}
-      >
+    <div className={styles.pageContainer} style={{ minHeight: '100vh' }}>
         <div className={styles.pageContainer}>
           <Center mb="md">
             <Title order={2}>Interações de Parceiros Pendentes</Title>
@@ -1149,8 +1121,8 @@ export default function InteracoesPage() {
             </>
           )}
         </div>
-      </ScrollArea>
-    </SidebarGestor>
+        </div>
+</SidebarGestor>
   );
 }
 
