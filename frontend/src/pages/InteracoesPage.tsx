@@ -421,7 +421,7 @@ export default function InteracoesPage() {
   
       // Aqui busca os parceiros e as metas de uma vez só
       const [resParceiros, resMeta] = await Promise.all([
-        retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/parceiros/`, { headers, signal })),
+        retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/parceiros-list/`, { headers, signal })),
         retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers, signal })),
       ]);
   
