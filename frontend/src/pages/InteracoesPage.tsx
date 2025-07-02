@@ -598,10 +598,10 @@ export default function InteracoesPage() {
 <Modal
   opened={modalAberto}
   onClose={() => setModalAberto(false)}
-  title={`Interagir com: ${itemSelecionado?.parceiro}`}
+  title={`Interagir com: ${itemSelecionado?.parceiro || ''}`}
   size="lg"
 >
-  {itemSelecionado && (
+  {modalAberto && itemSelecionado && (
     <>
       <Table striped withTableBorder mb="md">
         <tbody>
@@ -698,6 +698,7 @@ export default function InteracoesPage() {
     </>
   )}
 </Modal>
+
 
 <Pagination
   value={pagePend}
