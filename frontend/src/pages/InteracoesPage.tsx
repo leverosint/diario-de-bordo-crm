@@ -522,8 +522,13 @@ export default function InteracoesPage() {
     setValorModal('');
     setObsModal('');
     setTipoModal('');
-    setModalAberto(true);
-    }}
+  
+    // Aguardar micro-tick para garantir o set
+    setTimeout(() => {
+      setModalAberto(true);
+    }, 0);
+  }}
+  
 >
   Marcar como interagido
 </Button>
@@ -601,7 +606,7 @@ export default function InteracoesPage() {
   title={`Interagir com: ${itemSelecionado?.parceiro || ''}`}
   size="lg"
 >
-  {modalAberto && itemSelecionado && (
+  {itemSelecionado ? (
     <>
       <Table striped withTableBorder mb="md">
         <tbody>
@@ -696,8 +701,11 @@ export default function InteracoesPage() {
         </Button>
       </Group>
     </>
+  ) : (
+    <Center><Loader /></Center>
   )}
 </Modal>
+
 
 
 <Pagination
@@ -706,12 +714,12 @@ export default function InteracoesPage() {
   total={Math.ceil(pendentes.length / itemsPerPage)}
   mt="md"
 />
-              <Pagination
+              {/*<Pagination
                 value={pagePend}
                 onChange={setPagePend}
                 total={Math.ceil(pendentes.length / itemsPerPage)}
                 mt="md"
-              />
+              />*/}
             </div>
 
             <Divider label="Interagidos Hoje" style={{ marginTop: 32, marginBottom: 16 }} />
