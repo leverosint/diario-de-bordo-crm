@@ -418,33 +418,34 @@ export default function InteracoesPage() {
     try {
       const signal = cancelarRequisicoes();
       const headers = { Authorization: `Bearer ${token}` };
-
-     
+  
+      // Aqui busca os parceiros e as metas de uma vez só
       const [resParceiros, resMeta] = await Promise.all([
         retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/parceiros/`, { headers, signal })),
         retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers, signal })),
       ]);
-
+  
+      // Este trecho preenche os parceiros no estado (era o que você "comentou")
       setDados(prev => ({
         ...prev,
-        parceiros: resParceiros.data, // isso precisa bater com o que seu endpoint retorna!
+        parceiros: resParceiros.data // ou .data.results se vier paginado!
       }));
-
+  
       setMeta({
         atual: resMeta.data.interacoes_realizadas,
         total: resMeta.data.meta_diaria
       });
-
-     if (tipoUser === 'GESTOR') {
-       const canais = (usuario.canais_venda || []) as CanalVenda[];
+  
+      if (tipoUser === 'GESTOR') {
+        const canais = (usuario.canais_venda || []) as CanalVenda[];
         setDados(prev => ({
-        ...prev,
+          ...prev,
           canaisVenda: canais.map((c: CanalVenda) => ({ id: c.id, nome: c.nome }))
         }));
       }
-
+  
       setInicializado(true);
-
+  
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         console.error('Erro ao carregar dados estáticos:', err);
