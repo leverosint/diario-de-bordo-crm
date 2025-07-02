@@ -419,13 +419,12 @@ export default function InteracoesPage() {
       const signal = cancelarRequisicoes();
       const headers = { Authorization: `Bearer ${token}` };
 
- 
-
-          // Adicione a request dos parceiros aqui:
-          const [resParceiros, resMeta] = await Promise.all([
-            retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/parceiros/`, { headers, signal })), // <-- endpoint dos parceiros!
-            retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers, signal })),
-          ]);
+      const [resParceiros, resMeta] = await Promise.all([
+        retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/parceiros/`, { headers, signal })),
+        retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/interacoes/pendentes/metas/`, { headers, signal })),
+      ]);
+      
+      
 
        setDados(prev => ({
          ...prev,
