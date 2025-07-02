@@ -107,6 +107,7 @@ export default function InteracoesPage() {
       const params = new URLSearchParams();
       params.append('page', String(pagePend));
       params.append('limit', String(itemsPerPage));
+      params.append('page', String(pagePend));
       if (parceiroFilter)     params.append('parceiro', parceiroFilter);
       if (canalSelecionado)   params.append('canal_id', canalSelecionado);
       if (vendedorSelecionado) params.append('consultor', vendedorSelecionado);
@@ -310,7 +311,7 @@ export default function InteracoesPage() {
 
   useEffect(() => {
     carregarDados();
-  }, [canalSelecionado, vendedorSelecionado, parceiroFilter, statusSelecionado, temGatilho]);
+  }, [canalSelecionado, vendedorSelecionado, parceiroFilter, statusSelecionado, temGatilho,pagePend]);
   
   
   // 3) Calcule quais itens aparecem em cada tabela, conforme a página atual
