@@ -82,6 +82,7 @@ interface Vendedor {
   id: number;
   username: string;
   id_vendedor: string;
+  nome?: string; // opcional!
 }
 
 interface Parceiro {
@@ -1003,16 +1004,20 @@ export default function InteracoesPage() {
                   style={{ minWidth: 200, marginRight: 16 }}
                 />
 
-                <Select
-                  label="Filtrar por Vendedor"
-                  placeholder="Selecione um vendedor"
-                  value={filtros.vendedor}
-                  onChange={(value: string | null) => atualizarFiltro('vendedor', value || '')}
-                  data={dados.vendedores.map((v: Vendedor) => ({ value: v.id_vendedor, label: v.username }))}
-                  disabled={!filtros.canal}
-                  clearable
-                  style={{ minWidth: 200, marginRight: 16 }}
-                />
+<Select
+  label="Filtrar por Vendedor"
+  placeholder="Selecione um vendedor"
+  value={filtros.vendedor}
+  onChange={(value: string | null) => atualizarFiltro('vendedor', value || '')}
+  data={dados.vendedores.map((v: Vendedor) => ({
+    value: v.username,
+    label: v.nome || v.username // Se o backend mandar 'nome', mostra bonito
+  }))}
+  disabled={!filtros.canal}
+  clearable
+  style={{ minWidth: 200, marginRight: 16 }}
+/>
+
               </>
             )}
 
