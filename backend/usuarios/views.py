@@ -817,19 +817,17 @@ def usuarios_por_canal(request):
 
     if user.tipo_user != 'GESTOR':
         return Response({'detail': 'Acesso não autorizado.'}, status=403)
-
     if not canal_id:
         return Response({'detail': 'Parâmetro canal_id é obrigatório.'}, status=400)
-
     if not user.canais_venda.filter(id=canal_id).exists():
         return Response({'detail': 'Acesso negado ao canal informado.'}, status=403)
 
     usuarios = CustomUser.objects.filter(
         tipo_user='VENDEDOR',
         canais_venda__id=canal_id
-    ).values('id', 'username', 'id_vendedor')
-
-    return Response(usuarios)
+    )
+    serializer = UsuarioReportSerializer(usuarios, many=True)
+    return Response(serializer.data)
 
 ########GATILHO MANUAL#########
 

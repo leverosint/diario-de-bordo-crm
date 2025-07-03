@@ -82,7 +82,7 @@ interface Vendedor {
   id: number;
   username: string;
   id_vendedor: string;
-  nome?: string; // opcional!
+  nome: string; // agora é obrigatório!
 }
 
 interface Parceiro {
@@ -1011,12 +1011,13 @@ export default function InteracoesPage() {
   onChange={(value: string | null) => atualizarFiltro('vendedor', value || '')}
   data={dados.vendedores.map((v: Vendedor) => ({
     value: v.username,
-    label: v.nome || v.username // Se o backend mandar 'nome', mostra bonito
+    label: v.nome || v.username // Agora vai vir 'nome' certinho
   }))}
   disabled={!filtros.canal}
   clearable
   style={{ minWidth: 200, marginRight: 16 }}
 />
+
 
               </>
             )}
