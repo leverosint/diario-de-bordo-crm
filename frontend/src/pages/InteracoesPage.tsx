@@ -544,19 +544,17 @@ export default function InteracoesPage() {
   const handleCanalChange = useCallback(async (value: string | null) => {
     atualizarFiltro('canal', value || '');
     atualizarFiltro('vendedor', '');
-    
+  
     if (!value) {
       setDados(prev => ({ ...prev, vendedores: [] }));
     } else {
+      const vendedorController = new AbortController(); // 🔥 NOVO controller específico
       try {
-        const signal = cancelarRequisicoes();
         const headers = { Authorization: `Bearer ${token}` };
         const res = await retryRequest(() => axios.get(
           `${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${value}`,
-          { headers, signal }
+          { headers, signal: vendedorController.signal }
         ));
-  
-        // Corrigido: já montar value e label
         setDados(prev => ({
           ...prev,
           vendedores: res.data.map((v: any) => ({
@@ -565,12 +563,13 @@ export default function InteracoesPage() {
           }))
         }));
       } catch (error: any) {
-        if (error.name !== 'AbortError') {
+        if (error.name !== 'AbortError' && error.code !== 'ERR_CANCELED') {
           console.error('Erro ao carregar vendedores:', error);
         }
       }
     }
-  }, [atualizarFiltro, token, cancelarRequisicoes]);
+  }, [atualizarFiltro, token]);
+  
   
 
   // Função para registrar interação - OTIMIZADA
