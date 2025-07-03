@@ -78,10 +78,9 @@ interface CanalVenda {
   nome: string;
 }
 
-interface Vendedor {
-  id: number;
-  username: string;
-  id_vendedor: string;
+interface VendedorSelect {
+  value: string;
+  label: string;
 }
 
 interface Parceiro {
@@ -94,7 +93,7 @@ interface DadosState {
   interagidos: Interacao[];
   parceiros: Parceiro[];
   canaisVenda: CanalVenda[];
-  vendedores: Vendedor[];
+  vendedores: VendedorSelect[];
   statusDisponiveis: string[];
   gatilhosDisponiveis: string[];
 }
@@ -556,7 +555,15 @@ export default function InteracoesPage() {
           `${import.meta.env.VITE_API_URL}/usuarios-por-canal/?canal_id=${value}`,
           { headers, signal }
         ));
-        setDados(prev => ({ ...prev, vendedores: res.data }));
+  
+        // Corrigido: já montar value e label
+        setDados(prev => ({
+          ...prev,
+          vendedores: res.data.map((v: any) => ({
+            value: v.username,
+            label: v.nome || v.username
+          }))
+        }));
       } catch (error: any) {
         if (error.name !== 'AbortError') {
           console.error('Erro ao carregar vendedores:', error);
@@ -564,6 +571,7 @@ export default function InteracoesPage() {
       }
     }
   }, [atualizarFiltro, token, cancelarRequisicoes]);
+  
 
   // Função para registrar interação - OTIMIZADA
   const registrarInteracao = useCallback(async (
@@ -976,66 +984,67 @@ export default function InteracoesPage() {
           <Divider style={{ marginBottom: 8 }} label="Filtros" />
 
           <Group style={{ marginBottom: 16, flexWrap: 'wrap' }}>
-            {loadingStates.parceiros ? (
-              <Skeleton height={40} width={200} />
-            ) : (
-              <Select
-                label="Filtrar por Parceiro"
-                placeholder="Selecione um parceiro"
-                value={filtros.parceiro}
-                onChange={(value: string | null) => atualizarFiltro('parceiro', value)}
-                data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
-                searchable
-                clearable
-                style={{ minWidth: 200, marginRight: 16 }}
-              />
-            )}
+  {loadingStates.parceiros ? (
+    <Skeleton height={40} width={200} />
+  ) : (
+    <Select
+      label="Filtrar por Parceiro"
+      placeholder="Selecione um parceiro"
+      value={filtros.parceiro}
+      onChange={(value: string | null) => atualizarFiltro('parceiro', value)}
+      data={dados.parceiros.map((p: Parceiro) => ({ value: String(p.id), label: p.parceiro }))}
+      searchable
+      clearable
+      style={{ minWidth: 200, marginRight: 16 }}
+    />
+  )}
 
-            {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
-              <>
-                <Select
-                  label="Filtrar por Canal"
-                  placeholder="Selecione um canal"
-                  value={filtros.canal}
-                  onChange={handleCanalChange}
-                  data={dados.canaisVenda.map((c: CanalVenda) => ({ value: String(c.id), label: c.nome }))}
-                  clearable
-                  style={{ minWidth: 200, marginRight: 16 }}
-                />
+  {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
+    <>
+      <Select
+        label="Filtrar por Canal"
+        placeholder="Selecione um canal"
+        value={filtros.canal}
+        onChange={handleCanalChange}
+        data={dados.canaisVenda.map((c: CanalVenda) => ({ value: String(c.id), label: c.nome }))}
+        clearable
+        style={{ minWidth: 200, marginRight: 16 }}
+      />
+      
+      <Select
+        label="Filtrar por Vendedor"
+        placeholder="Selecione um vendedor"
+        value={filtros.vendedor}
+        onChange={(value: string | null) => atualizarFiltro('vendedor', value || '')}
+        data={dados.vendedores}
+        disabled={!filtros.canal}
+        clearable
+        style={{ minWidth: 200, marginRight: 16 }}
+      />
+    </>
+  )}
 
-                <Select
-                  label="Filtrar por Vendedor"
-                  placeholder="Selecione um vendedor"
-                  value={filtros.vendedor}
-                  onChange={(value: string | null) => atualizarFiltro('vendedor', value || '')}
-                  data={dados.vendedores.map((v: Vendedor) => ({ value: v.id_vendedor, label: v.username }))}
-                  disabled={!filtros.canal}
-                  clearable
-                  style={{ minWidth: 200, marginRight: 16 }}
-                />
-              </>
-            )}
+  <Select
+    label="Filtrar por Status"
+    placeholder="Selecione um status"
+    value={filtros.status}
+    onChange={(value: string | null) => atualizarFiltro('status', value || '')}
+    data={dados.statusDisponiveis.map((s: string) => ({ value: s, label: s }))}
+    clearable
+    style={{ minWidth: 200, marginRight: 16 }}
+  />
 
-            <Select
-              label="Filtrar por Status"
-              placeholder="Selecione um status"
-              value={filtros.status}
-              onChange={(value: string | null) => atualizarFiltro('status', value || '')}
-              data={dados.statusDisponiveis.map((s: string) => ({ value: s, label: s }))}
-              clearable
-              style={{ minWidth: 200, marginRight: 16 }}
-            />
+  <Select
+    label="Filtrar por Gatilho"
+    placeholder="Selecione"
+    value={filtros.gatilho}
+    onChange={(value: string | null) => atualizarFiltro('gatilho', value || '')}
+    data={dados.gatilhosDisponiveis.map((g: string) => ({ value: g, label: g }))}
+    clearable
+    style={{ minWidth: 200 }}
+  />
+</Group> {/* ← ESSA LINHA FALTAVA */}
 
-            <Select
-              label="Filtrar por Gatilho"
-              placeholder="Selecione"
-              value={filtros.gatilho}
-              onChange={(value: string | null) => atualizarFiltro('gatilho', value || '')}
-              data={dados.gatilhosDisponiveis.map((g: string) => ({ value: g, label: g }))}
-              clearable
-              style={{ minWidth: 200 }}
-            />
-          </Group>
 
           {/* Conteúdo Principal */}
           {loadingStates.dados && !inicializado ? (
