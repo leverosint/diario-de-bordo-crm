@@ -301,6 +301,18 @@ export default function InteracoesPage() {
   const itemsPerPage = 10;
   const abortControllerRef = useRef<AbortController | null>(null);
  
+
+
+  const [filtros, setFiltros] = useState<FiltrosState>({
+    parceiro: null,
+    canal: '',
+    vendedor: '',
+    status: '',
+    gatilho: '',
+  });
+
+
+
   // Estados consolidados
   const [dados, setDados] = useState<DadosState>({
     pendentes: [],
@@ -317,14 +329,7 @@ export default function InteracoesPage() {
     interagidos: 1
   });
 
-  const [filtros, setFiltros] = useState<FiltrosState>({
-    parceiro: null,
-    canal: '',
-    vendedor: '',
-    status: '',
-    gatilho: ''
-  });
-
+ 
   const [loadingStates, setLoadingStates] = useState<LoadingStatesType>({
     dados: false,
     interacao: false,
@@ -461,33 +466,36 @@ export default function InteracoesPage() {
   // Função principal de carregamento de dados dinâmicos - OTIMIZADA
   const carregarDadosDinamicos = useCallback(async () => {
     if (!inicializado) return;
-    
     setLoading('dados', true);
     setErro(null);
-    
+  
     try {
       const signal = cancelarRequisicoes();
       const headers = { Authorization: `Bearer ${token}` };
-      const params = new URLSearchParams();
-      
-      params.append('page', String(paginacao.pendentes));
-      params.append('limit', String(itemsPerPage));
-      
-      if (debouncedFiltros.parceiro) params.append('parceiro', debouncedFiltros.parceiro);
-      if (filtros.canal) params.append('canal_id', filtros.canal);
-      if (filtros.vendedor) params.append('consultor', filtros.vendedor);
-      if (debouncedFiltros.status) params.append('status', debouncedFiltros.status);
-      if (debouncedFiltros.gatilho) params.append('gatilho_extra', debouncedFiltros.gatilho);
-
+  
+      // USE UM OBJETO NORMAL PARA OS PARÂMETROS!
+      const params: any = {};
+      params.page = paginacao.pendentes;
+      params.limit = itemsPerPage;
+      if (debouncedFiltros.parceiro) params.parceiro = debouncedFiltros.parceiro;
+      if (filtros.canal) params.canal_id = filtros.canal;
+      if (filtros.vendedor) params.consultor = filtros.vendedor;
+      if (debouncedFiltros.status) params.status = debouncedFiltros.status;
+      if (debouncedFiltros.gatilho) params.gatilho_extra = debouncedFiltros.gatilho;
+  
       // Carrega apenas dados que mudam frequentemente
       const [resPendentes, resInteragidosHoje] = await Promise.all([
         retryRequest(() => axios.get(
-          `${import.meta.env.VITE_API_URL}/interacoes/pendentes/?tipo=pendentes&${params.toString()}`,
+          `${import.meta.env.VITE_API_URL}/interacoes/pendentes/`,
+          { headers, signal, params }
+        )),
+        retryRequest(() => axios.get(
+          `${import.meta.env.VITE_API_URL}/interacoes/hoje/`,
           { headers, signal }
         )),
-        retryRequest(() => axios.get(`${import.meta.env.VITE_API_URL}/interacoes/hoje/`, { headers, signal })),
       ]);
-
+      
+     
       // Função para obter nome do canal
       const obterNomeCanal = (id: number): string => {
         const canais = (usuario.canais_venda || []) as CanalVenda[];
@@ -546,7 +554,6 @@ export default function InteracoesPage() {
   const handleCanalChange = useCallback(async (value: string | null) => {
     atualizarFiltro('canal', value || '');
     atualizarFiltro('vendedor', '');
-    
     if (!value) {
       setDados(prev => ({ ...prev, vendedores: [] }));
     } else {
@@ -994,28 +1001,28 @@ export default function InteracoesPage() {
 
             {(tipoUser === 'ADMIN' || tipoUser === 'GESTOR') && (
               <>
-                <Select
-                  label="Filtrar por Canal"
-                  placeholder="Selecione um canal"
-                  value={filtros.canal}
-                  onChange={handleCanalChange}
-                  data={dados.canaisVenda.map((c: CanalVenda) => ({ value: String(c.id), label: c.nome }))}
-                  clearable
-                  style={{ minWidth: 200, marginRight: 16 }}
-                />
+            <Select
+  label="Canal de Venda"
+  placeholder="Selecione um canal"
+  data={dados.canaisVenda.map(c => ({ value: String(c.id), label: c.nome }))}
+  value={filtros.canal}
+  onChange={(value: string | null) => {
+    atualizarFiltro('canal', value || '');
+    atualizarFiltro('vendedor', ''); // Zera vendedor quando trocar canal
+    // Carrega os vendedores do canal
+    handleCanalChange(value);
+  }}
+  clearable
+/>
 
 <Select
-  label="Filtrar por Vendedor"
+  label="Vendedor"
   placeholder="Selecione um vendedor"
+  data={dados.vendedores.map(v => ({ value: String(v.id_vendedor), label: v.nome }))}
   value={filtros.vendedor}
-  onChange={(value: string | null) => atualizarFiltro('vendedor', value || '')}
-  data={dados.vendedores.map((v: Vendedor) => ({
-    value: v.username,
-    label: v.nome || v.username // Agora vai vir 'nome' certinho
-  }))}
-  disabled={!filtros.canal}
+  onChange={v => atualizarFiltro('vendedor', v || '')}
   clearable
-  style={{ minWidth: 200, marginRight: 16 }}
+  disabled={!filtros.canal}
 />
 
 
