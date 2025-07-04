@@ -736,18 +736,20 @@ const dadosFiltrados = useMemo(() => {
 
 
       {modalAberto && idMudandoStatus !== null && (
-  <Modal
-    opened={modalAberto}
-    onClose={() => setModalAberto(false)}
-    title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
-    centered
-    radius="md"
-    withinPortal={false}
-    overlayProps={{
-      backgroundOpacity: 0.55,
-      blur: 4,
-    }}
-  >
+ <Modal
+ opened={modalAberto}
+ onClose={() => setModalAberto(false)}
+ title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
+ centered
+ radius="md"
+ // withinPortal removido ou true
+ overlayProps={{
+   backgroundOpacity: 0.55,
+   blur: 4,
+ }}
+>
+
+
     <div className={styles.centralizado}>
       {etapaParaAtualizar === 'perdida' ? (
         <Select
