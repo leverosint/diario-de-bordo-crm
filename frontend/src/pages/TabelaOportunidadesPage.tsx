@@ -809,6 +809,11 @@ const dadosFiltrados = useMemo(() => {
     onClose={() => setOportunidadeSelecionada(null)}
     title="Editar Oportunidade"
     centered
+    withinPortal={false}
+    overlayProps={{
+      backgroundOpacity: 0.55,
+      blur: 4,
+    }}
   >
     <TextInput
       label="Valor"
