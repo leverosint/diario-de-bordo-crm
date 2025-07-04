@@ -508,11 +508,12 @@ export default function InteracoesPage() {
           tipo: i.tipo,
           gatilho_extra: i.gatilho_extra,
           canal_venda_nome: obterNomeCanal(i.canal_venda_id),
-          usuario_nome: i.usuario_nome,
+          usuario_nome: i.usuario_nome, // ✅ Correto
         })),
         statusDisponiveis: resPendentes.data.status_disponiveis || [],
-        gatilhosDisponiveis: resPendentes.data.gatilhos_disponiveis || [],
+        gatilhosDisponiveis: resPendentes.data.gatilhos_disponiveis || []
       }));
+      
 
       setTotalPendentes(resPendentes.data.total_count || 0);
 
