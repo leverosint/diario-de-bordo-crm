@@ -857,25 +857,46 @@ const dadosFiltrados = useMemo(() => {
       }
     />
 
-    <Select
-      label="Alterar Status"
-      placeholder="Selecione um status"
-      data={[
-        { value: 'oportunidade', label: 'Oportunidade' },
-        { value: 'orcamento', label: 'Orçamento' },
-        { value: 'aguardando', label: 'Aguardando Pagamento' },
-        { value: 'pedido', label: 'Pedido Faturado' },
-        { value: 'perdida', label: 'Venda Perdida' },
-      ]}
-      value={oportunidadeSelecionada.etapa}
-      onChange={(value) =>
-        setOportunidadeSelecionada({
-          ...oportunidadeSelecionada,
-          etapa: value || '',
-        })
-      }
-      clearable
-    />
+<Select
+  label="Alterar Status"
+  placeholder="Selecione um status"
+  data={[
+    { value: 'oportunidade', label: 'Oportunidade' },
+    { value: 'orcamento', label: 'Orçamento' },
+    { value: 'aguardando', label: 'Aguardando Pagamento' },
+    { value: 'pedido', label: 'Pedido Faturado' },
+    { value: 'perdida', label: 'Venda Perdida' },
+  ]}
+  value={oportunidadeSelecionada.etapa}
+  onChange={(value) => {
+    if (!value) return;
+
+    if (value === 'perdida') {
+      // Abre modal de motivo de perda
+      setIdMudandoStatus(oportunidadeSelecionada.id);
+      setEtapaParaAtualizar('perdida');
+      setModalAberto(true);
+      return;
+    }
+
+    if (value === 'aguardando') {
+      // Abre modal de número do pedido
+      setIdMudandoStatus(oportunidadeSelecionada.id);
+      setEtapaParaAtualizar('aguardando');
+      setNumeroPedido('');
+      setModalAberto(true);
+      return;
+    }
+
+    // Para os outros casos, atualiza normalmente no modal principal
+    setOportunidadeSelecionada({
+      ...oportunidadeSelecionada,
+      etapa: value,
+    });
+  }}
+  clearable
+/>
+
 
     <Group justify="flex-end" mt="md">
       <Button variant="outline" onClick={() => setOportunidadeSelecionada(null)}>
