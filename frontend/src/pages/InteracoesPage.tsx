@@ -215,15 +215,15 @@ const VirtualizedRow: React.FC<VirtualizedRowProps> = ({
     />
   ) : (
     <span>
-      {tipoSelecionado
-        ? ({
-            whatsapp: 'WhatsApp',
-            email: 'E-mail',
-            ligacao: 'Ligação',
-            visita: 'Visita Presencial'
-          } as any)[tipoSelecionado]
-        : '-'}
-    </span>
+    {tipoSelecionado && tipoSelecionado !== '' 
+      ? ({
+          whatsapp: 'WhatsApp',
+          email: 'E-mail',
+          ligacao: 'Ligação',
+          visita: 'Visita Presencial'
+        } as any)[tipoSelecionado]
+      : '-'}
+  </span>
   )}
 </td>
 
@@ -501,7 +501,7 @@ export default function InteracoesPage() {
         pendentes: resPendentes.data.dados.map((p: any): Interacao => ({
           ...p,
           canal_venda_nome: obterNomeCanal(p.canal_venda_id),
-          vendedor: p.vendedor, // ✅ usar já direto o campo certo
+          vendedor: p.vendedor, // ✅ ALTERADO AQUI
           consultor: p.consultor,
         })),
         interagidos: resInteragidosHoje.data.map((i: any): Interacao => ({
@@ -1075,8 +1075,7 @@ export default function InteracoesPage() {
                         <th>Status</th>
                         <th>Gatilho Extra</th>
                         <th>Vendedor</th> {/* nova coluna */}
-                        <th>Consultor</th> {/* ✅ Nova coluna */}
-                        <th>Tipo</th>
+                                                <th>Tipo</th>
                         <th>Ação</th>
                       </tr>
                     </thead>
