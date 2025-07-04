@@ -286,7 +286,6 @@ class InteracoesPendentesView(APIView):
             parceiros = Parceiro.objects.all()
 
         canal_id = request.query_params.get('canal_id')
-        canal_id = request.query_params.get('canal_id')
         status_p = request.query_params.get('status')
         gatilho_p = request.query_params.get('gatilho_extra')
         consultor = request.query_params.get('consultor')
@@ -305,9 +304,7 @@ class InteracoesPendentesView(APIView):
             ultima = parceiro.interacoes.order_by('-data_interacao').first()
             interagido_hoje = ultima and ultima.data_interacao.date() == hoje
             bloqueado = (
-                ultima
-                and ultima.entrou_em_contato
-                and limite_data < ultima.data_interacao.date() < hoje
+                ultima and ultima.entrou_em_contato and limite_data < ultima.data_interacao.date() < hoje
             )
 
             if usuario.tipo_user == 'GESTOR':
@@ -319,7 +316,11 @@ class InteracoesPendentesView(APIView):
                 if not gatilho or gatilho.descricao.lower() != gatilho_p.lower():
                     continue
 
-            if gatilho:
+            # Buscar vendedor (consultor)
+            vendedor_user = CustomUser.objects.filter(id_vendedor=parceiro.consultor).first()
+            vendedor_nome = vendedor_user.username if vendedor_user else None
+
+            if not interagido_hoje and not bloqueado and parceiro.status != 'Base Ativa':
                 pendentes.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -329,11 +330,11 @@ class InteracoesPendentesView(APIView):
                     'tipo': '',
                     'data_interacao': '',
                     'entrou_em_contato': False,
-                    'gatilho_extra': gatilho.descricao,
-                    'criador_gatilho': gatilho.usuario.username if usuario.tipo_user == 'GESTOR' else None,
+                    'gatilho_extra': gatilho.descricao if gatilho else None,
+                    'criador_gatilho': gatilho.usuario.username if gatilho else None,
+                    'vendedor': vendedor_nome,
                 })
-
-            if interagido_hoje:
+            elif interagido_hoje:
                 interagidos.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -344,26 +345,48 @@ class InteracoesPendentesView(APIView):
                     'data_interacao': ultima.data_interacao,
                     'entrou_em_contato': ultima.entrou_em_contato,
                     'gatilho_extra': gatilho.descricao if gatilho else None,
-                    'criador_gatilho': gatilho.usuario.username if (gatilho and usuario.tipo_user == 'GESTOR') else None,
+                    'criador_gatilho': gatilho.usuario.username if gatilho else None,
+                    'vendedor': vendedor_nome,
                 })
 
-            if (
-                not gatilho
-                and not interagido_hoje
-                and not bloqueado
-                and parceiro.status != 'Base Ativa'
-            ):
-                pendentes.append({
-                    'id': parceiro.id,
-                    'parceiro': parceiro.parceiro,
-                    'unidade': parceiro.unidade,
-                    'classificacao': parceiro.classificacao,
-                    'status': parceiro.status,
-                    'tipo': '',
-                    'data_interacao': '',
-                    'entrou_em_contato': False,
-                    'gatilho_extra': None,
-                })
+        # Paginação
+        page = int(request.query_params.get('page', 1))
+        limit = int(request.query_params.get('limit', 10))
+        start = (page - 1) * limit
+        end = start + limit
+        pendentes_paginados = pendentes[start:end]
+        total_count = len(pendentes)
+
+        # Filtros dinâmicos
+        status_unicos = sorted({item['status'] for item in pendentes})
+        if usuario.tipo_user == 'GESTOR':
+            gatilhos_ativos = (
+                GatilhoExtra.objects.filter(parceiro__canal_venda__in=usuario.canais_venda.all())
+                .values_list('descricao', flat=True)
+                .distinct()
+            )
+        else:
+            gatilhos_ativos = (
+                GatilhoExtra.objects.filter(usuario=usuario)
+                .values_list('descricao', flat=True)
+                .distinct()
+            )
+
+        return Response({
+            'dados': pendentes_paginados,
+            'total_count': total_count,
+            'status_disponiveis': status_unicos,
+            'gatilhos_disponiveis': list(gatilhos_ativos),
+            'interagidos': interagidos,
+        })
+
+
+
+
+
+
+
+
 
         # 🔥 Pega parâmetros de página
         page = int(request.query_params.get('page', 1))
