@@ -497,6 +497,7 @@ export default function InteracoesPage() {
       // Atualizar estados com os dados recebidos
       setDados(prev => ({
         ...prev,
+        pendentes: resPendentes.data.results || [], // ✅ ADICIONAR ESSA LINHA
         interagidos: resInteragidosHoje.data.map((i: any): Interacao => ({
           id: i.id,
           parceiro: i.parceiro_nome,
