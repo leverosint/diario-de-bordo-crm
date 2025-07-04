@@ -71,8 +71,8 @@ interface Interacao {
   gatilho_extra?: string;
   canal_venda_nome?: string;
   consultor?: string;
+  usuario_nome?: string; // ✅ <-- ADICIONE ESTA LINHA
 }
-
 interface CanalVenda {
   id: number;
   nome: string;
@@ -1109,27 +1109,29 @@ export default function InteracoesPage() {
                 ) : (
                   <Table striped highlightOnHover withTableBorder className={styles.table}>
                     <thead>
-                      <tr>
-                        <th>Parceiro</th>
-                        <th>Unidade</th>
-                        <th>Classificação</th>
-                        <th>Status</th>
-                        <th>Data</th>
-                        <th>Tipo</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dadosProcessados.interagidosExibidos.map((item: Interacao) => (
-                        <tr key={item.id}>
-                          <td>{item.parceiro}</td>
-                          <td>{item.unidade}</td>
-                          <td>{item.classificacao}</td>
-                          <td>{item.status}</td>
-                          <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
-                          <td>{item.tipo}</td>
-                        </tr>
-                      ))}
-                    </tbody>
+  <tr>
+    <th>Parceiro</th>
+    <th>Unidade</th>
+    <th>Classificação</th>
+    <th>Status</th>
+    <th>Data</th>
+    <th>Tipo</th>
+    <th>Vendedor</th> {/* <-- nova coluna */}
+  </tr>
+</thead>
+<tbody>
+  {dadosProcessados.interagidosExibidos.map((item: Interacao) => (
+    <tr key={item.id}>
+      <td>{item.parceiro}</td>
+      <td>{item.unidade}</td>
+      <td>{item.classificacao}</td>
+      <td>{item.status}</td>
+      <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
+      <td>{item.tipo}</td>
+      <td>{item.consultor || item.usuario_nome}</td> {/* <-- nome do vendedor */}
+    </tr>
+  ))}
+</tbody>
                   </Table>
                 )}
 

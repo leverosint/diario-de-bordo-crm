@@ -251,7 +251,14 @@ class InteracoesHojeView(generics.ListAPIView):
 
     def get_queryset(self):
         hoje = now().date()
-        return Interacao.objects.filter(data_interacao__date=hoje, usuario=self.request.user)
+        user = self.request.user
+
+        if user.tipo_user == 'ADMIN':
+            return Interacao.objects.filter(data_interacao__date=hoje)
+        elif user.tipo_user == 'GESTOR':
+            return Interacao.objects.filter(data_interacao__date=hoje, parceiro__canal_venda__in=user.canais_venda.all())
+        else:  # VENDEDOR
+            return Interacao.objects.filter(data_interacao__date=hoje, usuario=user)
 
 
 from datetime import timedelta
