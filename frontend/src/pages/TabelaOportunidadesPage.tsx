@@ -803,7 +803,7 @@ const dadosFiltrados = useMemo(() => {
   </Modal>
 )}
    
-   { oportunidadeSelecionada && (
+   {oportunidadeSelecionada && (
   <Modal
     opened={!!oportunidadeSelecionada}
     onClose={() => setOportunidadeSelecionada(null)}
@@ -815,6 +815,13 @@ const dadosFiltrados = useMemo(() => {
       blur: 4,
     }}
   >
+    <div>
+      <p><strong>Parceiro:</strong> {oportunidadeSelecionada.parceiro_nome}</p>
+      <p><strong>Data Criação:</strong> {new Date(oportunidadeSelecionada.data_criacao).toLocaleDateString('pt-BR')}</p>
+      <p><strong>Data Etapa:</strong> {oportunidadeSelecionada.data_etapa ? new Date(oportunidadeSelecionada.data_etapa).toLocaleDateString('pt-BR') : '-'}</p>
+      <p><strong>Gatilho:</strong> {oportunidadeSelecionada.gatilho_extra || '-'}</p>
+    </div>
+
     <TextInput
       label="Valor"
       value={oportunidadeSelecionada.valor}
@@ -824,7 +831,10 @@ const dadosFiltrados = useMemo(() => {
           valor: Number(e.currentTarget.value),
         })
       }
+      type="number"
+      min={0}
     />
+
     <Textarea
       label="Observação"
       value={oportunidadeSelecionada.observacao || ''}
@@ -835,6 +845,7 @@ const dadosFiltrados = useMemo(() => {
         })
       }
     />
+
     <TextInput
       label="Número do Pedido"
       value={oportunidadeSelecionada.numero_pedido || ''}
@@ -845,6 +856,27 @@ const dadosFiltrados = useMemo(() => {
         })
       }
     />
+
+    <Select
+      label="Alterar Status"
+      placeholder="Selecione um status"
+      data={[
+        { value: 'oportunidade', label: 'Oportunidade' },
+        { value: 'orcamento', label: 'Orçamento' },
+        { value: 'aguardando', label: 'Aguardando Pagamento' },
+        { value: 'pedido', label: 'Pedido Faturado' },
+        { value: 'perdida', label: 'Venda Perdida' },
+      ]}
+      value={oportunidadeSelecionada.etapa}
+      onChange={(value) =>
+        setOportunidadeSelecionada({
+          ...oportunidadeSelecionada,
+          etapa: value || '',
+        })
+      }
+      clearable
+    />
+
     <Group justify="flex-end" mt="md">
       <Button variant="outline" onClick={() => setOportunidadeSelecionada(null)}>
         Cancelar
