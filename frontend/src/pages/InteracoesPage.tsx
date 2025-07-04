@@ -501,8 +501,8 @@ export default function InteracoesPage() {
         pendentes: resPendentes.data.dados.map((p: any): Interacao => ({
           ...p,
           canal_venda_nome: obterNomeCanal(p.canal_venda_id),
-          vendedor: p.usuario_nome,
-          consultor: p.consultor, // ✅ Adicione esta linha
+          vendedor: p.vendedor, // ✅ usar já direto o campo certo
+          consultor: p.consultor,
         })),
         interagidos: resInteragidosHoje.data.map((i: any): Interacao => ({
           id: i.id,

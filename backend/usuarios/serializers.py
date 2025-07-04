@@ -47,16 +47,26 @@ class InteracaoSerializer(serializers.ModelSerializer):
     unidade = serializers.CharField(source='parceiro.unidade', read_only=True)
     classificacao = serializers.CharField(source='parceiro.classificacao', read_only=True)
     usuario_nome = serializers.CharField(source='usuario.username', read_only=True)
+    vendedor = serializers.SerializerMethodField()  # ✅ <-- Adicione esta linha
 
     class Meta:
         model = Interacao
         fields = [
             'id', 'parceiro', 'codigo', 'parceiro_nome',
-            'unidade', 'classificacao',  # 👈 novos campos adicionados
-            'usuario', 'usuario_nome',
+            'unidade', 'classificacao',
+            'usuario', 'usuario_nome', 'vendedor',  # ✅ incluir aqui
             'tipo', 'data_interacao', 'entrou_em_contato', 'status', 'gatilho_extra'
         ]
         read_only_fields = ['data_interacao', 'usuario', 'status']
+
+    def get_vendedor(self, obj):
+        # Busca CustomUser baseado no consultor (que é um "id_vendedor" em texto no Parceiro)
+        if obj.parceiro and obj.parceiro.consultor:
+            vendedor_user = User.objects.filter(id_vendedor=obj.parceiro.consultor).first()
+            if vendedor_user:
+                return vendedor_user.username
+        return None
+
 
 
 class InteracaoPendentesSerializer(serializers.ModelSerializer):
