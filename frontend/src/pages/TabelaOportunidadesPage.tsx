@@ -2,14 +2,14 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import {
   Title, Table, Container, Loader, ScrollArea, Badge, Group,
-  TextInput, Button, Tooltip, Card, Box, Select, Modal
+  TextInput, Button, Tooltip, Card, Box, Select, Modal, Textarea
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import 'dayjs/locale/pt-br';
 import * as XLSX from 'xlsx';
 import SidebarGestor from '../components/SidebarGestor';
 import type { DateValue } from '@mantine/dates';
-import { Pencil, Save, X } from 'lucide-react';
+
 import styles from './TabelaOportunidadesPage.module.css'; // ✅ CSS
 
 
@@ -41,10 +41,7 @@ export default function TabelaOportunidadesPage() {
   const [etapaFiltro, setEtapaFiltro] = useState<string | null>(null);
   const [dataInicio, setDataInicio] = useState<DateValue>(null);
   const [dataFim, setDataFim] = useState<DateValue>(null);
-  const [editandoId, setEditandoId] = useState<number | null>(null);
-  const [valorEdit, setValorEdit] = useState<string>('');
-  const [observacaoEdit, setObservacaoEdit] = useState<string>('');
-  const [numeroPedidoEdit, setNumeroPedidoEdit] = useState<string>('');
+ 
   const [filtroVendedor, setFiltroVendedor] = useState<string>('');      // ID do consultor
 const [filtroUnidade, setFiltroUnidade] = useState<string>('');        // ID do canal_venda
 const [statusParceiroFiltro, setStatusParceiroFiltro] = useState<string | null>(null);
@@ -55,7 +52,7 @@ const [opcoesUnidades, setOpcoesUnidades] = useState<{value:string, label:string
   const [popupAberto, setPopupAberto] = useState(false);
   
   const [pendentesMovimentacao, setPendentesMovimentacao] = useState<Oportunidade[]>([]);
-  
+  const [oportunidadeSelecionada, setOportunidadeSelecionada] = useState<Oportunidade | null>(null);
   const [filtroGatilho, setFiltroGatilho] = useState<string>('');
   
   const [idMudandoStatus, setIdMudandoStatus] = useState<number | null>(null);
@@ -70,7 +67,32 @@ const [numeroPedido, setNumeroPedido] = useState('');
     setModalAberto(true);
   };
 
+  const abrirModalOportunidade = (o: Oportunidade) => {
+    setOportunidadeSelecionada({ ...o });
+  };
+
+  const salvarOportunidade = async () => {
+    if (!oportunidadeSelecionada) return;
   
+    try {
+      await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${oportunidadeSelecionada.id}/`, {
+        valor: oportunidadeSelecionada.valor,
+        observacao: oportunidadeSelecionada.observacao,
+        numero_pedido: oportunidadeSelecionada.numero_pedido,
+        etapa: oportunidadeSelecionada.etapa,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      setDados(prev =>
+        prev.map(o => o.id === oportunidadeSelecionada.id ? oportunidadeSelecionada : o)
+      );
+      setOportunidadeSelecionada(null);
+    } catch (err) {
+      console.error('Erro ao salvar oportunidade:', err);
+      alert('Erro ao salvar oportunidade');
+    }
+  };
 
 <Modal
   opened={popupAberto}
@@ -158,13 +180,7 @@ const handleCanalChange = async (canalId: string | null) => {
     { value: 'perdida', label: 'Venda Perdida' },
   ];
 
-  const transicoesPermitidas: Record<string, string[]> = {
-    oportunidade: ['orcamento', 'perdida'],
-    orcamento: ['aguardando', 'perdida'],
-    aguardando: ['pedido', 'perdida'],
-    pedido: [],
-   perdida: [],
-  };
+  
 
   const getStatusColor = (etapa: string) => ({
     oportunidade: 'blue',
@@ -339,7 +355,6 @@ const confirmarVendaPerdida = async () => {
   }
 
   try {
-    // Atualiza no back-end
     await axios.patch(
       `${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`,
       {
@@ -353,80 +368,21 @@ const confirmarVendaPerdida = async () => {
       }
     );
 
-
-
-
-    const confirmarVendaPerdida = async () => {
-      if (!idMudandoStatus || motivoPerda.trim() === '') {
-        alert('Por favor, preencha o motivo da perda.');
-        return;
-      }
-    
-      const agora = new Date().toISOString();
-    
-      try {
-        await axios.patch(
-          `${import.meta.env.VITE_API_URL}/oportunidades/${idMudandoStatus}/`,
-          {
-            etapa: 'perdida',
-            observacao: motivoPerda,
-            data_etapa: agora,
-            data_status: agora,
-          },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-    
-        setDados(prev =>
-          prev.map(o =>
-            o.id === idMudandoStatus
-              ? {
-                  ...o,
-                  etapa: 'perdida',
-                  observacao: motivoPerda,
-                  data_etapa: agora,
-                  data_status: agora,
-                  dias_sem_movimentacao: 0,
-                }
-              : o
-          )
-        );
-    
-       
-    
-        setModalAberto(false);
-        setMotivoPerda('');
-        setEtapaParaAtualizar(null);
-        setIdMudandoStatus(null);
-      } catch (err) {
-        console.error('Erro ao salvar motivo de perda:', err);
-        alert('Erro ao atualizar etapa.');
-      }
-    };
-    
-    
-    
-   
-
-    // Reflete no front-end em `dados`
     setDados(prev =>
       prev.map(o =>
         o.id === idMudandoStatus
           ? {
               ...o,
               etapa: 'perdida',
-              data_status: new Date().toISOString(),
               observacao: motivoPerda,
-              // se você quiser também zerar dias_sem_movimentacao:
-              dias_sem_movimentacao: 0,
               data_etapa: new Date().toISOString(),
+              data_status: new Date().toISOString(),
+              dias_sem_movimentacao: 0,
             }
           : o
       )
     );
 
-    // Remove da lista de pendentes e fecha o popup quando zerar
     setPendentesMovimentacao(prev => {
       const atualizado = prev.filter(o => o.id !== idMudandoStatus);
       if (atualizado.length === 0) {
@@ -435,70 +391,18 @@ const confirmarVendaPerdida = async () => {
       return atualizado;
     });
 
-
-
-    // MODAL ADICIONAR PEDIDO AGUARDANDO PAGAMETNO
-
-<Modal
-  opened={modalAberto}
-  onClose={() => setModalAberto(false)}
-  title={
-    etapaParaAtualizar === 'perdida'
-      ? 'Motivo da Venda Perdida'
-      : 'Informar Número do Pedido'
-  }
-  centered
-  radius="md"
->
-  {etapaParaAtualizar === 'perdida' ? (
-    <>
-      <TextInput
-        label="Motivo da perda"
-        value={motivoPerda}
-        onChange={(e) => setMotivoPerda(e.currentTarget.value)}
-        required
-      />
-      <Group justify="center" mt="md">
-        <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
-          Cancelar
-        </Button>
-        <Button color="green" onClick={confirmarVendaPerdida}>
-          Confirmar
-        </Button>
-      </Group>
-    </>
-  ) : (
-    <>
-      <TextInput
-        label="Número do Pedido"
-        value={numeroPedido}
-        onChange={(e) => setNumeroPedido(e.currentTarget.value)}
-        required
-      />
-      <Group justify="center" mt="md">
-        <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
-          Cancelar
-        </Button>
-        <Button color="green" onClick={confirmarNumeroPedido}>
-          Confirmar
-        </Button>
-      </Group>
-    </>
-  )}
-</Modal>
-
-
-    // Fecha modal e limpa estado
     setModalAberto(false);
-    setIdMudandoStatus(null);
     setMotivoPerda('');
+    setEtapaParaAtualizar(null);
+    setIdMudandoStatus(null);
+
   } catch (err) {
-    console.error('Erro ao atualizar etapa:', err);
-    alert('Erro ao atualizar etapa');
+    console.error('Erro ao salvar motivo de perda:', err);
+    alert('Erro ao atualizar etapa.');
   }
 };
 
-
+    
 
 
 const dadosFiltrados = useMemo(() => {
@@ -586,43 +490,13 @@ const dadosFiltrados = useMemo(() => {
     return Math.round(dias.reduce((a, b) => a + b, 0) / dias.length);
   };
 
-  const iniciarEdicao = (o: Oportunidade) => {
-    setEditandoId(o.id);
-    setValorEdit(String(o.valor));
-    setObservacaoEdit(o.observacao || '');
-    setNumeroPedidoEdit(o.numero_pedido || ''); // <-- aqui
-  };
+  
 
-  const salvarEdicao = async (id: number) => {
-    try {
-      await axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
-        valor: parseFloat(valorEdit.replace(',', '.')) || 0,
-        observacao: observacaoEdit,
-        numero_pedido: numeroPedidoEdit, // <-- aqui
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+ 
 
-      setDados(prev =>
-        prev.map(o =>
-          o.id === id ? { ...o, valor: parseFloat(valorEdit.replace(',', '.')) || 0, observacao: observacaoEdit } : o
-        )
-      );
+      
+ 
 
-      setEditandoId(null);
-      setValorEdit('');
-      setObservacaoEdit('');
-    } catch (err) {
-      console.error('Erro ao salvar edição:', err);
-      alert('Erro ao salvar edição');
-    }
-  };
-
-  const cancelarEdicao = () => {
-    setEditandoId(null);
-    setValorEdit('');
-    setObservacaoEdit('');
-  };
 
   return (
     <SidebarGestor tipoUser={tipoUser}>
@@ -803,99 +677,41 @@ const dadosFiltrados = useMemo(() => {
   </thead>
   <tbody>
     {lista.map((o) => {
-      const emEdicao = editandoId === o.id;
+     
       return (
         <tr key={o.id} style={{ height: 44 }}>
           <td>{o.id}</td>
           <td className={styles.parceiro}>{o.parceiro_nome}</td>
           <td style={{ textAlign: 'right' }}>
-            {emEdicao ? (
-              <TextInput
-                value={valorEdit}
-                onChange={(e) => setValorEdit(e.currentTarget.value)}
-                size="xs"
-                style={{ width: 90 }}
-              />
-            ) : (
-              <>R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</>
-            )}
+          R$ {Number(o.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </td>
           <td>{new Date(o.data_criacao).toLocaleDateString('pt-BR')}</td>
           <td>{o.data_etapa ? new Date(o.data_etapa).toLocaleDateString('pt-BR') : '-'}</td>
           <td>{o.gatilho_extra || '-'}</td>
           <td className={styles.observacao}>
-            {emEdicao ? (
-              <TextInput
-                value={observacaoEdit}
-                onChange={(e) => setObservacaoEdit(e.currentTarget.value)}
-                size="xs"
-                style={{ width: '100%' }}
-              />
-            ) : (
-              <Tooltip label={o.observacao} multiline disabled={!o.observacao}>
-                <span className={styles.ellipsis}>{o.observacao || '-'}</span>
-              </Tooltip>
-            )}
-          </td>
+  <Tooltip label={o.observacao} multiline disabled={!o.observacao}>
+    <span className={styles.ellipsis}>{o.observacao || '-'}</span>
+  </Tooltip>
+</td>
           <td>
             {typeof o.dias_sem_movimentacao === 'number'
               ? `${o.dias_sem_movimentacao} dia${o.dias_sem_movimentacao === 1 ? '' : 's'}`
               : '-'}
           </td>
           <td>
-            {emEdicao ? (
-              <TextInput
-                value={numeroPedidoEdit}
-                onChange={(e) => setNumeroPedidoEdit(e.currentTarget.value)}
-                size="xs"
-                style={{ width: 110 }}
-              />
-            ) : (
-              o.numero_pedido || '-'
-            )}
-          </td>
-          <td className={styles.status}>
-            <div className={styles['botoes-status']}>
-            <Select
-  value={o.etapa}
-  onChange={(value) => value && handleStatusChange(o.id, value)}
-  data={etapaOptions.filter(opt =>
-    o.etapa === 'oportunidade' || opt.value === o.etapa || transicoesPermitidas[o.etapa]?.includes(opt.value)
-  )}
-  size="xs"
-  styles={{
-    input: {
-      backgroundColor: getStatusColor(o.etapa),
-      color: 'white',
-      fontWeight: 600,
-      textAlign: 'center',
-      borderRadius: 6,
-      minWidth: 90,
-      maxWidth: 120,
-      height: 32,
-      paddingRight: 20,
-    },
-  }}
-  style={{ width: 120 }}
-  rightSectionWidth={28}
-/>
+  {o.numero_pedido || '-'}
+</td>
+<td className={styles.status}>
+  <Button
+    size="xs"
+    variant="outline"
+    onClick={() => abrirModalOportunidade(o)}
+    style={{ minWidth: 30, height: 32, padding: 2 }}
+  >
+    Editar
+  </Button>
+</td>
 
-              {emEdicao ? (
-                <>
-                  <Button size="xs" color="green" onClick={() => salvarEdicao(o.id)} style={{ minWidth: 30, height: 32, padding: 2 }}>
-                    <Save size={14} />
-                  </Button>
-                  <Button size="xs" variant="outline" color="red" onClick={cancelarEdicao} style={{ minWidth: 30, height: 32, padding: 2 }}>
-                    <X size={14} />
-                  </Button>
-                </>
-              ) : (
-                <Button size="xs" variant="outline" onClick={() => iniciarEdicao(o)} style={{ minWidth: 30, height: 32, padding: 2 }}>
-                  <Pencil size={14} />
-                </Button>
-              )}
-            </div>
-          </td>
         </tr>
       );
     })}
@@ -987,6 +803,51 @@ const dadosFiltrados = useMemo(() => {
   </Modal>
 )}
    
+   { oportunidadeSelecionada && (
+  <Modal
+    opened={!!oportunidadeSelecionada}
+    onClose={() => setOportunidadeSelecionada(null)}
+    title="Editar Oportunidade"
+    centered
+  >
+    <TextInput
+      label="Valor"
+      value={oportunidadeSelecionada.valor}
+      onChange={(e) =>
+        setOportunidadeSelecionada({
+          ...oportunidadeSelecionada,
+          valor: Number(e.currentTarget.value),
+        })
+      }
+    />
+    <Textarea
+      label="Observação"
+      value={oportunidadeSelecionada.observacao || ''}
+      onChange={(e) =>
+        setOportunidadeSelecionada({
+          ...oportunidadeSelecionada,
+          observacao: e.currentTarget.value,
+        })
+      }
+    />
+    <TextInput
+      label="Número do Pedido"
+      value={oportunidadeSelecionada.numero_pedido || ''}
+      onChange={(e) =>
+        setOportunidadeSelecionada({
+          ...oportunidadeSelecionada,
+          numero_pedido: e.currentTarget.value,
+        })
+      }
+    />
+    <Group justify="flex-end" mt="md">
+      <Button variant="outline" onClick={() => setOportunidadeSelecionada(null)}>
+        Cancelar
+      </Button>
+      <Button onClick={salvarOportunidade}>Salvar</Button>
+    </Group>
+  </Modal>
+)}
 
 
     </SidebarGestor>
