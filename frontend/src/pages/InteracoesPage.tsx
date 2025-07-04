@@ -501,7 +501,8 @@ export default function InteracoesPage() {
         pendentes: resPendentes.data.dados.map((p: any): Interacao => ({
           ...p,
           canal_venda_nome: obterNomeCanal(p.canal_venda_id),
-          vendedor: p.usuario_nome, // <-- adiciona aqui
+          vendedor: p.usuario_nome,
+          consultor: p.consultor, // ✅ Adicione esta linha
         })),
         interagidos: resInteragidosHoje.data.map((i: any): Interacao => ({
           id: i.id,
@@ -1074,6 +1075,7 @@ export default function InteracoesPage() {
                         <th>Status</th>
                         <th>Gatilho Extra</th>
                         <th>Vendedor</th> {/* nova coluna */}
+                        <th>Consultor</th> {/* ✅ Nova coluna */}
                         <th>Tipo</th>
                         <th>Ação</th>
                       </tr>
@@ -1137,6 +1139,9 @@ export default function InteracoesPage() {
       <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
       <td>{item.tipo}</td>
       <td>{item.vendedor}</td> {/* ✅ aqui certinho */}
+      <td>{item.consultor || '-'}</td> {/* ✅ Adiciona esta linha */}
+
+
     </tr>
   ))}
 </tbody>
