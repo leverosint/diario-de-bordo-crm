@@ -183,18 +183,19 @@ const VirtualizedRow: React.FC<VirtualizedRowProps> = ({
 }) => {
   return (
     <Fragment>
-      <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
-        <td>{item.parceiro}</td>
-        <td>{item.unidade}</td>
-        <td>{item.classificacao}</td>
-        <td>{item.status}</td>
-        <td>
-          {item.gatilho_extra
-            ? <Badge color="red" size="sm">{item.gatilho_extra}</Badge>
-            : "-"}
-        </td>
-        <td>
-  {isExpanded ? (
+     <tr className={item.gatilho_extra ? styles.gatilhoRow : ''}>
+  <td>{item.parceiro}</td>
+  <td>{item.unidade}</td>
+  <td>{item.classificacao}</td>
+  <td>{item.status}</td>
+  <td>
+    {item.gatilho_extra
+      ? <Badge color="red" size="sm">{item.gatilho_extra}</Badge>
+      : "-"}
+  </td>
+  <td>{item.vendedor || '-'}</td> {/* ✅ Adicione esta coluna */}
+  <td>
+    {isExpanded ? (
     <Select
       placeholder="Tipo"
       className={styles.select}
@@ -725,9 +726,11 @@ export default function InteracoesPage() {
     (!filtros.vendedor || item.vendedor === filtros.vendedor)
   );
 
-    const interagidosFiltrados = dados.interagidos.filter((item: Interacao) => 
-      !debouncedFiltros.parceiro || String(item.id) === debouncedFiltros.parceiro
-    );
+  const interagidosFiltrados = dados.interagidos.filter((item: Interacao) =>
+  (!debouncedFiltros.parceiro || String(item.id) === debouncedFiltros.parceiro) &&
+  (!filtros.vendedor || item.vendedor === filtros.vendedor)
+);
+
 
     const interagidosExibidos = interagidosFiltrados.slice(
       (paginacao.interagidos - 1) * itemsPerPage,
