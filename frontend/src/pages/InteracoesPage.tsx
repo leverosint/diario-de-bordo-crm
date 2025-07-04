@@ -1139,9 +1139,6 @@ export default function InteracoesPage() {
       <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
       <td>{item.tipo}</td>
       <td>{item.vendedor}</td> {/* ✅ aqui certinho */}
-      <td>{item.consultor || '-'}</td> {/* ✅ Adiciona esta linha */}
-
-
     </tr>
   ))}
 </tbody>
