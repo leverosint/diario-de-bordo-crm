@@ -1130,7 +1130,7 @@ export default function InteracoesPage() {
       <td>{item.status}</td>
       <td>{item.data_interacao ? new Date(item.data_interacao).toLocaleString() : ''}</td>
       <td>{item.tipo}</td>
-      <td>{item.consultor || item.usuario_nome}</td> {/* <-- nome do vendedor */}
+      <td>{item.usuario_nome}</td>
     </tr>
   ))}
 </tbody>
