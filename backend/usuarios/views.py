@@ -257,9 +257,8 @@ class InteracoesHojeView(generics.ListAPIView):
             return Interacao.objects.filter(data_interacao__date=hoje)
         elif user.tipo_user == 'GESTOR':
             return Interacao.objects.filter(data_interacao__date=hoje, parceiro__canal_venda__in=user.canais_venda.all())
-        else:  # VENDEDOR
+        else:
             return Interacao.objects.filter(data_interacao__date=hoje, usuario=user)
-
 
 from datetime import timedelta
 from django.utils.timezone import now

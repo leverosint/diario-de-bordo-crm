@@ -72,6 +72,7 @@ interface Interacao {
   canal_venda_nome?: string;
   consultor?: string;
   usuario_nome?: string; // ✅ <-- ADICIONE ESTA LINHA
+  vendedor?: string; // ✅ ADICIONAR ESTA LINHA
 }
 interface CanalVenda {
   id: number;
@@ -510,6 +511,7 @@ export default function InteracoesPage() {
           tipo: i.tipo,
           gatilho_extra: i.gatilho_extra,
           canal_venda_nome: obterNomeCanal(i.canal_venda_id),
+          vendedor: i.usuario_nome, // ✅ Adicione isto
         })),
         statusDisponiveis: resPendentes.data.status_disponiveis || [],
         gatilhosDisponiveis: resPendentes.data.gatilhos_disponiveis || []
