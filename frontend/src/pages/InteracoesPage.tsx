@@ -500,6 +500,7 @@ export default function InteracoesPage() {
         pendentes: resPendentes.data.dados.map((p: any): Interacao => ({
           ...p,
           canal_venda_nome: obterNomeCanal(p.canal_venda_id),
+          vendedor: p.usuario_nome, // <-- adiciona aqui
         })),
         interagidos: resInteragidosHoje.data.map((i: any): Interacao => ({
           id: i.id,
@@ -719,9 +720,10 @@ export default function InteracoesPage() {
 
   // Dados filtrados e paginados - MEMOIZADOS COM TIPO EXPLÍCITO
   const dadosProcessados: DadosProcessados = useMemo(() => {
-    const pendentesFiltrados = dados.pendentes.filter((item: Interacao) => 
-      !debouncedFiltros.parceiro || String(item.id) === debouncedFiltros.parceiro
-    );
+    const pendentesFiltrados = dados.pendentes.filter((item: Interacao) =>
+    (!debouncedFiltros.parceiro || String(item.id) === debouncedFiltros.parceiro) &&
+    (!filtros.vendedor || item.vendedor === filtros.vendedor)
+  );
 
     const interagidosFiltrados = dados.interagidos.filter((item: Interacao) => 
       !debouncedFiltros.parceiro || String(item.id) === debouncedFiltros.parceiro
@@ -1068,6 +1070,7 @@ export default function InteracoesPage() {
                         <th>Classificação</th>
                         <th>Status</th>
                         <th>Gatilho Extra</th>
+                        <th>Vendedor</th> {/* nova coluna */}
                         <th>Tipo</th>
                         <th>Ação</th>
                       </tr>
