@@ -497,7 +497,7 @@ export default function InteracoesPage() {
       // Atualizar estados com os dados recebidos
       setDados(prev => ({
         ...prev,
-        pendentes: resPendentes.data.results || [], // ✅ ADICIONAR ESSA LINHA
+        pendentes: resPendentes.data.results || resPendentes.data || [],
         interagidos: resInteragidosHoje.data.map((i: any): Interacao => ({
           id: i.id,
           parceiro: i.parceiro_nome,
@@ -508,10 +508,10 @@ export default function InteracoesPage() {
           tipo: i.tipo,
           gatilho_extra: i.gatilho_extra,
           canal_venda_nome: obterNomeCanal(i.canal_venda_id),
-          usuario_nome: i.usuario_nome, // ✅ Correto
+          usuario_nome: i.usuario_nome,
         })),
         statusDisponiveis: resPendentes.data.status_disponiveis || [],
-        gatilhosDisponiveis: resPendentes.data.gatilhos_disponiveis || []
+        gatilhosDisponiveis: resPendentes.data.gatilhos_disponiveis || [],
       }));
 
       setTotalPendentes(resPendentes.data.total_count || 0);
