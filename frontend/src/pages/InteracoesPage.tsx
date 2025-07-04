@@ -498,22 +498,22 @@ export default function InteracoesPage() {
       setDados(prev => ({
         ...prev,
         pendentes: resPendentes.data.results || resPendentes.data || [],
-        interagidos: resInteragidosHoje.data.map((i: any): Interacao => ({
-          id: i.id,
-          parceiro: i.parceiro_nome,
-          unidade: i.unidade,
-          classificacao: i.classificacao,
-          status: i.status,
-          data_interacao: i.data_interacao,
-          tipo: i.tipo,
-          gatilho_extra: i.gatilho_extra,
-          canal_venda_nome: obterNomeCanal(i.canal_venda_id),
-          usuario_nome: i.usuario_nome, // ✅ Correto
-        })),
-        statusDisponiveis: resPendentes.data.status_disponiveis || [],
-        gatilhosDisponiveis: resPendentes.data.gatilhos_disponiveis || []
-      }));
-      
+          interagidos: resInteragidosHoje.data.map((i: any): Interacao => ({
+    id: i.id,
+    parceiro: i.parceiro_nome,
+    unidade: i.unidade,
+    classificacao: i.classificacao,
+    status: i.status,
+    data_interacao: i.data_interacao,
+    tipo: i.tipo,
+    gatilho_extra: i.gatilho_extra,
+    canal_venda_nome: obterNomeCanal(i.canal_venda_id),
+    usuario_nome: i.usuario_nome, // ✅ Correto
+  })),
+  statusDisponiveis: resPendentes.data.status_disponiveis || [],
+  gatilhosDisponiveis: resPendentes.data.gatilhos_disponiveis || []
+}));
+
 
       setTotalPendentes(resPendentes.data.total_count || 0);
 
