@@ -738,7 +738,7 @@ const dadosFiltrados = useMemo(() => {
       {modalAberto && idMudandoStatus !== null && (
   <Modal
     opened={modalAberto}
-    onClose={() => {}}
+    onClose={() => {}} // impede fechar manualmente
     withCloseButton={false}
     title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
     centered
@@ -799,18 +799,16 @@ const dadosFiltrados = useMemo(() => {
 )}
 
 
+
+
    
-   {oportunidadeSelecionada && (
+{oportunidadeSelecionada && (
   <Modal
     opened={!!oportunidadeSelecionada}
     onClose={() => setOportunidadeSelecionada(null)}
+    withCloseButton={false}
     title="Editar Oportunidade"
     centered
-    withinPortal={false}
-    overlayProps={{
-      backgroundOpacity: 0.55,
-      blur: 4,
-    }}
   >
     <div>
       <p><strong>Parceiro:</strong> {oportunidadeSelecionada.parceiro_nome}</p>
@@ -854,46 +852,42 @@ const dadosFiltrados = useMemo(() => {
       }
     />
 
-<Select
-  label="Alterar Status"
-  placeholder="Selecione um status"
-  data={[
-    { value: 'oportunidade', label: 'Oportunidade' },
-    { value: 'orcamento', label: 'Orçamento' },
-    { value: 'aguardando', label: 'Aguardando Pagamento' },
-    { value: 'pedido', label: 'Pedido Faturado' },
-    { value: 'perdida', label: 'Venda Perdida' },
-  ]}
-  value={oportunidadeSelecionada.etapa}
-  onChange={(value) => {
-    if (!value) return;
-  
-    if (value === 'perdida') {
-      setIdMudandoStatus(oportunidadeSelecionada.id);
-      setEtapaParaAtualizar('perdida');
-      setModalAberto(true);
-      // NÃO fechar oportunidadeSelecionada aqui!
-      return;
-    }
-  
-    if (value === 'aguardando') {
-      setIdMudandoStatus(oportunidadeSelecionada.id);
-      setEtapaParaAtualizar('aguardando');
-      setNumeroPedido('');
-      setModalAberto(true);
-      // NÃO fechar oportunidadeSelecionada aqui!
-      return;
-    }
-  
-    setOportunidadeSelecionada({
-      ...oportunidadeSelecionada,
-      etapa: value,
-    });
-  }}
-  
-  clearable
-/>
+    <Select
+      label="Alterar Status"
+      placeholder="Selecione um status"
+      data={[
+        { value: 'oportunidade', label: 'Oportunidade' },
+        { value: 'orcamento', label: 'Orçamento' },
+        { value: 'aguardando', label: 'Aguardando Pagamento' },
+        { value: 'pedido', label: 'Pedido Faturado' },
+        { value: 'perdida', label: 'Venda Perdida' },
+      ]}
+      value={oportunidadeSelecionada.etapa}
+      onChange={(value) => {
+        if (!value) return;
 
+        if (value === 'perdida') {
+          setIdMudandoStatus(oportunidadeSelecionada.id);
+          setEtapaParaAtualizar('perdida');
+          setModalAberto(true);
+          return;
+        }
+
+        if (value === 'aguardando') {
+          setIdMudandoStatus(oportunidadeSelecionada.id);
+          setEtapaParaAtualizar('aguardando');
+          setNumeroPedido('');
+          setModalAberto(true);
+          return;
+        }
+
+        setOportunidadeSelecionada({
+          ...oportunidadeSelecionada,
+          etapa: value,
+        });
+      }}
+      clearable
+    />
 
     <Group justify="flex-end" mt="md">
       <Button variant="outline" onClick={() => setOportunidadeSelecionada(null)}>
@@ -903,6 +897,7 @@ const dadosFiltrados = useMemo(() => {
     </Group>
   </Modal>
 )}
+
 
 
     </SidebarGestor>
