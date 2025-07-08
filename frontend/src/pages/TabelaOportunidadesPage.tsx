@@ -855,35 +855,47 @@ const dadosFiltrados = useMemo(() => {
     if (!value) return;
   
     if (value === 'perdida') {
-      // Fecha Modal Mantine
-      setOportunidadeSelecionada(null);
-  
-      // Abre modal de motivo de perda
+      const nova = { ...oportunidadeSelecionada, etapa: 'perdida' };
       setIdMudandoStatus(oportunidadeSelecionada.id);
       setEtapaParaAtualizar('perdida');
-      setModalAberto(true);
+  
+      // Fecha Modal principal
+      setOportunidadeSelecionada(null);
+  
+      // Guarda dados para reabrir depois
+      setTimeout(() => {
+        setOportunidadeSelecionada(nova);
+        setModalAberto(true);
+      }, 300);
+  
       return;
     }
   
     if (value === 'aguardando') {
-      // Fecha Modal Mantine
-      setOportunidadeSelecionada(null);
-  
-      // Abre modal de número do pedido
+      const nova = { ...oportunidadeSelecionada, etapa: 'aguardando' };
       setIdMudandoStatus(oportunidadeSelecionada.id);
       setEtapaParaAtualizar('aguardando');
       setNumeroPedido('');
-      setModalAberto(true);
+  
+      // Fecha Modal principal
+      setOportunidadeSelecionada(null);
+  
+      // Guarda dados para reabrir depois
+      setTimeout(() => {
+        setOportunidadeSelecionada(nova);
+        setModalAberto(true);
+      }, 300);
+  
       return;
     }
   
-    // Para os outros casos, atualiza normalmente no modal principal
+    // Para outros casos, atualiza normalmente no modal principal
     setOportunidadeSelecionada({
       ...oportunidadeSelecionada,
       etapa: value,
-      
     });
   }}
+  
   
   clearable
 />
