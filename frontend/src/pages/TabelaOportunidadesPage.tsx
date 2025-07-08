@@ -136,7 +136,7 @@ const [numeroPedido, setNumeroPedido] = useState('');
 
   // extrai todas as strings de gatilho que realmente existem na lista
   const gatilhoOptions = useMemo(() => {
-    const all = dados.map((o) => o.gatilho_extra).filter((g): g is string => !!g);
+    const all = (dados || []).map((o) => o.gatilho_extra).filter((g): g is string => !!g);
     const unique = Array.from(new Set(all));
     return unique.map((g) => ({ value: g, label: g }));
   }, [dados]);
@@ -242,11 +242,13 @@ useEffect(() => {
     headers: { Authorization: `Bearer ${token}` },
     params,
   })
-    .then(res => {
-      setDados(res.data.results);                  // ✅ agora usa "results"
-      const total = res.data.count || 1;
-      setTotalPaginas(Math.ceil(total / 20));      // ✅ calcula total de páginas
-    })
+  .then(res => {
+    // Garante que dados nunca fique undefined
+    setDados(res.data.results ?? res.data ?? []);
+    const total = res.data.count || 1;
+    setTotalPaginas(Math.ceil(total / 20));
+  })
+  
     .catch(() => setDados([]))
     .finally(() => setCarregando(false));
 }, [token, filtroVendedor, filtroUnidade, etapaFiltro, statusParceiroFiltro, filtroGatilho, paginaAtual]);
