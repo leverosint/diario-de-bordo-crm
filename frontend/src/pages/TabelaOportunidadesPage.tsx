@@ -11,6 +11,7 @@ import SidebarGestor from '../components/SidebarGestor';
 import type { DateValue } from '@mantine/dates';
 
 import styles from './TabelaOportunidadesPage.module.css'; // ✅ CSS
+import { Pagination } from '@mantine/core';
 
 
 
@@ -48,7 +49,8 @@ const [statusParceiroFiltro, setStatusParceiroFiltro] = useState<string | null>(
 
 const [opcoesVendedores, setOpcoesVendedores] = useState<{value:string, label:string}[]>([]);
 const [opcoesUnidades, setOpcoesUnidades] = useState<{value:string, label:string}[]>([]);
-
+const [paginaAtual, setPaginaAtual] = useState(1);
+const [totalPaginas, setTotalPaginas] = useState(1);
   const [popupAberto, setPopupAberto] = useState(false);
   
   const [pendentesMovimentacao, setPendentesMovimentacao] = useState<Oportunidade[]>([]);
@@ -229,18 +231,26 @@ const handleCanalChange = async (canalId: string | null) => {
 // 🔗 Carregar dados da API (mantém igual)
 useEffect(() => {
   setCarregando(true);
-  const params: any = {};
+  const params: any = { page: paginaAtual, page_size: 20 }; // ⭐️ define página e limite
   if (filtroVendedor) params.consultor = filtroVendedor;
   if (filtroUnidade)  params.canal_id = filtroUnidade;
+  if (etapaFiltro) params.etapa = etapaFiltro;
+  if (statusParceiroFiltro) params.status_parceiro = statusParceiroFiltro;
+  if (filtroGatilho) params.gatilho = filtroGatilho;
 
   axios.get(`${import.meta.env.VITE_API_URL}/oportunidades/`, {
     headers: { Authorization: `Bearer ${token}` },
     params,
   })
-    .then(res => setDados(res.data))
+    .then(res => {
+      setDados(res.data.results);                  // ✅ agora usa "results"
+      const total = res.data.count || 1;
+      setTotalPaginas(Math.ceil(total / 20));      // ✅ calcula total de páginas
+    })
     .catch(() => setDados([]))
     .finally(() => setCarregando(false));
-}, [token, filtroVendedor, filtroUnidade]);
+}, [token, filtroVendedor, filtroUnidade, etapaFiltro, statusParceiroFiltro, filtroGatilho, paginaAtual]);
+
 
 useEffect(() => {
   // Vendedores
@@ -748,13 +758,30 @@ const dadosFiltrados = useMemo(() => {
             style={{ width: '100%', padding: '8px', fontSize: '1rem' }}
           >
             <option value="">Selecione o motivo</option>
-            <option value="analise_credito">Análise de Crédito Recusou</option>
-            <option value="cliente_desistiu">Cliente Desistiu</option>
-            <option value="adiou_compra">Cliente adiou a compra</option>
-            <option value="sem_retorno">Cliente não deu retorno mais</option>
-            <option value="outro_fornecedor">Comprou em outro fornecedor</option>
-            <option value="marketplace">Comprou no Marketplace</option>
-            {/* ... demais motivos ... */}
+<option value="analise_credito">Análise de Crédito Recusou</option>
+<option value="cliente_desistiu">Cliente Desistiu</option>
+<option value="adiou_compra">Cliente adiou a compra</option>
+<option value="sem_retorno">Cliente nao deu retorno mais</option>
+<option value="nao_responde_pagamento">Cliente não responde mais o pagamento</option>
+<option value="outro_fornecedor">Comprou em outro fornecedor</option>
+<option value="marketplace">Comprou no Marketplace</option>
+<option value="site_leveros">Comprou no Site Leveros</option>
+<option value="concorrente">Comprou no concorrente</option>
+<option value="parceiro">Comprou via parceiro</option>
+<option value="desconto_acima">Desconto acima do permitido</option>
+<option value="falta_estoque">Falta de Estoque</option>
+<option value="fechado">Fechado</option>
+<option value="fechou_concorrente">Fechou no concorrente</option>
+<option value="financiamento_negado">Financiamento Negado</option>
+<option value="outros">Outros Motivos não listados</option>
+<option value="pagamento_nao_realizado">Pagamento Não Realizado/Não autorizado</option>
+<option value="parceira_informou">Parceira informou que cliente fechou com concorrente</option>
+<option value="prazo_entrega">Prazo de Entrega</option>
+<option value="queria_pf">Queria que faturasse Pessoa Física</option>
+<option value="reprovado_b2e">Reprovado na B2E</option>
+<option value="sem_resposta">Sem retorno/Não Responde</option>
+<option value="frete">Valor do Frete</option>
+
           </select>
         ) : (
           <input
@@ -910,6 +937,16 @@ const dadosFiltrados = useMemo(() => {
   </Modal>
 )}
 
+{totalPaginas > 1 && (
+  <Group justify="center" mt="md">
+    <Pagination
+      total={totalPaginas}
+      value={paginaAtual}
+      onChange={setPaginaAtual}
+      withEdges
+    />
+  </Group>
+)}
 
     </SidebarGestor>
   );
