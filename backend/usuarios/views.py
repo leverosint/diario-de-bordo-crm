@@ -349,6 +349,8 @@ class InteracoesPendentesView(APIView):
                     'vendedor': vendedor_nome,
                 })
 
+                
+
         # Paginação
         page = int(request.query_params.get('page', 1))
         limit = int(request.query_params.get('limit', 10))
