@@ -736,17 +736,18 @@ const dadosFiltrados = useMemo(() => {
 
 
       {modalAberto && idMudandoStatus !== null && (
- <Modal
- opened={modalAberto}
- onClose={() => setModalAberto(false)}
- title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
- centered
- radius="md"
- // withinPortal removido ou true
- overlayProps={{
-   backgroundOpacity: 0.55,
-   blur: 4,
- }}
+        <Modal
+  opened={modalAberto}
+  onClose={() => setModalAberto(false)}
+  title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
+  centered
+  radius="md"
+  withinPortal
+  zIndex={1200} // 🔥 define prioridade
+  overlayProps={{
+    backgroundOpacity: 0.55,
+    blur: 4,
+  }}
 >
 
 
@@ -872,25 +873,24 @@ const dadosFiltrados = useMemo(() => {
   value={oportunidadeSelecionada.etapa}
   onChange={(value) => {
     if (!value) return;
-
+  
     if (value === 'perdida') {
-      // Abre modal de motivo de perda
       setIdMudandoStatus(oportunidadeSelecionada.id);
       setEtapaParaAtualizar('perdida');
+      setOportunidadeSelecionada(null); // 👈 fechar modal principal
       setModalAberto(true);
       return;
     }
-
+  
     if (value === 'aguardando') {
-      // Abre modal de número do pedido
       setIdMudandoStatus(oportunidadeSelecionada.id);
       setEtapaParaAtualizar('aguardando');
       setNumeroPedido('');
+      setOportunidadeSelecionada(null); // 👈 fechar modal principal
       setModalAberto(true);
       return;
     }
-
-    // Para os outros casos, atualiza normalmente no modal principal
+  
     setOportunidadeSelecionada({
       ...oportunidadeSelecionada,
       etapa: value,
