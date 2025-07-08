@@ -96,11 +96,11 @@ const [numeroPedido, setNumeroPedido] = useState('');
 
 <Modal
   opened={popupAberto}
-  onClose={() => {}}
-  withCloseButton={false}
+  onClose={() => setPopupAberto(false)} // aqui permite fechar
   title="Oportunidades sem movimentação"
   centered
 >
+
   <p>Você tem oportunidades sem movimentação há mais de 10 dias.<br />Atualize o status para continuar!</p>
   <ul style={{ listStyle: 'none', padding: 0 }}>
     {pendentesMovimentacao.map((o) => (
@@ -737,13 +737,13 @@ const dadosFiltrados = useMemo(() => {
 
 
       {modalAberto && idMudandoStatus !== null && (
-  <Modal
-    opened={modalAberto}
-    onClose={() => {}} // impede fechar
-    withCloseButton={false}
-    title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
-    centered
-  >
+        <Modal
+  opened={modalAberto}
+  onClose={() => setModalAberto(false)} // aqui também
+  title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
+  centered
+>
+
     <div className={styles.centralizado}>
       {etapaParaAtualizar === 'perdida' ? (
         <Select
@@ -786,12 +786,12 @@ const dadosFiltrados = useMemo(() => {
    
 {oportunidadeSelecionada && (
   <Modal
-    opened={!!oportunidadeSelecionada}
-    onClose={() => setOportunidadeSelecionada(null)}
-    withCloseButton={false}
-    title="Editar Oportunidade"
-    centered
-  >
+  opened={!!oportunidadeSelecionada}
+  onClose={() => setOportunidadeSelecionada(null)}
+  withCloseButton={false}
+  title="Editar Oportunidade"
+  centered
+>
     <div>
       <p><strong>Parceiro:</strong> {oportunidadeSelecionada.parceiro_nome}</p>
       <p><strong>Data Criação:</strong> {new Date(oportunidadeSelecionada.data_criacao).toLocaleDateString('pt-BR')}</p>
@@ -834,42 +834,45 @@ const dadosFiltrados = useMemo(() => {
       }
     />
 
-    <Select
-      label="Alterar Status"
-      placeholder="Selecione um status"
-      data={[
-        { value: 'oportunidade', label: 'Oportunidade' },
-        { value: 'orcamento', label: 'Orçamento' },
-        { value: 'aguardando', label: 'Aguardando Pagamento' },
-        { value: 'pedido', label: 'Pedido Faturado' },
-        { value: 'perdida', label: 'Venda Perdida' },
-      ]}
-      value={oportunidadeSelecionada.etapa}
-      onChange={(value) => {
-        if (!value) return;
+<Select
+  label="Alterar Status"
+  placeholder="Selecione um status"
+  data={[
+    { value: 'oportunidade', label: 'Oportunidade' },
+    { value: 'orcamento', label: 'Orçamento' },
+    { value: 'aguardando', label: 'Aguardando Pagamento' },
+    { value: 'pedido', label: 'Pedido Faturado' },
+    { value: 'perdida', label: 'Venda Perdida' },
+  ]}
+  value={oportunidadeSelecionada.etapa}
+  onChange={(value) => {
+    if (!value) return;
 
-        if (value === 'perdida') {
-          setIdMudandoStatus(oportunidadeSelecionada.id);
-          setEtapaParaAtualizar('perdida');
-          setModalAberto(true);
-          return;
-        }
+    if (value === 'perdida') {
+      setIdMudandoStatus(oportunidadeSelecionada.id);
+      setEtapaParaAtualizar('perdida');
+      setModalAberto(true);
+      setOportunidadeSelecionada(null); // 👈 fecha principal
+      return;
+    }
 
-        if (value === 'aguardando') {
-          setIdMudandoStatus(oportunidadeSelecionada.id);
-          setEtapaParaAtualizar('aguardando');
-          setNumeroPedido('');
-          setModalAberto(true);
-          return;
-        }
+    if (value === 'aguardando') {
+      setIdMudandoStatus(oportunidadeSelecionada.id);
+      setEtapaParaAtualizar('aguardando');
+      setNumeroPedido('');
+      setModalAberto(true);
+      setOportunidadeSelecionada(null); // 👈 fecha principal
+      return;
+    }
 
-        setOportunidadeSelecionada({
-          ...oportunidadeSelecionada,
-          etapa: value,
-        });
-      }}
-      clearable
-    />
+    setOportunidadeSelecionada({
+      ...oportunidadeSelecionada,
+      etapa: value,
+    });
+  }}
+  clearable
+/>
+
 
     <Group justify="flex-end" mt="md">
       <Button variant="outline" onClick={() => setOportunidadeSelecionada(null)}>
