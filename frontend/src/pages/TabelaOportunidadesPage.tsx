@@ -96,39 +96,38 @@ const [numeroPedido, setNumeroPedido] = useState('');
 
 <Modal
   opened={popupAberto}
-  onClose={() => setPopupAberto(false)} // aqui permite fechar
+  onClose={() => {}} // Impede fechar manualmente
+  withCloseButton={false}
   title="Oportunidades sem movimentação"
   centered
 >
-
   <p>Você tem oportunidades sem movimentação há mais de 10 dias.<br />Atualize o status para continuar!</p>
   <ul style={{ listStyle: 'none', padding: 0 }}>
     {pendentesMovimentacao.map((o) => (
       <li key={o.id} style={{ marginBottom: 24 }}>
         <b>{o.parceiro_nome}</b> (ID: {o.id}) — <span style={{ color: '#e8590c', fontWeight: 600 }}>{o.dias_sem_movimentacao} dias parado</span>
         <Group mt="xs" gap="xs">
-          <Select
-            value={o.etapa}
-            onChange={(value) => value && handleStatusChange(o.id, value)}
-            data={etapaOptions}
-            size="xs"
-            styles={{
-              input: {
-                backgroundColor: getStatusColor(o.etapa),
-                color: 'white',
-                fontWeight: 600,
-                textAlign: 'center',
-                borderRadius: 6,
-                minWidth: 120,
-              },
-            }}
-          />
+        <Select
+  value={o.etapa}
+  onChange={(value) => value && handleStatusChange(o.id, value)}
+  data={etapaOptions}
+  size="xs"
+  styles={{
+    input: {
+      backgroundColor: getStatusColor(o.etapa),
+      color: 'white',
+      fontWeight: 600,
+      textAlign: 'center',
+      borderRadius: 6,
+      minWidth: 120,
+    },
+  }}
+/>
         </Group>
       </li>
     ))}
   </ul>
 </Modal>
-
 
   
   const [etapaParaAtualizar, setEtapaParaAtualizar] = useState<string | null>(null);
@@ -737,12 +736,19 @@ const dadosFiltrados = useMemo(() => {
 
 
       {modalAberto && idMudandoStatus !== null && (
-        <Modal
-  opened={modalAberto}
-  onClose={() => setModalAberto(false)} // aqui também
-  title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
-  centered
+ <Modal
+ opened={modalAberto}
+ onClose={() => setModalAberto(false)}
+ title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
+ centered
+ radius="md"
+ // withinPortal removido ou true
+ overlayProps={{
+   backgroundOpacity: 0.55,
+   blur: 4,
+ }}
 >
+
 
     <div className={styles.centralizado}>
       {etapaParaAtualizar === 'perdida' ? (
@@ -752,7 +758,26 @@ const dadosFiltrados = useMemo(() => {
           data={[
             { value: 'analise_credito', label: 'Análise de Crédito Recusou' },
             { value: 'cliente_desistiu', label: 'Cliente Desistiu' },
-            // ... (todos os outros motivos)
+            { value: 'adiou_compra', label: 'Cliente adiou a compra' },
+            { value: 'sem_retorno', label: 'Cliente nao deu retorno mais' },
+            { value: 'nao_responde_pagamento', label: 'Cliente não responde mais o pagamento' },
+            { value: 'outro_fornecedor', label: 'Comprou em outro fornecedor' },
+            { value: 'marketplace', label: 'Comprou no Marketplace' },
+            { value: 'site_leveros', label: 'Comprou no Site Leveros' },
+            { value: 'concorrente', label: 'Comprou no concorrente' },
+            { value: 'parceiro', label: 'Comprou via parceiro' },
+            { value: 'desconto_acima', label: 'Desconto acima do permitido' },
+            { value: 'falta_estoque', label: 'Falta de Estoque' },
+            { value: 'fechado', label: 'Fechado' },
+            { value: 'fechou_concorrente', label: 'Fechou no concorrente' },
+            { value: 'financiamento_negado', label: 'Financiamento Negado' },
+            { value: 'outros', label: 'Outros Motivos não listados' },
+            { value: 'pagamento_nao_realizado', label: 'Pagamento Não Realizado/Não autorizado' },
+            { value: 'parceira_informou', label: 'Parceira informou que cliente fechou com concorrente' },
+            { value: 'prazo_entrega', label: 'Prazo de Entrega' },
+            { value: 'queria_pf', label: 'Queria que faturasse Pessoa Física' },
+            { value: 'reprovado_b2e', label: 'Reprovado na B2E' },
+            { value: 'sem_resposta', label: 'Sem retorno/Não Responde' },
             { value: 'frete', label: 'Valor do Frete' },
           ]}
           value={motivoPerda}
@@ -779,19 +804,19 @@ const dadosFiltrados = useMemo(() => {
     </Group>
   </Modal>
 )}
-
-
-
-
    
-{oportunidadeSelecionada && (
+   {oportunidadeSelecionada && (
   <Modal
-  opened={!!oportunidadeSelecionada}
-  onClose={() => setOportunidadeSelecionada(null)}
-  withCloseButton={false}
-  title="Editar Oportunidade"
-  centered
->
+    opened={!!oportunidadeSelecionada}
+    onClose={() => setOportunidadeSelecionada(null)}
+    title="Editar Oportunidade"
+    centered
+    withinPortal={false}
+    overlayProps={{
+      backgroundOpacity: 0.55,
+      blur: 4,
+    }}
+  >
     <div>
       <p><strong>Parceiro:</strong> {oportunidadeSelecionada.parceiro_nome}</p>
       <p><strong>Data Criação:</strong> {new Date(oportunidadeSelecionada.data_criacao).toLocaleDateString('pt-BR')}</p>
@@ -849,22 +874,23 @@ const dadosFiltrados = useMemo(() => {
     if (!value) return;
 
     if (value === 'perdida') {
+      // Abre modal de motivo de perda
       setIdMudandoStatus(oportunidadeSelecionada.id);
       setEtapaParaAtualizar('perdida');
       setModalAberto(true);
-      setOportunidadeSelecionada(null); // 👈 fecha principal
       return;
     }
 
     if (value === 'aguardando') {
+      // Abre modal de número do pedido
       setIdMudandoStatus(oportunidadeSelecionada.id);
       setEtapaParaAtualizar('aguardando');
       setNumeroPedido('');
       setModalAberto(true);
-      setOportunidadeSelecionada(null); // 👈 fecha principal
       return;
     }
 
+    // Para os outros casos, atualiza normalmente no modal principal
     setOportunidadeSelecionada({
       ...oportunidadeSelecionada,
       etapa: value,
@@ -882,7 +908,6 @@ const dadosFiltrados = useMemo(() => {
     </Group>
   </Modal>
 )}
-
 
 
     </SidebarGestor>
