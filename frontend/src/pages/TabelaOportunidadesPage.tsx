@@ -54,23 +54,21 @@ const [opcoesUnidades, setOpcoesUnidades] = useState<{value:string, label:string
   const [pendentesMovimentacao, setPendentesMovimentacao] = useState<Oportunidade[]>([]);
   const [oportunidadeSelecionada, setOportunidadeSelecionada] = useState<Oportunidade | null>(null);
   const [filtroGatilho, setFiltroGatilho] = useState<string>('');
-  const [modoEdicao, setModoEdicao] = useState<'normal' | 'perdida' | 'pedido' | null>(null);
   
   const [idMudandoStatus, setIdMudandoStatus] = useState<number | null>(null);
-
+const [modalAberto, setModalAberto] = useState(false);
 const [motivoPerda, setMotivoPerda] = useState('');
 const [numeroPedido, setNumeroPedido] = useState('');
 
 
-const abrirModalPerda = (id: number) => {
-  setIdMudandoStatus(id);
-  setMotivoPerda('');
-  setModoEdicao('perdida');
-};
+  const abrirModalPerda = (id: number) => {
+    setIdMudandoStatus(id);
+    setMotivoPerda('');
+    setModalAberto(true);
+  };
 
   const abrirModalOportunidade = (o: Oportunidade) => {
     setOportunidadeSelecionada({ ...o });
-    setModoEdicao('normal');
   };
 
   const salvarOportunidade = async () => {
@@ -132,7 +130,7 @@ const abrirModalPerda = (id: number) => {
 </Modal>
 
   
-
+  const [etapaParaAtualizar, setEtapaParaAtualizar] = useState<string | null>(null);
 
   // extrai todas as strings de gatilho que realmente existem na lista
   const gatilhoOptions = useMemo(() => {
@@ -217,9 +215,9 @@ const handleCanalChange = async (canalId: string | null) => {
             : o
         )
       );
-   
+      setModalAberto(false);
       setIdMudandoStatus(null);
-    
+      setEtapaParaAtualizar(null);
       setNumeroPedido('');
     } catch (err) {
       console.error('Erro ao salvar número do pedido:', err);
@@ -310,12 +308,12 @@ const handleStatusChange = (id: number, novaEtapa: string | null) => {
 
   if (novaEtapa === 'perdida') {
     abrirModalPerda(id);
-
+    setEtapaParaAtualizar('perdida');
   } else if (novaEtapa === 'aguardando') {
     setIdMudandoStatus(id);
-   
+    setEtapaParaAtualizar('aguardando');
     setNumeroPedido('');
-
+    setModalAberto(true);
   } else {
     const agora = new Date().toISOString();
     axios.patch(`${import.meta.env.VITE_API_URL}/oportunidades/${id}/`, {
@@ -393,9 +391,9 @@ const confirmarVendaPerdida = async () => {
       return atualizado;
     });
 
-  
+    setModalAberto(false);
     setMotivoPerda('');
- 
+    setEtapaParaAtualizar(null);
     setIdMudandoStatus(null);
 
   } catch (err) {
@@ -737,168 +735,179 @@ const dadosFiltrados = useMemo(() => {
 
 
 
-      {modoEdicao && oportunidadeSelecionada && (
-  <Modal
-    opened={!!modoEdicao}
-    onClose={() => {
-      setModoEdicao(null);
-      setOportunidadeSelecionada(null);
-      setIdMudandoStatus(null);
-      setMotivoPerda('');
-      setNumeroPedido('');
-    }}
-    title={
-      modoEdicao === 'perdida'
-        ? "Marcar como Venda Perdida"
-        : modoEdicao === 'pedido'
-        ? "Informar Número do Pedido"
-        : "Editar Oportunidade"
-    }
-    centered
-    overlayProps={{
-      backgroundOpacity: 0.55,
-      blur: 4,
-    }}
-  >
-    {modoEdicao === 'normal' && (
-      <>
-       <>
-  <div>
-    <p><strong>Parceiro:</strong> {oportunidadeSelecionada.parceiro_nome}</p>
-    <p><strong>Data Criação:</strong> {new Date(oportunidadeSelecionada.data_criacao).toLocaleDateString('pt-BR')}</p>
-    <p><strong>Data Etapa:</strong> {oportunidadeSelecionada.data_etapa ? new Date(oportunidadeSelecionada.data_etapa).toLocaleDateString('pt-BR') : '-'}</p>
-    <p><strong>Gatilho:</strong> {oportunidadeSelecionada.gatilho_extra || '-'}</p>
-  </div>
+      {modalAberto && idMudandoStatus !== null && (
+ <Modal
+ opened={modalAberto}
+ onClose={() => setModalAberto(false)}
+ title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
+ centered
+ radius="md"
+ // withinPortal removido ou true
+ overlayProps={{
+   backgroundOpacity: 0.55,
+   blur: 4,
+ }}
+>
 
-  <TextInput
-    label="Valor"
-    value={oportunidadeSelecionada.valor}
-    onChange={(e) =>
-      setOportunidadeSelecionada({
-        ...oportunidadeSelecionada,
-        valor: Number(e.currentTarget.value),
-      })
-    }
-    type="number"
-    min={0}
-  />
 
-  <Textarea
-    label="Observação"
-    value={oportunidadeSelecionada.observacao || ''}
-    onChange={(e) =>
-      setOportunidadeSelecionada({
-        ...oportunidadeSelecionada,
-        observacao: e.currentTarget.value,
-      })
-    }
-  />
-
-  <TextInput
-    label="Número do Pedido"
-    value={oportunidadeSelecionada.numero_pedido || ''}
-    onChange={(e) =>
-      setOportunidadeSelecionada({
-        ...oportunidadeSelecionada,
-        numero_pedido: e.currentTarget.value,
-      })
-    }
-  />
-
-  <Select
-    label="Alterar Status"
-    placeholder="Selecione um status"
-    data={[
-      { value: 'oportunidade', label: 'Oportunidade' },
-      { value: 'orcamento', label: 'Orçamento' },
-      { value: 'aguardando', label: 'Aguardando Pagamento' },
-      { value: 'pedido', label: 'Pedido Faturado' },
-      { value: 'perdida', label: 'Venda Perdida' },
-    ]}
-    value={oportunidadeSelecionada.etapa}
-    onChange={(value) => {
-      if (!value) return;
-
-      if (value === 'perdida') {
-        setIdMudandoStatus(oportunidadeSelecionada.id);
-        setModoEdicao('perdida');
-        setMotivoPerda('');
-        return;
-      }
-
-      if (value === 'aguardando') {
-        setIdMudandoStatus(oportunidadeSelecionada.id);
-        setModoEdicao('pedido');
-        setNumeroPedido('');
-        return;
-      }
-
-      setOportunidadeSelecionada({
-        ...oportunidadeSelecionada,
-        etapa: value,
-      });
-    }}
-    clearable
-  />
-
-  <Group justify="flex-end" mt="md">
-    <Button variant="outline" onClick={() => { setModoEdicao(null); setOportunidadeSelecionada(null); }}>
-      Cancelar
-    </Button>
-    <Button onClick={salvarOportunidade}>Salvar</Button>
-  </Group>
-</>
-
-      </>
-    )}
-
-    {modoEdicao === 'perdida' && (
-      <>
+    <div className={styles.centralizado}>
+      {etapaParaAtualizar === 'perdida' ? (
         <Select
           label="Motivo da Venda Perdida"
           placeholder="Selecione"
           data={[
             { value: 'analise_credito', label: 'Análise de Crédito Recusou' },
             { value: 'cliente_desistiu', label: 'Cliente Desistiu' },
-            // ...restante dos motivos
+            { value: 'adiou_compra', label: 'Cliente adiou a compra' },
+            { value: 'sem_retorno', label: 'Cliente nao deu retorno mais' },
+            { value: 'nao_responde_pagamento', label: 'Cliente não responde mais o pagamento' },
+            { value: 'outro_fornecedor', label: 'Comprou em outro fornecedor' },
+            { value: 'marketplace', label: 'Comprou no Marketplace' },
+            { value: 'site_leveros', label: 'Comprou no Site Leveros' },
+            { value: 'concorrente', label: 'Comprou no concorrente' },
+            { value: 'parceiro', label: 'Comprou via parceiro' },
+            { value: 'desconto_acima', label: 'Desconto acima do permitido' },
+            { value: 'falta_estoque', label: 'Falta de Estoque' },
+            { value: 'fechado', label: 'Fechado' },
+            { value: 'fechou_concorrente', label: 'Fechou no concorrente' },
+            { value: 'financiamento_negado', label: 'Financiamento Negado' },
+            { value: 'outros', label: 'Outros Motivos não listados' },
+            { value: 'pagamento_nao_realizado', label: 'Pagamento Não Realizado/Não autorizado' },
+            { value: 'parceira_informou', label: 'Parceira informou que cliente fechou com concorrente' },
+            { value: 'prazo_entrega', label: 'Prazo de Entrega' },
+            { value: 'queria_pf', label: 'Queria que faturasse Pessoa Física' },
+            { value: 'reprovado_b2e', label: 'Reprovado na B2E' },
+            { value: 'sem_resposta', label: 'Sem retorno/Não Responde' },
+            { value: 'frete', label: 'Valor do Frete' },
           ]}
           value={motivoPerda}
           onChange={(value) => setMotivoPerda(value ?? '')}
           required
           clearable
         />
-        <Group justify="center" mt="md">
-          <Button variant="outline" color="red" onClick={() => setModoEdicao(null)}>
-            Cancelar
-          </Button>
-          <Button color="green" onClick={confirmarVendaPerdida}>
-            Confirmar
-          </Button>
-        </Group>
-      </>
-    )}
-
-    {modoEdicao === 'pedido' && (
-      <>
+      ) : (
         <TextInput
           label="Número do Pedido"
           value={numeroPedido}
           onChange={(e) => setNumeroPedido(e.currentTarget.value)}
           required
         />
-        <Group justify="center" mt="md">
-          <Button variant="outline" color="red" onClick={() => setModoEdicao(null)}>
-            Cancelar
-          </Button>
-          <Button color="green" onClick={confirmarNumeroPedido}>
-            Confirmar
-          </Button>
-        </Group>
-      </>
-    )}
+      )}
+    </div>
+    <Group justify="center" mt="md">
+      <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
+        Cancelar
+      </Button>
+      <Button color="green" onClick={etapaParaAtualizar === 'perdida' ? confirmarVendaPerdida : confirmarNumeroPedido}>
+        Confirmar
+      </Button>
+    </Group>
   </Modal>
 )}
+   
+   {oportunidadeSelecionada && (
+  <Modal
+    opened={!!oportunidadeSelecionada}
+    onClose={() => setOportunidadeSelecionada(null)}
+    title="Editar Oportunidade"
+    centered
+    withinPortal={false}
+    overlayProps={{
+      backgroundOpacity: 0.55,
+      blur: 4,
+    }}
+  >
+    <div>
+      <p><strong>Parceiro:</strong> {oportunidadeSelecionada.parceiro_nome}</p>
+      <p><strong>Data Criação:</strong> {new Date(oportunidadeSelecionada.data_criacao).toLocaleDateString('pt-BR')}</p>
+      <p><strong>Data Etapa:</strong> {oportunidadeSelecionada.data_etapa ? new Date(oportunidadeSelecionada.data_etapa).toLocaleDateString('pt-BR') : '-'}</p>
+      <p><strong>Gatilho:</strong> {oportunidadeSelecionada.gatilho_extra || '-'}</p>
+    </div>
 
+    <TextInput
+      label="Valor"
+      value={oportunidadeSelecionada.valor}
+      onChange={(e) =>
+        setOportunidadeSelecionada({
+          ...oportunidadeSelecionada,
+          valor: Number(e.currentTarget.value),
+        })
+      }
+      type="number"
+      min={0}
+    />
+
+    <Textarea
+      label="Observação"
+      value={oportunidadeSelecionada.observacao || ''}
+      onChange={(e) =>
+        setOportunidadeSelecionada({
+          ...oportunidadeSelecionada,
+          observacao: e.currentTarget.value,
+        })
+      }
+    />
+
+    <TextInput
+      label="Número do Pedido"
+      value={oportunidadeSelecionada.numero_pedido || ''}
+      onChange={(e) =>
+        setOportunidadeSelecionada({
+          ...oportunidadeSelecionada,
+          numero_pedido: e.currentTarget.value,
+        })
+      }
+    />
+
+<Select
+  label="Alterar Status"
+  placeholder="Selecione um status"
+  data={[
+    { value: 'oportunidade', label: 'Oportunidade' },
+    { value: 'orcamento', label: 'Orçamento' },
+    { value: 'aguardando', label: 'Aguardando Pagamento' },
+    { value: 'pedido', label: 'Pedido Faturado' },
+    { value: 'perdida', label: 'Venda Perdida' },
+  ]}
+  value={oportunidadeSelecionada.etapa}
+  onChange={(value) => {
+    if (!value) return;
+
+    if (value === 'perdida') {
+      // Abre modal de motivo de perda
+      setIdMudandoStatus(oportunidadeSelecionada.id);
+      setEtapaParaAtualizar('perdida');
+      setModalAberto(true);
+      return;
+    }
+
+    if (value === 'aguardando') {
+      // Abre modal de número do pedido
+      setIdMudandoStatus(oportunidadeSelecionada.id);
+      setEtapaParaAtualizar('aguardando');
+      setNumeroPedido('');
+      setModalAberto(true);
+      return;
+    }
+
+    // Para os outros casos, atualiza normalmente no modal principal
+    setOportunidadeSelecionada({
+      ...oportunidadeSelecionada,
+      etapa: value,
+    });
+  }}
+  clearable
+/>
+
+
+    <Group justify="flex-end" mt="md">
+      <Button variant="outline" onClick={() => setOportunidadeSelecionada(null)}>
+        Cancelar
+      </Button>
+      <Button onClick={salvarOportunidade}>Salvar</Button>
+    </Group>
+  </Modal>
+)}
 
 
     </SidebarGestor>
