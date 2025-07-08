@@ -736,21 +736,13 @@ const dadosFiltrados = useMemo(() => {
 
 
       {modalAberto && idMudandoStatus !== null && (
-        <Modal
-  opened={modalAberto}
-  onClose={() => setModalAberto(false)}
-  title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
-  centered
-  radius="md"
-  withinPortal
-  zIndex={1200} // 🔥 define prioridade
-  overlayProps={{
-    backgroundOpacity: 0.55,
-    blur: 4,
-  }}
->
-
-
+  <Modal
+    opened={modalAberto}
+    onClose={() => {}}
+    withCloseButton={false}
+    title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
+    centered
+  >
     <div className={styles.centralizado}>
       {etapaParaAtualizar === 'perdida' ? (
         <Select
@@ -760,7 +752,7 @@ const dadosFiltrados = useMemo(() => {
             { value: 'analise_credito', label: 'Análise de Crédito Recusou' },
             { value: 'cliente_desistiu', label: 'Cliente Desistiu' },
             { value: 'adiou_compra', label: 'Cliente adiou a compra' },
-            { value: 'sem_retorno', label: 'Cliente nao deu retorno mais' },
+            { value: 'sem_retorno', label: 'Cliente não deu retorno mais' },
             { value: 'nao_responde_pagamento', label: 'Cliente não responde mais o pagamento' },
             { value: 'outro_fornecedor', label: 'Comprou em outro fornecedor' },
             { value: 'marketplace', label: 'Comprou no Marketplace' },
@@ -805,6 +797,8 @@ const dadosFiltrados = useMemo(() => {
     </Group>
   </Modal>
 )}
+
+
    
    {oportunidadeSelecionada && (
   <Modal
@@ -877,8 +871,8 @@ const dadosFiltrados = useMemo(() => {
     if (value === 'perdida') {
       setIdMudandoStatus(oportunidadeSelecionada.id);
       setEtapaParaAtualizar('perdida');
-      setOportunidadeSelecionada(null); // 👈 fechar modal principal
       setModalAberto(true);
+      // NÃO fechar oportunidadeSelecionada aqui!
       return;
     }
   
@@ -886,8 +880,8 @@ const dadosFiltrados = useMemo(() => {
       setIdMudandoStatus(oportunidadeSelecionada.id);
       setEtapaParaAtualizar('aguardando');
       setNumeroPedido('');
-      setOportunidadeSelecionada(null); // 👈 fechar modal principal
       setModalAberto(true);
+      // NÃO fechar oportunidadeSelecionada aqui!
       return;
     }
   
@@ -896,6 +890,7 @@ const dadosFiltrados = useMemo(() => {
       etapa: value,
     });
   }}
+  
   clearable
 />
 
