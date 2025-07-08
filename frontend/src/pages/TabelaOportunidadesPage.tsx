@@ -736,74 +736,55 @@ const dadosFiltrados = useMemo(() => {
 
 
       {modalAberto && idMudandoStatus !== null && (
- <Modal
- opened={modalAberto}
- onClose={() => setModalAberto(false)}
- title={etapaParaAtualizar === 'perdida' ? "Marcar como Venda Perdida" : "Informar Número do Pedido"}
- centered
- radius="md"
- // withinPortal removido ou true
- overlayProps={{
-   backgroundOpacity: 0.55,
-   blur: 4,
- }}
->
+  <div className={styles.modalOverlay}>
+    <div className={styles.modalContent}>
+      <h2>{etapaParaAtualizar === 'perdida' ? 'Marcar como Venda Perdida' : 'Informar Número do Pedido'}</h2>
 
+      <div style={{ marginTop: 20 }}>
+        {etapaParaAtualizar === 'perdida' ? (
+          <select
+            value={motivoPerda}
+            onChange={(e) => setMotivoPerda(e.target.value)}
+            style={{ width: '100%', padding: '8px', fontSize: '1rem' }}
+          >
+            <option value="">Selecione o motivo</option>
+            <option value="analise_credito">Análise de Crédito Recusou</option>
+            <option value="cliente_desistiu">Cliente Desistiu</option>
+            <option value="adiou_compra">Cliente adiou a compra</option>
+            <option value="sem_retorno">Cliente não deu retorno mais</option>
+            <option value="outro_fornecedor">Comprou em outro fornecedor</option>
+            <option value="marketplace">Comprou no Marketplace</option>
+            {/* ... demais motivos ... */}
+          </select>
+        ) : (
+          <input
+            type="text"
+            value={numeroPedido}
+            onChange={(e) => setNumeroPedido(e.target.value)}
+            placeholder="Número do Pedido"
+            style={{ width: '100%', padding: '8px', fontSize: '1rem' }}
+          />
+        )}
+      </div>
 
-    <div className={styles.centralizado}>
-      {etapaParaAtualizar === 'perdida' ? (
-        <Select
-          label="Motivo da Venda Perdida"
-          placeholder="Selecione"
-          data={[
-            { value: 'analise_credito', label: 'Análise de Crédito Recusou' },
-            { value: 'cliente_desistiu', label: 'Cliente Desistiu' },
-            { value: 'adiou_compra', label: 'Cliente adiou a compra' },
-            { value: 'sem_retorno', label: 'Cliente nao deu retorno mais' },
-            { value: 'nao_responde_pagamento', label: 'Cliente não responde mais o pagamento' },
-            { value: 'outro_fornecedor', label: 'Comprou em outro fornecedor' },
-            { value: 'marketplace', label: 'Comprou no Marketplace' },
-            { value: 'site_leveros', label: 'Comprou no Site Leveros' },
-            { value: 'concorrente', label: 'Comprou no concorrente' },
-            { value: 'parceiro', label: 'Comprou via parceiro' },
-            { value: 'desconto_acima', label: 'Desconto acima do permitido' },
-            { value: 'falta_estoque', label: 'Falta de Estoque' },
-            { value: 'fechado', label: 'Fechado' },
-            { value: 'fechou_concorrente', label: 'Fechou no concorrente' },
-            { value: 'financiamento_negado', label: 'Financiamento Negado' },
-            { value: 'outros', label: 'Outros Motivos não listados' },
-            { value: 'pagamento_nao_realizado', label: 'Pagamento Não Realizado/Não autorizado' },
-            { value: 'parceira_informou', label: 'Parceira informou que cliente fechou com concorrente' },
-            { value: 'prazo_entrega', label: 'Prazo de Entrega' },
-            { value: 'queria_pf', label: 'Queria que faturasse Pessoa Física' },
-            { value: 'reprovado_b2e', label: 'Reprovado na B2E' },
-            { value: 'sem_resposta', label: 'Sem retorno/Não Responde' },
-            { value: 'frete', label: 'Valor do Frete' },
-          ]}
-          value={motivoPerda}
-          onChange={(value) => setMotivoPerda(value ?? '')}
-          required
-          clearable
-        />
-      ) : (
-        <TextInput
-          label="Número do Pedido"
-          value={numeroPedido}
-          onChange={(e) => setNumeroPedido(e.currentTarget.value)}
-          required
-        />
-      )}
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
+        <button
+          style={{ marginRight: 10, padding: '8px 20px', background: 'red', color: 'white', border: 'none', cursor: 'pointer' }}
+          onClick={() => setModalAberto(false)}
+        >
+          Cancelar
+        </button>
+        <button
+          style={{ padding: '8px 20px', background: 'green', color: 'white', border: 'none', cursor: 'pointer' }}
+          onClick={etapaParaAtualizar === 'perdida' ? confirmarVendaPerdida : confirmarNumeroPedido}
+        >
+          Confirmar
+        </button>
+      </div>
     </div>
-    <Group justify="center" mt="md">
-      <Button variant="outline" color="red" onClick={() => setModalAberto(false)}>
-        Cancelar
-      </Button>
-      <Button color="green" onClick={etapaParaAtualizar === 'perdida' ? confirmarVendaPerdida : confirmarNumeroPedido}>
-        Confirmar
-      </Button>
-    </Group>
-  </Modal>
+  </div>
 )}
+
    
    {oportunidadeSelecionada && (
   <Modal
@@ -872,16 +853,22 @@ const dadosFiltrados = useMemo(() => {
   value={oportunidadeSelecionada.etapa}
   onChange={(value) => {
     if (!value) return;
-
+  
     if (value === 'perdida') {
+      // Fecha Modal Mantine
+      setOportunidadeSelecionada(null);
+  
       // Abre modal de motivo de perda
       setIdMudandoStatus(oportunidadeSelecionada.id);
       setEtapaParaAtualizar('perdida');
       setModalAberto(true);
       return;
     }
-
+  
     if (value === 'aguardando') {
+      // Fecha Modal Mantine
+      setOportunidadeSelecionada(null);
+  
       // Abre modal de número do pedido
       setIdMudandoStatus(oportunidadeSelecionada.id);
       setEtapaParaAtualizar('aguardando');
@@ -889,13 +876,15 @@ const dadosFiltrados = useMemo(() => {
       setModalAberto(true);
       return;
     }
-
+  
     // Para os outros casos, atualiza normalmente no modal principal
     setOportunidadeSelecionada({
       ...oportunidadeSelecionada,
       etapa: value,
+      
     });
   }}
+  
   clearable
 />
 
