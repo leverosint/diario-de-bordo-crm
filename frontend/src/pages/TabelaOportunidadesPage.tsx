@@ -760,21 +760,29 @@ const dadosFiltrados = useMemo(() => {
             style={{ width: '100%', padding: '8px', fontSize: '1rem' }}
           >
             <option value="">Selecione o motivo</option>
-            <option value="analise_credito_recusou">Análise de crédito recusou</option>
-<option value="necessidade_entrada">Necessidade de entrada para pagamento a prazo</option>
-<option value="condicao_parcelamento_prazo">Condição de parcelamento para pagamento a prazo</option>
-<option value="cliente_desistiu_adiou">Cliente desistiu/adiou a compra</option>
-<option value="sem_retorno">Sem retorno/não responde</option>
-<option value="preco_margem_inviavel">Preço/Margem inviável</option>
-<option value="falta_estoque">Falta de estoque</option>
-<option value="prazo_entrega">Prazo de entrega</option>
-<option value="problemas_pagamento">Problemas com pagamento</option>
-<option value="valor_frete">Valor do frete</option>
-<option value="condicao_parcelamento_cartao">Condição de parcelamento no cartão</option>
-<option value="comprou_site_marketplace">Comprou no site/marketplace</option>
-<option value="rt_diferenciada_concorrente">RT diferenciada do concorrente</option>
-<option value="campanha_concorrente">Campanha do concorrente</option>
-
+<option value="analise_credito">Análise de Crédito Recusou</option>
+<option value="cliente_desistiu">Cliente Desistiu</option>
+<option value="adiou_compra">Cliente adiou a compra</option>
+<option value="sem_retorno">Cliente nao deu retorno mais</option>
+<option value="nao_responde_pagamento">Cliente não responde mais o pagamento</option>
+<option value="outro_fornecedor">Comprou em outro fornecedor</option>
+<option value="marketplace">Comprou no Marketplace</option>
+<option value="site_leveros">Comprou no Site Leveros</option>
+<option value="concorrente">Comprou no concorrente</option>
+<option value="parceiro">Comprou via parceiro</option>
+<option value="desconto_acima">Desconto acima do permitido</option>
+<option value="falta_estoque">Falta de Estoque</option>
+<option value="fechado">Fechado</option>
+<option value="fechou_concorrente">Fechou no concorrente</option>
+<option value="financiamento_negado">Financiamento Negado</option>
+<option value="outros">Outros Motivos não listados</option>
+<option value="pagamento_nao_realizado">Pagamento Não Realizado/Não autorizado</option>
+<option value="parceira_informou">Parceira informou que cliente fechou com concorrente</option>
+<option value="prazo_entrega">Prazo de Entrega</option>
+<option value="queria_pf">Queria que faturasse Pessoa Física</option>
+<option value="reprovado_b2e">Reprovado na B2E</option>
+<option value="sem_resposta">Sem retorno/Não Responde</option>
+<option value="frete">Valor do Frete</option>
 
           </select>
         ) : (
