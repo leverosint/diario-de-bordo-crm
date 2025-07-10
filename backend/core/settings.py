@@ -133,4 +133,3 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = f'Diário de Bordo <allan.costa@leveros.com.br>'
 FRONTEND_URL = config('FRONTEND_URL', default='https://diario-de-bordo-crm-1.onrender.com')
-
