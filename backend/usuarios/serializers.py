@@ -89,6 +89,8 @@ class OportunidadeSerializer(serializers.ModelSerializer):
     valor = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, default=0)
     gatilho_extra = serializers.CharField(required=False, allow_null=True, default=None)
     numero_pedido = serializers.CharField(required=False, allow_null=True, allow_blank=True)  # ⬅️ ADICIONE
+    data_etapa = serializers.DateTimeField(read_only=True, required=False, allow_null=True)
+
 
     class Meta:
         model = Oportunidade
