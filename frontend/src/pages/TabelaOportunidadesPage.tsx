@@ -13,6 +13,13 @@ import type { DateValue } from '@mantine/dates';
 import styles from './TabelaOportunidadesPage.module.css'; // ✅ CSS
 import { Pagination } from '@mantine/core';
 
+const etapaOptions = [
+  { value: 'oportunidade', label: 'Oportunidade' },
+  { value: 'orcamento', label: 'Orçamento' },
+  { value: 'aguardando', label: 'Aguardando Pagamento' },
+  { value: 'pedido', label: 'Pedido Faturado' },
+  { value: 'perdida', label: 'Venda Perdida' },
+];
 
 
 
@@ -170,17 +177,6 @@ const handleCanalChange = async (canalId: string | null) => {
     setOpcoesVendedores([]);
   }
 };
-
-
-
-
-  const etapaOptions = [
-    { value: 'oportunidade', label: 'Oportunidade' },
-    { value: 'orcamento', label: 'Orçamento' },
-    { value: 'aguardando', label: 'Aguardando Pagamento' },
-    { value: 'pedido', label: 'Pedido Faturado' },
-    { value: 'perdida', label: 'Venda Perdida' },
-  ];
 
   
 
