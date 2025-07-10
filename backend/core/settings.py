@@ -126,10 +126,10 @@ CORS_ALLOWED_ORIGINS = [
 
 # E-mail elastic
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp-relay.brevo.com'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = f'Diário de Bordo <allan.costa@leveros.com.br>'
+DEFAULT_FROM_EMAIL = f'Diário de Bordo <diario.bordo.lev@gmail.com>'
 FRONTEND_URL = config('FRONTEND_URL', default='https://diario-de-bordo-crm-1.onrender.com')

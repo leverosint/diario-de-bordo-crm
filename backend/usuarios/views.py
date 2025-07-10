@@ -349,7 +349,7 @@ class InteracoesPendentesView(APIView):
                     'vendedor': vendedor_nome,
                 })
 
-                
+
 
         # Paginação
         page = int(request.query_params.get('page', 1))
@@ -580,6 +580,10 @@ class HistoricoInteracoesView(generics.ListAPIView):
 
 
 
+class OportunidadePagination(PageNumberPagination):
+    page_size = 20  # ⭐️ Define o número padrão de registros por página
+    page_size_query_param = 'page_size'  # Permite que o front-end altere a página
+    max_page_size = 100
 # ===== Oportunidades =====
 class OportunidadeViewSet(viewsets.ModelViewSet):
     serializer_class = OportunidadeSerializer
