@@ -573,7 +573,6 @@ class InteracoesMetasView(APIView):
 class HistoricoInteracoesView(generics.ListAPIView):
     serializer_class = InteracaoSerializer
     permission_classes = [IsAuthenticated]
-    
 
     def get_queryset(self):
         parceiro_id = self.request.query_params.get('parceiro_id')
