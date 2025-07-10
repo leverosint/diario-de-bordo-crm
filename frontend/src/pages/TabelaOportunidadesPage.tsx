@@ -38,6 +38,13 @@ interface Oportunidade {
   dias_sem_movimentacao?: number;
 }
 
+const getStatusColor = (etapa: string) => ({
+  oportunidade: 'blue',
+  orcamento: 'teal',
+  aguardando: '#f59f00',
+  pedido: 'green',
+  perdida: 'red',
+}[etapa] || 'gray');
 
 
 
@@ -180,14 +187,7 @@ const handleCanalChange = async (canalId: string | null) => {
 
   
 
-  const getStatusColor = (etapa: string) => ({
-    oportunidade: 'blue',
-    orcamento: 'teal',
-    aguardando: '#f59f00',
-    pedido: 'green',
-    perdida: 'red',
-  }[etapa] || 'gray');
-
+  
 
   const confirmarNumeroPedido = async () => {
     if (!idMudandoStatus || numeroPedido.trim() === '') {
