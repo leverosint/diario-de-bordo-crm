@@ -759,8 +759,6 @@ const dadosFiltrados = useMemo(() => {
 </Modal>
       
 
-
-
       {modalAberto && idMudandoStatus !== null && (
   <div className={styles.modalOverlay}>
     <div className={styles.modalContent}>
