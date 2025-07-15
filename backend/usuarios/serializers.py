@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Parceiro, CanalVenda, Interacao, Oportunidade, GatilhoExtra
 from .models import ResumoParceirosMensal
-
+from django.utils import timezone
 
 User = get_user_model()
 
@@ -112,7 +112,21 @@ class OportunidadeSerializer(serializers.ModelSerializer):
             return (now().date() - ultima.data_interacao.date()).days
         return None
 
+    def get_dias_sem_movimentacao_oportunidade(self, obj):
+        from django.utils.timezone import now
+        if obj.data_etapa:
+            return (now().date() - obj.data_etapa.date()).days
+        return None
 
+    def update(self, instance, validated_data):
+        etapa_nova = validated_data.get('etapa')
+        if etapa_nova and etapa_nova != instance.etapa:
+            instance.data_etapa = timezone.now()
+        return super().update(instance, validated_data)
+
+    def create(self, validated_data):
+        validated_data['data_etapa'] = timezone.now()
+        return super().create(validated_data)
 
 
 

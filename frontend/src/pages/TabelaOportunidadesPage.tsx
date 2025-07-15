@@ -283,7 +283,7 @@ useEffect(() => {
 }, [token, tipoUser]);
 
 const dadosComDias: Oportunidade[] = useMemo(() => {
-  return dados.map((o) => ({
+  const dadosCalculados = dados.map((o) => ({
     ...o,
     dias_sem_movimentacao: o.data_etapa
       ? Math.floor(
@@ -292,9 +292,11 @@ const dadosComDias: Oportunidade[] = useMemo(() => {
         )
       : undefined,
   }));
+
+  console.log('📊 dadosComDias', dadosCalculados);
+
+  return dadosCalculados;
 }, [dados]);
-
-
 
 
 // 🔥 Verificar se tem oportunidades sem movimentação
