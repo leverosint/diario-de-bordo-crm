@@ -754,6 +754,7 @@ const dadosFiltrados = useMemo(() => {
   withCloseButton={false}
   title="Oportunidades sem movimentação"
   centered
+  withinPortal={false}
 >
   <p>Teste: conteúdo fixo do modal!</p>
 </Modal>
