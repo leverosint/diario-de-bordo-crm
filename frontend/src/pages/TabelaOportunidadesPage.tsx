@@ -47,8 +47,10 @@ const getStatusColor = (etapa: string) => ({
 }[etapa] || 'gray');
 
 
-
+TabelaOportunidadesPage.displayName = "TabelaOportunidadesPage";
 export default function TabelaOportunidadesPage() {
+console.log("✅ Renderizando TabelaOportunidadesPage");
+
  
   const [dados, setDados] = useState<Oportunidade[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -304,11 +306,16 @@ useEffect(() => {
   const oportunidadesPendentes = dadosComDias.filter(
     (o) => (o.dias_sem_movimentacao ?? 0) >= 10
   );
-  
+  console.log('✅ oportunidadesPendentes:', oportunidadesPendentes);
+  console.log('✅ popupAberto (antes set):', popupAberto);
 
   if (oportunidadesPendentes.length > 0) {
     setPendentesMovimentacao(oportunidadesPendentes);
     setPopupAberto(true);
+    console.log('🎉 setPopupAberto(TRUE)');
+  }else {
+    setPopupAberto(false);
+    console.log('🚫 setPopupAberto(FALSE)');
   }
 }, [dadosComDias]);
 
