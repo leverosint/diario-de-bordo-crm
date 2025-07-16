@@ -276,7 +276,7 @@ useEffect(() => {
   }
 
   const oportunidadesPendentes = dadosComDias.filter(
-    (o) => (o.dias_sem_movimentacao ?? 0) >= 16 &&
+    (o) => (o.dias_sem_movimentacao ?? 0) >= 20 &&
     o.etapa !== 'pedido' && // Ignora Pedido Faturado
     o.etapa !== 'perdida'   // Ignora Venda Perdida
   );
@@ -730,7 +730,7 @@ const dadosFiltrados = useMemo(() => {
   centered
   withinPortal={false} // ✅ adiciona aqui
 >
-  <p>Você tem oportunidades sem movimentação há mais de 10 dias.<br />Atualize o status para continuar!</p>
+  <p>Você tem oportunidades sem movimentação há mais de 20 dias.<br />Atualize o status para continuar!</p>
   <ul style={{ listStyle: 'none', padding: 0 }}>
     {pendentesMovimentacao.map((o) => (
       <li key={o.id} style={{ marginBottom: 24 }}>
