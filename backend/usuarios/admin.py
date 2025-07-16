@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, CanalVenda, Parceiro
+from .models import CustomUser, CanalVenda, Parceiro, InteracaoGerada
 
 # Admin do usuário
 @admin.register(CustomUser)
@@ -80,3 +80,18 @@ class InteracaoAdmin(admin.ModelAdmin):
     list_display = ('parceiro', 'usuario', 'tipo', 'data_interacao', 'entrou_em_contato')
     list_filter = ('tipo', 'entrou_em_contato', 'data_interacao')
     search_fields = ('parceiro__parceiro', 'usuario__username')
+
+
+# Interacoes Geradas
+@admin.register(InteracaoGerada)
+class InteracaoGeradaAdmin(admin.ModelAdmin):
+    list_display = ('parceiro', 'get_usuario', 'canal_venda', 'status', 'data_geracao')
+    list_filter = ('canal_venda', 'status', 'data_geracao')
+    search_fields = ('parceiro__parceiro', 'usuario__username', 'usuario__id_vendedor')
+
+    def get_usuario(self, obj):
+        return obj.usuario.username if obj.usuario else '-'
+    get_usuario.short_description = 'Usuário'
+    def get_id_vendedor(self, obj):
+        return obj.usuario.id_vendedor if obj.usuario else '-'
+    get_id_vendedor.short_description = 'ID Vendedor'

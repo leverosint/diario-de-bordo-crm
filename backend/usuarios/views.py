@@ -32,7 +32,7 @@ from .serializers import ReportParceiroSerializer
 from .models import ResumoParceirosMensal
 from .serializers import ResumoParceirosMensalSerializer
 from rest_framework.pagination import PageNumberPagination
-
+from .models import InteracaoGerada
 
 
 
@@ -334,6 +334,13 @@ class InteracoesPendentesView(APIView):
                     'criador_gatilho': gatilho.usuario.username if gatilho else None,
                     'vendedor': vendedor_nome,
                 })
+                # Grava Interacoes Geradas
+                InteracaoGerada.objects.create(
+        parceiro=parceiro,
+        usuario=vendedor_user,
+        canal_venda=parceiro.canal_venda,
+        status=parceiro.status
+    )
             elif interagido_hoje:
                 interagidos.append({
                     'id': parceiro.id,
@@ -348,8 +355,8 @@ class InteracoesPendentesView(APIView):
                     'criador_gatilho': gatilho.usuario.username if gatilho else None,
                     'vendedor': vendedor_nome,
                 })
-
                 
+    
 
         # Paginação
         page = int(request.query_params.get('page', 1))
