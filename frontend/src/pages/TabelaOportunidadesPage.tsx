@@ -270,7 +270,9 @@ const dadosComDias: Oportunidade[] = useMemo(() => {
 // 🔥 Verificar se tem oportunidades sem movimentação
 useEffect(() => {
   const oportunidadesPendentes = dadosComDias.filter(
-    (o) => (o.dias_sem_movimentacao ?? 0) >= 10
+    (o) => (o.dias_sem_movimentacao ?? 0) >= 18 &&
+    o.etapa !== 'pedido' && // Ignora Pedido Faturado
+    o.etapa !== 'perdida'   // Ignora Venda Perdida
   );
   console.log('✅ oportunidadesPendentes:', oportunidadesPendentes);
   console.log('✅ popupAberto (antes set):', popupAberto);
