@@ -321,6 +321,18 @@ class InteracoesPendentesView(APIView):
             vendedor_nome = vendedor_user.username if vendedor_user else None
 
             if not interagido_hoje and not bloqueado and parceiro.status != 'Base Ativa':
+                # Verifica se já foi gerada uma interação para esse parceiro por esse vendedor nos últimos 7 dias
+                sete_dias_atras = now() - timedelta(days=7)
+
+                ja_gerada = InteracaoGerada.objects.filter(
+                    parceiro=parceiro,
+                    usuario=vendedor_user,
+                    data_geracao__gte=sete_dias_atras
+                ).exists()
+
+                if not ja_gerada:
+                   InteracaoGerada.objects.create(parceiro=parceiro,usuario=vendedor_user,canal_venda=parceiro.canal_venda,status=parceiro.status)
+     
                 pendentes.append({
                     'id': parceiro.id,
                     'parceiro': parceiro.parceiro,
@@ -334,13 +346,7 @@ class InteracoesPendentesView(APIView):
                     'criador_gatilho': gatilho.usuario.username if gatilho else None,
                     'vendedor': vendedor_nome,
                 })
-                # Grava Interacoes Geradas
-                InteracaoGerada.objects.create(
-        parceiro=parceiro,
-        usuario=vendedor_user,
-        canal_venda=parceiro.canal_venda,
-        status=parceiro.status
-    )
+                
             elif interagido_hoje:
                 interagidos.append({
                     'id': parceiro.id,
