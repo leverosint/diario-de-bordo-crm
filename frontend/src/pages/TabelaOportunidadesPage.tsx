@@ -269,6 +269,12 @@ const dadosComDias: Oportunidade[] = useMemo(() => {
 
 // 🔥 Verificar se tem oportunidades sem movimentação
 useEffect(() => {
+  if (tipoUser !== 'VENDEDOR') {
+    // Não faz nada se não for vendedor
+    setPopupAberto(false);
+    return;
+  }
+
   const oportunidadesPendentes = dadosComDias.filter(
     (o) => (o.dias_sem_movimentacao ?? 0) >= 16 &&
     o.etapa !== 'pedido' && // Ignora Pedido Faturado
