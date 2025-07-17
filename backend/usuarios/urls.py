@@ -26,6 +26,7 @@ from .views import (
     AlterarSenhaView,
     SolicitarResetSenhaView,
     ResetSenhaConfirmarView,
+    DashboardParceirosDetalhadoView,
 )
 
 router = DefaultRouter()
@@ -52,6 +53,8 @@ urlpatterns = [
     path('dashboard/kpis/', DashboardKPIView.as_view(), name='dashboard-kpis'),
     path('dashboard/funil/', DashboardFunilView.as_view(), name='dashboard-funil'),
     path('dashboard/oportunidades-mensais/', DashboardOportunidadesMensaisView.as_view(), name='dashboard-oportunidades-mensais'),
+    path('dashboard/parceiros-detalhado/', DashboardParceirosDetalhadoView.as_view()),
+
 
     # Interações
     path('interacoes/', InteracaoViewSet.as_view({'get': 'list', 'post': 'create'}), name='interacoes-list'),
@@ -61,6 +64,7 @@ urlpatterns = [
     path('interacoes/hoje/', InteracoesHojeView.as_view(), name='interacoes-hoje'),
     path('interacoes/historico/', HistoricoInteracoesView.as_view(), name='interacoes-historico'),
     path('interacoes/registrar/', RegistrarInteracaoView.as_view(), name='registrar-interacao'),
+    
 
     # Oportunidades
     path('oportunidades/registrar/', RegistrarOportunidadeView.as_view(), name='registrar-oportunidade'),

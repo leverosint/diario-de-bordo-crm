@@ -176,24 +176,44 @@ const [loadingOportunidades, setLoadingOportunidades] = useState(true);
     try {
       setLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
+  
       const mes = mesSelecionado || String(new Date().getMonth() + 1);
       const ano = anoSelecionado || String(new Date().getFullYear());
       const canalParam = canalSelecionado ? `&canal_id=${canalSelecionado}` : '';
       const consultorParam = consultorSelecionado ? `&consultor=${consultorSelecionado}` : '';
+  
+      // 🔹 1. Buscar KPIs e parceiros base
       const res = await axios.get(
         `${import.meta.env.VITE_API_URL}/dashboard/kpis/?mes=${mes}&ano=${ano}${canalParam}${consultorParam}`,
         { headers }
       );
-
       setKpis(res.data.kpis);
-      setDados(res.data.parceiros || []);
+      const parceirosKPI = res.data.parceiros || [];
+  
+      // 🔹 2. Buscar detalhes com última interação
+      const resTabela = await axios.get(
+        `${import.meta.env.VITE_API_URL}/dashboard/parceiros-detalhado/`,
+        { headers }
+      );
+      const parceirosDetalhados = resTabela.data.parceiros || [];
+  
+      // 🔁 3. Mesclar os dois conjuntos de dados
+      const parceirosCompletos = parceirosKPI.map((p: any) => {
+        const detalhes = parceirosDetalhados.find((d: any) => d.codigo === p.codigo);
+        return {
+          ...p,
+          ultima_interacao: detalhes?.ultima_interacao || null,
+          dias_sem_interacao: detalhes?.dias_sem_interacao ?? null,
+        };
+      });
+  
+      setDados(parceirosCompletos);
     } catch (error) {
       console.error('Erro ao buscar dados do dashboard:', error);
     } finally {
       setLoading(false);
     }
   };
-
 
   
 const fetchOportunidades = async () => {

@@ -1023,3 +1023,32 @@ class ParceiroReportView(generics.ListAPIView):
         elif user.tipo_user == 'VENDEDOR':
             return Parceiro.objects.filter(consultor=user.id_vendedor)
         return Parceiro.objects.none()
+    
+    
+class DashboardParceirosDetalhadoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        parceiros = Parceiro.objects.all()
+
+        if user.tipo_user == 'GESTOR':
+            parceiros = parceiros.filter(canal_venda__in=user.canais_venda.all())
+        elif user.tipo_user == 'VENDEDOR':
+            parceiros = parceiros.filter(consultor=user.id_vendedor)
+
+        parceiros_serializados = []
+        for parceiro in parceiros:
+            parceiro_data = ParceiroSerializer(parceiro).data
+
+            ultima = Interacao.objects.filter(parceiro=parceiro).order_by('-data_interacao').first()
+            if ultima:
+                parceiro_data['ultima_interacao'] = ultima.data_interacao.date()
+                parceiro_data['dias_sem_interacao'] = (now().date() - ultima.data_interacao.date()).days
+            else:
+                parceiro_data['ultima_interacao'] = None
+                parceiro_data['dias_sem_interacao'] = None
+
+            parceiros_serializados.append(parceiro_data)
+
+        return Response({"parceiros": parceiros_serializados})
