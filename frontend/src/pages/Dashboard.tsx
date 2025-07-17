@@ -522,7 +522,7 @@ useEffect(() => {
         const sheetData = parceirosFiltrados.map((p) => ({
           Parceiro: p.parceiro,
           Status: p.status,
-          Consultor: p.consultor || '-', //aqui assume o nome do vendedor
+          'Faturamento Total': p.total || p.total_faturamento,
           'Última Interação': p.ultima_interacao || '-',
           'Dias sem Interação': p.dias_sem_interacao !== undefined ? `${p.dias_sem_interacao} dias` : '-',
         }));
@@ -540,7 +540,7 @@ useEffect(() => {
     <tr>
       <th>Parceiro</th>
       <th>Status</th>
-      <th style={{ textAlign: 'center' }}>Consultor</th>
+      <th style={{ textAlign: 'center' }}>Faturamento Total</th>
       <th style={{ textAlign: 'center' }}>Última Interação</th>
       <th style={{ textAlign: 'center' }}>Dias sem Interação</th>
     </tr>
@@ -551,7 +551,7 @@ useEffect(() => {
       <td>{p.parceiro}</td>
         <td>{p.status}</td>
         <td style={{ textAlign: 'center' }}>
-        {p.consultor || '-'}
+          R$ {Number(p.total || p.total_faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </td>
         <td style={{ textAlign: 'center' }}>
           {p.ultima_interacao || '-'}
