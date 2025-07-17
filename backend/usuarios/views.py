@@ -728,6 +728,15 @@ class DashboardKPIView(APIView):
             tem_interacao = parceiro.id in ids_com_interacao
             parceiro_data = ParceiroSerializer(parceiro).data
             parceiro_data['tem_interacao'] = tem_interacao
+             # 🔥 busca última interação sem filtrar por período
+        ultima = Interacao.objects.filter(parceiro=parceiro).order_by('-data_interacao').first()
+        if ultima:
+            parceiro_data['ultima_interacao'] = ultima.data_interacao.date()
+            parceiro_data['dias_sem_interacao'] = (now().date() - ultima.data_interacao.date()).days
+        else:
+            parceiro_data['ultima_interacao'] = None
+            parceiro_data['dias_sem_interacao'] = None
+            
             parceiros_serializados.append(parceiro_data)
 
         return Response({
