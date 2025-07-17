@@ -531,7 +531,7 @@ useEffect(() => {
 
 <Divider style={{ marginTop: 24, marginBottom: 24 }} />
 
-{/* Tabela */}
+{/* Tabela Todos os Parceiros */}
 <Title order={3} mb="md">Todos os Parceiros ({parceirosFiltrados.length})</Title>
 <Card shadow="md" padding="md" radius="md" withBorder mb="lg">
   <Group justify="space-between" style={{ marginBottom: 16 }}>
