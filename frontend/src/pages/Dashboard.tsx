@@ -176,23 +176,45 @@ const [loadingOportunidades, setLoadingOportunidades] = useState(true);
     try {
       setLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
+  
       const mes = mesSelecionado || String(new Date().getMonth() + 1);
       const ano = anoSelecionado || String(new Date().getFullYear());
       const canalParam = canalSelecionado ? `&canal_id=${canalSelecionado}` : '';
       const consultorParam = consultorSelecionado ? `&consultor=${consultorSelecionado}` : '';
+  
+      // 🔹 1. Buscar KPIs e parceiros base
       const res = await axios.get(
         `${import.meta.env.VITE_API_URL}/dashboard/kpis/?mes=${mes}&ano=${ano}${canalParam}${consultorParam}`,
         { headers }
       );
-
       setKpis(res.data.kpis);
-      setDados(res.data.parceiros || []);
+      const parceirosKPI = res.data.parceiros || [];
+  
+      // 🔹 2. Buscar detalhes com última interação
+      const resTabela = await axios.get(
+        `${import.meta.env.VITE_API_URL}/dashboard/parceiros-detalhado/`,
+        { headers }
+      );
+      const parceirosDetalhados = resTabela.data.parceiros || [];
+  
+      // 🔁 3. Mesclar os dois conjuntos de dados
+      const parceirosCompletos = parceirosKPI.map((p: any) => {
+        const detalhes = parceirosDetalhados.find((d: any) => d.codigo === p.codigo);
+        return {
+          ...p,
+          ultima_interacao: detalhes?.ultima_interacao || null,
+          dias_sem_interacao: detalhes?.dias_sem_interacao ?? null,
+        };
+      });
+  
+      setDados(parceirosCompletos);
     } catch (error) {
       console.error('Erro ao buscar dados do dashboard:', error);
     } finally {
       setLoading(false);
     }
   };
+
 
 
   
@@ -522,7 +544,7 @@ useEffect(() => {
         const sheetData = parceirosFiltrados.map((p) => ({
           Parceiro: p.parceiro,
           Status: p.status,
-          'Faturamento Total': p.total || p.total_faturamento,
+          Consultor: p.consultor || '-',
           'Última Interação': p.ultima_interacao || '-',
           'Dias sem Interação': p.dias_sem_interacao !== undefined ? `${p.dias_sem_interacao} dias` : '-',
         }));
@@ -540,7 +562,7 @@ useEffect(() => {
     <tr>
       <th>Parceiro</th>
       <th>Status</th>
-      <th style={{ textAlign: 'center' }}>Faturamento Total</th>
+      <th style={{ textAlign: 'center' }}>Consultor</th>
       <th style={{ textAlign: 'center' }}>Última Interação</th>
       <th style={{ textAlign: 'center' }}>Dias sem Interação</th>
     </tr>
@@ -551,7 +573,7 @@ useEffect(() => {
       <td>{p.parceiro}</td>
         <td>{p.status}</td>
         <td style={{ textAlign: 'center' }}>
-          R$ {Number(p.total || p.total_faturamento || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+        {p.consultor || '-'}
         </td>
         <td style={{ textAlign: 'center' }}>
           {p.ultima_interacao || '-'}
