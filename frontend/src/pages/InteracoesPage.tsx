@@ -1107,6 +1107,7 @@ export default function InteracoesPage() {
                     </tbody>
                   </Table>
                 )}
+                
 
                 {/* Paginação "A Interagir" */}
                 <Pagination
