@@ -251,19 +251,19 @@ class ResumoParceirosMensal(models.Model):
     
     # Tabela Nova de Registrartodas interacoes geradas
      
-# class InteracaoGerada(models.Model):
-#    parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='geracoes_interacao')
-#    usuario = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
-#    canal_venda = models.ForeignKey(CanalVenda, on_delete=models.SET_NULL, null=True, blank=True)
-#    status = models.CharField(max_length=255, null=True, blank=True)
-#    data_geracao = models.DateTimeField(auto_now_add=True)
-#   id_vendedor = models.CharField(max_length=100, null=True, blank=True)
+class InteracaoGerada(models.Model):
+    parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='geracoes_interacao')
+    usuario = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
+    canal_venda = models.ForeignKey(CanalVenda, on_delete=models.SET_NULL, null=True, blank=True)
+    status = models.CharField(max_length=255, null=True, blank=True)
+    data_geracao = models.DateTimeField(auto_now_add=True)
+    id_vendedor = models.CharField(max_length=100, null=True, blank=True)
 
-#    def save(self, *args, **kwargs):
-#        if self.usuario and not self.id_vendedor:
-#            self.id_vendedor = self.usuario.id_vendedor
-#        super().save(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        if self.usuario and not self.id_vendedor:
+            self.id_vendedor = self.usuario.id_vendedor
+        super().save(*args, **kwargs)
 
-#    def __str__(self):
-#        return f"Interação gerada para {self.parceiro.parceiro} em {self.data_geracao.strftime('%d/%m/%Y %H:%M')}"
+    def __str__(self):
+        return f"Interação gerada para {self.parceiro.parceiro} em {self.data_geracao.strftime('%d/%m/%Y %H:%M')}"
 
