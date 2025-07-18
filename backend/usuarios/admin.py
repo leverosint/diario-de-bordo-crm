@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, CanalVenda, Parceiro, InteracaoGerada
+from .models import CustomUser, CanalVenda, Parceiro, InteracaoGerada, GatilhoExtra
 
 # Admin do usuário
 @admin.register(CustomUser)
@@ -95,3 +95,14 @@ class InteracaoGeradaAdmin(admin.ModelAdmin):
     def get_id_vendedor(self, obj):
         return obj.usuario.id_vendedor if obj.usuario else '-'
     get_id_vendedor.short_description = 'ID Vendedor'
+    
+    
+@admin.register(GatilhoExtra)
+class GatilhoExtraAdmin(admin.ModelAdmin):
+    list_display = ('parceiro', 'usuario', 'descricao', 'observacao_gatilho', 'data_criacao')
+    search_fields = ('parceiro__parceiro', 'usuario__username', 'descricao', 'observacao_gatilho')
+    list_filter = ('data_criacao',)
+
+    # Aqui você controla se algum campo será somente leitura
+    # Se quiser que todos possam editar tudo, não defina readonly_fields
+    # readonly_fields = ()
