@@ -17,6 +17,8 @@ class Migration(migrations.Migration):
             name='observacao_gatilho',
             field=models.TextField(blank=True, null=True),
         ),
+        
+        
         #migrations.CreateModel(
         #    name='InteracaoGerada',
         #    fields=[

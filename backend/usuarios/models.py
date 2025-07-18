@@ -266,4 +266,5 @@ class InteracaoGerada(models.Model):
 
     def __str__(self):
         return f"Interação gerada para {self.parceiro.parceiro} em {self.data_geracao.strftime('%d/%m/%Y %H:%M')}"
+    
 
