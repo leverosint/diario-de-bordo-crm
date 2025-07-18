@@ -137,7 +137,7 @@ class GatilhoExtraSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GatilhoExtra
-        fields = ['id', 'parceiro', 'parceiro_nome', 'usuario', 'usuario_nome', 'descricao']
+        fields = ['id', 'parceiro', 'parceiro_nome', 'usuario', 'usuario_nome', 'descricao','observacao_gatilho']
 
 
 class UsuarioReportSerializer(serializers.ModelSerializer):

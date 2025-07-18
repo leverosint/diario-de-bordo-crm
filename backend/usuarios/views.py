@@ -345,6 +345,7 @@ class InteracoesPendentesView(APIView):
                     'gatilho_extra': gatilho.descricao if gatilho else None,
                     'criador_gatilho': gatilho.usuario.username if gatilho else None,
                     'vendedor': vendedor_nome,
+                    'observacao_gatilho': gatilho.observacao_gatilho if gatilho else None,  # novo campo'
                 })
                 
             elif interagido_hoje:
@@ -886,6 +887,7 @@ def usuarios_por_canal(request):
 def criar_gatilho_manual(request):
     parceiro_id = request.data.get('parceiro')
     descricao = request.data.get('descricao')
+    observacao_gatilho = request.data.get('observacao_gatilho')
 
     if not parceiro_id or not descricao:
         return Response(
@@ -910,7 +912,7 @@ def criar_gatilho_manual(request):
     gatilho, _ = GatilhoExtra.objects.update_or_create(
         parceiro=parceiro,
         usuario=usuario,
-        defaults={'descricao': descricao}
+        defaults={'descricao': descricao, 'observacao_gatilho': observacao_gatilho}
     )
 
     return Response(

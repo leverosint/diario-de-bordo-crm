@@ -69,6 +69,7 @@ interface Interacao {
   data_interacao?: string;
   tipo?: string;
   gatilho_extra?: string;
+  observacao_gatilho?: string; // 🆕 novo campo
   canal_venda_nome?: string;
   consultor?: string;
   usuario_nome?: string; // ✅ <-- ADICIONE ESTA LINHA
@@ -193,6 +194,11 @@ const VirtualizedRow: React.FC<VirtualizedRowProps> = ({
       ? <Badge color="red" size="sm">{item.gatilho_extra}</Badge>
       : "-"}
   </td>
+  <td>
+  {item.observacao_gatilho ? (
+    <span title={item.observacao_gatilho}>{item.observacao_gatilho}</span>
+  ) : "-"}
+</td>
   <td>{item.vendedor || '-'}</td> {/* ✅ Adicione esta coluna */}
   <td>
     {isExpanded ? (
@@ -1074,8 +1080,9 @@ export default function InteracoesPage() {
                         <th>Classificação</th>
                         <th>Status</th>
                         <th>Gatilho Extra</th>
+                        <th>Obs. Gatilho</th> {/* 🆕 nova coluna */}
                         <th>Vendedor</th> {/* nova coluna */}
-                                                <th>Tipo</th>
+                        <th>Tipo</th>
                         <th>Ação</th>
                       </tr>
                     </thead>
