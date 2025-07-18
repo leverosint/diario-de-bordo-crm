@@ -131,6 +131,7 @@ interface FormulariosState {
   obsInteracaoManual: string;
   parceiroSelecionado: string | null;
   descricaoGatilho: string;
+  observacaoGatilho?: string; // ✅ adiciona este campo
 }
 
 interface InteracaoState {
@@ -196,8 +197,12 @@ const VirtualizedRow: React.FC<VirtualizedRowProps> = ({
   </td>
   <td>
   {item.observacao_gatilho ? (
-    <span title={item.observacao_gatilho}>{item.observacao_gatilho}</span>
-  ) : "-"}
+    <span title={item.observacao_gatilho}>
+      {item.observacao_gatilho.length > 60
+        ? item.observacao_gatilho.slice(0, 60) + '...'
+        : item.observacao_gatilho}
+    </span>
+  ) : '-'}
 </td>
   <td>{item.vendedor || '-'}</td> {/* ✅ Adicione esta coluna */}
   <td>
@@ -655,6 +660,8 @@ export default function InteracoesPage() {
         parceiro: formularios.parceiroSelecionado,
         usuario: usuario.id,
         descricao: formularios.descricaoGatilho,
+        observacao_gatilho: formularios.observacaoGatilho || '',
+
       }, { headers, signal }));
 
       alert('Gatilho manual criado com sucesso!');
@@ -982,6 +989,14 @@ export default function InteracoesPage() {
                   value={formularios.descricaoGatilho}
                   onChange={(e) => atualizarFormulario('descricaoGatilho', e.currentTarget.value)}
                 />
+                <Textarea
+                  label="Observação do Gatilho"
+                  placeholder="Ex: cliente solicitou retorno até sexta..."
+                  value={formularios.observacaoGatilho || ''}
+                  onChange={(e) => atualizarFormulario('observacaoGatilho', e.currentTarget.value)}
+                  autosize
+                   minRows={2}
+                />
                 <Button 
                   color="blue" 
                   onClick={salvarGatilhoManual}
@@ -1107,7 +1122,7 @@ export default function InteracoesPage() {
                     </tbody>
                   </Table>
                 )}
-                
+
 
                 {/* Paginação "A Interagir" */}
                 <Pagination
