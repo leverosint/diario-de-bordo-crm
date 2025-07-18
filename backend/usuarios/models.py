@@ -214,6 +214,8 @@ class GatilhoExtra(models.Model):
     parceiro = models.ForeignKey(Parceiro, on_delete=models.CASCADE, related_name='gatilhos_extras')
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='gatilhos_extras')
     descricao = models.CharField(max_length=255)
+    observacao_gatilho = models.TextField(blank=True, null=True)  # 🆕 novo campo
+
 
     def __str__(self):
         return f'{self.parceiro.parceiro} - {self.usuario.username} ({self.descricao})'
