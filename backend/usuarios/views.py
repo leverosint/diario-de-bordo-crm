@@ -320,7 +320,7 @@ class InteracoesPendentesView(APIView):
             vendedor_user = CustomUser.objects.filter(id_vendedor=parceiro.consultor).first()
             vendedor_nome = vendedor_user.username if vendedor_user else None
 
-            if not interagido_hoje and not bloqueado and parceiro.status != 'Base Ativa':
+            if not interagido_hoje and not bloqueado and parceiro.status != 'Base Ativa' or gatilho is not None :
                 # Verifica se já foi gerada uma interação para esse parceiro por esse vendedor nos últimos 7 dias
                 sete_dias_atras = now() - timedelta(days=7)
 
