@@ -831,6 +831,7 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
         try:
             df = pd.read_excel(file_obj)
             required_columns = ['ID Parceiro', 'ID Usuario', 'Gatilho']
+            optional_column = 'Observação'
             if not all(col in df.columns for col in required_columns):
                 return Response({'erro': f'Colunas inválidas. As colunas obrigatórias são: {", ".join(required_columns)}'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -839,6 +840,8 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
                     parceiro_id = row.get('ID Parceiro')
                     usuario_id = row.get('ID Usuario')
                     descricao = str(row.get('Gatilho')).strip()
+                    observacao = str(row.get(optional_column)).strip() if optional_column in row and pd.notna(row.get(optional_column)) else None
+
 
                     if pd.isna(parceiro_id) or pd.isna(usuario_id) or not descricao:
                         continue
@@ -849,7 +852,7 @@ class UploadGatilhosExtrasView(viewsets.ViewSet):
                     GatilhoExtra.objects.update_or_create(
                         parceiro=parceiro,
                         usuario=usuario,
-                        defaults={'descricao': descricao}
+                        defaults={'descricao': descricao, 'observacao_gatilho': observacao}
                     )
 
             return Response({'mensagem': 'Gatilhos extras importados com sucesso'}, status=status.HTTP_200_OK)

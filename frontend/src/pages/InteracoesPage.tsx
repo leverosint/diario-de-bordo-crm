@@ -22,6 +22,9 @@ import {
 } from '@mantine/core';
 import SidebarGestor from '../components/SidebarGestor';
 import styles from './InteracoesPage.module.css';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver'
+
 
 // Hook de debounce para otimizar filtros
 const useDebounce = (value: any, delay: number): any => {
@@ -714,6 +717,26 @@ export default function InteracoesPage() {
     }
   }, [interacao.arquivoGatilho, token, carregarDadosDinamicos, cancelarRequisicoes, setLoading]);
 
+  //Função para baixar modelo gatilho extra
+  const baixarModeloExcel = () => {
+    const dados = [
+      {
+        'ID Parceiro': '',
+        'ID Usuario': '',
+        'Gatilho': '',
+        'Observação': '',
+      },
+    ];
+  
+    const worksheet = XLSX.utils.json_to_sheet(dados);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Modelo');
+  
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+    saveAs(blob, 'modelo_gatilho.xlsx');
+  };
+
   // useEffect para carregamento inicial
   useEffect(() => {
     carregarDadosEstaticos();
@@ -822,12 +845,15 @@ export default function InteracoesPage() {
                 </FileButton>
 
                 <Button
-                  color="blue"
+                  color="green"
                   onClick={handleUploadGatilho}
                   disabled={!interacao.arquivoGatilho}
                   loading={loadingStates.upload}
                 >
                   Enviar Gatilhos
+                </Button>
+                <Button color="blue" variant="outline" onClick={baixarModeloExcel}>
+                 Baixar Modelo Excel
                 </Button>
 
                 <Button

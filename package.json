@@ -7,9 +7,14 @@
     "@mantine/hooks": "^8.1.1",
     "@mantine/modals": "^8.1.1",
     "axios": "^1.9.0",
+    "file-saver": "^2.0.5",
     "lucide-react": "^0.511.0",
     "react-router-dom": "^7.6.0",
     "react-window": "^1.8.11",
-    "recharts": "^2.15.3"
+    "recharts": "^2.15.3",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/file-saver": "^2.0.7"
   }
 }
