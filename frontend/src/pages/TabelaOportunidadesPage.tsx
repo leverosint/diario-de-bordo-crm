@@ -276,7 +276,7 @@ useEffect(() => {
   }
 
   const oportunidadesPendentes = dadosComDias.filter(
-    (o) => (o.dias_sem_movimentacao ?? 0) >= 20 &&
+    (o) => (o.dias_sem_movimentacao ?? 0) >= 35 &&
     o.etapa !== 'pedido' && // Ignora Pedido Faturado
     o.etapa !== 'perdida'   // Ignora Venda Perdida
   );
